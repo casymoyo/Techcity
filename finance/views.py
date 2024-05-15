@@ -9,10 +9,10 @@ from django.contrib import messages
 from utils.utils import generate_pdf
 from django.http import JsonResponse
 from inventory.models import Inventory
-from inventory.models import ActivityLog
 from . utils import calculate_expenses_totals
 from django.utils.dateparse import parse_date
 from django.db.models import Sum, DecimalField
+from inventory.models import ActivityLog, Product
 from django.http import JsonResponse, HttpResponse
 from . forms import ExpenseForm, ExpenseCategoryForm
 from django.views.decorators.csrf import csrf_exempt
@@ -291,18 +291,23 @@ def create_invoice(request):
             data = json.loads(request.body)
             invoice_data = data['data'][0]  
             items_data = data['items']
-            
-            print(items_data)
-            
+            print(invoice_data)
+            # get cash account
             cash_account, _ = CashAccount.objects.get_or_create(name="Cash")
-            vat_output_account, _ = ChartOfAccounts.objects.get_or_create(name="VAT Output")
+            
+            # get accountts_receivable
+            accounts_receivable, _ = ChartOfAccounts.objects.get_or_create(name="Accounts Receivable")
+
+            # get VAT rate
+            vat_rate = VATRate.objects.get(status=True)
 
             # Create invoice object
             customer = Customer.objects.get(id=int(invoice_data['client_id'])) 
-            print(customer)
-            accounts_receivable, _ = ChartOfAccounts.objects.get_or_create(name="Accounts Receivable")
+            
             
             invoice_total_amount = Decimal(invoice_data['payable']) + Decimal(invoice_data['vat_amount'])
+            
+            
             
             invoice = Invoice.objects.create(
                 invoice_number=Invoice.generate_invoice_number(),  
@@ -330,7 +335,7 @@ def create_invoice(request):
             # Create InvoiceItem objects
             for item_data in items_data:
                 item = Inventory.objects.get(pk=item_data['inventory_id'])
-                
+                product = Product.objects.get(pk=item_data['product_id'])
                 item.quantity -= item_data['quantity']
                 item.save()
                 
@@ -339,24 +344,23 @@ def create_invoice(request):
                     invoice=invoice,
                     item=item,
                     quantity=item_data['quantity'],
-                    unit_price=item_data['price']
+                    unit_price=item_data['price'],
+                    vat_rate = vat_rate
                 )
                 
                 # Create StockTransaction for each sold item
                 stock_transaction = StockTransaction.objects.create(
-                    item=item,
+                    item=product,
                     transaction_type=StockTransaction.TransactionType.SALE,
                     quantity=item.quantity,
                     unit_price=item.price,
-                    date=timezone.now(),
-                    receipt_content_type=ContentType.objects.get_for_model(CashAccount),
-                    receipt_object_id=cash_account.id
+                    date=timezone.now()
                     )
                 
                 # stock log  
                 ActivityLog(
                         branch=request.user.branch,
-                        inventory=item.item,
+                        inventory=item,
                         user=request.user,
                         quantity=item_data['quantity'],
                         total_quantity = item.quantity
@@ -368,14 +372,14 @@ def create_invoice(request):
                 stock_transaction=stock_transaction,
                 vat_type=VATTransaction.VATType.OUTPUT,
                 vat_rate=VATRate.objects.get(status=True).rate,
-                tax_amount=item.vat_amount
+                tax_amount=invoice_data['vat_amount']
             )
             
             # Create Sale object
             sale = Sale.objects.create(
                 date=timezone.now(),
-                customer=invoice.customer,
-                transaction=transaction_obj,
+                transaction=invoice,
+                total_amount=invoice_total_amount
             )
             
             # Update cash account

@@ -49,7 +49,7 @@ class Transaction(models.Model):
     account = models.ForeignKey(ChartOfAccounts, on_delete=models.PROTECT)
     debit = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     credit = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    reference = models.CharField(max_length=50, blank=True)
+    reference_number = models.CharField(max_length=50, blank=True)
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True)
     
     def save(self, *args, **kwargs):
@@ -160,11 +160,11 @@ class Sale(models.Model):
     """
     date = models.DateField()
     total_amount = models.DecimalField(max_digits=15, decimal_places=2)
-    transaction = models.ForeignKey(Transaction, on_delete=models.PROTECT)
-    # payment_method = models.ForeignKey(PaymentMethod, on_delete=models.PROTECT)
+    transaction = models.ForeignKey('finance.Invoice', on_delete=models.PROTECT)
+    
 
     def __str__(self):
-        return f"Sale to {self.customer} on {self.date} ({self.total_amount} {self.currency.code})"
+        return f"Sale to {self.transaction.customer} on {self.date} ({self.total_amount})"
 
 
 class PayLaterTransaction(models.Model):
@@ -229,10 +229,14 @@ class InvoiceItem(models.Model):
     vat_rate = models.ForeignKey(VATRate, on_delete=models.PROTECT)
     vat_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0, editable=False)  
 
+    # @property
+    # def subtotal(self):
+    #     discount_amount = self.unit_price * (self.discount_percentage / 100)
+    #     return (self.unit_price - discount_amount) * self.quantity
+    
     @property
     def subtotal(self):
-        discount_amount = self.unit_price * (self.discount_percentage / 100)
-        return (self.unit_price - discount_amount) * self.quantity
+        return Decimal(self.unit_price )* int(self.quantity)
 
     @property
     def total(self):

@@ -69,7 +69,7 @@
                             <select type="text" id="search-input">
                                 <option value="">-----</option>
                                 {% for client in clients%}
-                                    <option value='{{ client.id }}'>{{ client.name }}</option>
+                                    <option value="{{client.id}}">{{ client.name }}</option>
                                 {% endfor %}
                             </select>
                             <div class="avatar-container">
@@ -208,7 +208,6 @@
        
     categorySelect.addEventListener('change', function() {
         const selectedCategoryId = this.value;
-        console.log(selectedCategoryId)
         fetchData(parseInt(selectedCategoryId))
     });
     
@@ -361,11 +360,11 @@
     }
 
     function processCart() {
-
+        console.log($('#search-input').val())
         const data = [
             {
                 amound_paid:$('#id_amount_paid').val(),
-                client_id:$('#id_category').val(),
+                client_id:$('#search-input').val(),
                 days: $('#id_days').val(),
                 note: $('#id_note').val(),
                 payable:document.getElementById('id_payable').textContent,
