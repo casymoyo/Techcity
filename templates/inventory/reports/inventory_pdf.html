@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Clients</title>
+</head>
+<style>
+    .table-body{
+        margin-top: 10px;
+    }
+    hr{
+        border-color:#664147 !important;
+    }
+</style>
+<body class="container">
+    <div class="row container mt-5">
+        <small>{{date}}</small>
+        <div class="title">
+            <h3 style="text-align: center;">TechCity</h3>
+        </div>
+        <div class="col-12">
+            <h4>{{title}}</h4>
+            <p>Total Price: {{total_price}} | Total Cost {{total_cost}}</P>
+            <hr style="border:1px solid #664147 !important;">
+            <table class='table border rounded p-2'>
+                <tr>
+                    <td>Name</td>
+                    <td>Quantity</td>
+                    <td>Cost</td>
+                    <td>Price</td>
+                </tr>
+                <tbody>
+                    {% for product in inventory %}
+                        <tr>
+                            <td>{{product.product.name}}</td>
+                            <td>{{product.quantity}}</td>
+                            <td>${{product.cost}}</td>
+                            <td>${{product.price}}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

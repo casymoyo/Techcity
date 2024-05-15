@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load static%}
+{% load crispy_forms_tags %}
+{% block content %}
+<div>
+    <div class="d-flex justify-content-between align-items-center py-2">
+        <div class="fs-5 fw-bold">
+            Add Expense
+        </div>
+        <hr style="border: 1px solid #333 !important;">
+    </div>
+    <form method='post'>
+        {% csrf_token %}
+        <div id="div_id_date" class="mb-3"> 
+            <label
+                for="id_date" class="form-label requiredField">
+                Date
+                <span class="asteriskField">*</span> 
+            </label> 
+            <input type="date" name="date" class="dateinput form-control" required id="id_date"> 
+        </div> 
+        <div id="div_id_amount" class="mb-3"> 
+            <label
+                for="id_amount" class="form-label requiredField">
+                Amount
+                <span class="asteriskField">*</span> 
+            </label> 
+            <input type="number" name="amount" step="0.01" class="numberinput form-control" required id="id_amount"> 
+            <p class="text-danger fs-6" id="id_amount_error"></p>
+        </div> 
+        <div id="div_id_category" class="mb-3"> 
+            <label
+                for="id_category" class="form-label requiredField">
+                Category
+                <span class="asteriskField">*</span> 
+            </label> 
+            <div class='d-flex'>
+                <select name="category" class="select form-select" required id="id_category"> 
+                    <option value="" selected>---------</option> 
+                    {% for category in expense_categories%}
+                        <option value="{{category.id}}">{{category.name}}</option> 
+                    {% endfor %}
+                </select> 
+                <button class='btn btn-primary btn-sm' id='id_category_button' type="button">
+                    <i class='bx bx-plus'></i>
+                </button>
+            </div>
+        </div> 
+        <div id="div_id_description" class="mb-3"> 
+            <label
+                for="id_description" class="form-label requiredField">
+                Description<span class="asteriskField">*</span> 
+            </label> 
+                <textarea name="description" cols="40" rows="3" maxlength="200" class="textarea form-control" required id="id_description"></textarea> 
+            </div>
+        </div>
+        <div class="d-flex justify-content-end mt-3">
+            <button class="btn btn-secondary btn-sm" type="submit">
+                <i class='bx bx-save'></i> 
+                Save
+            </button>
+        </div>
+    </form>
+    <div class="expense-modal hidden">
+        <div class="modal-content">
+            {% include 'finance/expenses/add_category.html'%}
+        </div>
+    </div>
+    <div class="overlay hidden"></div>
+</div>
+<script type="text/javascript">
+    const modal = document.querySelector('.expense-modal')
+    const overlay = document.querySelector('.overlay')
+    const expButton = document.querySelector('#id_category_button')
+
+    
+    expButton.addEventListener(
+        'click', ()=>{
+            modal.classList.remove('hidden')
+            overlay.classList.remove('hidden')
+        }
+    )
+    
+    document.querySelector('#btn-close').addEventListener(
+        'click', ()=>{
+            modal.classList.add('hidden')
+            overlay.classList.add('hidden')
+            location.reload()
+        }
+    ) 
+
+    document.querySelector('#id_amount').addEventListener(
+        'change', ()=>{
+            const amount = $('#id_amount').val()
+            const errorElement = document.querySelector('#id_amount_error')
+
+            if (amount <= 0){
+                errorElement.innerHTML='* Amount cant be less than or equal to zero'
+            }else{
+                errorElement.innerHTML=''
+            }
+        }
+    )
+
+    document.querySelector('#id_category_submit').addEventListener(
+        'click', ()=>{
+            const data = {
+                 name: $('#id_name').val(),
+                 csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+            }
+            $.ajax({
+                url: '{% url 'finance:create_expense_category'%}',
+                type: 'POST',
+                data: data,
+                }).done(function(response) {
+                    document.querySelector('#id_category_message').innerHTML=response.message
+                })
+        }
+    )
+</script>
+{% endblock content %}

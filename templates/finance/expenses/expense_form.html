@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static%}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class='finance'>
+    <div class="d-flex justify-content-between align-items-center py-2">
+        <div class="fs-5 fw-bold">
+            Edit {{expense.category.name}} Expense
+        </div>
+        <hr style="border: 1px solid #333 !important;">
+    </div>
+    <form method='post'>
+        {% csrf_token %}
+        {{form|crispy}}
+        <div class="d-flex justify-content-end mt-3">
+            <button class="btn btn-secondary btn-sm" type="submit">
+                <i class='bx bx-save'></i> 
+                Save
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock content %}

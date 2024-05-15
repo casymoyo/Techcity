@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static%}
+{% block title%} Receive Inventory {% endblock%}
+{% block content %}
+   <div class="inventory">
+        <div class="inventory-navbar mt-2">
+            <nav class="d-flex justify-content-between align-items-center p-2 border rounded">
+                <div class="d-flex">
+                    <div>
+                        <a href='{% url 'inventory:inventory'%}' class='btn btn-primary btn-sm'>
+                            <i class='bx bx-left-arrow-alt'></i>
+                        </a>
+                    </div>
+                    <div class='px-1'> 
+                        <a href='{% url 'inventory:add_transfer' %}' class="btn btn-light btn-sm">
+                            <i class='bx bx-plus'></i>
+                            Transfer
+                        </a>
+                    </div>
+                </div>
+                {% comment %} <div class="search d-flex align-items-center">
+                    <select class="form-select" id="branch">
+                        <option value="">---select branch---</option>
+                        {% for branch in branches%}
+                            <option value={{branch.id}}>{{branch.name}}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="px-1"></span>
+                    <div>
+                        <input
+                            id="search"
+                            name="search"
+                            type="search"
+                            class="form-control"
+                            placeholder="Transfer....."
+                        />
+                    </div>
+                </div> {% endcomment %}
+            </nav>
+        </div>
+        <div class='px-2'>
+            <p class=' mt-2'>Transfer(s) List</p>
+            {% include "inventory/components/receive _inventory_table.html" %}
+        </div>
+   </div>  
+{% endblock content %}

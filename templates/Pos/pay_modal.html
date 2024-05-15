@@ -1,0 +1,67 @@
+{% load static%}
+{% block content %}
+<div class='payment w-100'>
+    <div class="text-center">
+        <button class=" closebtn btn-close text-danger btn-sm"></button>
+    </div>
+    <div class='row'>
+        <div class='col'>
+            <h5 class="mb-3">Payment Method</h5>
+            <div class='button-choose d-flex w-100'>
+                <div class="w-100">
+                    <button class='btn btn-secondary btn-lg w-100' id="id_cash_btn">
+                        Cash
+                    </button>
+                </div>
+                <span class="px-2"></span>
+                <div class="w-100">
+                    <button class='btn btn-secondary btn-lg w-100' id="id_credit_btn">
+                        Credit
+                    </button>
+                </div>
+            </div>
+            <div class='payment-form mt-3'>
+                <div class='mb-2'>
+                    <input
+                        id='id_amount_paid'
+                        name='amount'
+                        type="number"
+                        class='form-control'
+                     />
+                </div>
+
+                <div class="credit border rounded p-2 mb-2 hidden">
+                    <p>Credit details</p>
+                    <div class="mb-2">
+                        <label for="id_date">Duration</label>
+                        <input
+                            type="number"
+                            class="form-control"
+                            placeholder="number of days"x
+                            id="id_days"
+                        />
+                    </div>
+                </div>
+                <div class='mb-3'>
+                    <label for="id_note">Note</label>
+                    <textarea
+                        id='id_note'
+                        name='note'
+                        class='form-control'
+                    ></textarea>
+                </div>
+
+                <div class="payment-btn d-flex justify-content-end">
+                    <span class="btn btn-seconday btn-sm">
+                        close
+                    </span>
+                    <span class="px-2"></span>
+                    <span class="btn btn-seconday btn-sm" onclick="processCart()">
+                        pay
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

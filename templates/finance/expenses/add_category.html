@@ -1,0 +1,33 @@
+{% load static%}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class='finance'>
+    <div class="text-center">
+        <button id='btn-close'class=" btn-close text-danger btn-sm"></button>
+    </div>
+    <div class="d-flex justify-content-center align-items-center mt-3 py-2">
+        <div class="fs-5 fw-bold">
+            Add Category
+        </div>
+        <hr style="border: 1px solid #333 !important;">
+    </div>
+    <form method='post' class='mt-3' id="id_category">
+        {% csrf_token %}
+        <div id="div_id_name" class="mb-3"> 
+            <label
+                for="id_name" class="form-label requiredField">
+                Name
+                <span class="asteriskField">*</span> 
+            </label> 
+            <input type="text" name="name" maxlength="50" class="textinput form-control" required id="id_name"> 
+            <p class='text-muted px-1' id='id_category_message'></p>
+        </div> 
+        <div class="d-flex justify-content-end mt-3">
+            <button class="btn btn-secondary btn-sm" id='id_category_submit' type='button'>
+                <i class='bx bx-save'></i> 
+                Save
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock content %}

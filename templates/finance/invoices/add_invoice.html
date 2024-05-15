@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% load static%}
+{% load crispy_forms_tags %}
+{% block title%} Create Invoice {% endblock%}
+{% block content %}
+   <div class="inventory">
+        <div class='add-transfer'>
+            <div class='add-transfer-nav rounded bg-light d-flex mt-2 px-2 align-items-center'>
+                <div>
+                    <a href='{% url 'finance:invoice'%}' class='btn btn-primary btn-sm'>
+                      <i class='bx bx-left-arrow-alt'></i>
+                    </a>
+                </div>
+                <div>
+                    <p class='fw-normal px-2 mt-3 '>Add Transfer</p>
+                </div>
+            </div>
+            <div class='mt-2  px-2 border'>
+                <form class='d-flex flex-column mt-2 w-100 mt-2 w-100' method='post'>
+                    {% csrf_token %}
+                    <div class="mb-1">
+                        <label for="id_product" class="form-label requiredField">
+                            Product
+                        </label> 
+                        <select class="select form-select" id='id_product'>
+                            <option value="">-----</option>
+                            {% for product in inventory %}
+                                <option value={{product.product.name}}>{{product.product.name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div id="div_id_price" class="mb-1">
+                        <label for="id_price" class="form-label requiredField">
+                            Price
+                        </label> 
+                        <input 
+                            type="number" 
+                            name="price" step="0.01" 
+                            class="numberinput form-control" 
+                            required 
+                            id="id_price"
+                        >
+                        <p id="price_error" class="fs-6 text-danger"></p>
+                    </div> 
+                    <div id="div_id_quantity" class="mb-1"> 
+                        <label for="id_quantity" class="form-label requiredField">
+                            Quantity
+                        </label> 
+                        <input 
+                            type="number" 
+                            name="quantity"
+                            value="" 
+                            min="0" 
+                            class="numberinput form-control" 
+                            required id="id_quantity"
+                        > 
+                        <p id="quantity_error" class="fs-6 text-danger"></p>
+                    </div> 
+                    <div class='d-flex justify-content-end mb-2'>
+                        <button type='button' class='btn btn-secondary btn-sm' onclick="addItem();">
+                          <i class='bx bx-save' ></i>
+                          save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% comment %} {% include "carts/view_branch_cart.html" %} {% endcomment %}
+        <div id="cart-display" class="mt-3 px-2">
+            <p id="cart-title">Transfer Items</p>
+            <table class="table border rounder p-2" id="cart-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Price</th>
+                  <th>Quantity</th>
+                  <th>Source</th>
+                  <th>Destination</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="cart-items">
+              </tbody>
+            </table>
+            <div class='d-flex justify-content-end'>
+                <button class="btn btn-primary btn-sm flex" id="confirm-button" onclick="processCart()">Confirm</button>
+            <div>
+          </div>          
+   </div>  
+   <script src="{% static 'js/productValidation.js'%}"></script>
+   <script>
+    $(document).ready(function() {
+        $('#id_product').select2(
+            {placeholder: 'Select Client'}
+        );
+    })
+    let cart = [];
+
+    function isCartEmpty(){
+        if (cart.length === 0){
+            document.getElementById('cart-display').style.display='none'
+            {% comment %} console.log(cart.length) {% endcomment %}
+        }else{
+            document.getElementById('cart-display').style.display='block'
+        }
+    }
+    isCartEmpty()
+
+    function generateUniqueId() {
+        return Math.floor(Math.random() * 1000000000).toString(36);
+      }
+    
+    function updateCartDisplay() {
+        isCartEmpty()
+        const cartItemsList = document.getElementById("cart-items");
+        cartItemsList.innerHTML = ""; 
+      
+        let total = 0;
+        cart.forEach((item) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${item.product}</td>
+            <td>${item.price}</td>
+            <td>${item.quantity}</td>
+    
+            <td>
+                <button class="btn btn-sm btn-danger" data-id=${item.id} onclick="removeItem(this);">
+                  <i class='bx bx-trash-alt'></i>
+                </button>
+            </td>
+          `;
+          cartItemsList.appendChild(row);
+        });
+      }
+      
+
+    function addItem() {
+        const pElement = document.getElementById('id_product')
+        const pSelectedOption = pElement.options[pElement.selectedIndex] 
+        const product = pSelectedOption.textContent;
+
+        const price = Number(document.getElementById('id_price').value)
+        const quantity =  Number(document.getElementById('id_quantity').value)
+
+        const toElement = document.getElementById('id_to')
+        const toSelectedOption = toElement.options[toElement.selectedIndex]
+        const toBranchId =  toSelectedOption.textContent
+        
+
+        const fromElement = document.getElementById('id_from')
+        const fromSelectedOption = fromElement.options[fromElement.selectedIndex]
+        const fromBranchId =  fromSelectedOption.textContent
+      
+
+        const existingItem = cart.find((item) => item.product === product)
+        console.log(fromBranchId)
+    
+      if (existingItem) {
+        existingItem.quantity += quantity;
+      } else {
+        const newTransfer = {
+          id:generateUniqueId(),
+          product:product, 
+          from_branch: fromBranchId,
+          to_branch:toBranchId,
+          quantity: quantity,
+          price:price
+        };
+        cart.push(newTransfer);
+      }
+    
+      updateCartDisplay(); 
+    }
+    
+    const removeItem = (el) => {
+        const id = el.dataset.id
+        cart = cart.filter((item) => item.id !== id);
+        updateCartDisplay();
+    }
+    
+    function processCart() {
+      fetch("/inventory/process-transfer-cart/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"), 
+        },
+        body: JSON.stringify(cart),
+      })
+        .then((response) => {
+          if (response.ok) {
+            cart = []; 
+            updateCartDisplay();
+          } else {
+            // Handle error 
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    }
+    
+    // Helper - Get CSRF Token (adjust if needed)
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === name + "=") {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }    
+   </script>
+        
+{% endblock content %}

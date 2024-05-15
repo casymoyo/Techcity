@@ -1,0 +1,38 @@
+{% load static%}
+{% block content %}
+   <div class="table mt-2">
+        <!-- inventory table -->
+        <table class='table table-striped border rounded p-2'>
+            <tr>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>Source</th>
+                <th>Destination</th>
+                <th>Actions</th>
+            </tr>
+            <tbody>
+                {% for transfer in transfers %}
+                    <tr>
+                        <td>{{transfer.product.name}}</td>
+                        <td>{{transfer.quantity}}</td>
+                        <td>{{transfer.from_branch}}</td>
+                        <td>{{transfer.to_branch}}</td>
+                        <td>
+                            <span>
+                                {% if transfer.declined == False %}
+                                    {% if transfer.received == False %}
+                                        not yet received
+                                    {% else %}
+                                       <span class='text-success'>Recieved</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class='text-danger'>Declined</span>
+                                {% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+   </div>  
+{% endblock content %}

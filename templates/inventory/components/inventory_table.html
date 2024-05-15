@@ -1,0 +1,107 @@
+{% load static%}
+{% block content %}
+   <div class="table mt-2">
+        <!-- inventory table -->
+        <table class='table border rounded p-2'>
+            <tr>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>Cost</th>
+                <th>Price</th>
+                <th>Actions</th>
+            </tr>
+            <tbody>
+                {% for product in inventory %}
+                    <tr>
+                        <td>{{product.product.name}}</td>
+                        <td>{{product.quantity}}</td>
+                        <td>${{product.cost}}</td>
+                        <td>${{product.price}}</td>
+                        <td>
+                            <span>
+                                <a href="{% url 'inventory:inventory_detail' product.id %}" class="btn btn-light btn-sm">
+                                    <i class='bx bx-show'></i>
+                                </a>
+                            </span>
+                            <span>
+                                {%  if request.user.role == 'admin' %}
+                                    <a href="{% url 'inventory:edit_inventory' product.product.name %}" class="btn btn-light btn-sm text-primary">
+                                        <i class='bx bx-edit-alt'></i>
+                                    </a>
+                                {% endif %}
+                            </span>
+                            <span>
+                                {% if request.user.role == 'admin' %}
+                                    <button id='delete' data-id="{{product.id}}" onclick="productId(this)" class="btn btn-light btn-sm text-danger">
+                                        <i class='bx bx-trash-alt'></i>
+                                    </button>
+                                {% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- delete modal -->
+        <div class="delete-modal hidden">
+            <div class="modal-content d-flex justify-content-center align-items-center mt-5">
+                <p class="fs-4 fw-bold">Confirm Product deletion</p>
+                <div>
+                    <button class="btn btn-secondary btn-sm yes">
+                        yes
+                    </button>
+                </div>
+                <div>
+                    <button id="btn-close" class="btn btn-danger btn-sm">
+                        no
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="overlay hidden"></div>
+   </div> 
+    
+   <script src="{% static 'js/jquery.js'%}"></script>
+   <script>
+        let product_id = ''
+        const modal = document.querySelector('.delete-modal')
+        const overlay = document.querySelector('.overlay')
+        const deleteButtons = document.querySelectorAll('#delete')
+
+        const productId=(element)=>{
+            console.log(element)
+            product_id = element.dataset.id
+        }
+
+        deleteButtons.forEach((button)=>{
+            button.addEventListener(
+                'click', ()=>{
+                    modal.classList.remove('hidden')
+                    overlay.classList.remove('hidden')
+                }
+            )
+        })
+
+        document.querySelector('#btn-close').addEventListener(
+            'click', ()=>{
+                modal.classList.add('hidden')
+                overlay.classList.add('hidden')
+            }
+        )
+        
+        document.querySelector('.yes').addEventListener(
+            'click', ()=>{
+                console.log(product_id)
+                $.ajax({
+                    url: "{% url 'inventory:delete_inventory' %}?product_id=" + product_id,
+                    type: 'GET',
+                    }).done(function(response) {
+                        modal.classList.add('hidden')
+                        overlay.classList.add('hidden')
+                    }
+                )
+            }
+        )
+   </script>
+{% endblock content %}

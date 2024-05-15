@@ -1,0 +1,43 @@
+{% load static%}
+{% block content %}
+   <div class="table mt-2">
+        <!-- inventory table -->
+        <table class='table border rounded p-2'>
+            <tr>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>Source</th>
+                <th>Destination</th>
+                <th>Actions</th>
+            </tr>
+            <tbody>
+                {% for transfer in transfers %}
+                    <tr>
+                        <td>{{transfer.product.name}}</td>
+                        <td>{{transfer.quantity}}</td>
+                        <td>{{transfer.from_branch}}</td>
+                        <td>{{transfer.to_branch}}</td>
+                        <td class=d-flex>
+                            <form method='post' class='px-1'>
+                                {% csrf_token %}
+                                <input name='id' value={{transfer.id}} type='text' hidden/>
+                                <input name='received' value='false' type='text' hidden/>
+                                <button class='btn btn-danger btn-sm'>
+                                    decline
+                                </button>
+                            </form>
+                            <form method='post'>
+                                {% csrf_token %}
+                                <input name='id' value={{transfer.id}} type='text' hidden/>
+                                <input name='received' value='true' type='text' hidden/>
+                                <button class='btn btn-success btn-sm'>
+                                    accept
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+   </div>  
+{% endblock content %}

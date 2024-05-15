@@ -1,0 +1,79 @@
+{% load static%}
+{% block content %}
+    <aside class="d-flex flex-column">
+        <div class="logo mt-3 px-2">
+            <img src="{% static 'assets/logo.png' %}" width="100px"/>
+        </div>
+
+        <div class=" menu mt-4 px-4 d-flex justify-content-cente align-items-center">
+            <ul class="menu list-unstyled">
+                <li class="menu-link">
+                    <a href="{% url 'pos:pos'%}">
+                        <i class='bx bxs-rectangle'></i>
+                        POS
+                    </a>
+                </li>
+                <li class="menu-link">
+                    <a href="">
+                        <i class='bx bxs-dashboard' ></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="menu-link">
+                    <a href="{% url 'inventory:inventory' %}">
+                        <i class='bx bx-cabinet'></i>
+                        Inventory
+                    </a>
+                    <span class=' text-dark caret'></span>
+                </li>
+                <li class="menu-link dropdown">
+                    <a href="{% url 'finance:finance' %}" class='dropdown-toggle'>
+                        <i class='bx bx-credit-card-front'></i>
+                        Finance
+                    </a>
+                    <ul class="dropdown-menu shadow w-50 bg-light">
+                        <li class="dropdown-link">
+                            <a href="{% url 'finance:finance' %}" class="px-3 fs-6">Sales</a>
+                        </li>
+                        <li class="dropdown-link">
+                            <a href="{% url 'finance:expense_list' %}" class="px-3 fs-6">Expenses</a>
+                        </li>
+                        <li class="dropdown-link">
+                            <a href="{% url 'finance:invoice' %}" class="px-3 fs-6">Invoices</a>
+                        </li class="dropdown-link">
+                        <li class="dropdown-link">
+                            <a href="{% url 'finance:finance' %}" class="px-3 fs-6">Reports</a>
+                        </li>
+                        <li class="dropdown-link">
+                            <a href="{% url 'finance:finance' %}" class="px-3 fs-6">Settings</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="menu-link dropdown">
+                    <a href="#" class='dropdown-toggle'>
+                        <i class='bx bx-building'></i>
+                        Branches
+                    </a>
+                    <ul class="dropdown-menu shadow w-50 bg-light">
+                        {% for branch in branches %}
+                            <li class="dropdown-link">
+                                <a href="{% url 'company:switch_branch' branch.id %}" class="px-3 fs-6">{{branch.name}}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class='settings px-4 py-2'>
+            <ul class="menu list-unstyled">
+                <li class="menu-link">
+                    <a href="">
+                        <i class='bx bx-cog' ></i>
+                        Settings
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </aside>
+{% endblock content %}

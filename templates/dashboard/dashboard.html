@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load static%}
+{% block title%} Dashboard {% endblock%}
+{% block content %}
+   Dashboard
+
+   <script>
+   const branchId = 2; 
+   const socket = new WebSocket(
+      'ws://' + window.location.host + '/ws/inventory/' + branchId + '/' 
+   );
+
+   socket.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      if (data.type === "stock_update") {
+         console.log("Received stock update:", data); 
+      }
+   }
+
+   </script>
+{% endblock content %}

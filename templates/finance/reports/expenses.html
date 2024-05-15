@@ -1,0 +1,57 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expenses</title>
+</head>
+<style>
+    .table-body{
+        margin-top: 10px;
+    }
+    hr{
+        border-color:#664147 !important;
+    }
+</style>
+<body class="container">
+    <div class="row container mt-5">
+        <small>{{date}}</small>
+        <div class="title">
+            {% comment %} <img src="{{ request.build_absolute_uri 'path/to/your/logo.png' }}" alt="Company Logo" />
+            {% endcomment %}
+            {% comment %} <img src="{% static 'assets/logo.png' %}" alt="Company Logo" /> {% endcomment %}
+
+            <h3 style="text-align: center;">TechCity</h3>
+        </div>
+        <div class="col-12">
+            <h4>{{title}}</h4>
+            <hr style="border:1px solid #664147 !important;">
+            <table class='table border rounded p-2'>
+                <tr>
+                    <td>Date</td>
+                    <td>Description</td>
+                    <td>Category</td>
+                    <td>Amount</td>
+                </tr>
+                <tbody>
+                    {% for expense in expenses %}
+                        <tr>
+                            <td>{{expense.date}}</td>
+                            <td>{{expense.description}}</td>
+                            <td>{{expense.category.name}}</td>
+                            <td>${{expense.amount}}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <td>Total</td>
+                    <td></td>
+                    <td></td>
+                    <td class='fs-5'>${{total_expenses}}</td>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

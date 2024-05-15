@@ -1,0 +1,415 @@
+{% load static%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Techcity Pos System"/>
+    <meta name="Author"content="casy moyo" />
+    <link rel="icon" href="{% static 'images/favicons/favicon.ico' %}"/>
+
+    {% block css %}
+        <link rel="stylesheet" href="{% static 'css/main.css'%}">
+        <link rel="stylesheet" href="{% static 'css/bootstrap/css/bootstrap.min.css'%}">
+        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    {% endblock css %}
+
+    <script defer src="{% static 'css/bootstrap/js/bootstrap.min.js'%}"></script>
+    <script src="{% static 'js/jquery.js'%}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <title>
+        {% block title %}Techcity POS{% endblock title %}
+    </title>
+</head>
+<body class="techcity">
+    <div class='pos'>
+        <div class="top-bar">
+            <div class="nav-bar"> {% include "base/pos_navbar.html" %} </div>
+        </div>
+        <div class='row mt-2'>
+            <div class='col-8'>
+                <div class='main-pos-area  px-2'>
+                    <!-- <div class="bg-light"> {% include "base/pos_aside.html" %} </div> -->
+                    <div class="d-flex align-content-center justify-content-between w-100">
+                        <div class="d-flex align-items-center product-search">
+                            <div ><i class="bx bx-search"></i></div>
+                            <div><input type="search" name="q" class="form-control"  id='id_search' placeholder="search..."/></div>
+                        </div>
+                        <div>
+                            <select id="id_category" class="form-select">
+                                <option value="0">All Categories</option>
+                                {% for category in categories%}
+                                    <option value='{{ category.id }}'>{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="products mt-2">
+                        <div class="row" id="product-list">
+                            <!-- <div className='loader-parent'>
+                                <div class="loader">
+                                    <div class="inner one"></div>
+                                    <div class="inner two"></div>
+                                    <div class="inner three"></div>
+                                </div>
+                                <p className='text-muted'>Loading...</p>
+                            </div> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class='col-4 d-flex'>
+                <div class='add-items-area w-100'>
+                    <div class='top d-flex w-100 align-items-center justify-content-between'>
+                        <div class="search-bar">
+                            <select type="text" id="search-input">
+                                <option value="">-----</option>
+                                {% for client in clients%}
+                                    <option value='{{ client.id }}'>{{ client.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="avatar-container">
+                                <img src="{% static 'assets/avatar.png' %}" alt="Avatar" class="avatar"> 
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column">
+                            <div>
+                                <small>Due</small>
+                            </div>
+                            <div>
+                                <small>00.00</small>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button class=" p-2 btn btn-light w-100 btn-sm">
+                                <i class="bx bx-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <table class="table">
+                        <tr class="border head">
+                            <th>Quanity</th>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </table>
+                    <div class="table-items border bg-light">
+                        <table class="table">
+                            <tbody id="cart_items"></tbody>
+                        </table>
+                    </div>
+                    <div class='totals border d-flex aling-items-center'>
+                        <table class="table">
+                            <tr>
+                                <td>Total Amount</td>
+                                <td></td>
+                                <td></td>
+                                <td id="id_total_amount">0.00</td>
+                            </tr>
+                            <tr>
+                                <td>Tax Amount</td>
+                                <td></td>
+                                <td></td>
+                                <td id="id_vat_amount">0.00</td>
+                            </tr>
+                            <tr>
+                                <td>Payable Amount</td>
+                                <td></td>
+                                <td></td>
+                                <td id="id_payable">0.00</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class=" w-100 payment-buttons d-flex justify-content-between mt-3">
+                        <div class="w-50 bg-danger">
+                            <button class="btn btn-danger w-100">
+                                <i class="bx bx-reset"></i>
+                                Reset
+                            </button>
+                        </div>
+                        <div class="w-50 bg-success">
+                            <button class="btn btn-success w-100"id='id_pay' >
+                                <i class="bx bx-money"></i>
+                                Pay Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="payment-modal hidden">
+            <div class="modal-content">
+                {% include 'Pos/pay_modal.html' %}
+            </div>
+        </div>
+        <div class="overlay hidden"></div>
+    </div>
+</body>
+<script>
+    $(document).ready(function() {
+        $('#search-input').select2(
+            {placeholder: 'Select Client'}
+        );
+       
+    })
+
+    //credit
+    const creditBtn = document.querySelector('#id_credit_btn')
+    const cashBtn = document.querySelector('#id_cash_btn')
+    const creditElement = document.querySelector('.credit')
+
+    creditBtn.addEventListener(
+        'click', ()=>{
+            creditElement.classList.remove('hidden')
+        }
+    )
+
+    cashBtn.addEventListener(
+        'click', ()=>{
+            creditElement.classList.add('hidden')
+        }
+    )
+    
+    // modal
+    const overlay = document.querySelector(".overlay");
+    const modal = document.querySelector('.payment-modal');
+    const closeModalBtn = document.querySelector(".btn-close");
+
+    document.querySelector('#id_pay').addEventListener(
+        'click', ()=>{
+            console.log(modal)
+            modal.classList.remove("hidden");
+            overlay.classList.remove("hidden");
+        }
+    )
+
+    closeModalBtn.addEventListener(
+        'click', ()=>{
+            modal.classList.add("hidden");
+            overlay.classList.add("hidden");
+        }
+    )
+
+    //search filters and fetching data
+    const productListContainer = document.getElementById('product-list');
+    const categorySelect = document.getElementById('id_category');
+    const search = document.getElementById('id_search')
+
+    //const loader = document.getElementById('loader').style.display = 'block';
+
+    search.addEventListener('input', ()=>{
+        fetchData(search.value)
+    })
+       
+    categorySelect.addEventListener('change', function() {
+        const selectedCategoryId = this.value;
+        console.log(selectedCategoryId)
+        fetchData(parseInt(selectedCategoryId))
+    });
+    
+    async function fetchData (param){
+
+        let url = '/inventory/product/list/';
+
+        if (typeof param ==="number" & param !== 0) {
+            url += `?category=${param}`; 
+        }else if (typeof param === "string"){
+            url += `?q=${param}`; 
+        }
+        //loader.style.display = 'block';
+        try {
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok.');
+            }
+            const products = await response.json();
+            productListContainer.innerHTML = ''; 
+            displayProducts(products);
+        } catch (error) {
+            console.error('Error fetching products:', error);
+            productListContainer.innerHTML = '<p class="error-message">Error loading products. Please try again later.</p>';
+        } finally {
+
+            //loader.style.display = 'none';
+        }
+    }
+    
+    fetchData()
+
+    function displayProducts(products){
+
+        products.forEach(product => {
+           
+            const productDiv = document.createElement('div');
+            productDiv.className = 'col';
+            productDiv.innerHTML = `
+            <div class="card" id='id_product_card' data-product=${product}>
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                <div class="d-flex align-items-center">
+                    <i style="font-size:40px" class='bx bx-barcode'></i>
+                </div>
+                <p class="px-1 fw-bold">${product.product_name}</p>
+                <small class="px-1 text-muted">${product.description}</small>
+                </div>
+                <div class="mt-1">
+                <button class="w-100 btn btn-light btn-sm" data-product=${product.inventory_id} onclick='fetchProductData(this)' >
+                    <i class="bx bx-plus"></i> Add to cart
+                </button>
+                </div>
+            </div>
+            `;
+            productListContainer.appendChild(productDiv);
+        });
+    }
+
+    // Cart 
+    let cart = [];
+
+    async function fetchProductData (product){
+        const id = product.dataset.product
+
+        let url = `/inventory/product/list/?product=${id}`;
+
+        try {
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok.');
+            }
+            const product = await response.json();
+            console.log(product)
+            addItem(product)
+        } catch (error) {
+            console.error('Error fetching products:', error);
+            productListContainer.innerHTML = '<p class="error-message">Error loading products. Please try again later.</p>';
+        } finally {
+        }
+    }
+
+    function generateUniqueId() {
+        return Math.floor(Math.random() * 1000000000).toString(36);
+      }
+    
+    function addItem(product) {
+        const existingItem = cart.find((item) => item.inventory_id === product[0].inventory_id)
+
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            const newTransfer = {
+            id:generateUniqueId(),
+            inventory_id:product[0].inventory_id, 
+            product_name: product[0].product_name,
+            quantity:1,
+            price:product[0].price
+            };
+            cart.push(newTransfer);
+        }
+        updateCartDisplay(); 
+
+        const totalAmount = calculateTotalAmount(cart);
+        const vatAmount = calculateVAT(totalAmount);
+        const payable = totalAmount + vatAmount;
+
+        document.getElementById("id_total_amount").textContent = totalAmount.toFixed(2);
+        document.getElementById("id_vat_amount").textContent = vatAmount.toFixed(2);
+        document.getElementById('id_payable').textContent = payable.toFixed(2)
+    }
+    
+    function calculateTotalAmount(cart) {
+        return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+    }
+    
+    function calculateVAT(totalAmount) {
+        const vatRate = 0.15; 
+        return totalAmount * vatRate;
+    }
+
+    function updateCartDisplay() {
+        const cartItemsList = document.getElementById("cart_items");
+        cartItemsList.innerHTML = ""; 
+      
+        let total = 0;
+        cart.forEach((item) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>
+                <small class='bx bx-trash-alt text-danger' data-id=${item.id} onclick="removeItem(this);"></small>
+                <small class='bx bx-chevron-up fw-bold text-success'></small>
+                <small class='bx bx-chevron-down fw-bold text-danger'></small>
+                ${item.quantity}
+            </td>
+            <td>${item.product_name}</td>
+            <td>$${parseFloat(item.price).toFixed(2)}</td>
+            <td>$${(parseInt(item.quantity) * parseFloat(item.price)).toFixed(2)}</td>
+          `;
+          cartItemsList.appendChild(row);
+        });
+      }
+
+    
+    const removeItem = (el) => {
+        const id = el.dataset.id
+        cart = cart.filter((item) => item.id === id);
+        updateCartDisplay();
+    }
+
+    function processCart() {
+
+        const data = [
+            {
+                amound_paid:$('#id_amount_paid').val(),
+                client_id:$('#id_category').val(),
+                days: $('#id_days').val(),
+                note: $('#id_note').val(),
+                payable:document.getElementById('id_payable').textContent,
+                vat_amount:document.getElementById("id_vat_amount").textContent
+            }
+        ]
+        console.log(data)
+        fetch("{% url 'finance:create_invoice' %}", {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"), 
+            },
+            body: JSON.stringify({
+                data:data,
+                items:cart
+            }),
+        })
+            .then((response) => {
+            if (response.ok) {
+                cart = []; 
+                updateCartDisplay();
+            } else {
+                // Handle error 
+            }
+            })
+            .catch((error) => {
+            console.error("Error:", error);
+            });
+
+      }
+
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+          const cookies = document.cookie.split(";");
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + "=") {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }       
+</script>

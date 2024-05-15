@@ -1,0 +1,24 @@
+from django.urls import path
+from . views import *
+
+app_name = 'inventory'
+
+urlpatterns = [
+    path('', inventory_index, name='inventory'),
+    path('product/list/', product_list, name='product_list'),
+    path('add-product/', AddProductView.as_view(), name='add_product'),
+    path('delete-inventory/', delete_inventory, name='delete_inventory'),
+    path('edit-inventory/<str:product_name>/', edit_inventory, name='edit_inventory'),
+    path('add_category/', add_product_category, name='add_product_category'),
+    
+    # transfers
+    path('transfers', inventory_transfers, name='transfers'),
+    path('add-transfer', add_inventory_transfer, name='add_transfer'),
+    path('receive-inventory', receive_inventory, name='receive_inventory'),
+    path('inventory-detail/<int:id>', inventory_detail, name='inventory_detail' ),
+    path('process-transfer-cart/', ProcessTransferCartView.as_view(), name='process_transfer_cart'),
+    
+    #reporting
+    path('inventory-pdf', inventory_pdf, name='inventory_pdf'),
+    path('transfers-report', transfers_report, name='transfers_report')
+]
