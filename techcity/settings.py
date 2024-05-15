@@ -199,3 +199,6 @@ LOGGING = {
     },
     "root": {"level": "INFO", "handlers": ["console"]},
 }
+
+# Celery Configs
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
