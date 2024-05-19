@@ -27,7 +27,7 @@
                 <td>Techcity</td>
                 <td></td>
                 <td align=right>Client Name</td>
-                <td>{{invoice.customer.name}}</td>
+                <td>{{customer.name}}</td>
             </tr>
             <tr>
                 <td></td>
@@ -58,16 +58,16 @@
                 <th>Quantity</td>
                 <th>Total Amount</th>
             </tr>
-            {{'Invoice Items'}}
+            {{#invoice.invoiceItems}}
             {% for invoice_item in invoice_items%}
               <tr>
-                <td>{{invoice_item.item}}</td>
-                <td>{{invoice_item.unit_price}}</td>
-                <td>{{invoice_item.quantity}}</td>
+                <td>{{invoice_item.item.name}}</td>
                 <td>{{invoice_item.price}}</td>
+                <td>{{invoice_item.quantity}}</td>
+                <td>{{invoice_item.price * invoice_item.quantity}}</td>
               </tr>
             {% endfor %}
-            {{''}}
+            {{/invoice.invoiceItems}}
             <tr>
                 <td colspan=4 />
             </tr>
@@ -79,7 +79,7 @@
             <tr>
               <td colspan=2 />
               <td align=right><strong>VAT @ 15%</strong></td>
-              <td align=right><strong>{{invoice.vat}}</strong></td>
+              <td align=right><strong>{{invoice.vat_amount}}</strong></td>
           </tr>
             <tr>
                 <td colspan=2 />
@@ -89,7 +89,7 @@
             <tr>
                 <td colspan=2 />
                 <td align=right><strong>Invoice Balance</strong></td>
-                <td align=right><strong>{{invoice.amount}}</strong></td>
+                <td align=right><strong>{{invoice.amount - invoice.amount_paid}}</strong></td>
             </tr>
         </table>
     </body>

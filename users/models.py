@@ -10,6 +10,7 @@ This module manages user models and related functionality, including:
 import random,  string
 from django.db import models
 from django.apps import apps
+from company.models import Branch
 from django.contrib.auth.models import AbstractUser, Group
 from django.db.models .signals import post_migrate, post_save
 
@@ -35,6 +36,7 @@ class CustomUserManager(BaseUserManager):
         user.set_password(password)
         user.is_staff = True 
         user.save(using=self._db)
+        
         if self.model.objects.count() == 1:  
             user.is_superuser = True  
             user.groups.add(Group.objects.get_or_create(name='Admin')[0])
@@ -66,7 +68,7 @@ class User(AbstractUser):
     )
     
     profile_image = models.ImageField(upload_to='Profile_images', blank=True, null=True)
-    branch = models.ForeignKey('company.Branch', on_delete=models.CASCADE)
+    branch = models.ForeignKey('company.Branch', on_delete=models.CASCADE, null=True)
     code = models.CharField(max_length=50, null=True, blank=True) 
     groups = models.ManyToManyField(Group)
     phonenumber = models.CharField(max_length=13)

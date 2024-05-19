@@ -194,6 +194,14 @@
       }
     
       updateCartDisplay(); 
+
+      //clear values
+      document.getElementById('id_product').textContent='';
+      document.getElementById('id_from').textContent=''
+      document.getElementById('id_to').textContent = ''
+      document.getElementById('id_price').value = 0
+      document.getElementById('id_quantity').value = 0
+
     }
     
     const removeItem = (el) => {
@@ -212,19 +220,20 @@
         body: JSON.stringify(cart),
       })
         .then((response) => {
-          if (response.ok) {
+          console.log(response)
+          {% comment %} if (response.ok) {
             cart = []; 
             updateCartDisplay();
+            window.location.href = "{% url 'inventory:transfers'%}"
           } else {
-            // Handle error 
-          }
+            alert('transfer failed')
+          } {% endcomment %}
         })
         .catch((error) => {
           console.error("Error:", error);
         });
     }
     
-    // Helper - Get CSRF Token (adjust if needed)
     function getCookie(name) {
       let cookieValue = null;
       if (document.cookie && document.cookie !== "") {

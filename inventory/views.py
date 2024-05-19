@@ -18,7 +18,8 @@ from permissions.permissions import admin_required, sales_required, accountant_r
 from finance.models import StockTransaction, CashAccount, VATRate, Transaction, VATTransaction, ChartOfAccounts
 
 from django.http import JsonResponse
-from .models import Inventory, Product
+from .models import Inventory
+from .tasks import add
 
 def product_list(request): 
     queryset = Inventory.objects.filter(branch=request.user.branch)
@@ -49,6 +50,9 @@ def product_list(request):
         'price': item['price'],
         'quantity': item['quantity'],
     } for item in inventory_data]
+    
+    # result = add.delay(4, 4)  
+ 
 
     return JsonResponse(merged_data, safe=False)
 
@@ -112,76 +116,6 @@ class AddProductView(View):
             )
             self.activity_log(log_action, inventory, inv=0)  
     
-    def stock_transaction(self, product):
-        print(product.tax_type)
-        if product.tax_type == 'standard':
-            vat_rate_percentage = VATRate.objects.get(status=True).rate 
-            vat_rate = Decimal(vat_rate_percentage) / Decimal('100') 
-
-            vat_inclusive_amount = product.quantity * product.price
-            vat_amount = vat_inclusive_amount * vat_rate / (1 + vat_rate)  
-            purchase_amount_excl_vat = vat_inclusive_amount - vat_amount  
-            
-        elif product.tax_type == 'exempt':
-            vat_amount = Decimal('0.00')  
-            purchase_amount_excl_vat = product.quantity * product.price
-            
-        else:
-            vat_amount = Decimal('0.00') 
-            purchase_amount_excl_vat = product.quantity * product.price
-            
-        cash_account, _ = CashAccount.objects.get_or_create(name="Cash")
-       
-        vat_input_account, _ = ChartOfAccounts.objects.get_or_create(
-            name = 'vat_input_account',
-            account_type = ChartOfAccounts.AccountType.ASSET,
-            normal_balance = ChartOfAccounts.NormalBalance.DEBIT
-        )
-        purchase_account, _ = ChartOfAccounts.objects.get_or_create(
-            name = 'purchase_account',
-            account_type = ChartOfAccounts.AccountType.EXPENSE,
-            normal_balance = ChartOfAccounts.NormalBalance.DEBIT
-        )
-        
-        # Create Stock Transaction
-        stock_transaction = StockTransaction.objects.create(
-            item = product,
-            quantity = product.quantity,
-            unit_price = product.price,
-            transaction_type=StockTransaction.TransactionType.PURCHASE,
-            payment_content_type=ContentType.objects.get_for_model(CashAccount),  
-            payment_object_id=cash_account.id
-        )
-        
-        cash_account.balance -= vat_inclusive_amount  
-        cash_account.save()
-        
-        # Transaction for the Purchase Amount (Excl. VAT)
-        transaction = Transaction.objects.create(
-            date=stock_transaction.date,
-            description="Purchase of {}".format(product.name),
-            account=purchase_account,
-            debit=purchase_amount_excl_vat,
-            credit=Decimal('0.00')
-        )
-        
-        # Create Transaction for VAT
-        Transaction.objects.create(
-            date=stock_transaction.date,
-            description="VAT on purchase of {}".format(product.name),
-            account=vat_input_account,
-            debit=vat_amount,
-            credit=Decimal('0.00')
-        )
-
-        # Create VATTransaction
-        VATTransaction.objects.create(
-            transaction=transaction,
-            stock_transaction=stock_transaction,
-            vat_type=VATTransaction.VATType.INPUT,
-            vat_rate=VATRate.objects.get(status=True).rate,
-            tax_amount=vat_amount
-        )
         
     def activity_log(self, action, inventory, inv):
         ActivityLog.objects.create(
@@ -194,12 +128,11 @@ class AddProductView(View):
         )
 
 class ProcessTransferCartView(View):
-    @login_required
+    # @login_required
     def post(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
                 cart_data = json.loads(request.body)
-                
                 for item in cart_data:
                     transfer_item = Transfer(
                         product= Product.objects.get(name=item['product']),
@@ -210,29 +143,30 @@ class ProcessTransferCartView(View):
                     )
                     self.deduct_inventory(item)  
                     
-                    transfer_item.save(item)
+                    transfer_item.save()
 
             return JsonResponse({'success': 'Transfer success'})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
 
     def deduct_inventory(self,  item):
+        print('here')
         branch_inventory = Inventory.objects.get(product__name=item['product'], branch__name=item['from_branch'])
+        print(branch_inventory)
         branch_inventory.quantity -= int(item['quantity'])
         branch_inventory.save()
-        # self.send_stock_notification(item)
-        self.activity_log('Transfer',branch_inventory,  item)
+        self.activity_log('Transfer', branch_inventory,  item)
         
-    def send_stock_notification(self, item):
-        print('here')
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            f"branch_{item['to_branch']}",  
-            {
-                "type": "stock_transfer",
-                "message": f'Stock transfer from {item['from_branch']} ',
-            }
-        )
+    # def send_stock_notification(self, item):
+    #     print('here')
+    #     channel_layer = get_channel_layer()
+    #     async_to_sync(channel_layer.group_send)(
+    #         f"branch_{item['to_branch']}",  
+    #         {
+    #             "type": "stock_transfer",
+    #             "message": f'Stock transfer from {item['from_branch']} ',
+    #         }
+    #     )
     
     def activity_log(self, action, inventory, item):
         ActivityLog.objects.create(
@@ -368,20 +302,22 @@ def receive_inventory(request):
         Q(declined=False)
     )  
     
+    
     transfers_filter = Transfer.objects.filter(
         Q(product__name__icontains=q) |
-        Q(date__icontains=q) |
-        Q(action__icontains=q)
+        Q(date__icontains=q) 
     ) & Transfer.objects.filter(to_branch=request.user.branch)
-
+    
     if request.method == 'POST':
         transfer_id = request.POST.get('id')  
+        print(transfer_id)
 
         try:
             branch_transfer = get_object_or_404(transfers, id=transfer_id)
+            print(branch_transfer)
 
             if request.POST['received'] == 'true':
-            
+                    print('here')
                     if Inventory.objects.filter(product=branch_transfer.product, branch=request.user.branch).exists():
                         existing_inventory = Inventory.objects.get(product=branch_transfer.product, branch=request.user.branch)
                         existing_inventory.quantity += branch_transfer.quantity

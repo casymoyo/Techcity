@@ -1,5 +1,5 @@
 .techcity {
-  overflow-y: hidden;
+  overflow: hidden;
 }
 .techcity .aside-bar {
   transition: transform 0.5;
@@ -118,9 +118,6 @@
 .techcity .finance .main-content {
   flex: 1;
   padding-right: 20px;
-}
-.techcity .finance .main-content .card {
-  border: none !important;
 }
 .techcity .finance .main-content .sidebar {
   flex: 1;
@@ -247,11 +244,14 @@
     transform: rotateX(35deg) rotateY(55deg) rotateZ(360deg);
   }
 }
+.techcity .client-modal,
 .techcity .payment-modal,
 .techcity .expense-modal,
 .techcity .delete-modal,
 .techcity .transfers-modal {
-  width: 70%;
+  display: flex;
+  justify-content: center;
+  width: 80%;
   padding: 1.3rem;
   min-height: 500px;
   position: absolute;
@@ -261,6 +261,7 @@
   border-radius: 15px;
   z-index: 2;
 }
+.techcity .client-modal p,
 .techcity .payment-modal p,
 .techcity .expense-modal p,
 .techcity .delete-modal p,
@@ -269,6 +270,7 @@
   color: #777;
   margin: 0.4rem 0 0.2rem;
 }
+.techcity .client-modal button,
 .techcity .payment-modal button,
 .techcity .expense-modal button,
 .techcity .delete-modal button,
@@ -277,6 +279,7 @@
   border: none;
   font-weight: 600;
 }
+.techcity .client-modal .btn,
 .techcity .payment-modal .btn,
 .techcity .expense-modal .btn,
 .techcity .delete-modal .btn,

@@ -32,7 +32,7 @@ THIRD_PARTY_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
     'phonenumber_field',
-    'livesync',
+    'celery'
 ]
 
 LOCAL_APPS = [
@@ -201,4 +201,5 @@ LOGGING = {
 }
 
 # Celery Configs
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672/'
+# CELERY_RESULT_BACKEND = 'django-db'  

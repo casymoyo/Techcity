@@ -5,7 +5,6 @@ This module defines the core data models for our Company management application:
 * **Branch:** Represents a branch location belonging to a company.
 """
 from django.db import models
-from users.models import User
 
 class Company(models.Model):
     """
@@ -29,7 +28,6 @@ class Company(models.Model):
     logo = models.ImageField(upload_to='store_logos/', blank=True)  
     email = models.EmailField(blank=True)  
     phone_number = models.CharField(max_length=20, blank=True)  
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)  
 
     def __str__(self) -> str:

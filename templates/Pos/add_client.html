@@ -1,0 +1,57 @@
+{% load static%}
+{% block content %}
+<div class='client w-100'>
+    <div class="text-center">
+        <button class=" btn-close btn-close text-danger btn-sm"></button>
+    </div>
+        <h5 class="">Add client</h5>
+        <form class='' id='id_client_form' method='post'>
+            <div class='mb-2'>
+                <label for="id_name">Full name:</label>
+                <input
+                    id='id_name'
+                    name='name'
+                    type="text"
+                    class='form-control'
+                    />
+            </div>
+
+            <div class="mb-2">
+                <label for="id_email">Email:</label>
+                <input
+                    name='email'
+                    type="text"
+                    class="form-control"
+                    id="id_email"
+                />
+            </div>
+            
+            <div class="mb-2">
+                <label for="id_phonenumber">Phonenumber:</label>
+                <input
+                    type="text"
+                    name='phonenumber'
+                    class="form-control"
+                    placeholder="+263......"
+                    id="id_phonenumber"
+                />
+            </div>
+            <div class='mb-3'>
+                <label for="id_address">Address:</label>
+                <input
+                    name='address'
+                    type="text"
+                    class="form-control"
+                    id="id_address"
+                />
+            </div>
+
+            <div class="client-btn d-flex justify-content-end">
+                <button class="btn btn-seconday btn-sm" type='button' onclick='submitClient();'>
+                    <i class='bx bx-save'></i>
+                    save
+                </button>
+            </div>
+        </form>
+</div>
+{% endblock content %}

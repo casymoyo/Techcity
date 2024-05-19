@@ -1,5 +1,5 @@
 from django import forms
-from .models import Expense, ExpenseCategory
+from .models import Expense, ExpenseCategory, Customer
 
 class ExpenseForm(forms.ModelForm):
     class Meta:
@@ -17,4 +17,9 @@ class ExpenseForm(forms.ModelForm):
 class ExpenseCategoryForm(forms.ModelForm):
     class Meta:
         model = ExpenseCategory
+        fields = '__all__'
+
+class CustomerForm(forms.ModelForm):
+    class Meta:
+        model = Customer
         fields = '__all__'

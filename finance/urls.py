@@ -19,6 +19,10 @@ urlpatterns = [
     path('invoice/pdf/', invoice_pdf, name='invoice_pdf'),
     path('invoice/create/', create_invoice, name='create_invoice'),
     
+    #customer
+    path('customers/', customer, name='customers'),
+    path('customer/add/', customer, name='add_customer'),
+    
     #reports
     path('expenses-report/', expenses_report, name='expenses_report'),  
 ]

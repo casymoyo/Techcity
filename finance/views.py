@@ -14,9 +14,9 @@ from django.utils.dateparse import parse_date
 from django.db.models import Sum, DecimalField
 from inventory.models import ActivityLog, Product
 from django.http import JsonResponse, HttpResponse
-from . forms import ExpenseForm, ExpenseCategoryForm
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404, redirect
+from . forms import ExpenseForm, ExpenseCategoryForm, CustomerForm
 
 class Finance(View):
     template_name = 'finance/finance.html'
@@ -27,10 +27,10 @@ class Finance(View):
         bank_balance = BankAccount.objects.aggregate(total_balance=Sum('balance'))['total_balance'] or 0
 
         # Recent Transactions
-        recent_transactions = Transaction.objects.all().order_by('-date')[:10]
+        recent_transactions = Transaction.objects.all().order_by('-date')[:5]
         
         # Pay laters 
-        pay_later_transactions = PayLaterTransaction.objects.all().order_by('-paid_date')[:10]
+        pay_later_transactions = PayLaterTransaction.objects.all().order_by('-paid_date')[:5]
 
         # 3. Expense Summary (Optional)
         expenses_by_category = Expense.objects.values('category__name').annotate(
@@ -291,7 +291,7 @@ def create_invoice(request):
             data = json.loads(request.body)
             invoice_data = data['data'][0]  
             items_data = data['items']
-            print(invoice_data)
+           
             # get cash account
             cash_account, _ = CashAccount.objects.get_or_create(name="Cash")
             
@@ -305,88 +305,94 @@ def create_invoice(request):
             customer = Customer.objects.get(id=int(invoice_data['client_id'])) 
             
             
-            invoice_total_amount = Decimal(invoice_data['payable']) + Decimal(invoice_data['vat_amount'])
+            invoice_total_amount = Decimal(invoice_data['payable'])
+            print(invoice_total_amount, Decimal(invoice_data['payable']))
+            print('yes' if invoice_total_amount > Decimal(invoice_data['payable']) else 'no')
             
+            with transaction.atomic():
             
-            
-            invoice = Invoice.objects.create(
-                invoice_number=Invoice.generate_invoice_number(),  
-                customer=customer,
-                issue_date=timezone.now(),
-                due_date=timezone.now() + timezone.timedelta(days=int(invoice_data['days'])),
-                amount=invoice_total_amount,
-                amount_paid=Decimal(invoice_data['payable']),
-                vat=Decimal(invoice_data['vat_amount']),
-                payment_status = Invoice.PaymentStatus.DUE if invoice_total_amount < Decimal(invoice_data['payable']) else Invoice.PaymentStatus.PAID,
-                branch = request.user.branch
+                invoice = Invoice.objects.create(
+                    invoice_number=Invoice.generate_invoice_number(),  
+                    customer=customer,
+                    issue_date=timezone.now(),
+                    due_date=timezone.now() + timezone.timedelta(days=int(invoice_data['days'])),
+                    amount=invoice_total_amount,
+                    amount_paid=Decimal(invoice_data['payable']),
+                    vat=Decimal(invoice_data['vat_amount']),
+                    payment_status = Invoice.PaymentStatus.PARTIAL if invoice_total_amount > Decimal(invoice_data['payable']) else Invoice.PaymentStatus.PAID,
+                    branch = request.user.branch
 
-            )
-            
-            # #create transaction
-            transaction_obj = Transaction.objects.create(
-                date=timezone.now(),
-                description=invoice_data['note'],
-                account=accounts_receivable,
-                debit=Decimal(invoice_data['payable']),
-                credit=Decimal('0.00'),
-                customer=customer
-            )
-            
-            # Create InvoiceItem objects
-            for item_data in items_data:
-                item = Inventory.objects.get(pk=item_data['inventory_id'])
-                product = Product.objects.get(pk=item_data['product_id'])
-                item.quantity -= item_data['quantity']
-                item.save()
-                
-                
-                InvoiceItem.objects.create(
-                    invoice=invoice,
-                    item=item,
-                    quantity=item_data['quantity'],
-                    unit_price=item_data['price'],
-                    vat_rate = vat_rate
                 )
                 
-                # Create StockTransaction for each sold item
-                stock_transaction = StockTransaction.objects.create(
-                    item=product,
-                    transaction_type=StockTransaction.TransactionType.SALE,
-                    quantity=item.quantity,
-                    unit_price=item.price,
-                    date=timezone.now()
-                    )
+                # #create transaction
+                transaction_obj = Transaction.objects.create(
+                    date=timezone.now(),
+                    description=invoice_data['note'],
+                    account=accounts_receivable,
+                    debit=Decimal(invoice_data['payable']),
+                    credit=Decimal('0.00'),
+                    customer=customer
+                )
                 
-                # stock log  
-                ActivityLog(
-                        branch=request.user.branch,
-                        inventory=item,
-                        user=request.user,
+                # Create InvoiceItem objects
+                for item_data in items_data:
+                    item = Inventory.objects.get(pk=item_data['inventory_id'])
+                    product = Product.objects.get(pk=item.product.id)
+                    print(product, item, item.quantity)
+                    item.quantity -= item_data['quantity']
+                    item.save()
+                    print(item, item.quantity)
+                    
+                    
+                    InvoiceItem.objects.create(
+                        invoice=invoice,
+                        item=item,
                         quantity=item_data['quantity'],
-                        total_quantity = item.quantity
+                        unit_price=item_data['price'],
+                        vat_rate = vat_rate
                     )
+                    
+                    # Create StockTransaction for each sold item
+                    stock_transaction = StockTransaction.objects.create(
+                        item=product,
+                        transaction_type=StockTransaction.TransactionType.SALE,
+                        quantity=item.quantity,
+                        unit_price=item.price,
+                        date=timezone.now()
+                        )
+                    
+                    # stock log  
+                    ActivityLog.objects.create(
+                            branch=request.user.branch,
+                            inventory=item,
+                            user=request.user,
+                            quantity=item_data['quantity'],
+                            total_quantity = item.quantity,
+                            action='Sale'
+                        )
+                    
+                # # Create VATTransaction
+                VATTransaction.objects.create(
+                    transaction=transaction_obj,
+                    stock_transaction=stock_transaction,
+                    vat_type=VATTransaction.VATType.OUTPUT,
+                    vat_rate=VATRate.objects.get(status=True).rate,
+                    tax_amount=invoice_data['vat_amount']
+                )
                 
-            # # Create VATTransaction
-            VATTransaction.objects.create(
-                transaction=transaction_obj,
-                stock_transaction=stock_transaction,
-                vat_type=VATTransaction.VATType.OUTPUT,
-                vat_rate=VATRate.objects.get(status=True).rate,
-                tax_amount=invoice_data['vat_amount']
-            )
-            
-            # Create Sale object
-            sale = Sale.objects.create(
-                date=timezone.now(),
-                transaction=invoice,
-                total_amount=invoice_total_amount
-            )
-            
-            # Update cash account
-            cash_account.balance += Decimal(invoice_data['payable']),
-            cash_account.save()
+                # Create Sale object
+                sale = Sale.objects.create(
+                    date=timezone.now(),
+                    transaction=invoice,
+                    total_amount=invoice_total_amount
+                )
+                
+                # Update cash account
+                print(invoice_data['payable'], cash_account.balance)
+                cash_account.balance = Decimal(invoice_data['payable']) + Decimal(cash_account.balance)
+                cash_account.save()
 
-            return JsonResponse({'success': True, 'invoice_id': 'invoice.id'})
+                return JsonResponse({'success': True, 'invoice_id': 'invoice.id'})
             
 
         except (KeyError, json.JSONDecodeError, Customer.DoesNotExist, Inventory.DoesNotExist) as e:
@@ -394,7 +400,19 @@ def create_invoice(request):
 
     return render(request, 'finance/invoices/add_invoice.html')
 
-
+def customer(request):
+    customers = Customer.objects.all().values()
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        Customer.objects.create(
+            name=data['name'],
+            email=data['email'],
+            address=data['address'],
+            phone_number=data['phonenumber']
+        )
+        return JsonResponse({'success': True, 'message': 'Customer succesfully created'})
+    return JsonResponse(list(customers), safe=False)
+    
 
 # Reports
 def expenses_report(request):

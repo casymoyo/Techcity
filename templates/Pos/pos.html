@@ -6,7 +6,7 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content="Techcity Pos System"/>
-    <meta name="Author"content="casy moyo" />
+    <meta name="Author"content="casper moyo" />
     <link rel="icon" href="{% static 'images/favicons/favicon.ico' %}"/>
 
     {% block css %}
@@ -67,10 +67,7 @@
                     <div class='top d-flex w-100 align-items-center justify-content-between'>
                         <div class="search-bar">
                             <select type="text" id="search-input">
-                                <option value="">-----</option>
-                                {% for client in clients%}
-                                    <option value="{{client.id}}">{{ client.name }}</option>
-                                {% endfor %}
+                                <option value=''></option>
                             </select>
                             <div class="avatar-container">
                                 <img src="{% static 'assets/avatar.png' %}" alt="Avatar" class="avatar"> 
@@ -85,11 +82,14 @@
                             </div>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <button class=" p-2 btn btn-light w-100 btn-sm">
+                            <button class=" p-2 btn btn-light w-100 btn-sm" id='id_add_client'>
                                 <i class="bx bx-plus"></i>
                             </button>
                         </div>
                     </div>
+
+                    <small class=" text-danger id_client_error"></small>
+
                     <table class="table">
                         <tr class="border head">
                             <th>Quanity</th>
@@ -142,13 +142,19 @@
                 </div>
             </div>
         </div>
-        <div class="payment-modal hidden">
-            <div class="modal-content">
-                {% include 'Pos/pay_modal.html' %}
-            </div>
-        </div>
-        <div class="overlay hidden"></div>
+        
     </div>
+    <div class="payment-modal hidden">
+        <div class="modal-content">
+            {% include 'Pos/pay_modal.html' %}
+        </div>
+    </div>
+    <div class="client-modal hidden">
+        <div class="modal-content">
+            {% include 'Pos/add_client.html' %}
+        </div>
+    </div>
+    <div class="overlay hidden"></div>
 </body>
 <script>
     $(document).ready(function() {
@@ -157,6 +163,8 @@
         );
        
     })
+
+    let cart = [];
 
     //credit
     const creditBtn = document.querySelector('#id_credit_btn')
@@ -178,13 +186,25 @@
     // modal
     const overlay = document.querySelector(".overlay");
     const modal = document.querySelector('.payment-modal');
+    const clientModal = document.querySelector('.client-modal');
     const closeModalBtn = document.querySelector(".btn-close");
 
     document.querySelector('#id_pay').addEventListener(
         'click', ()=>{
-            console.log(modal)
-            modal.classList.remove("hidden");
-            overlay.classList.remove("hidden");
+            
+            if($('id_client').value !== null){
+                modal.classList.remove("hidden");
+                overlay.classList.remove("hidden");
+            }else{
+                document.querySelector('.id_client_error').innerHTML='* Client is needed'
+            }
+        }
+    )
+
+    document.querySelector('#id_add_client').addEventListener(
+        'click',()=>{
+            clientModal.classList.remove('hidden');
+            overlay.classList.remove('hidden')
         }
     )
 
@@ -241,6 +261,17 @@
     
     fetchData()
 
+    function cartButton(){
+        const cartBtn = document.querySelector('#id_pay')
+        if(cart.length==0){
+            cartBtn.disabled = true
+        }else{
+            cartBtn.disabled = false
+        }
+    }
+
+    cartButton()
+
     function displayProducts(products){
 
         products.forEach(product => {
@@ -268,8 +299,6 @@
     }
 
     // Cart 
-    let cart = [];
-
     async function fetchProductData (product){
         const id = product.dataset.product
 
@@ -282,7 +311,6 @@
                 throw new Error('Network response was not ok.');
             }
             const product = await response.json();
-            console.log(product)
             addItem(product)
         } catch (error) {
             console.error('Error fetching products:', error);
@@ -311,7 +339,11 @@
             cart.push(newTransfer);
         }
         updateCartDisplay(); 
+        cartButton()
+        totals()
+    }
 
+    function totals(){
         const totalAmount = calculateTotalAmount(cart);
         const vatAmount = calculateVAT(totalAmount);
         const payable = totalAmount + vatAmount;
@@ -351,16 +383,16 @@
           cartItemsList.appendChild(row);
         });
       }
-
     
     const removeItem = (el) => {
         const id = el.dataset.id
-        cart = cart.filter((item) => item.id === id);
+        cart = cart.filter((item) => item.id !== id);
         updateCartDisplay();
+        cartButton()
+        totals()
     }
 
     function processCart() {
-        console.log($('#search-input').val())
         const data = [
             {
                 amound_paid:$('#id_amount_paid').val(),
@@ -371,7 +403,7 @@
                 vat_amount:document.getElementById("id_vat_amount").textContent
             }
         ]
-        console.log(data)
+
         fetch("{% url 'finance:create_invoice' %}", {
             method: "POST",
             headers: {
@@ -396,6 +428,72 @@
             });
 
       }
+    
+    function submitClient(){
+        const data = {
+            name: $('#id_name').val(),
+            email: $('#id_email').val(),
+            phonenumber: $('#id_phonenumber').val(),
+            address: $('#id_address').val()
+        }
+
+        fetch("{% url 'finance:add_customer' %}", {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"), 
+            },
+            body: JSON.stringify(data),
+        })
+            .then((response) => {
+            if (response.ok) { 
+                fetchCustomers()
+                clientModal.classList.add("hidden");
+                overlay.classList.add("hidden");
+            } else {
+                
+            }
+            })
+            .catch((error) => {
+            console.error("Error:", error);
+            });
+
+    }
+
+    async function fetchCustomers(){
+        try {
+            const response = await fetch('{% url "finance:customers" %}');
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok.');
+            }
+            const customers = await response.json();
+            console.log(customers)
+            displayCustomers(customers);
+        } catch (error) {
+            console.error('Error fetching products:', error);
+            productListContainer.innerHTML = '<p class="error-message">Error loading products. Please try again later.</p>';
+        } finally {
+
+            //loader.style.display = 'none';
+        }
+    }
+    fetchCustomers()
+
+    function displayCustomers(customers){
+        const cusElement = document.querySelector('#search-input')
+       
+        while(cusElement.options.length > 1){
+            console.log('here')
+            cusElement.remove(1)
+        }
+
+        customers.forEach((customer)=>{
+            cusElement.innerHTML += `<option value=${customer.id}>${customer.name}</option>`
+        })
+    }
+    
+    
 
       function getCookie(name) {
         let cookieValue = null;
