@@ -116,7 +116,6 @@ class AddProductView(View):
             )
             self.activity_log(log_action, inventory, inv=0)  
     
-        
     def activity_log(self, action, inventory, inv):
         ActivityLog.objects.create(
             branch = self.request.user.branch,
@@ -310,7 +309,6 @@ def receive_inventory(request):
     
     if request.method == 'POST':
         transfer_id = request.POST.get('id')  
-        print(transfer_id)
 
         try:
             branch_transfer = get_object_or_404(transfers, id=transfer_id)
@@ -412,28 +410,22 @@ def delete_inventory(request):
     messages.success(request, 'Product successfully deleted')
     return redirect('inventory:inventory')
 
-
-
 @login_required
 @admin_required
 def add_product_category(request):
-    form = addCategoryForm()
-    if request.method == 'POST':
-        category_name = request.POST['name']
-        if ProductCategory.objects.filter(name=category_name).exists():
-            messages.warning(request, 'Category exists')
-            return render(request, 'inventory/components/category_modal.html', {
-            'form':form
-        })
-        form = addCategoryForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Category successfully created')
-            return redirect('inventory:add_product')
-    return render(request, 'inventory/components/category_modal.html', {
-        'form':form
-    })
+    categories = ProductCategory.objects.all().values()
     
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        category_name = data['name']
+        
+        if ProductCategory.objects.filter(name=category_name).exists():
+            return JsonResponse({'error', 'Category Exists'})
+        
+        ProductCategory.objects.create(
+            name=category_name
+        )
+    return JsonResponse(list(categories), safe=False)       
 
 # reports
 

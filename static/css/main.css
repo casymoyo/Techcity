@@ -248,6 +248,7 @@
 .techcity .payment-modal,
 .techcity .expense-modal,
 .techcity .delete-modal,
+.techcity .category-modal,
 .techcity .transfers-modal {
   display: flex;
   justify-content: center;
@@ -265,6 +266,7 @@
 .techcity .payment-modal p,
 .techcity .expense-modal p,
 .techcity .delete-modal p,
+.techcity .category-modal p,
 .techcity .transfers-modal p {
   font-size: 0.9rem;
   color: #777;
@@ -274,6 +276,7 @@
 .techcity .payment-modal button,
 .techcity .expense-modal button,
 .techcity .delete-modal button,
+.techcity .category-modal button,
 .techcity .transfers-modal button {
   cursor: pointer;
   border: none;
@@ -283,6 +286,7 @@
 .techcity .payment-modal .btn,
 .techcity .expense-modal .btn,
 .techcity .delete-modal .btn,
+.techcity .category-modal .btn,
 .techcity .transfers-modal .btn {
   display: inline-block;
   padding: 0.8rem 1.4rem;

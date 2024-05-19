@@ -97,14 +97,23 @@ SESSION_AUTH = True
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': os.environ.get('DB_NAME', 'techcity'),
+    #     'USER': os.environ.get('DB_USER', 'casy'),
+    #     'PASSWORD': os.environ.get('DB_PASSWORD', 'neverfail'),
+    #     'HOST': os.environ.get('DB_HOST', 'localhost'),
+    #     'PORT': os.environ.get('DB_PORT', '5432'),
+    # }
+        'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'techcity'),
-        'USER': os.environ.get('DB_USER', 'casy'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'neverfail'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
+        'NAME': 'railway',
+        'USER': 'postgres',
+        'PASSWORD': 'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
+        'HOST': 'monorail.proxy.rlwy.net',
+        'PORT': '39004',
     }
+
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 # https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-DEFAULT_AUTO_FIELD
