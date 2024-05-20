@@ -13,6 +13,7 @@ from . utils import calculate_inventory_totals
 from . forms import AddProductForm, addCategoryForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
+from channels.generic.websocket import  AsyncJsonWebsocketConsumer
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from permissions.permissions import admin_required, sales_required, accountant_required
 from finance.models import StockTransaction, CashAccount, VATRate, Transaction, VATTransaction, ChartOfAccounts
@@ -22,7 +23,7 @@ from .models import Inventory
 from .tasks import add
 
 def product_list(request): 
-    queryset = Inventory.objects.filter(branch=request.user.branch)
+    queryset = Inventory.objects.filter(branch=request.user.branch, status=True)
     search_query = request.GET.get('q', '') 
     product_id = request.GET.get('product', '')
     category_id = request.GET.get('category', '')
@@ -92,10 +93,9 @@ class AddProductView(View):
                 else:
                     return redirect('inventory:inventory')
                 
-            self.stock_transaction(product)
             self.create_branch_inventory(product, log_action)
+            
             messages.success(request, message)
-
         return redirect('inventory:inventory')
 
     def create_branch_inventory(self, product, log_action):
@@ -177,6 +177,13 @@ class ProcessTransferCartView(View):
             total_quantity=inventory.quantity
         )
 
+@login_required
+def inventory(request):
+    product_name = request.GET.get('name', '')
+    if product_name:
+        return JsonResponse(list(Inventory.objects.filter(product__name=product_name, branch=request.user.branch).values()), safe=False)
+    return JsonResponse({'error':'product doesnt exists'})
+
 
 @login_required
 def inventory_index(request):
@@ -185,13 +192,20 @@ def inventory_index(request):
     """
 
     q = request.GET.get('q', '')  
-
-    # Filter inventory items
-    inventory_filter = Inventory.objects.filter(
-        Q(product__name__icontains=q) &  
-        Q(branch=request.user.branch) &
-        Q(status=True)
-    )
+    category = request.GET.get('category', '')
+    
+    inventory = Inventory.objects.filter(branch=request.user.branch, status=True)
+    
+    if category:
+        
+        if category == 'inactive':
+            inventory = Inventory.objects.filter(branch=request.user.branch, status=False)
+            print(inventory)
+        else:
+            inventory = inventory.filter(product__category__name=category)
+        
+    if q:
+        inventory = inventory.filter(Q(product__name__icontains=q) | Q(product__batch_code__icontains=q))
     
     # Filter pending transfers
     pending_transfers = Transfer.objects.filter(
@@ -200,9 +214,6 @@ def inventory_index(request):
         declined=False
     )
 
-    # Determine inventory to display
-    inv = inventory_filter if inventory_filter.exists() else Inventory.objects.filter(branch=request.user.branch, status=True)
-    
     if request.user.branch.name == 'Warehouse':
         all_branches_inventory = Inventory.objects.all()
     else: all_branches_inventory = Inventory.objects.filter(branch=request.user.branch)
@@ -210,8 +221,9 @@ def inventory_index(request):
     totals = calculate_inventory_totals(all_branches_inventory.filter(status=True))
   
     return render(request, 'inventory/inventory.html', {
-        'inventory': inv,
+        'inventory': inventory,
         'search_query': q,
+        'category':category,
         'total_price': totals[1],
         'total_cost':totals[0],
         'transfers_count': pending_transfers.count()
@@ -223,9 +235,11 @@ def edit_inventory(request, product_name):
         inv_product = Inventory.objects.get(product__name=product_name, branch=request.user.branch)
        
         if request.method == 'POST':
-            
+            print(request.POST)
             product = Product.objects.get(name=product_name)
             product.name=request.POST['name']
+            product.batch_code=request.POST['batch_code']
+            # product.description=request.POST['description']
             product.save()
     
             inv_product.quantity = int(request.POST['quantity'])
@@ -244,9 +258,7 @@ def edit_inventory(request, product_name):
             
             messages.success(request, 'Inventory edited succesfully')
             return redirect('inventory:inventory')
-        return render(request, 'inventory/inventory_form.html', { 
-            'product':inv_product
-        })
+        return render(request, 'inventory/inventory_form.html', {'product':inv_product})
 
 @login_required
 def inventory_detail(request, id):
@@ -276,15 +288,16 @@ def inventory_transfers(request):
     """
 
     q = request.GET.get('q', '') 
+    branch_id = request.GET.get('branch', '')
 
-    # Base queryset for filtering (applies to all users)
-    transfers_filter = Transfer.objects.filter(
-        Q(product__name__icontains=q) |
-        Q(date__icontains=q) 
-    ) & Transfer.objects.filter(from_branch=request.user.branch)
+    transfers = Transfer.objects.filter(from_branch=request.user.branch)
+    
+    if q:
+        transfers = transfers.filter(Q(product__name__icontains=q) | Q(date__icontains=q) )
+        
+    if branch_id: 
+        transfers =transfers.filter(to_branch__id=branch_id)
 
-    transfers = transfers_filter if transfers_filter.exists() else Transfer.objects.filter(from_branch=request.user.branch)
-    print(transfers_filter)
     return render(request, 'inventory/transfers.html', {
         'transfers': transfers,
         'search_query': q  
@@ -295,24 +308,23 @@ def inventory_transfers(request):
 def receive_inventory(request):
     q = request.GET.get('q', '')
     
-    transfers = Transfer.objects.filter(
-        Q(to_branch=request.user.branch),
-        Q(received=False), 
-        Q(declined=False)
-    )  
+    transfers =  Transfer.objects.filter(
+        to_branch=request.user.branch,
+        received=False,
+        declined=False
+    )
     
-    
-    transfers_filter = Transfer.objects.filter(
-        Q(product__name__icontains=q) |
-        Q(date__icontains=q) 
-    ) & Transfer.objects.filter(to_branch=request.user.branch)
+    if q:
+        transfers = transfers.filter(
+            Q(product__name__icontains=q) |
+            Q(date__icontains=q) 
+        ) 
     
     if request.method == 'POST':
         transfer_id = request.POST.get('id')  
 
         try:
             branch_transfer = get_object_or_404(transfers, id=transfer_id)
-            print(branch_transfer)
 
             if request.POST['received'] == 'true':
                     print('here')
@@ -379,9 +391,7 @@ def receive_inventory(request):
         except Exception: 
             messages.error(request, 'Error in processing the request')
 
-    return render(request, 'inventory/receive_inventory.html', {
-        'transfers': transfers_filter if transfers_filter.exists() else transfers
-    })
+    return render(request, 'inventory/receive_inventory.html', {'transfers': transfers})
 
 
 @login_required
@@ -496,68 +506,3 @@ def transfers_report(request):
         },
     )
     
-    
-    
-
-# @login_required
-# def dailyReport(request):
-#     template_name = 'reports/expensesPdf.html'
-#     # query today's expenses data
-#     expenses = Expense.objects.filter(date_created=datetime.date.today())
-#     return generate_pdf(
-#         template_name,
-#         {
-#             "expenses": expenses,
-#             'title': 'Today(s) Expenses',
-#             'date': datetime.date.today(),
-#             'total': expensesTotal(expenses)
-#         },
-#     )
-
-
-# # monthly report
-# @login_required
-# def monthlyReport(request):
-#     # computation for this month data
-#     today = datetime.date.today()
-#     current_month = today.month
-
-#     template_name = 'reports/expensesPdf.html'
-#     expenses = Expense.objects.filter(date_created__month=current_month)
-#     return generate_pdf(
-#         template_name,
-#         {
-#             "expenses": expenses,
-#             'title': 'Monthly Expenses',
-#             'date': datetime.date.today(),
-#             'total': expensesTotal(expenses)
-#         },
-#     )
-
-
-# @login_required
-# def customReport(request):
-#     end_date = request.GET.get('date_from')
-#     start_date = request.GET.get('date_to')
-
-#     try:
-#         end_date = datetime.date.fromisoformat(end_date)  
-#         start_date = datetime.date.fromisoformat(start_date) 
-#     except ValueError:
-#         # Handle invalid date format appropriately
-#         return render(request, 'error_page.html', {'error_message': 'Invalid date format'})
-
-#     template_name = 'reports/expensesPdf.html'
-
-#     expenses = Expense.objects.filter(date_created__range=(start_date, end_date))
-#     # print(Expense.objects.filter(date_created__range=(start_date, end_date)).query)
-#     return generate_pdf(
-#         template_name,
-#         {
-#             "expenses": expenses,
-#             'title': 'Expenses Report',  # More descriptive title
-#             'date_range': f"{start_date} to {end_date}",  # Include date range in title
-#             'report_date': datetime.date.today(),  # Date the report was generated
-#             'total': expensesTotal(expenses)
-#         },
-#     )

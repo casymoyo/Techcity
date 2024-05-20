@@ -17,6 +17,12 @@
             </div>
             <form method="post" class='mt-2 border rounded p-2'>
                 {% csrf_token %}   
+                <div id="div_id_batch_code" class="mb-3"> 
+                    <label for="id_batch_code" class="form-label requiredField">
+                        Batch code<span class="asteriskField">*</span>
+                    </label>
+                    <input type="text" name="batch_code" maxlength="255" class="textinput form-control" required id="id_batch_code">
+                </div>
                 <div id="div_id_name" class="mb-3">
                      <label for="id_name" class="form-label requiredField">
                         Name
@@ -148,7 +154,6 @@
             }
         )
         
-        
         function categorySubmit(){
            
             const data = {name:$('#id_category_name').val()}
@@ -167,7 +172,7 @@
                     document.querySelector('#id_error').textContent=response.error
                   } else {
                    fetchCategories()
-                    modal.classList.add('hidden')
+                   modal.classList.add('hidden')
                     overlay.classList.add('hidden')
                   }
                 })

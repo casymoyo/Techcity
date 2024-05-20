@@ -29,6 +29,19 @@
                             placeholder="Transfer....."
                         />
                     </form>
+                    <span class="px-1"></span>
+                    <form method="get" class="d-flex">
+                        <select name="branch" class="form-control">
+                            <option value="">All Branches</option>
+                            {% for branch in branches %}
+                                <option value="{{ branch.id }}">{{ branch.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="px-1"></span>
+                        <button type="submit" class="btn btn-light btn-sm">
+                            <i class="bx bx-filter"></i>
+                        </button>
+                    </form>
                 </div>
             </nav>
         </div>

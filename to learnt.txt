@@ -1,2 +1,29 @@
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+
+'https://techcity-production.up.railway.app'
+
+
+todo(s):
+Inventory
+1. inventory description
+2. view buttons
+3. downloads 
+4. design view templates
+5. reports
+
+finance:
+1. view invoice
+2. invoice logs
+3. customer accounts
+4. payment from previous
+5. recurring invoices
+6. expenses -> description
+7. expenses view
+6. reporting
+
+dashboard:
+1. transactions and clients
+
+analytics:
+1. graphs

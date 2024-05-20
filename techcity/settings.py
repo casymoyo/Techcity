@@ -3,6 +3,7 @@ Django settings for techcity project.
 """
 import environ, os
 from pathlib import Path
+from celery.schedules import crontab
 
 env = environ.Env()
 
@@ -14,7 +15,7 @@ SECRET_KEY = "django-insecure-rb&d1ur&gv!uedx9&nym9zthkk(32-kdvh1x_b0+c+&^hny!o9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DJANGO_DEBUG", True)
 
-ALLOWED_HOSTS = ['*', 'https://techcity-production.up.railway.app']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -49,7 +50,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 CSRF_TRUSTED_ORIGINS = ['https://techcity-production.up.railway.app']
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -59,7 +60,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # 'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = "techcity.urls"
@@ -102,22 +103,22 @@ SESSION_AUTH = True
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': os.environ.get('DB_NAME', 'techcity'),
-    #     'USER': os.environ.get('DB_USER', 'casy'),
-    #     'PASSWORD': os.environ.get('DB_PASSWORD', 'neverfail'),
-    #     'HOST': os.environ.get('DB_HOST', 'localhost'),
-    #     'PORT': os.environ.get('DB_PORT', '5432'),
-    # }
-        'default': {
+    'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'railway',
-        'USER': 'postgres',
-        'PASSWORD': 'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
-        'HOST': 'monorail.proxy.rlwy.net',
-        'PORT': '39004',
+        'NAME': os.environ.get('DB_NAME', 'techcity'),
+        'USER': os.environ.get('DB_USER', 'casy'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'neverfail'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
+    #     'default': {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': 'railway',
+    #     'USER': 'postgres',
+    #     'PASSWORD': 'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
+    #     'HOST': 'monorail.proxy.rlwy.net',
+    #     'PORT': '39004',
+    # }
 
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
@@ -218,4 +219,10 @@ LOGGING = {
 
 # Celery Configs
 CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672/'
-# CELERY_RESULT_BACKEND = 'django-db'  
+
+# CELERY_BEAT_SCHEDULE = {
+#     'your_periodic_task_name': {
+#         'task': 'your_app_name.tasks.your_periodic_task',
+#         'schedule': crontab(minute='*/1'),  # Schedule the task to run every minute
+#     },
+# }

@@ -81,7 +81,7 @@
 <script>
     const branchId = 2; 
     const socket = new WebSocket(
-       'ws://' + window.location.host + '/ws/inventory/' + branchId + '/' 
+       'ws://' + window.location.host + `/inventory/ws/inventory/${branchId}` 
     );
  
     socket.onmessage = function(event) {

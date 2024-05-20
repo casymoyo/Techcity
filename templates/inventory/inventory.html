@@ -46,7 +46,6 @@
                     </div>
                 </div>
                 <div class="search d-flex align-items-center">
-                    <span class="px-1"></span>
                     <form method="get">
                         <div>
                             <input
@@ -55,9 +54,23 @@
                                 type="search"
                                 value="{{search_query}}"
                                 class="form-control"
-                                placeholder="product....."
+                                placeholder="search..."
                             />
                         </div>
+                    </form>
+                    <span class="px-1"></span>
+                    <form method="get" class="d-flex">
+                        <select name="category" class="form-control" id='id_category'>
+                            <option value="">All Categories</option>
+                            <option value='inactive'>Inactive</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="px-1"></span>
+                        <button type="submit" class="btn btn-light btn-sm">
+                            <i class="bx bx-filter"></i>
+                        </button>
                     </form>
                 </div>
             </nav>
@@ -102,5 +115,6 @@
                 }).done(function(response) {
             })
         })
+        document.querySelector('#id_category').value='{{category}}'
    </script>
 {% endblock content %}

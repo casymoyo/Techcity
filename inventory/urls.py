@@ -1,10 +1,12 @@
 from django.urls import path
 from . views import *
+from . consumer import InventoryConsumer
 
 app_name = 'inventory'
 
 urlpatterns = [
     path('', inventory_index, name='inventory'),
+    path('inventory/', inventory, name='inventory_list'),
     path('product/list/', product_list, name='product_list'),
     path('add-product/', AddProductView.as_view(), name='add_product'),
     path('delete-inventory/', delete_inventory, name='delete_inventory'),
@@ -20,5 +22,8 @@ urlpatterns = [
     
     #reporting
     path('inventory-pdf', inventory_pdf, name='inventory_pdf'),
-    path('transfers-report', transfers_report, name='transfers_report')
+    path('transfers-report', transfers_report, name='transfers_report'),
+    
+    #websocket
+    path('ws/inventory/<int:branchId>/',InventoryConsumer.as_asgi()),
 ]
