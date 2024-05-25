@@ -105,7 +105,7 @@ class AddProductView(View):
             inv.price = product.price
             inv.cost = product.cost
             inv.save()
-            self.activity_log(log_action, product, inv)
+            self.activity_log(log_action, inv, inv)
         except Inventory.DoesNotExist:
             inventory = Inventory.objects.create(
                 product=product,
@@ -149,9 +149,9 @@ class ProcessTransferCartView(View):
             return JsonResponse({'success': False, 'error': str(e)})
 
     def deduct_inventory(self,  item):
-        print('here')
+        
         branch_inventory = Inventory.objects.get(product__name=item['product'], branch__name=item['from_branch'])
-        print(branch_inventory)
+        
         branch_inventory.quantity -= int(item['quantity'])
         branch_inventory.save()
         self.activity_log('Transfer', branch_inventory,  item)
@@ -235,7 +235,6 @@ def edit_inventory(request, product_name):
         inv_product = Inventory.objects.get(product__name=product_name, branch=request.user.branch)
        
         if request.method == 'POST':
-            print(request.POST)
             product = Product.objects.get(name=product_name)
             product.name=request.POST['name']
             product.batch_code=request.POST['batch_code']

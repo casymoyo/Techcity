@@ -12,6 +12,7 @@
     {% block css %}
         <link rel="stylesheet" href="{% static 'css/main.css'%}">
         <link rel="stylesheet" href="{% static 'css/bootstrap/css/bootstrap.min.css'%}">
+        <link href='{% static "assets/boxicons/css/boxicons.css"%}' rel='stylesheet'>
         <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     {% endblock css %}
@@ -103,6 +104,29 @@
                             <tbody id="cart_items"></tbody>
                         </table>
                     </div>
+                    <div class='additional-costs border p-2 d-flex justify-content-between w-100'>
+                        <div class='w-50'>
+                            <label for="id_discount"><small>Discount</small></label>
+                            <input 
+                                id='id_discount'
+                                type='number'
+                                class='form-control text-center'
+                                placeholder='Discount'
+                                value=0
+                            />
+                        </div>
+                        <span class='px-2'></span>
+                        <div class='w-50'>
+                            <label for="id_dc_input"><small>Delivery Charge</small></label>
+                            <input 
+                                id='id_dc_input'
+                                type='number'
+                                class='form-control text-center'
+                                placeholder='Delivery Charge'
+                                value=0
+                            />
+                        </div>
+                    </div>
                     <div class='totals border d-flex aling-items-center'>
                         <table class="table">
                             <tr>
@@ -142,11 +166,15 @@
                 </div>
             </div>
         </div>
-        
     </div>
     <div class="payment-modal hidden">
         <div class="modal-content">
             {% include 'Pos/pay_modal.html' %}
+        </div>
+    </div>
+    <div class="error-modal hidden">
+        <div class="modal-content">
+            {% include 'Pos/error_modal.html' %}
         </div>
     </div>
     <div class="client-modal hidden">
@@ -157,15 +185,42 @@
     <div class="overlay hidden"></div>
 </body>
 <script>
-    $(document).ready(function() {
-        $('#search-input').select2(
-            {placeholder: 'Select Client'}
-        );
-       
-    })
-
+   
     let cart = [];
+    let data = [];
+    let currencyData = [];
+    const customersData = [];
 
+    let discount_amount = 0;
+    let delivery_amount = 0;
+    let payable_amount = 0;
+    let vat_amount = 0;
+    let amount_paid = 0;
+
+    let error = document.querySelector('#error_message')
+
+    const currencySelect = document.querySelector('#currency')
+
+    currencySelect.addEventListener(
+        'change', ()=>{
+            const data = {id:currencySelect.value}
+            $.ajax({
+                url: '{% url "finance:currency_json" %}',
+                type: 'GET',
+                data: data,
+                }).done(function(response) {
+                    const data = response
+                    console.log(data)
+                    currencyData = []
+                    currencyData.push(data)
+            })
+        }
+    )
+
+    // disable all add to cart buttons if currency not selected
+    const addBtn = document.querySelectorAll('#id_add_to_cart')
+    console.log(addBtn)
+    
     //credit
     const creditBtn = document.querySelector('#id_credit_btn')
     const cashBtn = document.querySelector('#id_cash_btn')
@@ -183,20 +238,24 @@
         }
     )
     
-    // modal
+    // modals
     const overlay = document.querySelector(".overlay");
     const modal = document.querySelector('.payment-modal');
+    const errorModal = document.querySelector('.error-modal')
     const clientModal = document.querySelector('.client-modal');
     const closeModalBtn = document.querySelector(".btn-close");
 
     document.querySelector('#id_pay').addEventListener(
         'click', ()=>{
             
-            if($('id_client').value !== null){
+            if($('#search-input').val()){
                 modal.classList.remove("hidden");
                 overlay.classList.remove("hidden");
             }else{
-                document.querySelector('.id_client_error').innerHTML='* Client is needed'
+                errorModal.classList.remove('hidden')
+                overlay.classList.remove('hidden')
+                error.textContent=''
+                error.textContent='Wasirira Mutengi'
             }
         }
     )
@@ -215,6 +274,12 @@
         }
     )
 
+    document.querySelector('.closeBtn').addEventListener(
+        'click', ()=>{
+            errorModal.classList.add("hidden");
+            overlay.classList.add("hidden");
+        }
+    )
     //search filters and fetching data
     const productListContainer = document.getElementById('product-list');
     const categorySelect = document.getElementById('id_category');
@@ -249,7 +314,9 @@
             }
             const products = await response.json();
             productListContainer.innerHTML = ''; 
+            
             displayProducts(products);
+            
         } catch (error) {
             console.error('Error fetching products:', error);
             productListContainer.innerHTML = '<p class="error-message">Error loading products. Please try again later.</p>';
@@ -288,7 +355,7 @@
                 <small class="px-1 text-muted">${product.description}</small>
                 </div>
                 <div class="mt-1">
-                <button class="w-100 btn btn-light btn-sm" data-product=${product.inventory_id} onclick='fetchProductData(this)' >
+                <button id="id_add_to_cart" class="w-100 btn btn-light btn-sm" data-product=${product.inventory_id} onclick='fetchProductData(this)' >
                     <i class="bx bx-plus"></i> Add to cart
                 </button>
                 </div>
@@ -298,25 +365,36 @@
         });
     }
 
+
+    
     // Cart 
     async function fetchProductData (product){
-        const id = product.dataset.product
+        if  ($('#currency').val()){
+            const id = product.dataset.product
 
-        let url = `/inventory/product/list/?product=${id}`;
+            let url = `/inventory/product/list/?product=${id}`;
 
-        try {
-            const response = await fetch(url);
+            try {
+                const response = await fetch(url);
 
-            if (!response.ok) {
-                throw new Error('Network response was not ok.');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok.');
+                }
+                const product = await response.json();
+                addItem(product)
+                
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                productListContainer.innerHTML = '<p class="error-message">Error loading products. Please try again later.</p>';
+            } finally {
             }
-            const product = await response.json();
-            addItem(product)
-        } catch (error) {
-            console.error('Error fetching products:', error);
-            productListContainer.innerHTML = '<p class="error-message">Error loading products. Please try again later.</p>';
-        } finally {
+        }else{
+            errorModal.classList.remove('hidden')
+            overlay.classList.remove('hidden')
+            error.textContent=''
+            error.textContent='Tanga Kusarudza Currency'
         }
+        
     }
 
     function generateUniqueId() {
@@ -334,33 +412,85 @@
             inventory_id:product[0].inventory_id, 
             product_name: product[0].product_name,
             quantity:1,
-            price:product[0].price
+            price:`${product[0].price * parseFloat(currencyData[0][0]?.exchange_rate)}`
             };
             cart.push(newTransfer);
         }
         updateCartDisplay(); 
+        updateOrderDisplay()
         cartButton()
         totals()
     }
-
+    
     function totals(){
-        const totalAmount = calculateTotalAmount(cart);
-        const vatAmount = calculateVAT(totalAmount);
-        const payable = totalAmount + vatAmount;
 
-        document.getElementById("id_total_amount").textContent = totalAmount.toFixed(2);
-        document.getElementById("id_vat_amount").textContent = vatAmount.toFixed(2);
-        document.getElementById('id_payable').textContent = payable.toFixed(2)
+        let totalAmount = calculateTotalAmount(cart);
+        let vatAmount = calculateVAT(totalAmount);
+        let discount = $('#id_discount').val()
+        let delivery = parseFloat($('#id_dc_input').val())
+        
+        let payable = totalAmount + vatAmount + delivery;
+        
+        // validate for not a number
+        if (delivery >= 0){
+            delivery = delivery
+        }else{delivery = 0}
+
+        delivery_amount = delivery
+        vat_amount = vatAmount
+
+        if(discount === 0){
+            document.getElementById("id_total_amount").textContent = `${ currencyData[0][0].symbol + ' ' + totalAmount.toFixed(2)}`;
+            document.getElementById("id_vat_amount").textContent =`${ currencyData[0][0].symbol + ' ' + vatAmount.toFixed(2)}`;
+            document.getElementById('id_payable').textContent = `${ currencyData[0][0].symbol + ' ' + payable.toFixed(2)}`;
+
+            payable_amount = payable
+            discount_amount = discount
+
+            updateTfoot(vatAmount, totalAmount, discountAmount, discount, delivery, payable)
+
+        }else{
+            totalAmount = totalAmount * ((100 - discount)/100)
+            console.log(totalAmount)
+            discountAmount = calculateTotalAmount(cart) - totalAmount
+            vatAmount = totalAmount * 0.15
+            payable = totalAmount + vatAmount + delivery;
+            console.log(totalAmount, vatAmount,  delivery, payable)
+            
+            vat_amount = vatAmount
+            payable_amount = payable
+            discount_amount = discountAmount
+
+            document.getElementById("id_total_amount").textContent = `${ currencyData[0][0].symbol + ' ' + totalAmount.toFixed(2)}`;
+            document.getElementById("id_vat_amount").textContent =`${ currencyData[0][0].symbol + ' ' + vatAmount.toFixed(2)}`;
+            document.getElementById('id_payable').textContent = `${ currencyData[0][0].symbol + ' ' + payable.toFixed(2)}`;
+
+            updateTfoot(vatAmount, totalAmount, discountAmount, discount, delivery, payable)
+        }
     }
     
     function calculateTotalAmount(cart) {
-        return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+       let total = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+       return total.toFixed(2)
     }
     
     function calculateVAT(totalAmount) {
         const vatRate = 0.15; 
         return totalAmount * vatRate;
     }
+
+    // events for discount and delivery charge
+    document.querySelector('#id_discount').addEventListener(
+        'input', ()=>{
+            totals()
+        }
+    )
+
+    document.querySelector('#id_dc_input').addEventListener(
+        'input', ()=>{
+            totals()
+        }
+    )
 
     function updateCartDisplay() {
         const cartItemsList = document.getElementById("cart_items");
@@ -377,13 +507,49 @@
                 ${item.quantity}
             </td>
             <td>${item.product_name}</td>
-            <td>$${parseFloat(item.price).toFixed(2)}</td>
-            <td>$${(parseInt(item.quantity) * parseFloat(item.price)).toFixed(2)}</td>
+            <td>${ currencyData[0][0].symbol + ' ' + parseFloat(item.price).toFixed(2)}</td>
+            <td>${currencyData[0][0].symbol + ' ' + (parseInt(item.quantity) * parseFloat(item.price)).toFixed(2)}</td>
           `;
           cartItemsList.appendChild(row);
         });
       }
+
+    function updateOrderDisplay() {
+        const orderDetails = document.getElementById("order_details");
+        orderDetails.innerHTML = ""; 
+      
+        let total = 0;
+        cart.forEach((item) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${item.product_name} x ${item.quantity}</td>
+            <td class='d-flex justify-content-end'>${currencyData[0][0].symbol + ' ' + (parseInt(item.quantity) * parseFloat(item.price)).toFixed(2)}</td>
+          `;
+          orderDetails.appendChild(row);
+        });
+      }
     
+    // update tfoot
+    function updateTfoot(vat, totalAmount, discountAmount, discount, delivery, payable){
+        document.querySelector('#id_subtotal').textContent = `${ currencyData[0][0].symbol + ' ' + calculateTotalAmount(cart)}`
+        document.querySelector('#id_vat').textContent = `${ currencyData[0][0].symbol + ' ' + vat.toFixed(2)}`
+        document.querySelector('#id_dcp').textContent = `Discount @${discount}%`
+        document.querySelector('#id_disc').textContent = `${ currencyData[0][0].symbol + ' ' + discountAmount.toFixed(2)}`
+        document.querySelector('#id_delivery_charge').textContent = `${ currencyData[0][0].symbol + ' ' + delivery.toFixed(2)}`
+        document.querySelector('#id_interest_amount').textContent = `${ currencyData[0][0].symbol + ' ' + 0.00}`
+        document.querySelector('#id_due_amount').textContent = `${ currencyData[0][0].symbol + ' ' + payable.toFixed(2)}`
+        document.querySelector('#id_balance').textContent = `${ currencyData[0][0].symbol + ' ' + (payable.toFixed(2) - amount_paid.toFixed(2))}` // payable + due amount - paid amount
+    }
+
+    // pay amount event
+    document.querySelector('#id_amount_paid').addEventListener(
+        'input', ()=>{
+            amount_paid = parseFloat($('#id_amount_paid').val())
+            document.querySelector('#id_paid_amount').textContent = `${currencyData[0][0].symbol + ' ' +  amount_paid.toFixed(2)}`
+            totals()
+        }
+    )
+
     const removeItem = (el) => {
         const id = el.dataset.id
         cart = cart.filter((item) => item.id !== id);
@@ -392,15 +558,20 @@
         totals()
     }
 
+    // processing the product cart
     function processCart() {
-        const data = [
+        data = [
             {
-                amound_paid:$('#id_amount_paid').val(),
+                subtotal:calculateTotalAmount(cart),
+                currency:currencyData[0][0].id,
+                amount_paid:amount_paid,
                 client_id:$('#search-input').val(),
                 days: $('#id_days').val(),
                 note: $('#id_note').val(),
-                payable:document.getElementById('id_payable').textContent,
-                vat_amount:document.getElementById("id_vat_amount").textContent
+                discount:discount_amount,
+                delivery:delivery_amount,
+                payable:payable_amount,
+                vat_amount:vat_amount
             }
         ]
 
@@ -415,20 +586,27 @@
                 items:cart
             }),
         })
-            .then((response) => {
-            if (response.ok) {
-                cart = []; 
-                updateCartDisplay();
-            } else {
-                // Handle error 
-            }
-            })
-            .catch((error) => {
-            console.error("Error:", error);
-            });
+        .then((response) => {
+            const data = response
+            console.log(data)
+            console.log(response.data)
+        if (response.ok) {
+            cart = []; 
+            updateCartDisplay();
+            console.log(response.json()['promisedResult'], response['inventory_id'])
+            //window.location.href
+        } else {
+            // Handle error 
+        }
+        })
+        .catch((error) => {
+        console.error("Error:", error);
+        });
 
       }
     
+    
+    // customer get and post
     function submitClient(){
         const data = {
             name: $('#id_name').val(),
@@ -468,7 +646,8 @@
                 throw new Error('Network response was not ok.');
             }
             const customers = await response.json();
-            console.log(customers)
+
+            customersData.push(customers)
             displayCustomers(customers);
         } catch (error) {
             console.error('Error fetching products:', error);
@@ -482,19 +661,21 @@
 
     function displayCustomers(customers){
         const cusElement = document.querySelector('#search-input')
-       
+        
         while(cusElement.options.length > 1){
             cusElement.remove(1)
         }
-
         customers.forEach((customer)=>{
-            cusElement.innerHTML += `<option value=${customer.id}>${customer.name}</option>`
+            cusElement.innerHTML += `<option value=${customer.customer__id}>${customer.customer__name}</option>`
         })
     }
     
+    function fillCustomerFields(){
+        
+    }
     
 
-      function getCookie(name) {
+    function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== "") {
           const cookies = document.cookie.split(";");

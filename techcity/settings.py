@@ -50,7 +50,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 CSRF_TRUSTED_ORIGINS = ['https://techcity-production.up.railway.app']
 
-# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -60,7 +60,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # 'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = "techcity.urls"
@@ -83,8 +83,10 @@ TEMPLATES = [
                 "inventory.context_processors.product_category_list",
                 
                 #finance
+                "finance.context_processors.client_list",
+                "finance.context_processors.currency_list",
                 "finance.context_processors.expense_category_list",
-                "finance.context_processors.client_list"
+                
             ],
         },
     },
@@ -103,22 +105,22 @@ SESSION_AUTH = True
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'techcity'),
-        'USER': os.environ.get('DB_USER', 'casy'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'neverfail'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
-    }
-    #     'default': {
+    # 'default': {
     #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'railway',
-    #     'USER': 'postgres',
-    #     'PASSWORD': 'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
-    #     'HOST': 'monorail.proxy.rlwy.net',
-    #     'PORT': '39004',
+    #     'NAME': os.environ.get('DB_NAME', 'techcity'),
+    #     'USER': os.environ.get('DB_USER', 'casy'),
+    #     'PASSWORD': os.environ.get('DB_PASSWORD', 'neverfail'),
+    #     'HOST': os.environ.get('DB_HOST', 'localhost'),
+    #     'PORT': os.environ.get('DB_PORT', '5432'),
     # }
+        'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'railway',
+        'USER': 'postgres',
+        'PASSWORD': 'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
+        'HOST': 'monorail.proxy.rlwy.net',
+        'PORT': '39004',
+    }
 
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True

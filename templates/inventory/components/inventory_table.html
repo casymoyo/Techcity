@@ -82,13 +82,6 @@
                 }
             )
         })
-
-        document.querySelector('#btn-close').addEventListener(
-            'click', ()=>{
-                modal.classList.add('hidden')
-                overlay.classList.add('hidden')
-            }
-        )
         
         document.querySelector('.yes').addEventListener(
             'click', ()=>{
@@ -101,6 +94,13 @@
                         overlay.classList.add('hidden')
                     }
                 )
+            }
+        )
+
+        document.querySelector('#btn-close').addEventListener(
+            'click', ()=>{
+                modal.classList.add('hidden')
+                overlay.classList.add('hidden')
             }
         )
    </script>

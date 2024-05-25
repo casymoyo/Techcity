@@ -5,133 +5,227 @@
 <div class="finance d-flex">
     <div class="px-2 main-content ">
         <div class='row mt-2'>
-            <div class='col-4'>
+            <div class='col'>
                 <div class='card'>
-                    <div class='card-body border rounded'>
-                        <h6>Pending</h6>
-                        <h6 class='text-center text-light text-muted'>${{total_pending}}</h6>
-                    </div>
-                </div>
-            </div>
-            <div class='col-4'>
-                <div class='card'>
-                    <div class='card-body border rounded'>
+                    <div class='card-body rounded'>
                         <h6>Due</h6>
                         <h6 class='text-center text-light text-muted'>${{total_due}}</h6>
                     </div>
                 </div>
             </div>
-            <div class='col-4'>
+            <div class='col'>
                 <div class='card'>
-                    <div class='card-body border rounded'>
+                    <div class='card-body rounded'>
                         <h6>Paid</h6>
                         <h6 class='text-center text-light text-muted'>${{total_paid}}</h6>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="finance-navbar mt-2">
-            <nav class="d-flex justify-content-between align-items-center p-2 border rounded">
-                <div class="d-flex">
-                    <div>
-                        <a href='{% url 'finance:finance'%}' class='btn btn-primary btn-sm'>
-                            <i class='bx bx-left-arrow-alt'></i>
-                        </a>
-                    </div>
-                    <div class='px-1'> 
-                        <a href="{% url 'finance:create_invoice' %}" class="btn btn-light btn-sm" id='id_expense_button'>
-                            <i class='bx bx-plus'></i>
-                            Invoice
-                        </a>
-                    </div>
+        <div class="finance-navba mt-2">
+            <nav class="border rounded d-flex justify-content-between align-items-center p-2">
+                <div>
+                    <a href='{% url 'finance:finance'%}' class='btn btn-primary btn-sm'>
+                        <i class='bx bx-left-arrow-alt'></i>
+                    </a>
                 </div>
+                <form method="get" class="d-flex justify-content-between align-items-center">
+                    <input
+                        id="search"
+                        name="q"
+                        type="search"
+                        value="{{search_query}}"
+                        class="form-control"
+                        placeholder="search..."
+                    />
+                </form>
             </nav>
         </div>
         <div class='mt-3 mb-3'>
             <div class='mt-2'>Invoice List</div>
         </div>
         
-        <table id="expenseTable" class="table border rounded p-2">
+        <table class="table table-striped border rounded table-responsive table-sm p-2">
             <thead>
-                <tr>
-                    <th> </th>
+                <tr class='fw-normal'>
                     <th>Date</th>
-                    <th>Invoice Number</th>
+                    <th>Invoice #</th>
                     <th>Customer</th>
-                    <th>Status</th>
+                    <th>Amount Paid</th>
+                    <th>Amount Due</th>
                     <th>Amount</th>
+                    <th>Processed by</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for invoice in invoices %}
                     <tr style='color: #6c757d;'>
-                        <td>
-                            <form method="get" action="{% url 'finance:invoice_pdf'%}">
-                                <input name="id" value="{{invoice.id}}" hidden/>
-                                <button class="btn btn-secondary btn-sm">
-                                    <i class="bx bx-download"></i> 
-                                </button>
-                            </form>
-                        </td>
-                        <td>{{invoice.issue_date}}</td>
-                        <td>#{{invoice.invoice_number}}</td>
-                        <td>{{invoice.customer.name}}</td>
-                        <td>{{invoice.payment_status}}</td>
-                        <td>${{invoice.amount}}</td>
-                        <td>
-                            <span>
-                                {%  if request.user.role == 'admin' %}
-                                    <a href="{% url 'finance:expense_update' invoice.id%}" class="btn btn-light btn-sm text-primary">
-                                        <i class='bx bx-edit-alt'></i>
+                        {% if invoice.payment_status == 'Paid'%}
+                            <td><small>{{invoice.issue_date}}</small></td>
+                            <td><small>#{{invoice.invoice_number}}</small></td>
+                            <td><a href="{% url 'finance:customer' invoice.customer.id%}">{{invoice.customer.name}}</a></td>
+                            <td>{{invoice.amount_paid}}</td>
+                            <td>{{invoice.amount_due}}</td>
+                            <td>${{invoice.amount}}</td>
+                            <td>{{invoice.user.username}}</td>
+                            <td>
+                                <span>
+                                    <a href="{% url 'finance:invoice_preview' invoice.id %}" class='btn btn-light btn-sm'>
+                                        <i class='bx bx-show'></i>
                                     </a>
-                                {% endif %}
-                            </span>
-                            <span>
-                                {% if request.user.role == 'admin' %}
-                                    <button id='delete' data-id="{{invoice.id}}" onclick="expenseId(this)" class="btn btn-light btn-sm text-danger">
-                                        <i class='bx bx-trash-alt'></i>
-                                    </button>
-                                {% endif %}
-                            </span>
-                            <span>
-                                {% if request.user.role == 'admin' %}
-                                    <button class="btn btn-light btn-sm text-success">
-                                        <i class='bx bx-right-arrow'></i>
-                                        process
-                                    </button>
-                                {% endif %}
-                            </span>
-                        </td>
+                                </span>  
+                                <span>
+                                    {% if request.user.role == 'admin' %}
+                                        <button class="btn btn-light btn-sm text-success" disabled>
+                                            <i class='bx bx-rectangle'></i>
+                                        </button>
+                                    {% endif %}
+                                </span>
+                                <span>
+                                    {% if request.user.role == 'admin' %}
+                                        <a href='' class="btn btn-light btn-sm text-success">
+                                            <i class='bx bxl-gmail'></i>
+                                        </a>
+                                    {% endif %}
+                                </span>
+                                <span>
+                                    {% if request.user.role == 'admin' %}
+                                        <a href='https://wa.me/{{invoice.customer.phone_number}}' class="btn btn-light btn-sm text-success">
+                                            <i class='bx bxl-whatsapp'></i>
+                                        </a>
+                                    {% endif %}
+                                </span>
+                                <span>
+                                    {% if request.user.role == 'admin' %}
+                                        <button class="btn btn-light btn-sm text-danger">
+                                            <i class='bx bx-trash'></i>
+                                        </button>
+                                    {% endif %}
+                                </span>  
+                            </td>
+                        {% else %}
+                            <td class='text-danger'><small>{{invoice.issue_date}}</small></td>
+                            <td class='text-danger'><small>#{{invoice.invoice_number}}</small></td>
+                            <td><a href="{% url 'finance:customer' invoice.customer.id%}">{{invoice.customer.name}}</a></td>
+                            <td class='text-danger'>{{invoice.amount_paid}}</td>
+                            <td class='text-danger'>{{invoice.amount_due}}</td>
+                            <td class='text-danger'>${{invoice.amount}}</td>
+                            <td class='text-danger'>{{invoice.user.username}}</td>
+                            <td>
+                                <span>
+                                    <a href="{% url 'finance:invoice_preview' invoice.id %}" class='btn btn-light btn-sm'>
+                                        <i class='bx bx-show'></i>
+                                    </a>
+                                </span>  
+                                <span>
+                                    {% if request.user.role == 'admin' %}
+                                        <a href={% url 'finance:update_invoice' invoice.invoice_number %} class="btn btn-light btn-sm text-success">
+                                            <i class='bx bx-right-arrow'></i>
+                                        </a>
+                                    {% endif %}
+                                </span>
+                                <span>
+                                    {% if request.user.role == 'admin' %}
+                                        <a href='' class="btn btn-light btn-sm text-success">
+                                            <i class='bx bxl-gmail'></i>
+                                        </a>
+                                    {% endif %}
+                                </span>
+                                <span>
+                                    {% if request.user.role == 'admin' %}
+                                        <a href='https://wa.me/{{invoice.customer.phone_number}}' class="btn btn-light btn-sm text-success">
+                                            <i class='bx bxl-whatsapp'></i>
+                                        </a>
+                                    {% endif %}
+                                </span>
+                                <span>
+                                    {% if request.user.role == 'admin' %}
+                                        <button class="btn btn-light btn-sm text-danger">
+                                            <i class='bx bx-trash'></i>
+                                        </button>
+                                    {% endif %}
+                                </span>  
+                            </td>
+                        {% endif %}
                     </tr>
                 {% endfor %}
             </tbody>  
         </table>
     </div>
-    <div class="sidebar mt-2 px-2 border rounded ">
+    <div class="sideba d-flex flex-column mt-2 px-2 border rounded ">
         <h6 class="mt-1">Filter</h6>
-        {% include 'components/filters.html'%}
+        <form method='get' class='d-flex'>
+            <select name="category" id="id_category" class='form-select'>
+                <option value="">All</option>l
+                <option value="paid">Paid</option>
+                <option value="due">Due</option>
+            </select>
+                <button type="submit" class='btn btn-secondary btn-sm btn-flat'>
+                    <i class='bx bx-filter'></i>
+                </button>
+        </form>  
+        <form method='get' class='border d-flex justify-content-center mt-2'>
+            <input hidden name='day' value='today'/>
+            <button class='btn btn-large btn-flat'>Today</button>
+        </form> 
+
+        <form method='get' class='border d-flex justify-content-center mt-2'>
+            <input hidden name='day' value='yesterday'/>
+            <button class='btn btn-large btn-flat'>Yesterday</button>
+        </form> 
+        
+        <form method='get' class='border d-flex justify-content-center mt-2'>
+            <input hidden name='day' value='t_week'/>
+            <button class='btn btn-large btn-flat'>This Week</button>
+        </form> 
+
+        <form method='get' class='border d-flex justify-content-center mt-2'>
+            <input hidden name='day' value='l_week'/>
+            <button class='btn btn-large btn-flat'>Last week</button>
+        </form> 
+
+        <form method='get' class='border d-flex justify-content-center mt-2'>
+            <input hidden name='day' value='t_month'/>
+            <button class='btn btn-large btn-flat'>This month</button>
+        </form> 
+
+        <form method='get' class='border d-flex justify-content-center mt-2'>
+            <input hidden name='day' value='l_month'/>
+            <button class='btn btn-large btn-flat'>Last month</button>
+        </form> 
+
+        <form method='get' class='border d-flex justify-content-center mt-2'>
+            <input hidden name='day' value='t_year'/>
+            <button class='btn btn-large btn-flat'>This year</button>
+        </form> 
     </div>
 
     <div class="invoice-modal hidden">
         <div class="modal-content">
-            {% include 'finance/expenses/add_expense.html'%}
+            {% include 'pos/receipt.html'%}
         </div>
     </div>
+
     <div class="overlay hidden"></div>
 </div>
 
 <script type="text/javascript">
     const modal = document.querySelector('.invoice-modal')
     const overlay = document.querySelector('.overlay')
-    const expButton = document.querySelector('#id_expense_button')
+    const invButton = document.querySelector('#id_invoice_button')
+
     
-    expButton.addEventListener(
-        'click', ()=>{
-            modal.classList.remove('hidden')
-            overlay.classList.remove('hidden')
-        }
-    )
+    
+    function modalOpen(el){
+        const id = el.dataset.invoiceid
+       
+        modal.classList.remove('hidden')
+        overlay.classList.remove('hidden')
+
+        fetchInvoice(id)
+
+    }
     
     document.querySelector('#btn-close').addEventListener(
         'click', ()=>{
@@ -139,5 +233,11 @@
             overlay.classList.add('hidden')
         }
     ) 
+
+    // get invoice details
+    function fetchInvoice(id){
+
+    }
+
 </script>
 {% endblock content %}

@@ -11,6 +11,7 @@ class Currency(models.Model):
     code = models.CharField(max_length=3, unique=True)  
     name = models.CharField(max_length=50)  
     symbol = models.CharField(max_length=5)  
+    exchange_rate = models.DecimalField(max_digits=15, decimal_places=2, default=0)
 
     def __str__(self):
         return f"{self.code} - {self.name}"
@@ -39,9 +40,17 @@ class Customer(models.Model):
     email = models.EmailField(blank=True)
     phone_number = models.CharField(blank=True)
     address = models.CharField(max_length=100)
+    date = models.DateField(auto_now_add=True)
     
     def __str__(self):
         return self.name
+
+class CustomerAccount(models.Model):
+    customer = models.OneToOneField(Customer, on_delete=models.CASCADE)
+    balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    
+    def __str__(self):
+        return f'{self.customer.name}: ({self.balance})'
 
 class Transaction(models.Model):
     date = models.DateField()
@@ -123,38 +132,13 @@ class Expense(models.Model):
     amount = models.DecimalField(max_digits=15, decimal_places=2)
     category = models.ForeignKey(ExpenseCategory, on_delete=models.PROTECT)
     description = models.CharField(max_length=200)
+    user = models.ForeignKey('users.user', on_delete=models.CASCADE)
     branch = models.ForeignKey('company.branch', on_delete=models.CASCADE)
 
 
     def __str__(self):
         return f"{self.date} - {self.category} - {self.description} - ${self.amount}"
-
-class PaymentMethod(models.Model):
-    name = models.CharField(max_length=255)
     
-    def __str__(self):
-        return self.name
-    
-class Receipt(models.Model):
-    transaction = models.OneToOneField(Transaction, on_delete=models.CASCADE)  
-    date = models.DateField()
-    def __str__(self):
-        return f"Receipt for Transaction #{self.transaction.pk} on {self.date.strftime('%Y-%m-%d')}" 
-
-
-class ReceiptItem(models.Model):
-    """
-    Represents a line item on a sales receipt.
-    """
-    receipt = models.ForeignKey(Receipt, on_delete=models.CASCADE, related_name='items')
-    item = models.ForeignKey('inventory.Inventory', on_delete=models.PROTECT)
-    quantity = models.PositiveIntegerField()
-    unit_price = models.DecimalField(max_digits=15, decimal_places=2)
-
-    def __str__(self):
-        return f"{self.quantity} x {self.item.description} @ {self.unit_price} on Receipt #{self.receipt.pk}"
-
-
 class Sale(models.Model):
     """
     Represents a sale transaction.
@@ -167,19 +151,6 @@ class Sale(models.Model):
     def __str__(self):
         return f"Sale to {self.transaction.customer} on {self.date} ({self.total_amount})"
 
-
-class PayLaterTransaction(models.Model):
-    """
-    Represents a pay later transaction.
-    """
-    transaction = models.OneToOneField(Transaction, on_delete=models.CASCADE)
-    due_date = models.DateField()
-    paid_date = models.DateField(null=True, blank=True)
-
-    def __str__(self):
-        return f"Pay Later for {self.transaction} (due {self.due_date})"
-
-
 class Invoice(models.Model):
     """
     Model representing an invoice.
@@ -191,49 +162,50 @@ class Invoice(models.Model):
         PAID = 'Paid', _('Paid')
         OVERDUE = 'Overdue', _('Overdue')
 
-    invoice_number = models.CharField(max_length=50, unique=True)  
-    # sale = models.ForeignKey(Sale, on_delete=models.CASCADE)         
+    invoice_number = models.CharField(max_length=50, unique=True)       
     customer = models.ForeignKey(Customer, on_delete=models.PROTECT)  
     issue_date = models.DateField()
     due_date = models.DateField()
     amount = models.DecimalField(max_digits=15, decimal_places=2, default=0) 
     vat = models.DecimalField(max_digits=15, decimal_places=2, default=0)     
-    amount_paid = models.DecimalField(max_digits=15, decimal_places=2, default=0)   
-    payment_status = models.CharField(
-        max_length=10, 
-        choices=PaymentStatus.choices, 
-        default=PaymentStatus.PENDING,
-    )
+    amount_paid = models.DecimalField(max_digits=15, decimal_places=2, default=0)  
+    amount_due = models.DecimalField(max_digits=15, decimal_places=2, default=0) 
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, null=True) 
+    payment_status = models.CharField(max_length=10, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    delivery_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     branch = models.ForeignKey('company.branch', on_delete=models.CASCADE)
+    status = models.BooleanField(default=True)
+    user = models.ForeignKey('users.User', on_delete=models.PROTECT, null=True)
+    recurring = models.BooleanField(default=False)
+    recurrence_period = models.IntegerField(default=29)  # Default to 14 days (2 weeks)
+    next_due_date = models.DateField(null=True, blank=True) 
+    subtotal =  models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     
-    from django.db import models
-
-    def generate_invoice_number():
-        last_invoice = Invoice.objects.order_by('-id').first()
+    def generate_invoice_number(branch):
+        last_invoice = Invoice.objects.filter(branch__name=branch).order_by('-id').first()
         if last_invoice:
-            last_invoice_number = int(last_invoice.invoice_number.split('-')[1]) 
-            new_invoice_number = last_invoice_number + 1
+            if str(last_invoice.invoice_number.split('-')[0])[-1] == branch[0]:
+                last_invoice_number = int(last_invoice.invoice_number.split('-')[1]) 
+                new_invoice_number = last_invoice_number + 1   
+            else:
+                new_invoice_number = 1
+            return f"INV{branch[:1]}-{new_invoice_number:04d}"  
         else:
             new_invoice_number = 1
-        current_year = timezone.now().year
-        return f"INV{current_year}-{new_invoice_number:04d}"  
+            return f"INV{branch[:1]}-{new_invoice_number:04d}"  
 
     def __str__(self):
         return f"Invoice #{self.invoice_number} - {self.customer}"
 
 class InvoiceItem(models.Model):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='invoice_items')
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, related_name='invoice_items')
     item = models.ForeignKey('inventory.Inventory', on_delete=models.PROTECT)
     quantity = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=15, decimal_places=2)
-    # discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     vat_rate = models.ForeignKey(VATRate, on_delete=models.PROTECT)
     vat_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0, editable=False)  
-
-    # @property
-    # def subtotal(self):
-    #     discount_amount = self.unit_price * (self.discount_percentage / 100)
-    #     return (self.unit_price - discount_amount) * self.quantity
+    total_amount = models.DecimalField(max_digits=15, decimal_places=2)
     
     @property
     def subtotal(self):
@@ -241,14 +213,25 @@ class InvoiceItem(models.Model):
 
     @property
     def total(self):
-        return self.subtotal + self.vat_amount
+        return self.subtotal
 
     def save(self, *args, **kwargs):
         # Calculate and set the VAT amount automatically
         vat_rate_percentage = self.vat_rate.rate
         vat_rate = Decimal(vat_rate_percentage) / Decimal('100')  
         self.vat_amount = self.subtotal * vat_rate
+        self.total_amount = self.total
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.quantity} x {self.item.product.description} for Invoice #{self.invoice.invoice_number}"
+    
+class Payment(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='payments')
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_date = models.DateTimeField(auto_now_add=True)  
+    payment_method = models.CharField(max_length=50, choices=[
+        ('cash', 'Cash'),
+        ('credit_card', 'Credit Card'),
+        ('Ecocash','Ecocash')
+    ])

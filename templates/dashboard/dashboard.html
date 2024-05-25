@@ -7,43 +7,178 @@
         <div class="row mt-2">
             <div class="col">
                 <div class="card border rounded">
-                    <div class="card-body ">
-                        <h6>Sales</h6>
-                        {% if cash_balance < 0 %}
-                            <h6 class='text-center text-danger'>${{ cash_balance }}</h6>
-                        {% else %}
-                            <h6 class='text-center text-muted'>${{ cash_balance }}</h6>
-                        {% endif %}
+                    <div class="card-body d-flex align-items-center justify-content-center flex-column">
+                        <h6 class='text-center text-muted'>TOTAL INVOICE</h6>
+                        <h6 class='text-center text-muted'>{{invoice_count}}</h6>
+                        <h6 class='text-center text-muted'>TOTAL INVOICE TODAY</h6>
+                        <h6 class='text-center text-muted'>{{invoice_today_count}}</h6>
+                        <small>
+                            <a href="{% url 'finance:invoice' %}">
+                                <span>Details</span>
+                                <i class=' mt-1 bx bx-right-arrow-circle'></i>
+                            </a>
+                        </small>
                     </div>
                 </div>
             </div>
             <div class="col">
                 <div class="card border rounded">
-                    <div class="card-body">
-                        <h6>Cash</h6>
-                        {% if bank_balance < 0 %}
-                            <h6 class='text-center text-danger'>${{ bank_balance }}</h6>
-                        {% else %}
-                            <h6 class='text-center text-muted'>${{ bank_balance }}</h6>
-                        {% endif %}
+                    <div class="card-body d-flex align-items-center justify-content-center flex-column">
+                        <h6 class='text-center text-muted'>TOTAL CUSTOMERS</h6>
+                        <h6 class='text-center text-muted'>{{customers_count}}</h6>
+                        <h6 class='text-center text-muted'>TOTAL CUSTOMERS TODAY</h6>
+                        <h6 class='text-center text-muted'>{{customers_today_count}}</h6>
+                        <small>
+                            <a href="">
+                                <span>Details</span>
+                                <i class=' mt-1 bx bx-right-arrow-circle'></i>
+                            </a>
+                        </small>
                     </div>
                 </div>
             </div>
             <div class="col">
-               <div class="card border rounded">
-                   <div class="card-body">
-                       <h6>Inventory In Hand</h6>
+                <div class="card border rounded">
+                   <div class="card-body d-flex align-items-center justify-content-center flex-column">
+                        <h6 class='text-center text-muted'>TOTAL PRODUCTS</h6>
+                        <h6 class='text-center text-muted'>{{products_count}}</h6>
+                        <h6 class='text-center text-muted'>TOTAL PRODUCTS TODAY</h6>
+                        <h6 class='text-center text-muted'>0</h6>
+                        <small>
+                            <a href="{% url 'inventory:inventory' %}">
+                                <span>Details</span>
+                                <i class=' mt-1 bx bx-right-arrow-circle'></i>
+                            </a>
+                        </small>
                    </div>
                </div>
            </div>
         </div>
 
 
-        {% block sales %}
+        {% block recent_transactions %}
             <div class="mt-3 border rounded p-2">
-                <p>Sales Summary</p>
+                <nav class='recent-nav navbar navbar-expand-lg navbar-light bg-light px-2'>
+                    <ul class='navbar-nav items  mr-auto'>
+                        <li class='nav-item active' data-name="sales">Sales</li>
+                        <li class='nav-item px-2' data-name="qoutations">Qoutations</li>
+                        <li class='nav-item' data-name="transfers">Transfers</li>
+                        <li class='nav-item px-2' data-name="customers">Customers</li>
+                    </ul>
+                </nav>
+                <div class='content'>
+                    <div class='sales border p-2'>
+                        <table class='table'>
+                            <thead>
+                                <th>Invoive #</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th class="text-center">Payment Status</th>
+                            </thead>
+                            <tbody>
+                                {% for sale in sales %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'finance:invoice_preview' sale.transaction.id %}">
+                                                <small>{{sale.transaction.invoice_number}}</small>
+                                            </a>
+                                        </td>
+                                        <td><small>{{sale.date}}</small></td>
+                                        <td>{{sale.transaction.customer}}</td>
+                                        <td>{{sale.total_amount}}</td>
+                                        <td class="text-center">
+                                            {% if sale.transaction.payment_status == 'Paid' %}
+                                                <small class='border rounded bg-success p-1 text-light fw-bold'><small>Paid</small></small>
+                                            {% else %}
+                                                <small class='border rounded bg-danger p-1 text-light fw-bold'><small>Due</small></small>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <a href="{% url 'pos:pos' %}" class='btn btn-primary btn-sm'>
+                            <i class="bx bx-plus"></i>
+                            Add Sale
+                        </a>
+                        <span class="px-1"></span>
+                        <a href="{% url 'finance:invoice' %}" class='btn btn-success btn-flat btn-sm'>
+                            <i class='bx bx-list-ul' ></i>
+                            Sales List
+                        </a>
+                    </div>
+                    <div class='transfers hidden border p-2'>
+                        <table class='table'>
+                            <tr>
+                                <th>Name</th>
+                                <th>Quantity</th>
+                                <th>Source</th>
+                                <th>Destination</th>
+                                <th>Transfer Status</th>
+                            </tr>
+                            <tbody>
+                                {% for transfer in transfers %}
+                                    <tr>
+                                        <td>{{transfer.product.name}}</td>
+                                        <td>{{transfer.quantity}}</td>
+                                        <td>{{transfer.from_branch}}</td>
+                                        <td>{{transfer.to_branch}}</td>
+                                        <td>
+                                            <span>
+                                                {% if transfer.declined == False %}
+                                                    {% if transfer.received == False %}
+                                                        not yet received
+                                                    {% else %}
+                                                       <span class='text-success'>Recieved</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class='text-danger'>Declined</span>
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <a href="{% url 'inventory:add_transfer' %}" class='btn btn-primary btn-sm'>
+                            <i class="bx bx-plus"></i>
+                            Add Transfer
+                        </a>
+                        <span class="px-1"></span>
+                        <a href="{% url 'inventory:transfers' %}" class='btn btn-success btn-flat btn-sm'>
+                            <i class='bx bx-list-ul' ></i>
+                            Transfers List
+                        </a>
+                    </div>
+                    <div class='customers hidden border p-2'>
+                        <table class='table'>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone Number</th>
+                                <th>Address</th>
+                            </tr>
+                            <tbody>
+                                {% for customer in customers %}
+                                    <tr>
+                                        <td>{{customer.name}}</td>
+                                        <td>{{customer.email}}</td>
+                                        <td>{{customer.phone_number}}</td>
+                                        <td>{{customer.address}}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <span class="px-1"></span>
+                        <a href="" class='btn btn-success btn-flat btn-sm'>
+                            <i class='bx bx-list-ul' ></i>
+                            Customer List
+                        </a>
+                    </div>
+                </div>
             </div>
-        {% endblock sales %}
+        {% endblock recent_transactions %}
 
         {% block expenses %}
             <div class="mt-3 border rounded p-2">
@@ -79,17 +214,34 @@
     </div>
 </div>
 <script>
-    const branchId = 2; 
-    const socket = new WebSocket(
-       'ws://' + window.location.host + `/inventory/ws/inventory/${branchId}` 
-    );
- 
-    socket.onmessage = function(event) {
-       const data = JSON.parse(event.data);
-       if (data.type === "stock_update") {
-          console.log("Received stock update:", data); 
-       }
+    const navButtons = document.querySelectorAll('.nav-item')
+    const sales = $('.sales')
+    //const qoute = $('.quotations')
+    const customers = $('.customers')
+    const transfers = $('.transfers')
+
+
+    navButtons.forEach((btn)=>{
+        btn.addEventListener(
+            'click', ()=>{
+                let name = event.target.getAttribute('data-name')
+
+                navButtons.forEach(b => b.classList.remove('active')); 
+                event.target.classList.add('active'); 
+
+                show(name)
+            }
+        )
+    })
+
+    function show(name) {
+        sales.addClass('hidden');
+        //quote.addClass('hidden'); 
+        customers.addClass('hidden');
+        transfers.addClass('hidden');
+
+        $(`.${name}`).removeClass('hidden'); 
     }
- 
+
     </script>
 {% endblock content %}

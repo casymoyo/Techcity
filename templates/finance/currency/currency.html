@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load static%}
+{% block title%} Currency {% endblock%}
+{% block content %}
+<div class="currency d-flex">
+    <div class="mt-2 w-100">
+        <nav class="border rounded d-flex justify-content-between align-items-center p-2">
+            <div>
+                <a href='{% url 'finance:finance'%}' class='btn btn-primary btn-sm'>
+                    <i class='bx bx-left-arrow-alt'></i>
+                </a>
+                <span class='px-1'></span>
+                <a href={% url 'finance:add_currency' %} class='btn btn-secondary btn-sm btn-flat'>
+                    <i class='bx bx-plus'></i>
+                    Add currency
+                </a>
+            </div>
+            <form method="get" class="d-flex justify-content-between align-items-center">
+                <input
+                    id="search"
+                    name="q"
+                    type="search"
+                    value="{{search_query}}"
+                    class="form-control"
+                    placeholder="search..."
+                />
+            </form>
+        </nav>
+
+        <table class="table border rounded p-2">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Symbol</th>
+                    <th>Exchange rate</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for currency in currencies %}
+                    <tr style='color: #6c757d;'>
+                        <td>{{currency.code}}</td>
+                        <td>{{currency.name}}</td>
+                        <td >${{currency.symbol}}</td>
+                        <td >{{currency.exchange_rate}}</td>
+                        <td>
+                            <span>
+                                {%  if request.user.role == 'admin' %}
+                                    <a href="{% url 'finance:update_currency' currency.id%}" class="btn btn-light btn-sm text-primary">
+                                        <i class='bx bx-edit-alt'></i>
+                                    </a>
+                                {% endif %}
+                            </span>
+                            <span>
+                                {% if request.user.role == 'admin' %}
+                                    <button  data-id={{currency.id}} id='delete' class="btn btn-light btn-sm text-danger">
+                                        <i class='bx bx-trash-alt'></i>
+                                    </button>
+                                {% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>  
+        </table>
+    </div>
+    <div class="delete-modal hidden">
+        <div class="modal-content d-flex justify-content-center align-items-center mt-5">
+            <p class="fs-4 fw-bold">Confirm Product deletion</p>
+            <div>
+                <button class="btn btn-secondary btn-sm yes">
+                    yes
+                </button>
+            </div>
+            <div>
+                <button id="btn-close" class="btn btn-danger btn-sm">
+                    no
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="overlay hidden"></div>
+</div>
+
+<script src="{% static 'js/jquery.js'%}"></script>
+<script>
+     let currency_id = 0
+     const modal = document.querySelector('.delete-modal')
+     const overlay = document.querySelector('.overlay')
+     const deleteButtons = document.querySelectorAll('#delete')
+
+     const currencyId=(element)=>{
+         console.log(element)
+         currency_id = element.dataset.id
+     }
+
+     deleteButtons.forEach((button)=>{
+         button.addEventListener(
+             'click', ()=>{
+                 modal.classList.remove('hidden')
+                 overlay.classList.remove('hidden')
+             }
+         )
+     })
+     
+     document.querySelector('.yes').addEventListener(
+         'click', ()=>{
+             $.ajax({
+                 url: `/delete_currency/${currency_id}` 
+                 type: 'GET',
+                 }).done(function(response) {
+                    window.location.reload()
+                 }
+             )
+         }
+     )
+     document.querySelector('#btn-close').addEventListener(
+         'click', ()=>{
+             modal.classList.add('hidden')
+             overlay.classList.add('hidden')
+         }
+     )
+</script>
+{% endblock content %}

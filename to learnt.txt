@@ -27,3 +27,37 @@ dashboard:
 
 analytics:
 1. graphs
+
+
+### remove the nulls
+
+
+on production to utilize
+
+ $(document).ready(function() {
+        $('#search-input').select2(
+            {placeholder: 'Select Client'}
+        )
+        .on('change', function (e){
+            let value = $(this).val()
+            console.log(value)
+        })
+       
+    })
+
+
+INOVICE:
+-usd and zig
+-cancellation
+-processing
+-recuring
+- receipt template
+
+Quotation:
+-create qoute
+-delete qoute
+- qoute template
+
+VAT accounts:
+-  
+

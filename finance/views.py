@@ -3,6 +3,7 @@ import json, datetime
 from decimal import Decimal
 from django.views import View
 from django.db.models import Q
+from datetime import timedelta
 from django.utils import timezone
 from django.db import transaction
 from django.contrib import messages
@@ -16,7 +17,7 @@ from inventory.models import ActivityLog, Product
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404, redirect
-from . forms import ExpenseForm, ExpenseCategoryForm, CustomerForm
+from . forms import ExpenseForm, ExpenseCategoryForm, CustomerForm, CurrencyForm, InvoiceForm
 
 class Finance(View):
     template_name = 'finance/finance.html'
@@ -28,9 +29,7 @@ class Finance(View):
 
         # Recent Transactions
         recent_transactions = Transaction.objects.all().order_by('-date')[:5]
-        
-        # Pay laters 
-        pay_later_transactions = PayLaterTransaction.objects.all().order_by('-paid_date')[:5]
+       
 
         # 3. Expense Summary (Optional)
         expenses_by_category = Expense.objects.values('category__name').annotate(
@@ -42,7 +41,6 @@ class Finance(View):
             'bank_balance': bank_balance,
             'recent_transactions': recent_transactions,
             'expenses_by_category': expenses_by_category,
-            'pay_later_transactions':pay_later_transactions
         }
         return render(request, self.template_name, context)
 
@@ -119,6 +117,7 @@ def create_expense(request):
         if form.is_valid():
             expense = form.save(commit=False)
             expense.branch = request.user.branch
+            expense.user = request.user
             expense.save()
             
             messages.success(request, 'Expense successfuly created')
@@ -148,143 +147,97 @@ def create_expense_category(request):
     return JsonResponse({'message': 'Invalid request method.'}, status=405)
 
         
+
 def invoice(request):
-    invoices = Invoice.objects.filter(branch=request.user.branch).order_by('issue_date')
+    day = request.GET.get('day', '')
+    q = request.GET.get('q', '')
     
-    total_draft = invoices.filter(payment_status='Draft').aggregate(Sum('amount'))['amount__sum'] or 0
-    total_pending = invoices.filter(payment_status='Pending').aggregate(Sum('amount'))['amount__sum'] or 0
+    invoices = Invoice.objects.filter(branch=request.user.branch, status=True).order_by('-issue_date')
+    today = timezone.now().date()  
+    
+    if q:
+        invoices = invoices.filter(
+            Q(customer__name__icontains=q)|
+            Q(invoice_number__icontains=q)|
+            Q(issue_date__icontains=q)
+        )
+
+    if day == 'today':
+        invoices = invoices.filter(issue_date=today)
+
+    if day == 'yesterday':
+        yesterday = today - timedelta(days=1)
+        invoices = invoices.filter(issue_date=yesterday)
+
+    if day == 't_week':
+        start_of_week = today - timedelta(days=today.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        invoices = invoices.filter(issue_date__range=[start_of_week, end_of_week])
+
+    if day == 'l_week':
+        end_of_last_week = today - timedelta(days=today.weekday() + 1)
+        start_of_last_week = end_of_last_week - timedelta(days=6)
+        invoices = invoices.filter(issue_date__range=[start_of_last_week, end_of_last_week])
+
+    if day == 't_month':
+        invoices = invoices.filter(issue_date__month=today.month, issue_date__year=today.year)
+
+    if day == 'l_month':
+        last_month = today.month - 1 if today.month > 1 else 12
+        last_month_year = today.year if today.month > 1 else today.year - 1
+        invoices = invoices.filter(issue_date__month=last_month, issue_date__year=last_month_year)
+
+    if day == 't_year':
+        invoices = invoices.filter(issue_date__year=today.year)
+
     total_partial = invoices.filter(payment_status='Partial').aggregate(Sum('amount'))['amount__sum'] or 0
     total_paid = invoices.filter(payment_status='Paid').aggregate(Sum('amount'))['amount__sum'] or 0
-    total_overdue = invoices.filter(payment_status='Overdue').aggregate(Sum('amount'))['amount__sum'] or 0
     total_amount = invoices.aggregate(Sum('amount'))['amount__sum'] or 0
-    print(total_pending)
-    return render(request, 'finance/invoices/invoice.html', 
-        {
-            'invoices':invoices,
-            'total_pending':total_pending,
-            'total_paid':total_paid,
-            'total_overdue':total_paid,
-            'total_amount':total_amount
-        }
-    )
 
-def process_invoice(request, invoice_id):
-    try:
-        with transaction.atomic():
-            invoice = get_object_or_404(Invoice, pk=invoice_id)
-            invoice_items = InvoiceItem.objects.filter(invoice=invoice)
-            amount_paid = Decimal(request.POST.get('amount_paid')) 
+    return render(request, 'finance/invoices/invoice.html', {
+        'search_query':q,
+        'invoices': invoices,
+        'total_paid': total_paid,
+        'total_due': total_partial,
+        'total_amount': total_amount, 
+    })
 
-            if invoice.payment_status != Invoice.PaymentStatus.PAID:
-                amount_paid = Decimal(request.POST.get('amount_paid')) 
-
-                # Validate amount_paid (should not exceed amount_due)
-                if amount_paid <= 0 or amount_paid > invoice.amount_due:
-                    messages.error(request, 'Invalid payment amount.')
-                    return redirect('finance:invoice_detail', pk=invoice_id)
-                
-                #vat mount
-                vat_amount = invoice.vat
-            
-                # Get or create cashAccount and VAT output account
-                cash_account, _ = CashAccount.objects.get_or_create(name="Cash")
-                vat_output_account, _ = ChartOfAccounts.objects.get_or_create(name="VAT Output")
-                
-                # Create Transaction to record payment to bank account
-                transaction_obj = Transaction.objects.create(
-                    date=timezone.now(),
-                    description=f"Payment for Invoice #{invoice.invoice_number}",
-                    account=cash_account,
-                    content_type=ContentType.objects.get_for_model(CashAccount),
-                    object_id=cash_account.id,
-                    debit=amount_paid,
-                    credit=Decimal('0.00'),
-                    customer=invoice.customer
-                )
-
-                # Create Sale object
-                sale = Sale.objects.create(
-                    date=timezone.now(),
-                    customer=invoice.customer,
-                    transaction=transaction_obj,
-                    amount=invoice.amount,
-                )
-
-                # Create Receipt object
-                receipt = Receipt.objects.create(
-                    transaction=transaction,
-                    date=timezone.now()
-                )
-
-                # Create ReceiptItem objects for each item in the invoice
-                for item in invoice_items:
-                    ReceiptItem.objects.create(
-                        receipt=receipt,
-                        item=item.item,
-                        quantity=item.quantity,
-                        unit_price=item.unit_price,
-                    )
-
-                # Update stock quantities based on sold items
-                for item in invoice_items:
-                    stock_item = item.item
-                    stock_item.quantity -= item.quantity
-                    stock_item.save()
-
-                    # Create StockTransaction for each sold item
-                    stock_transaction = StockTransaction.objects.create(
-                        item=stock_item,
-                        transaction_type=StockTransaction.TransactionType.SALE,
-                        quantity=item.quantity,
-                        unit_price=item.unit_price,
-                        date=timezone.now(),
-                        receipt_content_type=ContentType.objects.get_for_model(BankAccount),
-                        receipt_object_id=cash_account.id
-                    )
-                    
-                    # Create VATTransaction
-                    VATTransaction.objects.create(
-                        transaction=transaction_obj,
-                        stock_transaction=stock_transaction,
-                        vat_type=VATTransaction.VATType.OUTPUT,
-                        vat_rate=VATRate.objects.get(status=True).rate,
-                        tax_amount=item.vat_amount
-                    )
-                    
-                    # create inventory log
-                    ActivityLog(
-                        branch=request.user.branch,
-                        inventory=item.item,
-                        user=request.user,
-                        quantity=item.quantity,
-                        total_quantity = item.item.quantity
-                    )
-                
-                # Update the Invoice's status
-                invoice.amount_paid += amount_paid
-                invoice.amount_due -= amount_paid
-                
-                # Update cash account
-                cash_account.balance += amount_paid 
-                cash_account.save()
-
+def update_invoice(request, invoice_number):
+    form = InvoiceForm()
+    invoice = Invoice.objects.get(invoice_number=invoice_number)
+    customer_account = CustomerAccount.objects.get(customer__id=invoice.customer.id)
+    
+    if request.method == 'POST':
+        form = InvoiceForm(request.POST)
         
-                if invoice.amount_due == 0:
-                    invoice.payment_status = Invoice.PaymentStatus.PAID
-                else:
-                    invoice.payment_status = Invoice.PaymentStatus.PARTIAL
-                
-                invoice.save()
-                
+        if form.is_valid():
+            amount_paid = Decimal(request.POST['amount_paid'])
+            
+            if amount_paid < 0:
+                messages.error(request, 'Amount cant be below zero')
+                return render(request, 'finance/invoices/update_invoice.html', {'form':form})
+            
+            if amount_paid >= invoice.amount_due:
+                invoice.payment_status=invoice.PaymentStatus.PAID
+                invoice.amount_due = 0
             else:
-                messages.error(request, 'Invoice has already been paid')
-                return redirect('finance:invoice')
+                invoice.amount_due -= amount_paid
+              
+            invoice.amount_paid += amount_paid   
+              
+            Payment.objects.create(
+                invoice=invoice,
+                amount_paid=amount_paid,
+                payment_method="Cash"
+            )
+            
+            customer_account.balance -= amount_paid
+            customer_account.save()
+            invoice.save()
+            messages.success(request, 'Invoice successfully updated')
+            return redirect('finance:invoice')
+    return render(request, 'finance/invoices/update_invoice.html', {'form':form, 'invoice':invoice})
 
-    except Invoice.DoesNotExist:
-        messages.error(request, 'Invoice not found')
-        return redirect('finance:invoice')
-
-@csrf_exempt
 def create_invoice(request):
     if request.method == 'POST':
         try:
@@ -297,31 +250,80 @@ def create_invoice(request):
             
             # get accountts_receivable
             accounts_receivable, _ = ChartOfAccounts.objects.get_or_create(name="Accounts Receivable")
+            
+            # get currency
+            currency = Currency.objects.get(id=invoice_data['currency'])
 
             # get VAT rate
             vat_rate = VATRate.objects.get(status=True)
 
-            # Create invoice object
+            # customer
             customer = Customer.objects.get(id=int(invoice_data['client_id'])) 
             
+            # get customer account
+            customer_account = CustomerAccount.objects.get(customer=customer)
             
+            
+            amount_paid = Decimal(invoice_data['amount_paid'])
             invoice_total_amount = Decimal(invoice_data['payable'])
-            print(invoice_total_amount, Decimal(invoice_data['payable']))
-            print('yes' if invoice_total_amount > Decimal(invoice_data['payable']) else 'no')
+            
+            # check for due invoices 
+            if Invoice.objects.filter(customer=customer, payment_status='Partial', branch=request.user.branch).exists():
+                due_invoice = Invoice.objects.filter(customer=customer, payment_status='Partial', branch=request.user.branch).last()
+                if amount_paid > due_invoice.amount_due:
+                    due_invoice.amount_paid += due_invoice.amount_due
+                    amount_paid -= due_invoice.amount_due
+                    due_invoice.payment_status= due_invoice.PaymentStatus.PAID
+                    
+                    
+                    # refactor
+                    Payment.objects.create(
+                        invoice=due_invoice,
+                        amount_paid=due_invoice.amount_due,
+                        payment_method='Cash'
+                    )
+                    
+                    customer_account.balance -= due_invoice.amount_due
+                    due_invoice.amount_due = 0
+                    print(customer_account.balance, due_invoice.amount_due)
+                    
+                else:
+                    due_invoice.amount_due -= amount_paid
+                    due_invoice.amount_paid += amount_paid
+                    
+                    Payment.objects.create(
+                        invoice=due_invoice,
+                        amount_paid=amount_paid,
+                        payment_method='Cash'
+                    )
+        
+                    customer_account.balance -= amount_paid
+                    amount_paid = 0
+                
+                customer_account.save()
+                due_invoice.save()
+
+            # calculate amount due
+            amount_due = invoice_total_amount - amount_paid
             
             with transaction.atomic():
             
                 invoice = Invoice.objects.create(
-                    invoice_number=Invoice.generate_invoice_number(),  
+                    invoice_number=Invoice.generate_invoice_number(request.user.branch.name),  
                     customer=customer,
                     issue_date=timezone.now(),
                     due_date=timezone.now() + timezone.timedelta(days=int(invoice_data['days'])),
                     amount=invoice_total_amount,
-                    amount_paid=Decimal(invoice_data['payable']),
+                    amount_paid=amount_paid,
+                    amount_due=amount_due,
+                    discount_amount=invoice_data['discount'],
+                    delivery_charge=invoice_data['delivery'],
                     vat=Decimal(invoice_data['vat_amount']),
-                    payment_status = Invoice.PaymentStatus.PARTIAL if invoice_total_amount > Decimal(invoice_data['payable']) else Invoice.PaymentStatus.PAID,
-                    branch = request.user.branch
-
+                    payment_status = Invoice.PaymentStatus.PARTIAL if amount_due > 0 else Invoice.PaymentStatus.PAID,
+                    branch = request.user.branch,
+                    user=request.user,
+                    currency=currency,
+                    subtotal=invoice_data['subtotal']
                 )
                 
                 # #create transaction
@@ -338,12 +340,10 @@ def create_invoice(request):
                 for item_data in items_data:
                     item = Inventory.objects.get(pk=item_data['inventory_id'])
                     product = Product.objects.get(pk=item.product.id)
-                    print(product, item, item.quantity)
+                    
                     item.quantity -= item_data['quantity']
                     item.save()
-                    print(item, item.quantity)
-                    
-                    
+                  
                     InvoiceItem.objects.create(
                         invoice=invoice,
                         item=item,
@@ -387,11 +387,22 @@ def create_invoice(request):
                     total_amount=invoice_total_amount
                 )
                 
-                # Update cash account
-                print(invoice_data['payable'], cash_account.balance)
+                #payment
+                Payment.objects.create(
+                    invoice=invoice,
+                    amount_paid=amount_paid,
+                    payment_method='Cash'
+                )
+                
+                # updae account balance
+                if invoice.payment_status == 'Partial':
+                    customer_account.balance += amount_due
+                    customer_account.save()
+                    
+                # Update cash  account
                 cash_account.balance = Decimal(invoice_data['payable']) + Decimal(cash_account.balance)
                 cash_account.save()
-
+                
                 return JsonResponse({'success': True, 'invoice_id': 'invoice.id'})
             
 
@@ -401,19 +412,103 @@ def create_invoice(request):
     return render(request, 'finance/invoices/add_invoice.html')
 
 def customer(request):
-    customers = Customer.objects.all().values()
+    customers = CustomerAccount.objects.all().values(
+        'customer__id',
+        'customer__name', 
+        'customer__phone_number', 
+        'customer__address', 
+        'balance'
+    )
+    
     if request.method == 'POST':
         data = json.loads(request.body)
-        Customer.objects.create(
+        
+        customer = Customer.objects.create(
             name=data['name'],
             email=data['email'],
             address=data['address'],
             phone_number=data['phonenumber']
         )
+        
+        CustomerAccount.objects.create(
+            customer=customer,
+            balance=0
+        )
         return JsonResponse({'success': True, 'message': 'Customer succesfully created'})
     return JsonResponse(list(customers), safe=False)
     
+def customer_account(request, customer_id):
+    q = request.GET.get('q', '')
+    search_query = request.GET.get('search_query', '')
+    
+    customer = Customer.objects.get(id=customer_id)
+    account = CustomerAccount.objects.get(customer=customer)
+    invoices = Invoice.objects.filter(customer=customer, branch=request.user.branch, status=True)
+    
+    if q:
+        invoices = invoices.filter(payment_status=q)
+    if search_query:
+        invoices = invoices.filter(Q(invoice_number__icontains=search_query) | Q(issue_date__icontains=search_query) )
 
+    
+    return render(request, 'finance/customer.html', {
+        'q':q,
+        'account':account,
+        'invoices':invoices,
+        'customer':customer,
+        'search_query':search_query,
+        'paid':Invoice.objects.filter(payment_status='Paid', customer=customer, branch=request.user.branch, status=True).count(),
+        'due':Invoice.objects.filter(payment_status='Partial', customer=customer, branch=request.user.branch, status=True).count(),
+    })
+
+# currency views    
+def currency(request):
+    currencies = Currency.objects.all()
+    return render(request, 'finance/currency/currency.html')
+
+def currency_json(request):
+    currency_id = request.GET.get('id', '')
+    currency = Currency.objects.filter(id=currency_id).values()
+    return JsonResponse(list(currency), safe=False)
+
+
+def add_currency(request):
+    form = CurrencyForm()
+    if request.method == 'POST':
+        form = CurrencyForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Currency successfully created')
+            return redirect('finance:currency')
+    return render(request, 'finance/currency/currency_add.html', {'form':form})
+
+def update_currency(request, currency_id):
+    try:
+        currency = Currency.objects.get(id=currency_id)
+    except Currency.DoesNotExist:
+        messages.error(request, 'Currency doesnt Exists')
+        return redirect('finance:currency')
+    
+    form = CurrencyForm(instance=currency)
+    
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Currency successfully created')
+        return redirect('finance:currency')
+    return render(request, 'finance/currency/currency_add.html', {'form':form})
+
+def delete_currency(request, currency_id):
+    try:
+        currency = Currency.objects.get(id=currency_id)
+        currency.delete()
+    except Currency.DoesNotExist:
+        messages.error(request, 'Currency doesnt Exists')
+        return JsonResponse({'message':'Currency doesnt exists'})
+    return JsonResponse({'message':'Deleted Successfully'})
+
+def finance_settings(request):
+    return render(request, 'finance/settings/settings.html')
+    
 # Reports
 def expenses_report(request):
     
@@ -423,8 +518,6 @@ def expenses_report(request):
     start_date_str = request.GET.get('startDate', '')
     end_date_str = request.GET.get('endDate', '')
     category_id = request.GET.get('category', '')
-    print(category_id)
-    
    
     if start_date_str and end_date_str:
         try:
@@ -452,10 +545,8 @@ def expenses_report(request):
         end_date = parse_date(end_date_str)
         expenses = expenses.filter(date__lte=end_date)
     if category_id:
-        print('here')
         expenses = expenses.filter(category__id=category_id)
     
-    print(expenses)
     return generate_pdf(
         template_name,
         {
@@ -466,6 +557,12 @@ def expenses_report(request):
             'expenses':expenses
         }
     )
+    
+def invoice_preview(request, invoice_id):
+    invoice = Invoice.objects.get(id=invoice_id)
+    invoice_items = InvoiceItem.objects.filter(invoice=invoice)
+    account = CustomerAccount.objects.get(customer__id = invoice.customer.id)
+    return render(request, 'pos/receipt.html', {'invoice':invoice, 'invoice_items':invoice_items,'account': account})
 
 def invoice_pdf(request):
     template_name = 'finance/reports/invoice.html'

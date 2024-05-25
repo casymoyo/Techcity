@@ -21,6 +21,15 @@
         <!-- user and logout -->
         <div class='user mt-3  px-2 d-flex justify-content-end w-25'>
             <ul class="menu list-unstyled d-flex align-items-center">
+                <li class="menu-link dropdown">
+                    <select  id='currency' class='bg-dark text-light form-select'>
+                        <option value=''>Currency</option>
+                        {% for currency in currencies %}
+                            <option value='{{currency.id}}'>{{currency.name}}</option>
+                        {% endfor %}
+                    </select>
+                </li>
+                <span class='px-2'></span>
                 <li class="menu-link">
                     <small class='bx bx-bell text-muted'></small>
                 </li>

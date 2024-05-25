@@ -1,5 +1,5 @@
 from django import forms
-from .models import Expense, ExpenseCategory, Customer
+from .models import Expense, ExpenseCategory, Customer, Currency, Invoice
 
 class ExpenseForm(forms.ModelForm):
     class Meta:
@@ -23,3 +23,14 @@ class CustomerForm(forms.ModelForm):
     class Meta:
         model = Customer
         fields = '__all__'
+
+class CurrencyForm(forms.ModelForm):
+    class Meta:
+        model = Currency
+        fields = '__all__'
+        
+
+class InvoiceForm(forms.ModelForm):
+    class Meta:
+        model = Invoice
+        fields = ['amount_paid']

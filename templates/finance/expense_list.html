@@ -38,6 +38,7 @@
                     <th>Description</th>
                     <th>Amount</th>
                     <th>Category</th>
+                    <th>Done by</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -46,21 +47,21 @@
                     <tr style='color: #6c757d;'>
                         <td>{{expense.date}}</td>
                         <td>{{expense.description}}</td>
-                        <td >${{expense.amount}}</td>
-                        <td >{{expense.category.name}}</td>
+                        <td>{{expense.amount}}</td>
+                        <td>{{expense.category.name}}</td>
+                        <td>{{expense.user.username}}</td>
                         <td>
                             <span>
                                 {%  if request.user.role == 'admin' %}
                                     <a href="{% url 'finance:expense_update' expense.id%}" class="btn btn-light btn-sm text-primary">
                                         <i class='bx bx-edit-alt'></i>
                                     </a>
-                                {% endif %}
-                            </span>
-                            <span>
-                                {% if request.user.role == 'admin' %}
-                                    <a href={% url 'finance:expense_delete' expense.id %} id='delete' class="btn btn-light btn-sm text-danger">
-                                        <i class='bx bx-trash-alt'></i>
-                                    </a>
+                                {% else %}
+                                    <button disable>
+                                        <a href="{% url 'finance:expense_update' expense.id%}" class="btn btn-light btn-sm text-primary">
+                                            <i class='bx bx-edit-alt'></i>
+                                        </a>
+                                    </button>
                                 {% endif %}
                             </span>
                         </td>

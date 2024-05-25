@@ -14,7 +14,7 @@
                     </a>
                 </li>
                 <li class="menu-link">
-                    <a href="">
+                    <a href="{% url 'dashboard:dashboard'%}">
                         <i class='bx bxs-dashboard' ></i>
                         Dashboard
                     </a>
@@ -33,7 +33,7 @@
                     </a>
                     <ul class="dropdown-menu shadow w-50 bg-light">
                         <li class="dropdown-link">
-                            <a href="{% url 'finance:finance' %}" class="px-3 fs-6">Sales</a>
+                            <a href="{% url 'finance:currency' %}" class="px-3 fs-6">Currency</a>
                         </li>
                         <li class="dropdown-link">
                             <a href="{% url 'finance:expense_list' %}" class="px-3 fs-6">Expenses</a>
@@ -49,6 +49,18 @@
                         </li>
                     </ul>
                 </li>
+                <li class="menu-link">
+                    <a href="{% url 'finance:finance' %}">
+                        <i class='bx bx-universal-access'></i>
+                        Customers
+                    </a>
+                </li>
+                <li class="menu-link">
+                    <a href="{% url 'finance:finance' %}">
+                        <i class='bx bx-analyse'></i>
+                        Analytics
+                    </a>
+                </li>
                 <li class="menu-link dropdown">
                     <a href="#" class='dropdown-toggle'>
                         <i class='bx bx-building'></i>
@@ -61,6 +73,12 @@
                             </li>
                         {% endfor %}
                     </ul>
+                </li>
+                <li class="menu-link">
+                    <a href="{% url 'finance:finance' %}">
+                        <i class='bx bx-user'></i>
+                        Users
+                    </a>
                 </li>
             </ul>
         </div>
