@@ -4,7 +4,7 @@ from .models import Expense, ExpenseCategory, Customer, Currency, Invoice
 class ExpenseForm(forms.ModelForm):
     class Meta:
         model = Expense
-        fields = ['date', 'amount', 'category', 'description', ]  
+        fields = ['date','payment_method', 'currency', 'amount', 'category', 'description', ]  
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}), 
             'description': forms.Textarea(attrs={'rows': 3}),  
@@ -34,3 +34,4 @@ class InvoiceForm(forms.ModelForm):
     class Meta:
         model = Invoice
         fields = ['amount_paid']
+        

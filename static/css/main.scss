@@ -42,23 +42,78 @@
 }
 
 
+
 .techcity{
+    .bg{
+        background:#373f4c;
+        color:#fff;
+    }
+    @font-face {
+        font-family: 'graphik';
+        src: url('../assets/fonts/GraphikRegular.otf') format('opentype');
+        font-weight: normal;
+        font-style: normal;
+    }
+    th{
+        font-weight:bold !important;
+        opacity:.9;
+        color:#5f5f60 !important;
+        font-size: 0.8125rem;
+    }
     overflow:hidden;
-    // font-family: Poppins;
+    font-family: graphik;
+    font-size:0.9rem;
+
+    .initials{
+        background:#535d6e;
+        color:#fff;
+        font-size: 0.7125rem;
+        width:48px;
+        height: 48px;
+        border-radius: 50%;
+        text-align:center;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        .content{
+            padding:0.5rem;
+        }
+    }
+    .td-contents{
+        height: 48px;
+        display:flex;
+        align-items:center;
+    }
     a{
         text-decoration:none;
+    }
+    .col-2{
+        background:#373f4c !important;
+        width: 15%;
+    }
+    .col-lg-10, 
+    .col-12{
+        width: 85%;
     }
     .aside-bar{
         transition: transform 0.5;
         aside{
             position: relative;
             height: 100vh;
-            .bx{
-                color:#f06721 !important;
+            background:#373f4c !important;
+            .aside-logo{
+                margin-left:0.7rem;
             }
             a{
                 color:#fff !important;
                 opacity:0.9;
+                display:flex;
+                align-items:center;
+                font-size: 0.8125rem;
+                i{
+                    font-size: 1.25rem;
+                }
             }
             .menu,
             .settings{
@@ -162,7 +217,14 @@
                 height:200px !important;
             }
         }
-    
+        .payment-modal{
+            .payment-btn{
+                position:fixed;
+                bottom: 0; 
+                left: 0;
+                width: 100%;
+            }
+        }
         .product-search{
             .form-control,
             .form-select{
@@ -289,8 +351,21 @@
             }
           }
     }
+    .analytics{
+        .aside-content{
+            .col{
+                display:flex;
+                align-items:center;
+                // height:20vh !important;
+                p{
+                    font-size: 0.8125em;
+                }
+            }
+        }
+    }
         
     // modal css
+    .customer-modal,
     .error-modal,
     .invoice-modal,
     .client-modal,

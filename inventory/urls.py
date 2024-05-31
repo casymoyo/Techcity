@@ -7,6 +7,7 @@ app_name = 'inventory'
 urlpatterns = [
     path('', inventory_index, name='inventory'),
     path('inventory/', inventory, name='inventory_list'),
+    path('inventory/branches/', branches_inventory, name='branches_inventory'),
     path('product/list/', product_list, name='product_list'),
     path('add-product/', AddProductView.as_view(), name='add_product'),
     path('delete-inventory/', delete_inventory, name='delete_inventory'),

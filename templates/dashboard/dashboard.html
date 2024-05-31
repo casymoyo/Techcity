@@ -6,12 +6,12 @@
     <div class="main-content">
         <div class="row mt-2">
             <div class="col">
-                <div class="card border rounded">
+                <div class="card border rounded shadow bg">
                     <div class="card-body d-flex align-items-center justify-content-center flex-column">
-                        <h6 class='text-center text-muted'>TOTAL INVOICE</h6>
-                        <h6 class='text-center text-muted'>{{invoice_count}}</h6>
-                        <h6 class='text-center text-muted'>TOTAL INVOICE TODAY</h6>
-                        <h6 class='text-center text-muted'>{{invoice_today_count}}</h6>
+                        <h6 class='text-center'>TOTAL INVOICE</h6>
+                        <h6 class='text-center'>{{invoice_count}}</h6>
+                        <h6 class='text-center'>TOTAL INVOICE TODAY</h6>
+                        <h6 class='text-center'>{{invoice_today_count}}</h6>
                         <small>
                             <a href="{% url 'finance:invoice' %}">
                                 <span>Details</span>
@@ -22,12 +22,12 @@
                 </div>
             </div>
             <div class="col">
-                <div class="card border rounded">
+                <div class="card border rounded shadow bg">
                     <div class="card-body d-flex align-items-center justify-content-center flex-column">
-                        <h6 class='text-center text-muted'>TOTAL CUSTOMERS</h6>
-                        <h6 class='text-center text-muted'>{{customers_count}}</h6>
-                        <h6 class='text-center text-muted'>TOTAL CUSTOMERS TODAY</h6>
-                        <h6 class='text-center text-muted'>{{customers_today_count}}</h6>
+                        <h6 class='text-center'>TOTAL CUSTOMERS</h6>
+                        <h6 class='text-center'>{{customers_count}}</h6>
+                        <h6 class='text-center'>TOTAL CUSTOMERS TODAY</h6>
+                        <h6 class='text-center'>{{customers_today_count}}</h6>
                         <small>
                             <a href="">
                                 <span>Details</span>
@@ -38,12 +38,12 @@
                 </div>
             </div>
             <div class="col">
-                <div class="card border rounded">
+                <div class="card border rounded shadow bg">
                    <div class="card-body d-flex align-items-center justify-content-center flex-column">
-                        <h6 class='text-center text-muted'>TOTAL PRODUCTS</h6>
-                        <h6 class='text-center text-muted'>{{products_count}}</h6>
-                        <h6 class='text-center text-muted'>TOTAL PRODUCTS TODAY</h6>
-                        <h6 class='text-center text-muted'>0</h6>
+                        <h6 class='text-center'>TOTAL PRODUCTS</h6>
+                        <h6 class='text-center'>{{products_count}}</h6>
+                        <h6 class='text-center'>TOTAL PRODUCTS TODAY</h6>
+                        <h6 class='text-center'>0</h6>
                         <small>
                             <a href="{% url 'inventory:inventory' %}">
                                 <span>Details</span>
@@ -89,9 +89,9 @@
                                         <td>{{sale.total_amount}}</td>
                                         <td class="text-center">
                                             {% if sale.transaction.payment_status == 'Paid' %}
-                                                <small class='border rounded bg-success p-1 text-light fw-bold'><small>Paid</small></small>
+                                                <small class='border rounded bg-success p-1 text-light'><small>Paid</small></small>
                                             {% else %}
-                                                <small class='border rounded bg-danger p-1 text-light fw-bold'><small>Due</small></small>
+                                                <small class='border rounded bg-danger p-1 text-light'><small>Due</small></small>
                                             {% endif %}
                                         </td>
                                     </tr>

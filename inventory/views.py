@@ -16,11 +16,7 @@ from django.contrib.contenttypes.models import ContentType
 from channels.generic.websocket import  AsyncJsonWebsocketConsumer
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from permissions.permissions import admin_required, sales_required, accountant_required
-from finance.models import StockTransaction, CashAccount, VATRate, Transaction, VATTransaction, ChartOfAccounts
 
-from django.http import JsonResponse
-from .models import Inventory
-from .tasks import add
 
 def product_list(request): 
     queryset = Inventory.objects.filter(branch=request.user.branch, status=True)
@@ -51,14 +47,35 @@ def product_list(request):
         'price': item['price'],
         'quantity': item['quantity'],
     } for item in inventory_data]
-    
-    # result = add.delay(4, 4)  
- 
 
     return JsonResponse(merged_data, safe=False)
 
+def branches_inventory(request):
+    search_query = request.GET.get('q', '')
+    branch = request.GET.get('branches', '')
+    category = request.GET.get('category', '')
     
+    branches_inventory = Inventory.objects.filter(status=True)
     
+    if search_query:
+         branches_inventory = branches_inventory.filter(Q(product__name__icontains=search_query))
+        
+    if branch:
+        branches_inventory = branches_inventory.filter(branch__id=branch)
+        
+    if category:
+        if category == 'inactive':
+            branches_inventory = branches_inventory.filter(status=False)
+        else:
+            branches_inventory = branches_inventory.filter(product__category__id=category)
+    
+    return render(request, 'inventory/branches_inventory.html', {
+        'branches_inventory':branches_inventory,
+        'branch':branch, 
+        'search_query':search_query,
+        'category':category
+    })
+        
 class AddProductView(View):
     form_class = AddProductForm()
     initial = {'key':'value'}

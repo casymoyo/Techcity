@@ -6,8 +6,8 @@ from django.urls import include, path
 from django.views import defaults as default_views
 
 urlpatterns = [
+    path('/', include('pos.urls', namespace='pos')),
     path("admin/", admin.site.urls),
-    path('', include('pos.urls', namespace='pos')),
     path('users/', include('users.urls', namespace='users')),
     path('company/', include('company.urls', namespace='company')),
     path('finance/', include('finance.urls', namespace='finance')),

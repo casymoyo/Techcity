@@ -1,55 +1,5 @@
 {% load static %}
 {% block content %}
-<form method='get'>
-    <div class='mb-2'>
-        <input 
-            name='q' 
-            id="id_search"
-            class='form-control' 
-            type="text" 
-            placeholder="Search..." 
-        />
-    </div>
-    <select name="category" id="id_category" class='form-select'>
-        <option value="">All Categories</option>
-        {% for category in expense_categories %}
-            <option value="{{ category.id }}">{{ category.name }}</option>
-        {% endfor %}
-    </select>
-    <div class='mb-2 mt-2'>
-        <label for="id_start_date">From</label>
-        <input 
-            type="date" 
-            id="id_start_date" 
-            name="start_date" 
-            value="{{ request.GET.start_date }}" 
-            class='form-control'
-        />
-    </div>
-    <div class='mb-2'>
-        <label for="id_end_date">to</label>
-        <input 
-            type="date" 
-            id="id_end_date" 
-            name="end_date" 
-            value="{{ request.GET.end_date }}"
-            class='form-control'
-        />
-    </div>
-    <div class='mb-2 d-flex'>
-        
-        <div class='w-100'>
-            <button type="button" id="id_report" class='btn btn-primary btn-sm'>
-                <i class='bx bx-download'></i>
-                Download
-            </button>
-        </div>
-        <div class='w-100'>
-            <button type="submit" class='btn btn-secondary w-100 btn-sm'>Filter</button>
-        </div>
-    </div>
-</form>
-
 <script src="{% static 'js/jquery.js'%}"></script>
 <script>
     document.querySelector('#id_report').addEventListener(

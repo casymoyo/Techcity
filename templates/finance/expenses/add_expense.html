@@ -19,6 +19,14 @@
             </label> 
             <input type="date" name="date" class="dateinput form-control" required id="id_date"> 
         </div> 
+        <div id="div_id_payment_method" class="mb-3"> <label
+            for="id_payment_method" class="form-label requiredField">
+            Payment method<span class="asteriskField">*</span> </label> <select name="payment_method" class="select form-select" required id="id_payment_method"> <option value="" selected>---------</option> <option value="cash">cash</option> <option value="bank">bank</option> <option value="ecocash">ecocash</option>
+        </select> </div>
+        <div id="div_id_currency" class="mb-3"> <label
+            for="id_currency" class="form-label requiredField">
+            Currency<span class="asteriskField">*</span> </label> <select name="currency" class="select form-select" required id="id_currency"> <option value="" selected>---------</option> <option value="1">USD</option> <option value="2">ZIG</option>
+        </select> </div>
         <div id="div_id_amount" class="mb-3"> 
             <label
                 for="id_amount" class="form-label requiredField">
@@ -85,7 +93,7 @@
         'click', ()=>{
             modal.classList.add('hidden')
             overlay.classList.add('hidden')
-            location.reload()
+            window.location.reload()
         }
     ) 
 

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static%}
+{% block title%} Analytics {% endblock title %}
+{% block content %}
+<div class='analytics'>
+    <div class="row mt-3">
+        <div class="col-3">
+            <div class="aside-content px-2">
+                <h6 class="mt-2">Analytics</h6>
+                <div class="row flex-column">
+                    <div class="col border">
+                        <div class="detail">
+                            <p class="fw-bold">REVENUE</p>
+                            <div>
+                                <p><span>ZIG</span> 2000</p>
+                                <p><span>USD</span> 2000</p>
+                            </div>
+                            <div>
+                                <p><small id="best_hour">Best hour 10h</small></p>
+                            </div>
+                        </div>
+                        <div class="graph">
+                            graph
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="detail">
+                            <p class="fw-bold">SALES</p>
+                        </div>
+                        <div class="graph">
+
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="detail">
+                            <p class="fw-bold">PROFITS</p>
+                        </div>
+                        <div class="graph">
+
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="detail">
+                            <p class="fw-bold">PAYMENT METHOD</p>
+                        </div>
+                        <div class="graph">
+
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="detail">
+                            <p class="fw-bold">TOP PRODUCTS</p>
+                        </div>
+                        <div class="graph">
+
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="detail">
+                            <p class="fw-bold">TOP CUSTOMERS</p>
+                        </div>
+                        <div class="graph">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-9">
+            <div class="graph-content">
+                <h6 id="graph_title" class="mt-2">Revenue</h6>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

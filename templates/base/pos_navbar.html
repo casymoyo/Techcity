@@ -19,7 +19,7 @@
         <!-- middle links -->
         
         <!-- user and logout -->
-        <div class='user mt-3  px-2 d-flex justify-content-end w-25'>
+        <div class='user mt-3  px-2 d-flex justify-content-end w-75'>
             <ul class="menu list-unstyled d-flex align-items-center">
                 <li class="menu-link dropdown">
                     <select  id='currency' class='bg-dark text-light form-select'>
@@ -30,22 +30,27 @@
                     </select>
                 </li>
                 <span class='px-2'></span>
-                <li class="menu-link">
-                    <small class='bx bx-bell text-muted'></small>
+                <li class="menu-link invoice btn btn-secondary p-1">
+                    <a href={% url 'finance:invoice' %}  class='text-light px-1'>
+                        Invoices
+                        <span class='badge badge-sm text-light'>{{invoice_count}}</span>
+                    </a>
                 </li>
-                <li class="menu-link dropdown px-3">
-                    <a href="#" class="dropdown-toggle">
+                <span class='px-2'></span>
+                <li class="menu-link invoice btn btn-light p-1" id='end'>
+                    <span class='px-1'>
+                        End Of Day
+                    </span>
+                </li>
+                <span class='px-2'></span>
+                <li class="menu-link">
+                    <a href={% url 'inventory:branches_inventory'%} class="">
                         <small class='bx bx-briefcase text-muted'></small>
                     </a>
-                    <ul class="dropdown-menu bg-light shadow w-100">
-                        <li class="dropdown-link">
-                            <a href="" class="px-4 fs-6">Harare</a>
-                        </li>
-                    </ul>
                 </li>
+                <span class='px-2'></span>
                 <li class="menu-link">
-                    <small class='bx bxs-file text-muted'></small>
-                    <span class=' text-dark caret'></span>
+                    <small class='bx bx-bell text-muted'></small>
                 </li>
                 <li class="menu-link dropdown px-2">
                     <small class="dropdown-toggle">{{request.user}}</small>

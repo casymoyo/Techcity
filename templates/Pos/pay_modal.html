@@ -2,73 +2,13 @@
 {% block content %}
 <div class='payment'>
     <div class="bg-secondary text-light border d-flex justify-content-between align-items-center rounded w-100 py-2">
-        <h4 class='px-2' id="id_customer_details">Payment</h4>
+        <h4 class='px-2' id="id_customer_details">Process Payment -> <span>Cash</span></h4>
        <div class='px-2'>
             <button class=" closebtn btn-close text-light btn-sm"></button>
        </div>
     </div>
     <div class='row mt-2'>
-        <div class='col-8'>
-            <h5 class="mb-3">Payment Method</h5>
-            <div class='button-choose d-flex w-100'>
-                <div class="w-100">
-                    <button class='btn btn-success btn-lg w-100' id="id_cash_btn">
-                        Full Payment
-                    </button>
-                </div>
-                <span class="px-2"></span>
-                <div class="w-100">
-                    <button class='btn btn-danger btn-lg w-100' id="id_credit_btn">
-                        Credit Payment
-                    </button>
-                </div>
-            </div>
-            <div class='payment-form mt-3'>
-                <div class='mb-2 d-flex align-items-center'>
-                    <label for="id_amount_paid" class='bg-light'>Pay Amount</label>
-                    <input
-                        id='id_amount_paid'
-                        name='amount'
-                        type="number"
-                        class='form-control'
-                     />
-                </div>
-
-                <div class="credit border rounded p-2 mb-2 hidden">
-                    <p>Credit details</p>
-                    <div class="mb-2">
-                        <label for="id_date">Credit Duration</label>
-                        <input
-                            type="number"
-                            class="form-control"
-                            placeholder="number of days"
-                            id="id_days"
-                            value="0"
-                        />
-                    </div>
-                </div>
-                <div class='mb-3 d-flex align-items-center bg-light'>
-                    <label for="id_note p-1" class='bg-light'>Note</label>
-                    <textarea
-                        id='id_note'
-                        rows='1'
-                        name='note'
-                        class='form-control'
-                    ></textarea>
-                </div>
-
-                <div class="payment-btn d-flex justify-content-end">
-                    <span class="btn btn-danger btn-sm">
-                        close
-                    </span>
-                    <span class="px-2"></span>
-                    <span class="btn btn-success btn-sm" onclick="processCart()">
-                        pay
-                    </span>
-                </div>
-            </div>
-        </div>
-        <div class='col-4'>
+        <div class='col-3 border p-2'>
             <h5>Order details</h5>
             <table class="table">
                 <tbody id="order_details"></tbody>
@@ -111,6 +51,78 @@
                     </tr>
                 </tfoot>
             </table>
+        </div>
+        <div class='col-6'>
+            <div class='payment-form mt-3'>
+                <div class='mb-2 d-flex align-items-center'>
+                    <label for="id_amount_paid" class="px-2">Amount</label>
+                    <input
+                        id='id_amount_paid'
+                        name='amount'
+                        type="number"
+                        class='form-control'
+                     />
+                </div>
+
+                <div class="credit border rounded p-2 mb-2 hidden">
+                    <p>Credit details</p>
+                    <div class="mb-2">
+                        <label for="id_date">Credit Duration</label>
+                        <input
+                            type="number"
+                            class="form-control"
+                            placeholder="number of days"
+                            id="id_days"
+                            value="0"
+                        />
+                    </div>
+                </div>
+                <div class='mb-5 d-flex align-items-center'>
+                    <label for="id_note p-1" class="px-2">Note</label>
+                    <textarea
+                        title="note"
+                        id='id_note'
+                        rows='1'
+                        name='note'
+                        class='form-control'
+                        placeholder=""
+                    ></textarea>
+                </div>
+
+                <div class="payment-btn w-100 ">
+                    <button type="button" class="btn btn-success btn-sm w-100 py-2" onclick="processCart()">
+                        PAY
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-3">
+            <h5 class="mb-3">Payment Methods</h5>
+            <div class='button-choose w-100'>
+                <div class="w-100 p-2">
+                    <button type="button"  class='btn btn-light btn-lg w-100 pm' data-name='cash' id="id_cash_btn">
+                        CASH
+                    </button>
+                </div>
+                
+                <div class="w-100 mt-2 p-2">
+                    <button class='btn btn-danger btn-lg w-100 pm' data-name='cash' id="id_credit_btn">
+                        CREDIT
+                    </button>
+                </div>
+
+                <div class="w-100 mt-2 p-2">
+                    <button type="button" class='btn btn-secondary btn-lg w-100 pm' data-name='bank' id="id_bank_transfer">
+                        BANK CARD
+                    </button>
+                </div>
+
+                <div class="w-100 mt-2 p-2">
+                    <button type="button" class='btn btn-primary btn-lg w-100 pm' data-name='ecocash' id="id_credit_ecocash">
+                        ECOCASH
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

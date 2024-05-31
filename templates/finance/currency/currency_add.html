@@ -5,15 +5,10 @@
 <div>
     <div class="d-flex justify-content-between align-items-center py-2">
         <div class="fs-5 fw-bold">
-            <a href='{% url 'finance:finance'%}' class='btn btn-primary btn-sm'>
-                <i class='bx bx-left-arrow-alt'></i>
-            </a>
-            <span class='px-1'></span>
             <span>Add currency</span>
         </div>
-        <hr style="border: 1px solid #333 !important;">
     </div>
-    <form method='post'>
+    <form method='post' class='mt-2'>
         {% csrf_token %}
         {{form|crispy}}
         <div class="d-flex justify-content-end">

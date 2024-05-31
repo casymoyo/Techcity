@@ -7,22 +7,42 @@
         <div class="finance-navbar mt-2">
             <nav class="d-flex justify-content-between align-items-center p-2 border rounded">
                 <div class="d-flex">
-                    <div>
-                        <a href='{% url 'finance:finance'%}' class='btn btn-primary btn-sm'>
-                            <i class='bx bx-left-arrow-alt'></i>
-                        </a>
-                    </div>
                     <div class='px-1'> 
-                        <a href='{% url 'finance:expense_create' %}' class="btn btn-light btn-sm" >
+                        <a href='{% url 'finance:expense_create' %}' class="btn btn-secondary btn-sm" >
                             <i class='bx bx-plus'></i>
                             Expenses
                         </a>
                     </div>
                 </div>
+                <div class='d-flex align-items-center'>
+                    <form method='get'>
+                            <input 
+                                name='q' 
+                                id="id_search"
+                                value='{{search_query}}'
+                                class='form-control' 
+                                type="text" 
+                                placeholder="Search..." 
+                            />
+                    </form>
+                    <form method='get' class='d-flex px-2'>
+                        <select name="category" id="id_category" class='form-select' value={{category}}>
+                            <option value="">All Categories</option>
+                            {% for category in expense_categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class='px-2'>
+                            <button type="submit" class='btn btn-light'>
+                                <i class='bx bx-filter'></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </nav>
         </div>
-        <div class='mt-3 mb-3 d-flex justify-content-between align-items-center'>
-            <div class='mt-2'>Expenses List</div>
+        <div class='d-flex justify-content-between align-items-center'>
+            <div class='mt-2 mb-2 fw-bold px-1'>List</div>
             {% comment %} <div>
                 <button class='pdf-gen btn btn-secondary btn-sm'>
                     Expenses Report
@@ -45,36 +65,39 @@
             <tbody>
                 {% for expense in expenses %}
                     <tr style='color: #6c757d;'>
-                        <td>{{expense.date}}</td>
-                        <td>{{expense.description}}</td>
-                        <td>{{expense.amount}}</td>
-                        <td>{{expense.category.name}}</td>
-                        <td>{{expense.user.username}}</td>
-                        <td>
-                            <span>
-                                {%  if request.user.role == 'admin' %}
+                        {% if expense.status != True and request.user.role == 'admin' %}
+                            <td>{{expense.date}}</td>
+                            <td>{{expense.description}}</td>
+                            <td>{{expense.currency.symbol}} {{expense.amount}}</td>
+                            <td>{{expense.category.name}}</td>
+                            <td>{{expense.user.username}}</td>
+                            <td>
+                                <a href="{% url 'finance:expense_update' expense.id%}" class="btn btn-light btn-sm">
+                                    <i class='bx bx-edit-alt'></i>
+                                </a>
+                                <a  href="{% url 'finance:confirm_expense' expense.id%}" type='button' data-id='{{expense.id}}' class="btn btn-primary btn-sm">
+                                    confirm
+                                </a>
+                            </td>
+                        {% else %}   
+                            <td>{{expense.date}}</td>
+                            <td>{{expense.description}}</td>
+                            <td>{{expense.currency.symbol}} {{expense.amount}}</td>
+                            <td>{{expense.category.name}}</td>
+                            <td>{{expense.user.username}}</td>
+                            <td>
+                                {% if request.user.role == 'admin' %}
                                     <a href="{% url 'finance:expense_update' expense.id%}" class="btn btn-light btn-sm text-primary">
                                         <i class='bx bx-edit-alt'></i>
                                     </a>
-                                {% else %}
-                                    <button disable>
-                                        <a href="{% url 'finance:expense_update' expense.id%}" class="btn btn-light btn-sm text-primary">
-                                            <i class='bx bx-edit-alt'></i>
-                                        </a>
-                                    </button>
                                 {% endif %}
-                            </span>
-                        </td>
+                            </td>
+                        {% endif %}
                     </tr>
                 {% endfor %}
             </tbody>  
         </table>
     </div>
-    <div class="sidebar mt-2 px-2 border rounded ">
-        <h6 class="mt-1">Filter</h6>
-        {% include 'components/filters.html'%}
-    </div>
-
     <div class="expense-modal hidden">
         <div class="modal-content">
             {% include 'finance/expenses/add_expense.html'%}

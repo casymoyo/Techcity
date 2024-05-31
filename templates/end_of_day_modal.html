@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>End of Day Stock Take</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.x.x/dist/css/bootstrap.min.css"> 
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>End of Day Stock Take</h2>
+
+        <table class="table table-bordered" id="stockTable">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Stock At Hand</th>
+                    <th>Quantity Sold</th>
+                    <th>Remaining Quantity</th>
+                    <th>Physical Count</th>
+                    <th>Difference</th> 
+                </tr>
+            </thead>
+            <tbody>
+                </div>
+        </table>
+
+        <button type="button" class="btn btn-primary" id="saveStockBtn">Save Stock Take</button>
+    </div>
+
+<script>
+
+    fetch('/finance/end_of_day/')
+    .then(response => response.json())
+    .then(data => {
+        const inventoryData = data.inventory;
+
+        inventoryData.forEach(item => {
+            // Create elements inside the loop for each item
+            const row = stockTable.insertRow();
+            row.insertCell().textContent = item.name;
+            row.insertCell().textContent = item.initial_quantity;
+            row.insertCell().textContent = item.quantity_sold;
+            row.insertCell().textContent = item.remaining_quantity;
+
+            // Input field for physical count
+            const inputCell = row.insertCell();
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'form-control';
+            input.dataset.itemId = item.id; 
+
+            // Difference cell (initially empty)
+            const diffCell = row.insertCell();
+            diffCell.textContent = '';
+
+            inputCell.appendChild(input);
+
+            // Add event listener to the input field (inside the loop)
+            input.addEventListener('input', () => {
+                const physicalCount = parseInt(input.value, 10) || 0;
+                const remainingQuantity = parseInt(item.remaining_quantity, 10);
+                const difference = physicalCount - remainingQuantity;
+
+                diffCell.textContent = difference;
+                diffCell.style.color = difference < 0 ? 'red' : 'green';  // Conditional coloring
+            });
+        });
+
+        // Save button event handler
+        saveStockBtn.addEventListener('click', () => {
+            const physicalCounts = [];
+            stockTable.querySelectorAll('input').forEach(input => {
+                physicalCounts.push({
+                    item_id: input.dataset.itemId,
+                    physical_count: parseInt(input.value, 10) || 0 
+                });
+            });
+
+            fetch('/finance/end_of_day/', { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    "X-CSRFToken": getCookie("csrftoken"), 
+                },
+                body: JSON.stringify(physicalCounts)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    endOfDayModal.hide()
+                    alert('Stock take saved successfully!');
+                } else {
+                    alert('Error saving stock take.');
+                }
+                });
+            });
+        });
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+            const cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === name + "=") {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+                }
+            }
+            }
+            return cookieValue;
+        } 
+    </script>
+</body>
+</html>
+
+

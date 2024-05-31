@@ -1,8 +1,55 @@
 .techcity {
   overflow: hidden;
+  font-family: graphik;
+  font-size: 0.9rem;
+}
+.techcity .bg {
+  background: #373f4c;
+  color: #fff;
+}
+@font-face {
+  font-family: "graphik";
+  src: url("../assets/fonts/GraphikRegular.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+}
+.techcity th {
+  font-weight: bold !important;
+  opacity: 0.9;
+  color: #5f5f60 !important;
+  font-size: 0.8125rem;
+}
+.techcity .initials {
+  background: #535d6e;
+  color: #fff;
+  font-size: 0.7125rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.techcity .initials .content {
+  padding: 0.5rem;
+}
+.techcity .td-contents {
+  height: 48px;
+  display: flex;
+  align-items: center;
 }
 .techcity a {
   text-decoration: none;
+}
+.techcity .col-2 {
+  background: #373f4c !important;
+  width: 15%;
+}
+.techcity .col-lg-10,
+.techcity .col-12 {
+  width: 85%;
 }
 .techcity .aside-bar {
   transition: transform 0.5;
@@ -10,13 +57,20 @@
 .techcity .aside-bar aside {
   position: relative;
   height: 100vh;
+  background: #373f4c !important;
 }
-.techcity .aside-bar aside .bx {
-  color: #f06721 !important;
+.techcity .aside-bar aside .aside-logo {
+  margin-left: 0.7rem;
 }
 .techcity .aside-bar aside a {
   color: #fff !important;
   opacity: 0.9;
+  display: flex;
+  align-items: center;
+  font-size: 0.8125rem;
+}
+.techcity .aside-bar aside a i {
+  font-size: 1.25rem;
 }
 .techcity .aside-bar aside .menu .menu-link,
 .techcity .aside-bar aside .settings .menu-link {
@@ -146,6 +200,12 @@
 .techcity .pos .products .card {
   height: 200px !important;
 }
+.techcity .pos .payment-modal .payment-btn {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+}
 .techcity .pos .product-search .form-control,
 .techcity .pos .product-search .form-select {
   border: none !important;
@@ -254,6 +314,14 @@
     transform: rotateX(35deg) rotateY(55deg) rotateZ(360deg);
   }
 }
+.techcity .analytics .aside-content .col {
+  display: flex;
+  align-items: center;
+}
+.techcity .analytics .aside-content .col p {
+  font-size: 0.8125em;
+}
+.techcity .customer-modal,
 .techcity .error-modal,
 .techcity .invoice-modal,
 .techcity .client-modal,
@@ -274,6 +342,7 @@
   border-radius: 15px;
   z-index: 2;
 }
+.techcity .customer-modal p,
 .techcity .error-modal p,
 .techcity .invoice-modal p,
 .techcity .client-modal p,
@@ -286,6 +355,7 @@
   color: #777;
   margin: 0.4rem 0 0.2rem;
 }
+.techcity .customer-modal button,
 .techcity .error-modal button,
 .techcity .invoice-modal button,
 .techcity .client-modal button,

@@ -14,7 +14,7 @@ class Currency(models.Model):
     exchange_rate = models.DecimalField(max_digits=15, decimal_places=2, default=0)
 
     def __str__(self):
-        return f"{self.code} - {self.name}"
+        return f"{self.name}"
 
 class ChartOfAccounts(models.Model):
     class AccountType(models.TextChoices):
@@ -40,6 +40,7 @@ class Customer(models.Model):
     email = models.EmailField(blank=True)
     phone_number = models.CharField(blank=True)
     address = models.CharField(max_length=100)
+    id_number = models.CharField(max_length=100)
     date = models.DateField(auto_now_add=True)
     
     def __str__(self):
@@ -47,10 +48,20 @@ class Customer(models.Model):
 
 class CustomerAccount(models.Model):
     customer = models.OneToOneField(Customer, on_delete=models.CASCADE)
-    balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     
     def __str__(self):
-        return f'{self.customer.name}: ({self.balance})'
+        return f'{self.customer.name})'
+class CustomerAccountBalances(models.Model):
+    account = models.ForeignKey(CustomerAccount, on_delete=models.CASCADE, related_name='balances')
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)  
+    balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+
+    class Meta:
+        unique_together = ('account', 'currency') 
+
+    def __str__(self):
+        return f'{self.account} - {self.currency}: {self.balance}'
+
 
 class Transaction(models.Model):
     date = models.DateField()
@@ -96,14 +107,34 @@ class VATTransaction(models.Model):
     def __str__(self):
         return f"VAT Transaction for {self.transaction} ({self.vat_type})"
 
-class CashAccount(models.Model):
-    name = models.CharField(max_length=50)
-    balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+class Account(models.Model):
 
-class BankAccount(models.Model):
+    class AccountType(models.TextChoices):
+        CASH = 'CA', 'Cash'
+        BANK = 'BA', 'Bank'
+        ECOCASH = 'EC', 'Ecocash'
+        
     name = models.CharField(max_length=50)
-    account_number = models.CharField(max_length=20)
+    type = models.CharField(
+        max_length=2,
+        choices=AccountType.choices,
+        default=AccountType.CASH
+    )
+    
+    def __str__(self):
+        return f'{self.name} ({self.type})'
+class AccountBalance(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='balances')
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    branch = models.ForeignKey('company.branch', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('account', 'currency')
+
+    def __str__(self):
+        return f'{self.account.name} ({self.account.type}):{self.currency}{self.balance}'
+
 
 class StockTransaction(models.Model):
     class TransactionType(models.TextChoices):
@@ -112,12 +143,13 @@ class StockTransaction(models.Model):
         ADJUSTMENT = 'Adjustment', _('Adjustment')
 
     item = models.ForeignKey('inventory.Product', on_delete=models.PROTECT)
+    invoice = models.ForeignKey('finance.invoice', on_delete=models.PROTECT)
     transaction_type = models.CharField(max_length=10, choices=TransactionType.choices)
     payment_content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True, related_name='payment_stock_transactions')
     payment_object_id = models.PositiveIntegerField(null=True, blank=True)
     payment_object = GenericForeignKey('payment_content_type', 'payment_object_id') 
 
-    quantity = models.PositiveIntegerField()
+    quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=15, decimal_places=2)
     date = models.DateField()
 
@@ -130,11 +162,18 @@ class ExpenseCategory(models.Model):
 class Expense(models.Model):
     date = models.DateField()
     amount = models.DecimalField(max_digits=15, decimal_places=2)
+    payment_method = models.CharField(max_length=15, choices=[
+        ('cash', 'cash'),
+        ('bank', 'bank'),
+        ('ecocash', 'ecocash')
+    ])
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     category = models.ForeignKey(ExpenseCategory, on_delete=models.PROTECT)
     description = models.CharField(max_length=200)
     user = models.ForeignKey('users.user', on_delete=models.CASCADE)
     branch = models.ForeignKey('company.branch', on_delete=models.CASCADE)
-
+    status = models.BooleanField(default=False)
+    
 
     def __str__(self):
         return f"{self.date} - {self.category} - {self.description} - ${self.amount}"
@@ -164,7 +203,7 @@ class Invoice(models.Model):
 
     invoice_number = models.CharField(max_length=50, unique=True)       
     customer = models.ForeignKey(Customer, on_delete=models.PROTECT)  
-    issue_date = models.DateField()
+    issue_date = models.DateTimeField()
     due_date = models.DateField()
     amount = models.DecimalField(max_digits=15, decimal_places=2, default=0) 
     vat = models.DecimalField(max_digits=15, decimal_places=2, default=0)     
@@ -181,6 +220,8 @@ class Invoice(models.Model):
     recurrence_period = models.IntegerField(default=29)  # Default to 14 days (2 weeks)
     next_due_date = models.DateField(null=True, blank=True) 
     subtotal =  models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    note = models.TextField()
+    products_purchased = models.TextField()
     
     def generate_invoice_number(branch):
         last_invoice = Invoice.objects.filter(branch__name=branch).order_by('-id').first()

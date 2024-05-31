@@ -221,6 +221,11 @@ LOGGING = {
 
 # Celery Configs
 CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672/'
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Africa/Harare'
 
 # CELERY_BEAT_SCHEDULE = {
 #     'your_periodic_task_name': {
@@ -228,3 +233,29 @@ CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672/'
 #         'schedule': crontab(minute='*/1'),  # Schedule the task to run every minute
 #     },
 # }
+
+# EMAIL SETTINGS
+# settings.py
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+
+# Twillo settings
+TWILIO_WHATSAPP_NUMBER = '+263778587612'
+TWILIO_ACCOUNT_SID = 'AC6890aa7c095ce1315c4a3a86f13bb403'
+TWILIO_AUTH_TOKEN='2c7f2948c4593b8bc714a65d8fb0074f'
+
+# AWS S3 Configuration
+AWS_ACCESS_KEY_ID = 'AKIAQP45RRLGRXGVLDQU'  
+AWS_SECRET_ACCESS_KEY = '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'  
+AWS_STORAGE_BUCKET_NAME = 'techcity'
+AWS_S3_REGION_NAME = 'us-east-1'  
+AWS_S3_FILE_OVERWRITE = False 
+
+# File Storage Configuration
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % 'techcity'

@@ -2,7 +2,7 @@
 {% block content %}
 <div class='client w-100'>
     <div class="text-center">
-        <button class=" btn-close btn-close text-danger btn-sm"></button>
+        <button class="btn-close text-danger btn-sm"></button>
     </div>
         <h5 class="">Add client</h5>
         <form class='' id='id_client_form' method='post'>
@@ -45,7 +45,7 @@
                     id="id_address"
                 />
             </div>
-
+            <p class='text-danger' id='id_client_error'></p>
             <div class="client-btn d-flex justify-content-end">
                 <button class="btn btn-seconday btn-sm" type='button' onclick='submitClient();'>
                     <i class='bx bx-save'></i>

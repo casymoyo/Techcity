@@ -18,10 +18,7 @@
         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     {% endblock css %}
 
-    <script defer src="{% static 'css/bootstrap/js/bootstrap.min.js'%}"></script>
-    <script src="{% static 'js/jquery.js'%}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    
+
     <title>
         {% block title %}Techcity{% endblock title %}
     </title>
@@ -29,7 +26,7 @@
 <body>
     <div class="techcity">
         <div class="row">
-            <div class="aside-bar col-2 bg-dark text-light"> {% include "base/aside.html" %} </div>
+            <div class="aside-bar col-2 text-light"> {% include "base/aside.html" %} </div>
             <div class=" top-bar col-lg-10 col-12">
                 <div class="nav-bar"> {% include "base/navbar.html" %} </div>
                 <div class="app-area">
@@ -49,5 +46,8 @@
             </div>
         </div>
     </div>
+<script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>    
+    <script src="{% static 'js/jquery.js'%}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </body>
 </html>

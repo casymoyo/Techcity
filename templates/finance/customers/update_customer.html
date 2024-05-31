@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static%}
+{% load crispy_forms_tags %}
+{% block content %}
+   <div class="customer">
+        <div class="mt-4">
+            <h5>Update >>> {{customer.name}}</h5>
+        </div>
+        <form method="post" class="rounded border mt-4 p-2">
+            {% csrf_token %}
+            {{form|crispy}}
+            <div class="d-flex justify-content-end">
+                <div class="">
+                    <button type="reset" class="btn btn-danger btn-sm w-100">
+                        <i class='bx bx-reset'></i>
+                        Reset
+                    </button>
+                </div>
+                <span class="px-1"></span>
+                <div class="">
+                    <button type="submit" class="btn btn-secondary btn-sm w-100">
+                        <i class='bx bx-save'></i>
+                        Save
+                    </button>
+                </div>
+            </div>
+        </form>
+   </div>
+{% endblock content %}
