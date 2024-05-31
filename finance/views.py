@@ -29,6 +29,7 @@ from django.core.mail import send_mail, EmailMessage
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from . forms import ExpenseForm, ExpenseCategoryForm, CurrencyForm, InvoiceForm, CustomerForm
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -714,7 +715,7 @@ def invoice_preview(request, invoice_id):
     invoice = Invoice.objects.get(id=invoice_id)
     invoice_items = InvoiceItem.objects.filter(invoice=invoice)
     account = CustomerAccount.objects.get(customer__id = invoice.customer.id)
-    return render(request, 'pos/receipt.html', {'invoice_id':invoice_id, 'invoice':invoice, 'invoice_items':invoice_items})
+    return render(request, 'Pos/receipt.html', {'invoice_id':invoice_id, 'invoice':invoice, 'invoice_items':invoice_items})
 
 @login_required
 def invoice_pdf(request):
@@ -751,7 +752,7 @@ def send_invoice_email(request):
         invoice_items = InvoiceItem.objects.filter(invoice=invoice)
         account = CustomerAccount.objects.get(customer__id = invoice.customer.id)
         
-        html_string = render_to_string('pos/receipt.html', {'invoice': invoice, 'invoice_items':invoice_items, 'account':account})
+        html_string = render_to_string('Pos/receipt.html', {'invoice': invoice, 'invoice_items':invoice_items, 'account':account})
         buffer = BytesIO()
 
         pisa.CreatePDF(html_string, dest=buffer) 
@@ -787,7 +788,7 @@ def send_invoice_whatsapp(request, invoice_id):
         invoice_items = InvoiceItem.objects.filter(invoice=invoice)
         img = settings.STATIC_URL + "/assets/logo.png"
     
-        html_string = render_to_string('pos/invoice_template.html', {'invoice': invoice, 'request':request, 'invoice_items':invoice_items, 'img':img})
+        html_string = render_to_string('Pos/invoice_template.html', {'invoice': invoice, 'request':request, 'invoice_items':invoice_items, 'img':img})
         pdf_buffer = BytesIO()
         pisa_status = pisa.CreatePDF(html_string, dest=pdf_buffer)
         if not pisa_status.err:
