@@ -19,7 +19,6 @@ def login_view(request):
     if request.method =='POST':
         username = request.POST['username']
         password = request.POST['password']
-        print(username)
         user = authenticate(
             request,
             username=username,
@@ -27,7 +26,7 @@ def login_view(request):
         )
         if user is not None:
             login(request, user)
-            return redirect('dashboard:dashboard')
+            return redirect('pos:pos')
         else: messages.error(request, 'Invalid username or password')
     return render(request, 'auth/login.html')
 

@@ -26,6 +26,7 @@ from inventory.models import ActivityLog, Product
 from django.http import JsonResponse, HttpResponse
 from django.template.loader import render_to_string
 from django.core.mail import send_mail, EmailMessage
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from . forms import ExpenseForm, ExpenseCategoryForm, CurrencyForm, InvoiceForm, CustomerForm
 import logging
@@ -112,7 +113,7 @@ class ExpenseView(View):
         expense.delete()
         return redirect('finance:expenses_list')
     
-
+@login_required
 def create_expense(request):
     form = ExpenseCategoryForm()
     if request.method == 'POST':
@@ -129,6 +130,7 @@ def create_expense(request):
 
     return render(request, 'finance/expenses/add_expense.html', {'form': form})
 
+@login_required
 def confirm_expense(request, expense_id):
     expense = Expense.objects.get(id=expense_id)
     
@@ -154,7 +156,7 @@ def confirm_expense(request, expense_id):
     messages.success(request, 'Expense confirmed')
     return redirect('finance:expense_list')
     
-
+@login_required
 def create_expense_category(request):
     if request.method == 'POST':
         form = ExpenseCategoryForm(request.POST) 
@@ -176,7 +178,7 @@ def create_expense_category(request):
 
     return JsonResponse({'message': 'Invalid request method.'}, status=405)
 
-        
+@login_required       
 def invoice(request):
     day = request.GET.get('day', '')
     q = request.GET.get('q', '')
@@ -231,6 +233,7 @@ def invoice(request):
         'total_amount': total_amount, 
     })
 
+@login_required
 def update_invoice(request, invoice_id):
     form = InvoiceForm()
     invoice = Invoice.objects.get(id=invoice_id)
@@ -285,6 +288,7 @@ def update_invoice(request, invoice_id):
         return JsonResponse({'success':True, 'message':'Invoice Successfully Updated'})
     return JsonResponse({'success':False, 'message':'Update Failed'})
 
+@login_required
 def create_invoice(request):
     if request.method == 'POST':
         try:
@@ -478,7 +482,7 @@ def create_invoice(request):
 
     return render(request, 'finance/invoices/add_invoice.html')
 
-
+@login_required
 def customer(request):
     if request.method == 'GET':
         customers = Customer.objects.all().values()
@@ -516,7 +520,7 @@ def customer(request):
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
-
+@login_required
 def customer_list(request):
     search_query = request.GET.get('q', '')
     
@@ -552,6 +556,7 @@ def customer_list(request):
         
     return render(request, 'finance/customers/customers.html', {'customers':customers, 'search_query':search_query})
 
+@login_required
 def update_customer(request, customer_id):
     customer = get_object_or_404(Customer, pk=customer_id)
 
@@ -577,8 +582,7 @@ def delete_customer(request, customer_id):
     else:
         return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})  
     
-
-    
+@login_required    
 def customer_account(request, customer_id):
     q = request.GET.get('q', '')
     search_query = request.GET.get('search_query', '')
@@ -604,16 +608,18 @@ def customer_account(request, customer_id):
         'due':Invoice.objects.filter(payment_status='Partial', customer=customer, branch=request.user.branch, status=True).count(),
     })
 
-# currency views    
+# currency views  
+@login_required  
 def currency(request):
     return render(request, 'finance/currency/currency.html')
 
+@login_required
 def currency_json(request):
     currency_id = request.GET.get('id', '')
     currency = Currency.objects.filter(id=currency_id).values()
     return JsonResponse(list(currency), safe=False)
 
-
+@login_required
 def add_currency(request):
     form = CurrencyForm()
     if request.method == 'POST':
@@ -624,6 +630,7 @@ def add_currency(request):
             return redirect('finance:currency')
     return render(request, 'finance/currency/currency_add.html', {'form':form})
 
+@login_required
 def update_currency(request, currency_id):
     currency = get_object_or_404(Currency, id=currency_id)  
 
@@ -638,6 +645,7 @@ def update_currency(request, currency_id):
 
     return render(request, 'finance/currency/currency_add.html', {'form': form})
 
+@login_required
 def delete_currency(request, currency_id):
     try:
         currency = Currency.objects.get(id=currency_id)
@@ -647,10 +655,12 @@ def delete_currency(request, currency_id):
         return JsonResponse({'message':'Currency doesnt exists'})
     return JsonResponse({'message':'Deleted Successfully'})
 
+@login_required
 def finance_settings(request):
     return render(request, 'finance/settings/settings.html')
     
 # Reports
+@login_required
 def expenses_report(request):
     
     template_name = 'finance/reports/expenses.html'
@@ -698,13 +708,15 @@ def expenses_report(request):
             'expenses':expenses
         }
     )
-    
+
+@login_required 
 def invoice_preview(request, invoice_id):
     invoice = Invoice.objects.get(id=invoice_id)
     invoice_items = InvoiceItem.objects.filter(invoice=invoice)
     account = CustomerAccount.objects.get(customer__id = invoice.customer.id)
     return render(request, 'pos/receipt.html', {'invoice_id':invoice_id, 'invoice':invoice, 'invoice_items':invoice_items})
 
+@login_required
 def invoice_pdf(request):
     template_name = 'finance/reports/invoice.html'
     invoice_id = request.GET.get('id', '')
@@ -730,6 +742,7 @@ def invoice_pdf(request):
     )
     
 # email
+@login_required
 def send_invoice_email(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -766,8 +779,7 @@ def send_invoice_email(request):
     return JsonResponse({'success': False, 'error':'error'})
 
 #whatsapp
-
-
+@login_required
 def send_invoice_whatsapp(request, invoice_id):
     try:
         # Retrieve Invoice and Generate PDF
@@ -823,10 +835,11 @@ def send_invoice_whatsapp(request, invoice_id):
     
 
 # analytics
+@login_required
 def analytics(request):
     return render(request, 'finance/analytics/analytics.html')
 
-
+@login_required
 def end_of_day(request):
     today = timezone.now().date()
     
@@ -959,6 +972,7 @@ def end_of_day(request):
     
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
+@login_required
 def day_report(request, inventory_data):
     today_min = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
     today_max = timezone.now().replace(hour=23, minute=59, second=59, microsecond=999999)

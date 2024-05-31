@@ -115,12 +115,12 @@ DATABASES = {
     #     'PORT': os.environ.get('DB_PORT', '5432'),
     # }
     'default': {
-        'DB_ENGINE':'django.db.backends.postgresql',
-        'DB_NAME':'railway',
-        'DB_USER':'postgres',
-        'DB_PASSWORD':'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
-        'DB_HOST':'monorail.proxy.rlwy.net',
-        'DB_PORT':'39004'
+        'ENGINE':'django.db.backends.postgresql',
+        'NAME':'railway',
+        'USER':'postgres',
+        'PASSWORD':'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
+        'HOST':'monorail.proxy.rlwy.net',
+        'PORT':'39004'
     }
 
 }

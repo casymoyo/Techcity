@@ -38,7 +38,7 @@ class ChartOfAccounts(models.Model):
 class Customer(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField(blank=True)
-    phone_number = models.CharField(blank=True)
+    phone_number = models.CharField(max_length=100, blank=True)
     address = models.CharField(max_length=100)
     id_number = models.CharField(max_length=100)
     date = models.DateField(auto_now_add=True)
