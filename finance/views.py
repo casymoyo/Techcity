@@ -863,9 +863,9 @@ def end_of_day(request):
             inventory_data.append({
                 'id': inv['id'],
                 'name': inv['product__name'],
-                'initial_quantity': inv['quantity'],
+                'initial_quantity': inv['quantity'] + sold_info['quantity_sold'],
                 'quantity_sold': sold_info['quantity_sold'] if sold_info else 0,
-                'remaining_quantity': inv['quantity'] - (sold_info['quantity_sold'] if sold_info else 0),
+                'remaining_quantity': inv['quantity'],
                 'physical_count': None
             })
 
@@ -948,8 +948,9 @@ def end_of_day(request):
                 s3_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/daily_reports/{invoice_filename}"
 
                 # Send WhatsApp Message with Twilio
-                account_sid = settings.TWILIO_ACCOUNT_SID
-                auth_token = settings.TWILIO_AUTH_TOKEN
+                
+                account_sid = 'AC6890aa7c095ce1315c4a3a86f13bb403'
+                auth_token = '897e02139a624574c5bd175aa7aaf628'
                 client = Client(account_sid, auth_token)
                 from_whatsapp_number = 'whatsapp:' + '+14155238886'
                 to_whatsapp_number = 'whatsapp:' + '+263778587612'
