@@ -40,10 +40,11 @@ class Finance(View):
     def get(self, request, *args, **kwargs):
         # Balances
         balances = AccountBalance.objects.all()
-        print(balances)
+        
         # Recent Transactions
-        recent_transactions = Transaction.objects.all().order_by('-date')[:5]
-       
+        recent_sales = Sale.objects.filter(transaction__branch=request.user.branch).order_by('-date')[:5]
+        
+        print(recent_sales)
 
         # 3. Expense Summary (Optional)
         expenses_by_category = Expense.objects.values('category__name').annotate(
@@ -52,7 +53,7 @@ class Finance(View):
         
         context = {
             'balances': balances,
-            'recent_transactions': recent_transactions,
+            'recent_transactions': recent_sales,
             'expenses_by_category': expenses_by_category,
         }
         return render(request, self.template_name, context)
@@ -333,7 +334,7 @@ def create_invoice(request):
                 currency=currency, 
                 defaults={'balance': 0}
             )
-            customer_account = customer_account_balance.account
+           
             
             
             amount_paid = Decimal(invoice_data['amount_paid'])
@@ -354,7 +355,7 @@ def create_invoice(request):
                         payment_method='Cash'
                     )
                     
-                    customer_account.balance -= due_invoice.amount_due
+                    customer_account_balance.balance -= due_invoice.amount_due
                     due_invoice.amount_due = 0
                     
                 else:
@@ -367,10 +368,10 @@ def create_invoice(request):
                         payment_method='Cash'
                     )
         
-                    customer_account_balance -= amount_paid
+                    customer_account_balance.balance -= amount_paid
                     amount_paid = 0
                 
-                customer_account.save()
+                customer_account_balance.save()
                 due_invoice.save()
 
             # calculate amount due
@@ -441,7 +442,8 @@ def create_invoice(request):
                             user=request.user,
                             quantity=item_data['quantity'],
                             total_quantity = item.quantity,
-                            action='Sale'
+                            action='Sale',
+                            invoice=invoice
                         )
                     
                 # # Create VATTransaction
@@ -482,6 +484,20 @@ def create_invoice(request):
             return JsonResponse({'success': False, 'error': str(e)})
 
     return render(request, 'finance/invoices/add_invoice.html')
+
+
+@login_required       
+def invoice_details(request, invoice_id):
+    invoice = Invoice.objects.filter(id=invoice_id, branch=request.user.branch).values(
+        'invoice_number',
+        'customer__id', 
+        'customer__name', 
+        'products_purchased', 
+        'payment_status', 
+        'amount'
+    )
+    return JsonResponse(list(invoice), safe=False)
+
 
 @login_required
 def customer(request):
@@ -810,8 +826,8 @@ def send_invoice_whatsapp(request, invoice_id):
             s3_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/invoices/{invoice_filename}"
 
             # Send WhatsApp Message with Twilio
-            account_sid = settings.TWILIO_ACCOUNT_SID
-            auth_token = settings.TWILIO_AUTH_TOKEN
+            account_sid = 'AC6890aa7c095ce1315c4a3a86f13bb403'
+            auth_token = '897e02139a624574c5bd175aa7aaf628'
             client = Client(account_sid, auth_token)
             from_whatsapp_number = 'whatsapp:' + '+14155238886'
             to_whatsapp_number = 'whatsapp:' + '+263778587612'
@@ -844,7 +860,6 @@ def analytics(request):
 def end_of_day(request):
     today = timezone.now().date()
     
-    # Fetch sold inventory for today
     sold_inventory = (
         StockTransaction.objects
         .filter(invoice__branch=request.user.branch, date=today, transaction_type=StockTransaction.TransactionType.SALE)
@@ -860,10 +875,11 @@ def end_of_day(request):
         inventory_data = []
         for inv in all_inventory:
             sold_info = next((item for item in sold_inventory if item['item__id'] == inv['id']), None)
+           
             inventory_data.append({
                 'id': inv['id'],
                 'name': inv['product__name'],
-                'initial_quantity': inv['quantity'] + sold_info['quantity_sold'],
+                'initial_quantity': inv['quantity'] + sold_info['quantity_sold'] if sold_info else 0,
                 'quantity_sold': sold_info['quantity_sold'] if sold_info else 0,
                 'remaining_quantity': inv['quantity'],
                 'physical_count': None
@@ -996,8 +1012,6 @@ def day_report(request, inventory_data):
     # accounts
     account_balances = AccountBalance.objects.filter(branch=request.user.branch)
     
-    print(invoices)
-
     try:
         html_string = render_to_string('day_report.html',{
                 'request':request,

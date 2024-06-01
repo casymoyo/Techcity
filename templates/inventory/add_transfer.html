@@ -227,8 +227,6 @@
       updateCartDisplay(); 
 
       //clear values
-      document.getElementById('id_product').textContent='';
-      document.getElementById('id_to').textContent = ''
       document.getElementById('id_price').value = 0
       document.getElementById('id_quantity').value = 0
 
@@ -251,13 +249,13 @@
       })
         .then((response) => {
           console.log(response)
-          {% comment %} if (response.ok) {
+          if (response.ok) {
             cart = []; 
             updateCartDisplay();
             window.location.href = "{% url 'inventory:transfers'%}"
           } else {
             alert('transfer failed')
-          } {% endcomment %}
+          } 
         })
         .catch((error) => {
           console.error("Error:", error);

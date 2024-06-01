@@ -7,9 +7,11 @@
                 <img src="{% static 'assets/logo.png' %}" width="100px"/>
             </div>
             <div class="mt-1">
+                {% if request.user.role == 'admin' or request.user.role == 'accountant'%}
                 <a href='{% url "dashboard:dashboard" %}' class="btn">
                     <i class='bx bxs-grid'></i>
                 </a>
+                {% endif %}
             </div>
             <div>
                 <span class='text-muted mt-2'>{{request.user.branch.name}}</span>

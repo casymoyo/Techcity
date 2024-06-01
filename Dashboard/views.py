@@ -3,6 +3,7 @@ from finance.models import *
 from inventory.models import *
 from django.db.models import Sum
 from django.shortcuts import render
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 
 
@@ -13,7 +14,6 @@ def dashboard(request):
     transfers = Transfer.objects.filter(from_branch = request.user.branch).order_by('-date')[:5]
     
     invoices = Invoice.objects.filter(payment_status='Partial', branch=request.user.branch).order_by('-issue_date')[:5]
-    
     
     return render(request, 'dashboard/dashboard.html', {
         'sales':sales,
@@ -29,6 +29,12 @@ def dashboard(request):
         'invoice_count': Invoice.objects.filter(branch=request.user.branch, status=True).count(),
         'invoice_today_count': Invoice.objects.filter(branch=request.user.branch, issue_date=datetime.date.today()).count(),
     })
+    
+@login_required
+def get_partial_invoice_details(request, invoice_id):
+    invoices = Invoice.objects.filter(payment_status='Partial', id=invoice_id, branch=request.user.branch).order_by('-issue_date').values()
+    return JsonResponse(list(invoices), safe=False)
+
 
 @login_required
 def POS(request):

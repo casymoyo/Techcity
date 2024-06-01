@@ -118,34 +118,6 @@
                                         <i class='bx bx-show'></i>
                                     </a>
                                 </span>  
-                                <span>
-                                    {% if request.user.role == 'admin' %}
-                                        <button class="btn btn-light btn-sm text-success" disabled>
-                                            <i class='bx bx-rectangle'></i>
-                                        </button>
-                                    {% endif %}
-                                </span>
-                                <span>
-                                    {% if request.user.role == 'admin' %}
-                                        <a href='' class="btn btn-light btn-sm text-success">
-                                            <i class='bx bxl-gmail'></i>
-                                        </a>
-                                    {% endif %}
-                                </span>
-                                <span>
-                                    {% if request.user.role == 'admin' %}
-                                        <a href='' class="btn btn-light btn-sm text-success">
-                                            <i class='bx bxl-whatsapp'></i>
-                                        </a>
-                                    {% endif %}
-                                </span>
-                                <span>
-                                    {% if request.user.role == 'admin' %}
-                                        <button class="btn btn-light btn-sm text-danger">
-                                            <i class='bx bx-trash'></i>
-                                        </button>
-                                    {% endif %}
-                                </span>  
                             </td>
                         {% else %}
                             <td class='text-danger'><small>{{invoice.issue_date}}</small></td>
@@ -159,34 +131,6 @@
                                     <a href="{% url 'finance:invoice_preview' invoice.id %}" class='btn btn-light btn-sm'>
                                         <i class='bx bx-show'></i>
                                     </a>
-                                </span>  
-                                <span>
-                                    {% if request.user.role == 'admin' %}
-                                        <button class="btn btn-light btn-sm text-success">
-                                            <i class='bx bx-right-arrow'></i>
-                                        </button>
-                                    {% endif %}
-                                </span>
-                                <span>
-                                    {% if request.user.role == 'admin' %}
-                                        <a href='' class="btn btn-light btn-sm text-success">
-                                            <i class='bx bxl-gmail'></i>
-                                        </a>
-                                    {% endif %}
-                                </span>
-                                <span>
-                                    {% if request.user.role == 'admin' %}
-                                        <a href='' class="btn btn-light btn-sm text-success">
-                                            <i class='bx bxl-whatsapp'></i>
-                                        </a>
-                                    {% endif %}
-                                </span>
-                                <span>
-                                    {% if request.user.role == 'admin' %}
-                                        <button class="btn btn-light btn-sm text-danger">
-                                            <i class='bx bx-trash'></i>
-                                        </button>
-                                    {% endif %}
                                 </span>  
                             </td>
                         {% endif %}

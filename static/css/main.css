@@ -321,6 +321,9 @@
 .techcity .analytics .aside-content .col p {
   font-size: 0.8125em;
 }
+.techcity .users .card {
+  border: none;
+}
 .techcity .customer-modal,
 .techcity .error-modal,
 .techcity .invoice-modal,

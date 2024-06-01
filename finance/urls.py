@@ -20,6 +20,7 @@ urlpatterns = [
     path('invoice/pdf/', invoice_pdf, name='invoice_pdf'),
     path('invoice/create/', create_invoice, name='create_invoice'),
     path('invoice/update/<str:invoice_id>/', update_invoice, name='update_invoice'),
+    path('invoice/details/<int:invoice_id>/', invoice_details, name='invoice_details'),
     path('invoice/preview/<int:invoice_id>/', invoice_preview, name='invoice_preview'),
     
     #customer

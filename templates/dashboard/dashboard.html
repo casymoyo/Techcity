@@ -202,24 +202,51 @@
             {% for partial_transaction in partial_invoices %}  
                 <tr>
                     <td><small>{{ partial_transaction.due_date }}</small></td>
-                    <td>{{ partial_transaction.customer }}</td>
-                    <td><small>$</small>{{ partial.transaction.amount}}</td>
+                    <td id="partialTr" data-id='{{partial_transaction.id}}' style='cursor:pointer;'><small>{{ partial_transaction.customer }}</small></td>
+                    <td><small>{{partial_transaction.currency.symbol}}{{ partial_transaction.amount_due}}</small></td>
                     <td>
-                        <a href='https://wa.me/{{partial_transaction.customer.phone_number}}' target='_blank'>
+                        <button type="button" id="whatsappBtn" data-id='{{partial_transaction.id}}'>
                             <i class='bx bxl-whatsapp text-success'></i>
+                        </button>
                     </td>
                 </tr>
             {% endfor %}
         </table>
     </div>
+
+    <div class="modal fade" id="paylaterModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <ul id="partial_details"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="loaderModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Sending invoice to WhatsApp...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
+
+<script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>  
+<script src="{% static 'js/jquery.js'%}"></script>  
 <script>
     const navButtons = document.querySelectorAll('.nav-item')
     const sales = $('.sales')
     //const qoute = $('.quotations')
     const customers = $('.customers')
     const transfers = $('.transfers')
-
 
     navButtons.forEach((btn)=>{
         btn.addEventListener(
@@ -242,6 +269,88 @@
 
         $(`.${name}`).removeClass('hidden'); 
     }
+
+    const paylaterModal = new bootstrap.Modal(document.getElementById('paylaterModal'));
+    const partialDetailsList = document.getElementById('partial_details');
+    const trElements = document.querySelectorAll('#partialTr');
+
+    trElements.forEach(td => {
+        td.addEventListener('click', () => {
+            const invoiceId = td.dataset.id;
+            console.log(invoiceId)
+            partialDetailsList.innerHTML = ''; 
+
+            fetch(`/dashboard/get_partial_invoice_details/${invoiceId}/`)  
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok.');
+                    }
+                    return response.json();
+                })
+                .then(invoice => {
+                    console.log(invoice)
+                    paylaterModal.show();
+
+                    const items = [
+                        `Invoice amount: ${invoice[0].amount}`,
+                        `Invoice amount due: ${invoice[0].amount_due}`,
+                        `Invoice items: ${invoice[0].products_purchased}`
+                    ];
+                    items.forEach(itemText => {
+                        const li = document.createElement('li');
+                        li.textContent = itemText;
+                        li.classList.add('fw-bold')
+                        partialDetailsList.appendChild(li);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching invoice details:', error);
+                });
+        });
+    });
+
+    const whatsappBtn = document.getElementById('whatsappBtn');
+    const loaderModal = new bootstrap.Modal(document.getElementById('loaderModal'));
+
+    whatsappBtn.addEventListener('click', function() {
+        loaderModal.show(); 
+        whatsappBtn.disabled = true; 
+
+        const invoiceId = this.dataset.id;
+
+        fetch(`/finance/send_invoice_whatsapp/${invoiceId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            loaderModal.hide();
+            whatsappBtn.disabled = false;
+        })
+        .catch(error => {
+            loaderModal.hide();
+            whatsappBtn.disabled = false; 
+            console.error('Error:', error);
+        });
+    });
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + "=") {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+            }
+        }
+        }
+        return cookieValue;
+    } 
 
     </script>
 {% endblock content %}

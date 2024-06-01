@@ -15,6 +15,7 @@
                         <span class='px-2'>Sell</span>
                     </a>
                 </li>
+                {% if request.user.role == 'admin' %}
                 <li class="menu-link mb-4">
                     <a href="{% url 'dashboard:dashboard'%}">
                         <i class='bx bxs-dashboard' ></i>
@@ -76,7 +77,7 @@
                     </ul>
                 </li>
                 <li class="menu-link mb-4">
-                    <a href="{% url 'finance:finance' %}">
+                    <a href="{% url 'users:users' %}">
                         <i class='bx bx-user'></i>
                         <span class='px-2'>Users</span>
                     </a>
@@ -87,6 +88,7 @@
                         <span class='px-2'>Settings</span>
                     </a>
                 </li>
+                {% endif %}
             </ul>
         </div>
     </aside>

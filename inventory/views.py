@@ -8,6 +8,7 @@ from django.contrib import messages
 from utils.utils import generate_pdf
 from django.http import JsonResponse
 from asgiref.sync import async_to_sync
+from finance.models import StockTransaction
 from channels.layers import get_channel_layer 
 from . utils import calculate_inventory_totals
 from . forms import AddProductForm, addCategoryForm
@@ -17,7 +18,7 @@ from channels.generic.websocket import  AsyncJsonWebsocketConsumer
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from permissions.permissions import admin_required, sales_required, accountant_required
 
-
+@login_required
 def product_list(request): 
     queryset = Inventory.objects.filter(branch=request.user.branch, status=True)
     search_query = request.GET.get('q', '') 
@@ -50,6 +51,7 @@ def product_list(request):
 
     return JsonResponse(merged_data, safe=False)
 
+@login_required
 def branches_inventory(request):
     search_query = request.GET.get('q', '')
     branch = request.GET.get('branches', '')
@@ -155,23 +157,24 @@ class ProcessTransferCartView(View):
                         price=item['price'],
                         quantity=item['quantity'],
                         from_branch= Branch.objects.get(name=item['from_branch']),
-                        to_branch= Branch.objects.get(name=item['to_branch'])
-                    )
-                    self.deduct_inventory(item)  
-                    
+                        to_branch= Branch.objects.get(name=item['to_branch']),
+                    )            
                     transfer_item.save()
+                    self.deduct_inventory(item, transfer_item)  
 
             return JsonResponse({'success': 'Transfer success'})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
 
-    def deduct_inventory(self,  item):
+    def deduct_inventory(self, item, transfer_item):
         
         branch_inventory = Inventory.objects.get(product__name=item['product'], branch__name=item['from_branch'])
         
         branch_inventory.quantity -= int(item['quantity'])
+        print(branch_inventory.quantity, int(item['quantity']))
         branch_inventory.save()
-        self.activity_log('Transfer', branch_inventory,  item)
+        print(branch_inventory.quantity)
+        self.activity_log('Transfer', branch_inventory,  item, transfer_item, )
         
     # def send_stock_notification(self, item):
     #     print('here')
@@ -184,8 +187,11 @@ class ProcessTransferCartView(View):
     #         }
     #     )
     
-    def activity_log(self, action, inventory, item):
+    def activity_log(self,  action, inventory, item, transfer_item,):
+        # print(transfer_item.id)
         ActivityLog.objects.create(
+            invoice = None,
+            product_transfer = transfer_item,
             branch = self.request.user.branch,
             user=self.request.user,
             action= action,
@@ -193,6 +199,14 @@ class ProcessTransferCartView(View):
             quantity=item['quantity'],
             total_quantity=inventory.quantity
         )
+        
+@login_required       
+def transfer_details(request, transfer_id):
+    transfer = Transfer.objects.filter(id=transfer_id, from_branch=request.user.branch).values(
+        'product__name', 'transfer_ref', 'quantity', 'price', 'from_branch__name', 'to_branch__name'
+    )
+    print(transfer)
+    return JsonResponse(list(transfer), safe=False)
 
 @login_required
 def inventory(request):
@@ -217,7 +231,6 @@ def inventory_index(request):
         
         if category == 'inactive':
             inventory = Inventory.objects.filter(branch=request.user.branch, status=False)
-            print(inventory)
         else:
             inventory = inventory.filter(product__category__name=category)
         
@@ -283,7 +296,10 @@ def inventory_detail(request, id):
     q = request.GET.get('q', '')
 
     inventory = Inventory.objects.get(id=id, branch=request.user.branch)
+    
     logs = ActivityLog.objects.filter(inventory=inventory, branch=request.user.branch)
+    stock_transactions = StockTransaction()
+    
 
     logs_filter = ActivityLog.objects.filter(
         Q(timestamp__icontains=q) |
@@ -343,7 +359,6 @@ def receive_inventory(request):
             branch_transfer = get_object_or_404(transfers, id=transfer_id)
 
             if request.POST['received'] == 'true':
-                    print('here')
                     if Inventory.objects.filter(product=branch_transfer.product, branch=request.user.branch).exists():
                         existing_inventory = Inventory.objects.get(product=branch_transfer.product, branch=request.user.branch)
                         existing_inventory.quantity += branch_transfer.quantity
@@ -454,7 +469,7 @@ def add_product_category(request):
     return JsonResponse(list(categories), safe=False)       
 
 # reports
-
+@login_required
 def inventory_pdf(request):
     """Generates a PDF report of inventory items, optionally filtered by category."""
     

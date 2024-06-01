@@ -20,27 +20,18 @@
         <div class="mt-3 border rounded p-2">
             <p class='fw-bold'>
                 <i class='bx bx-circle text-primary '></i>
-                Recent Transactions
+                Recent Sales
             </p>
             <table class="table recent">
                 {% for transaction in recent_transactions %}
                     <tr>
                         <td><small>{{ transaction.date }}</small></td>
-                        <td>{{ transaction.description }}</td>
-                        <td>{{ transaction.amount }} {{ transaction.currency }}</td>
+                        <td>{{ transaction.transaction.customer.name}}</td>
+                        <td>{{ transaction.total_amount }} {{ transaction.currency }}</td>
                     </tr>
                 {% endfor %}
             </table>
         </div>
-
-        {% block sales %}
-            <div class="mt-3 border rounded p-2">
-                <p class='fw-bold'>
-                    <i class='bx bx-circle text-success'></i>
-                    Sales Summary
-                </p>
-            </div>
-        {% endblock sales %}
 
         {% block expenses %}
             <div class="mt-3 border rounded p-2">

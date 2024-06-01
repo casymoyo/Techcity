@@ -12,7 +12,7 @@ urlpatterns = [
     path('company/', include('company.urls', namespace='company')),
     path('finance/', include('finance.urls', namespace='finance')),
     path('inventory/', include('inventory.urls', namespace='inventory')),
-    path('dashboard', include('Dashboard.urls', namespace='dashboard')),
+    path('dashboard/', include('Dashboard.urls', namespace='dashboard')),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:
