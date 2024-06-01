@@ -625,6 +625,13 @@ def customer_account(request, customer_id):
         'due':Invoice.objects.filter(payment_status='Partial', customer=customer, branch=request.user.branch, status=True).count(),
     })
 
+@login_required
+def customer_account_json(request, customer_id):
+    account = CustomerAccountBalances.objects.filter(account__customer__id=customer_id).values(
+        'currency__symbol', 'balance'
+    )
+    return JsonResponse(list(account), safe=False)
+    
 # currency views  
 @login_required  
 def currency(request):
@@ -989,6 +996,11 @@ def end_of_day(request):
             return JsonResponse({'success': False, 'error': str(e)})
     
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+def invoice_payment_track(request, invoice_id):
+    invoice = Invoice.objects.get(id=invoice_id)
+    payments = Payment.objects.filter(invoice=invoice)
+    return render(request, 'finance/payments.html', {'invoice':invoice, 'payments':payments})
 
 @login_required
 def day_report(request, inventory_data):

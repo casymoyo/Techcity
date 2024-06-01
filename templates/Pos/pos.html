@@ -78,9 +78,7 @@
                             <div>
                                 <small>Due</small>
                             </div>
-                            <div>
-                                <small id='id_due' class='text-danger'>0.00</small>
-                            </div>
+                            <div id="due_balance"></div>
                         </div>
                         <div class="d-flex justify-content-between">
                             <button class=" p-2 btn btn-light w-100 btn-sm" id='id_add_client'>
@@ -172,10 +170,13 @@
             {% include 'Pos/pay_modal.html' %}
         </div>
     </div>
-    <div class="error-modal hidden">
-        <div class="modal-content">
-            {% include 'Pos/error_modal.html' %}
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                {% include 'Pos/error_modal.html' %}
+            </div>
         </div>
+    </div>
     </div>
     <div class="client-modal hidden">
         <div class="modal-content">
@@ -203,6 +204,7 @@
     let respData = [];
     let currencyData = [];
     const customersData = [];
+    let customerAccountData = []
 
     let discount_amount = 0;
     let delivery_amount = 0;
@@ -215,6 +217,7 @@
 
     const currencySelect = document.querySelector('#currency')
     const endOfDayModal = new bootstrap.Modal(document.getElementById('endOfDayModal'));
+    const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
 
     document.querySelector('#end').addEventListener(
         'click', ()=>{
@@ -242,10 +245,24 @@
     const creditBtn = document.querySelector('#id_credit_btn')
     const cashBtn = document.querySelector('#id_cash_btn')
     const creditElement = document.querySelector('.credit')
+    const bankBtn = document.querySelector('.bank')
+    const ecocash= document.querySelector('.ecocash')
 
     creditBtn.addEventListener(
         'click', ()=>{
             creditElement.classList.remove('hidden')
+        }
+    )
+
+    bankBtn.addEventListener(
+        'click', ()=>{
+            creditElement.classList.add('hidden')
+        }
+    )
+
+    ecocash.addEventListener(
+        'click', ()=>{
+            creditElement.classList.add('hidden')
         }
     )
 
@@ -258,7 +275,6 @@
     // modals
     const overlay = document.querySelector(".overlay");
     const modal = document.querySelector('.payment-modal');
-    const errorModal = document.querySelector('.error-modal')
     const clientModal = document.querySelector('.client-modal');
     const closeModalBtn = document.querySelectorAll(".btn-close");
 
@@ -296,12 +312,6 @@
         )
     })
 
-    document.querySelector('.closeBtn').addEventListener(
-        'click', ()=>{
-            errorModal.classList.add("hidden");
-            overlay.classList.add("hidden");
-        }
-    )
     //search filters and fetching data
     const productListContainer = document.getElementById('product-list');
     const categorySelect = document.getElementById('id_category');
@@ -413,10 +423,9 @@
             } finally {
             }
         }else{
-            errorModal.classList.remove('hidden')
-            overlay.classList.remove('hidden')
+            errorModal.show()
             error.textContent=''
-            error.textContent='Tanga Kusarudza Currency'
+            error.textContent=`Choose Currency`
         }
         
     }
@@ -558,11 +567,12 @@
         document.querySelector('#id_subtotal').textContent = `${ currencyData[0][0].symbol + ' ' + calculateTotalAmount(cart)}`
         document.querySelector('#id_vat').textContent = `${ currencyData[0][0].symbol + ' ' + vat.toFixed(2)}`
         document.querySelector('#id_dcp').textContent = `Discount`
-        document.querySelector('#id_disc').textContent = `${ currencyData[0][0].symbol + ' ' + discountAmount.toFixed(2)}`
-        document.querySelector('#id_delivery_charge').textContent = `${ currencyData[0][0].symbol + ' ' + delivery.toFixed(2)}`
-        document.querySelector('#id_interest_amount').textContent = `${ currencyData[0][0].symbol + ' ' + 0.00}`
+        document.querySelector('#id_disc').textContent = `${ currencyData[0][0].symbol + ' ' + '<span class="disc_c">' + discountAmount.toFixed(2) + '</span>'}`
+        document.querySelector('#id_delivery_charge').textContent = `${ currencyData[0][0].symbol + ' ' + '<span class="d_c">' + delivery.toFixed(2) + "</span>"}`
+        document.querySelector('#id_interest_amount').textContent = `${ currencyData[0][0].symbol + ' ' +  '<span class="inter">' + 0.00 + "</span>"}`
         document.querySelector('#id_due_amount').textContent = `${ currencyData[0][0].symbol + ' ' + payable.toFixed(2)}`
         document.querySelector('#id_balance').textContent = `${ currencyData[0][0].symbol + ' ' + (payable.toFixed(2) - amount_paid.toFixed(2))}` // payable + due amount - paid amount
+        document.querySelector('#id_amount_paid').value = payable.toFixed(2)
     }
 
     // pay amount event
@@ -694,6 +704,7 @@
     }
     fetchCustomers()
     
+    
     function displayCustomers(customers){
         const cusElement = document.querySelector('#search-input')
         
@@ -705,6 +716,39 @@
         })
     }
     
+    document.querySelector('#search-input').addEventListener(
+        'input',()=>{
+            fetchCustomerAccount(document.querySelector('#search-input').value)
+        }
+    )
+
+    async function fetchCustomerAccount(customerId){
+        fetch(`/finance/customer/account/json/${customerId}/`, {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"), 
+            },
+            body: JSON.stringify(data),
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data[0].balance)
+
+            const balanceEl = document.querySelector('#due_balance')
+            data.forEach((balance)=>{
+                console.log(balance)
+                balanceEl.innerHTML +=`<small id='id_due' class='text-danger'>${balance.currency__symbol} ${balance.balance}</small>`
+            })
+        })
+        .catch((error) => {
+        console.error("Error:", error);
+    });
+    }
+
+    function displayCuatomerBalances(){
+        console.log(data)
+    }
 
     function getCookie(name) {
         let cookieValue = null;

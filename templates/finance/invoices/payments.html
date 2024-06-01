@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static%}
+{% block title%} Invoices Payments {% endblock%}
+{% block content %}
+<div class="finance d-flex">
+        <div class='mt-2 mb-2'>
+            <div class='h5 px-1 fw-bold'>Payments</div>
+        </div>
+        
+        <div class='table-responsive'>
+            <table class="table table-striped border rounded table-responsive table-sm p-2">
+                <thead>
+                    <tr class='fw-normal'>
+                        <th>Date</th>
+                        <th>Invoice</th>
+                        <th>Customer</th>
+                        <th>Details</th>
+                        <th>Amount Paid</th>
+                        <th>Amount Due</th>
+                        <th>Amount</th>
+                        <th>Processed by</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                        <tr>
+                            <td><small>{{invoice.issue_date}}</small></td>
+                            <td><small>#{{invoice.invoice_number}}</small></td>
+                            <td><a href="{% url 'finance:customer' invoice.customer.id%}">{{invoice.customer.name}}</a></td>
+                            <td><small>{{invoice.products_purchased}}</small></td>
+                            <td><small>{{invoice.currency.symbol}} {{invoice.amount_paid}}</small></td>
+                            <td><small>{{invoice.currency.symbol}} {{invoice.amount_due}}</small></td>
+                            <td><small>{{invoice.currency.symbol}} {{invoice.amount}}</small></td>
+                            <td><small>{{invoice.user.username}}</small></td>     
+                        </tr>
+                    {% endfor %}
+                </tbody>  
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

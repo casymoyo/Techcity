@@ -41,9 +41,20 @@
     }
 }
 
-
+.receipt{
+    @font-face {
+        font-family: 'adobe';
+        src: url('../assets/fontts/Adobe.tff') format('opentype');
+        font-weight: normal;
+        font-style: normal;
+    }
+    font-family:adobf;
+}
 
 .techcity{
+    td{
+        height:5px !important;
+    }
     .bg{
         background:#373f4c;
         color:#fff;
@@ -54,6 +65,7 @@
         font-weight: normal;
         font-style: normal;
     }
+    
     th{
         font-weight:bold !important;
         opacity:.9;
@@ -183,6 +195,11 @@
         .table-detail{ 
             table-layout: fixed; 
             width: 100%; 
+        }
+        .transfers-table{
+            td{
+                height:fit-content;
+            }
         }
     }
     .finance { 

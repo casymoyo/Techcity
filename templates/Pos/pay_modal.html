@@ -1,5 +1,10 @@
 {% load static%}
 {% block content %}
+<style>
+    .payment-details{
+        font-family:adobe;
+    }
+</style>
 <div class='payment'>
     <div class="bg-secondary text-light border d-flex justify-content-between align-items-center rounded w-100 py-2">
         <h4 class='px-2' id="id_customer_details">Process Payment -> <span>Cash</span></h4>
@@ -7,49 +12,67 @@
             <button class=" closebtn btn-close text-light btn-sm"></button>
        </div>
     </div>
-    <div class='row mt-2'>
+    <div class='row mt-2 payment-details'>
         <div class='col-3 border p-2'>
             <h5>Order details</h5>
             <table class="table">
                 <tbody id="order_details"></tbody>
-                <tfoot id="oder_details_foot">
-                    <tr>
-                        <td>Subtotal</td>
-                        <td class="d-flex justify-content-end" id="id_subtotal"></td>
-                    </tr>
-                    <tr>
-                        <td id="id_dcp"></td>
-                        <td class="d-flex justify-content-end" id="id_disc">0.00</td>
-                    </tr>
-                    <tr>
-                        <td>VAT</td>
-                        <td class="d-flex justify-content-end" id="id_vat">0.00</td>
-                    </tr>
-                    <tr>
-                        <td>Delivery Charge</td>
-                        <td class="d-flex justify-content-end" id="id_delivery_charge">0.00</td>
-                    </tr>
-                    <tr>
-                        <td>Interest Amount</td>
-                        <td class="d-flex justify-content-end" id="id_interest_amount">0.00</td>
-                    </tr>
-                    <tr>
-                        <td>Previous Due</td>
-                        <td class="d-flex justify-content-end" id="previous_due">0.00</td>
-                    </tr>
-                    <tr>
-                        <td>Paid Amount</td>
-                        <td class="d-flex justify-content-end" id="id_paid_amount">0.00</td>
-                    </tr>
-                    <tr>
-                        <td>Due Amount</td>
-                        <td class="d-flex justify-content-end" id="id_due_amount">0.00</td>
-                    </tr>
-                    <tr>
-                        <td>Balance</td>
-                        <td class="d-flex justify-content-end" id="id_balance">0.00</td>
-                    </tr>
-                </tfoot>
+            </table>
+
+            <table id="oder_details_foot" class="table">
+                <tr>
+                    <td class='px-5 fw-bold'>Subtotal</td>
+                    <td class="d-flex justify-content-end" id="id_subtotal"></td>
+                </tr>
+                <tr id='disc'>
+                    <td id="id_dcp"class='px-5 fw-bold'></td>
+                    <td class="d-flex justify-content-end" id="id_disc">
+                        <span class='disc_c'>0.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class='px-5 fw-bold'>VAT</td>
+                    <td class="d-flex justify-content-end" id="id_vat">0.00</td>
+                </tr>
+                <tr id='d_charge'>
+                    <td class='px-5 fw-bold'>Delivery Charge</td>
+                    <td class="d-flex justify-content-end" id="id_delivery_charge">
+                        <span class='d_c'>0.00</span>
+                    </td>
+                </tr>
+                <tr id='int'>
+                    <td class='px-5 fw-bold'>Interest Amount</td>
+                    <td class="d-flex justify-content-end" id="id_interest_amount">
+                        <span class='inter'>0.00</span>
+                    </td>
+                </tr>
+                <tr id='prv'>
+                    <td class='px-5 fw-bold'>Previous Due</td>
+                    <td class="d-flex justify-content-end" id="previous_due">
+                        <span class='p_due'>0.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class='px-5 fw-bold'>Paid Amount</td>
+                    <td class="d-flex justify-content-end" id="id_paid_amount">0.00</td>
+                </tr>
+                <tr>
+                    <td class='px-5 fw-bold'>Due Amount</td>
+                    <td class="d-flex justify-content-end fw-bold" id="id_due_amount">0.00</td>
+                </tr>
+                <tr>
+                    <td class='px-5 fw-bold'>Balance</td>
+                    <td class="d-flex justify-content-end" id="id_balance">0.00</td>
+                </tr>
+            </table>
+            
+            <table>
+                <tr>
+                    <td class='fw-bold px-5'>Cur & Pre Due</td>
+                    <td class="d-flex justify-content-end" id="previous_due">
+                        <span class='fw-bold'>0.00</span>
+                    </td>
+                </tr>
             </table>
         </div>
         <div class='col-6'>
@@ -112,13 +135,13 @@
                 </div>
 
                 <div class="w-100 mt-2 p-2">
-                    <button type="button" class='btn btn-secondary btn-lg w-100 pm' data-name='bank' id="id_bank_transfer">
+                    <button type="button" class='bank btn btn-secondary btn-lg w-100 pm' data-name='bank' id="id_bank_transfer">
                         BANK CARD
                     </button>
                 </div>
 
                 <div class="w-100 mt-2 p-2">
-                    <button type="button" class='btn btn-primary btn-lg w-100 pm' data-name='ecocash' id="id_credit_ecocash">
+                    <button type="button" class='ecocash btn btn-primary btn-lg w-100 pm' data-name='ecocash' id="id_credit_ecocash">
                         ECOCASH
                     </button>
                 </div>
@@ -126,4 +149,27 @@
         </div>
     </div>
 </div>
+<script>
+    const previousV = document.querySelector('.p_due')
+    const interestV = document.querySelector('.inter')
+    const deliveryV = document.querySelector('.d_c')
+    const discountV = document.querySelector('.disc_c')
+
+    if (previousV.textContent == '0.00'){
+        document.querySelector('#prv').style.disply='none'
+        document.querySelector('#prv').classList.add('hidden')
+    }
+    if (deliveryV.textContent == '0.00'){
+        document.querySelector('#d_charge').style.disply='none'
+        document.querySelector('#d_charge').classList.add('hidden')
+    }
+    if (interestV.textContent == '0.00'){
+        document.querySelector('#int').style.disply='none'
+        document.querySelector('#int').classList.add('hidden')
+    }
+    if (discountV.textContent == '0.00'){
+        document.querySelector('#disc').style.disply='none'
+        document.querySelector('#disc').classList.add('hidden')
+    }
+</script>
 {% endblock content %}

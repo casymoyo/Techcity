@@ -1,6 +1,6 @@
 {% load static%}
 {% block content %}
-   <div class="table mt-2">
+   <div class="table transfers-table mt-2">
         <!-- inventory table -->
         <table class='table table-striped border rounded p-2'>
             <tr>
@@ -13,20 +13,20 @@
             <tbody>
                 {% for transfer in transfers %}
                     <tr>
-                        <td>{{transfer.product.name}}</td>
-                        <td>{{transfer.quantity}}</td>
-                        <td>{{transfer.from_branch}}</td>
-                        <td>{{transfer.to_branch}}</td>
+                        <td><small>{{transfer.product.name}}</small></td>
+                        <td><small>{{transfer.quantity}}</small></td>
+                        <td><small>{{transfer.from_branch}}</small></td>
+                        <td><small>{{transfer.to_branch}}</small></td>
                         <td>
                             <span>
                                 {% if transfer.declined == False %}
                                     {% if transfer.received == False %}
-                                        not yet received
+                                        <small>not yet received</small>
                                     {% else %}
-                                       <span class='text-success'>Recieved</span>
+                                       <small class='text-success'>Recieved</small>
                                     {% endif %}
                                 {% else %}
-                                    <span class='text-danger'>Declined</span>
+                                    <small class='text-danger'>Declined</small>
                                 {% endif %}
                             </span>
                         </td>

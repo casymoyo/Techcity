@@ -1,7 +1,20 @@
+.receipt {
+  font-family: adobf;
+}
+@font-face {
+  font-family: "adobe";
+  src: url("../assets/fontts/Adobe.tff") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+}
+
 .techcity {
   overflow: hidden;
   font-family: graphik;
   font-size: 0.9rem;
+}
+.techcity td {
+  height: 5px !important;
 }
 .techcity .bg {
   background: #373f4c;
@@ -178,6 +191,10 @@
 .techcity .inventory .table-detail {
   table-layout: fixed;
   width: 100%;
+}
+.techcity .inventory .transfers-table td {
+  height: -moz-fit-content;
+  height: fit-content;
 }
 .techcity .finance .main-content {
   flex: 1;

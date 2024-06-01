@@ -29,7 +29,7 @@
 </head>
 <style>
     .receipt{
-        font-family:Poppins;
+        font-family:Adobe Corporate ID;
     }
     hr{
         margin-top:-15px;
@@ -72,8 +72,8 @@
     <div class="w-100 header-color">
         
     </div>
-    <div class='content d-flex justify-content-between px-2'>
-        <div>
+    <div class='content px-2'>
+        <div class='d-flex justify-content-between align-items-center'>
             <div class='details'>
                 <img src='{% static 'assets/logo.png' %}' width='200px'/>
                 <div class="mt-3">
@@ -82,59 +82,60 @@
                     <p class="minus-margin">Email: info@techcity.co.zw</p>
                 </div>
             </div>
-
-            <div class='client'>
-                <p class='color'>BILL TO</p>
-                <hr/>
+            <div>
+                <div style='height:50px;' class=' w-100 mt-2 py-2 bg-dark text-light d-flex align-content-center justify-content-center'>
+                    <h2 class='fw-bold'>INVOICE</h2>
+                </div>
+                <table class='mt-3'>
+                    <tr>
+                        <td class='fw-bold fs-4'>Invoice Number:</td>
+                        <td class="px-3"><small>#{{invoice.invoice_number}}</small></td>
+                    </tr>
+                    <tr>
+                        <td class='fw-bold fs-4'>Date:</td>
+                        <td class="px-3"><small>{{invoice.issue_date}}</small></td>
+                    </tr>
+                </table>
+            </div>
+        </div>  
+        <div class='d-flex justify-content-between align-items-center'>
+            <div class=''>
+                <p class='bg-dark text-light p-2'>BILL TO</p>
                 <table>
                     <tr>
-                        <td>NAME:</td>
+                        <td class='fw-bold'>NAME:</td>
                         <td class="px-3">{{invoice.customer}}</td>
                     </tr>
                     <tr>
-                        <td>PHONE NUMBER:</td>
+                        <td class='fw-bold'>PHONE NUMBER:</td>
                         <td class="px-3">{{invoice.customer.phone_number}}</td>
                     </tr>
                     <tr>
-                        <td>PEMAIL:</td>
+                        <td class='fw-bold'>PEMAIL:</td>
                         <td class="px-3">{{invoice.customer.email}}</td>
                     </tr>
                 </table>
             </div>
-        </div>
-        
-        <div>
-            <h3>INVOICE</h3>
-            <table class='mt-5'>
-                <tr>
-                    <td>Invoice Number:</td>
-                    <td class="px-3">#{{invoice.invoice_number}}</td>
-                </tr>
-                <tr>
-                    <td>Date:</td>
-                    <td class="px-3">{{invoice.issue_date}}</td>
-                </tr>
-            </table>
-            <div>
-                <p class='mt-4 pro color'>PROCESSED BY</p>
-                <hr class=""/>
+            <div class='w-25' style='margin-right:50px;'>
+                <p class='bg-dark text-light p-2'>PROCESSED BY</p>
                 <table>
                     <tr>
-                        <td>NAME:</td>
+                        <td class='fw-bold'>NAME:</td>
                         <td class="px-3">{{request.user.first_name}}</td>
                     </tr>
                     <tr>
-                        <td>PHONE:</td>
+                        <td class='fw-bold'>PHONE:</td>
                         <td class="px-3">{{request.user.phonenumber}}</td>
                     </tr>
                 </table>
             </div>
-        </div>
+        </div>        
     </div>
     <div class="mt-3">
-        <table class="table">
+        <table class="table table-bordered">
             <thead class="header-color">
-                <th>Item description</th>
+                <th>Item</th>
+                <th>Description</th>
                 <th>Qty</th>
                 <th>Price</th>
                 <th>Amount</th>
@@ -142,54 +143,62 @@
             <tbody>
                 {% for item in invoice_items%}
                     <tr>
-                        <td>{{item.item.product}}
-                            <em>{{item.item.product.description}}</em>
-                        </td>
+                        <td>{{item.item.product}}</td>
+                        <td>{{item.item.product.description}}</td>
                         <td>{{item.quantity}}</td>
-                        <td>{{invoice.currency.symbol}}{{item.unit_price}}</td>
-                        <td>{{invoice.currency.symbol}}{{item.total_amount}}</td>
+                        <td><span class='fw-bold'>{{invoice.currency.symbol}}</span> {{item.unit_price}}</td>
+                        <td><span class='fw-bold'>{{invoice.currency.symbol}}</span> {{item.total_amount}}</td>
                     </tr>
                 {% endfor %}
             </tbody>
-            <tfoot>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td>Subtotal</td>
-                    <td>{{invoice.currency.symbol}} {{invoice.subtotal}}</td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td>Discount</td>
-                    <td>({{invoice.currency.symbol}} {{invoice.discount_amount}})</td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td>Vat @15%</td>
-                    <td>{{invoice.currency.symbol}} {{invoice.vat}}</td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td>Delivery Charge</td>
-                    <td>{{invoice.currency.symbol}} {{invoice.delivery_charge}}</td>
-                </tr>
-                <!-- <tr>
-                    <td></td>
-                    <td></td>
-                    <td>Previous Due Amount</td>
-                    <td>{{invoice.currency.symbol}} {{account.balance}}</td>
-                </tr> -->
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td>Total</td>
-                    <td>{{invoice.currency.symbol}} {{invoice.amount}}</td>
-                </tr>
-            </tfoot>
         </table>
+        <div class="d-flex justify-content-end w-100">
+            <div class="">
+                <table class="w-25" style="margin-right:20px;">
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td class='fw-bold'>Sub Total</td>
+                        <td >{{invoice.currency.symbol}} {{invoice.subtotal}}</td>
+                    </tr>
+                    <tr id='discount_amount'>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td class='fw-bold' style="display:block;">Discount</td>
+                        <td '>{{invoice.currency.symbol}} <span class='amnt'>{{invoice.discount_amount}}</span></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td class='fw-bold'>Vat @15%</td>
+                        <td>{{invoice.currency.symbol}} <span class='amnt'>{{invoice.vat}}</span></td>
+                    </tr>
+                    <tr id='delivery_amount'>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td class='fw-bold' style="display:block;">Delivery Charge</td>
+                        <td>{{invoice.currency.symbol}} <span class='d_amnt'>{{invoice.delivery_charge}}</span></td>
+                    </tr>
+                    <!-- <tr>
+                        <td></td>
+                        <td></td>
+                        <td>Previous Due Amount</td>
+                        <td>{{invoice.currency.symbol}} {{account.balance}}</td>
+                    </tr> -->
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td class='fw-bold'>Total</td>
+                        <td>{{invoice.currency.symbol}} {{invoice.amount}}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
         <div class="tcs w-100" class="d-flex flex-column align-ipx-3 justify-conpx-3">
             <h6>Terms and Conditions</h6>
             <ul>
@@ -225,7 +234,18 @@
     const emailBtn = document.querySelector('.btn-secondary')
     const whatsappBtn = document.querySelector('.btn-success')
 
-    console.log(invoiceId)
+    const removeDisc = document.querySelector('.amnt')
+    if (removeDisc.textContent == '0.00'){
+        document.querySelector('#discount_amount').style.display='none'
+        document.querySelector('#discount_amount').classList.add('d-none')
+    }
+
+    const removeDil = document.querySelector('.d_amnt')
+    if (removeDil.textContent == '0.00'){
+        document.querySelector('#delivery_amount').style.display='none'
+        document.querySelector('#delivery_amount').classList.add('d-none')
+    }
+
 
     printBtn.addEventListener('click', () => {
         window.print();

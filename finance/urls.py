@@ -19,6 +19,7 @@ urlpatterns = [
     path('invoice/', invoice, name='invoice'),
     path('invoice/pdf/', invoice_pdf, name='invoice_pdf'),
     path('invoice/create/', create_invoice, name='create_invoice'),
+    path('invoice/payments/', invoice_payment_track, name='payments'),
     path('invoice/update/<str:invoice_id>/', update_invoice, name='update_invoice'),
     path('invoice/details/<int:invoice_id>/', invoice_details, name='invoice_details'),
     path('invoice/preview/<int:invoice_id>/', invoice_preview, name='invoice_preview'),
@@ -30,6 +31,7 @@ urlpatterns = [
     path('customer/account/<int:customer_id>/', customer_account, name='customer'),
     path('customers/update/<int:customer_id>/', update_customer, name='update_customer'),
     path('customer/delete/<int:customer_id>/delete/', delete_customer, name='customer_delete'),
+    path('customer/account/json/<int:customer_id>/', customer_account_json, name='customer_account_json'),
     
     #currency
     path('currency/', currency, name='currency'),
