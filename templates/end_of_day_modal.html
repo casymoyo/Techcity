@@ -6,7 +6,7 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h2>End of Day Stock Take</h2>
+        <h3 class="text-center fw-bold">End of Day Stock Take</h3>
 
         <table class="table table-bordered" id="stockTable">
             <thead>
@@ -23,11 +23,16 @@
             </tbody>
         </table>
 
-        <button type="button" class="btn btn-primary" id="saveStockBtn">Save Stock Take</button>
+        <div id="categorySummary"></div> 
+
+        <button type="button" class="btn btn-secondary w-100" id="saveStockBtn">
+            <i class="bx bx-save"></i>
+            Stock Take
+        </button>
     </div>
 
 <script>
-    fetch('/finance/end_of_day/')
+fetch('/finance/end_of_day/')
     .then(response => response.json())
     .then(data => {
         const inventoryData = data.inventory;
@@ -93,21 +98,62 @@
                 });
             });
         });
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== "") {
-            const cookies = document.cookie.split(";");
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === name + "=") {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-                }
+
+fetch('{% url "inventory:product_list" %}')
+    .then(response => response.json())
+    .then(data => {
+        const inventoryData = data;
+        const categorySummary = document.getElementById('categorySummary'); // Get the container
+    
+        // Organize products by category (assuming your data structure supports this)
+        const productsByCategory = {};
+        inventoryData.forEach(item => {
+            const category = item.category_name; 
+            if (!productsByCategory[category]) {
+                productsByCategory[category] = { totalQuantity: 0, products: [] };
             }
+            productsByCategory[category].totalQuantity += parseInt(item.quantity, 10);
+            productsByCategory[category].products.push(item);
+        });
+
+        // Display category summary
+        for (const category in productsByCategory) {
+            const categoryContainer = document.createElement('div');
+            categoryContainer.className = 'category-container';
+
+            const categoryHeading = document.createElement('h6');
+            categoryHeading.classList.add('fw-bold')
+            categoryHeading.textContent = `${category} (Total Quantity: ${productsByCategory[category].totalQuantity})`;
+            categoryContainer.appendChild(categoryHeading);
+
+            const productList = document.createElement('ol');
+            productList.className = 'product-list';
+            productsByCategory[category].products.forEach(product => {
+                const productItem = document.createElement('li');
+                productItem.textContent = `${product.product_name} (At Hand: ${product.quantity})`;
+                productList.appendChild(productItem);
+            });
+            categoryContainer.appendChild(productList);
+
+            categorySummary.appendChild(categoryContainer);
+        }
+    });
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + "=") {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
             }
-            return cookieValue;
-        } 
-    </script>
+        }
+        }
+        return cookieValue;
+    } 
+</script>
 </body>
 </html>
 

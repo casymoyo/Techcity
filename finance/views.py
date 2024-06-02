@@ -308,9 +308,11 @@ def create_invoice(request):
                 'ecocash': Account.AccountType.ECOCASH,
             }
 
-            account_name = f"{currency.name} {invoice_data['payment_method'].capitalize()} Account"
+            account_name = f"{request.user.branch} {currency.name} {invoice_data['payment_method'].capitalize()} Account"
 
             account, _ = Account.objects.get_or_create(name=account_name, type=account_types[invoice_data['payment_method']])
+            
+            print(account)
             
             account_balance, _ = AccountBalance.objects.get_or_create(
                 account=account,
@@ -629,7 +631,7 @@ def customer_account(request, customer_id):
 def customer_account_json(request, customer_id):
     account = CustomerAccountBalances.objects.filter(account__customer__id=customer_id).values(
         'currency__symbol', 'balance'
-    )
+    )   
     return JsonResponse(list(account), safe=False)
     
 # currency views  
@@ -874,24 +876,27 @@ def end_of_day(request):
         .annotate(quantity_sold=Sum('quantity'))
     )
     
+    print(sold_inventory)
+    
     if request.method == 'GET':
         all_inventory = Inventory.objects.filter(branch=request.user.branch, status=True).values(
             'id', 'product__name', 'quantity'
         )
 
         inventory_data = []
-        for inv in all_inventory:
-            sold_info = next((item for item in sold_inventory if item['item__id'] == inv['id']), None)
-           
-            inventory_data.append({
-                'id': inv['id'],
-                'name': inv['product__name'],
-                'initial_quantity': inv['quantity'] + sold_info['quantity_sold'] if sold_info else 0,
-                'quantity_sold': sold_info['quantity_sold'] if sold_info else 0,
-                'remaining_quantity': inv['quantity'],
-                'physical_count': None
-            })
-
+        for item in sold_inventory:
+            sold_info = next((inv for inv in all_inventory if item['item__id'] == inv['id']), None)
+            print(sold_info)
+            if sold_info:
+                inventory_data.append({
+                    'id': item['item__id'],
+                    'name': item['item__name'],
+                    'initial_quantity': item['quantity_sold'] + sold_info['quantity'] if sold_info else 0,
+                    'quantity_sold':  item['quantity_sold'],
+                    'remaining_quantity':sold_info['quantity'] if sold_info else 0,
+                    'physical_count': None
+                })
+            print(inventory_data)
         return JsonResponse({'inventory': inventory_data})
     
     elif request.method == 'POST':

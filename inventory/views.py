@@ -36,7 +36,7 @@ def product_list(request):
         queryset = queryset.filter(id=product_id)
 
     inventory_data = list(queryset.values(
-        'id', 'product__id', 'product__name', 'product__description', 'product__category__id', 'price', 'quantity'
+        'id', 'product__id', 'product__name', 'product__description', 'product__category__id', 'product__category__name',  'price', 'quantity'
     ))
     
     merged_data = [{
@@ -45,6 +45,7 @@ def product_list(request):
         'product_name':item['product__name'],
         'description': item['product__description'],
         'category': item['product__category__id'],
+        'category_name': item['product__category__name'],
         'price': item['price'],
         'quantity': item['quantity'],
     } for item in inventory_data]
