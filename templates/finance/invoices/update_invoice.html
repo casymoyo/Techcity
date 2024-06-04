@@ -56,7 +56,7 @@
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <p class="mt-2">Updating Invoice</p>
+                        <p id='error_message' class="mt-2 ">Updating Invoice</p>
                     </div>
                 </div>
             </div>
@@ -65,8 +65,8 @@
    
    <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>
    <script>
-        let paymentMethod = 'cash'
-        const error = document.querySelector('#id_amount_error')
+        let paymentMethod = ''
+        {% comment %} const error = document.querySelector('#id_amount_error') {% endcomment %}
         const loaderModal = new bootstrap.Modal(document.getElementById('loaderModal'));
 
         // payment methods
@@ -86,36 +86,53 @@
         // update payment
         function updatePayment(){
             const invoice_id = {{invoice.id}}
+            const error = document.querySelector('#error_message');
+            const amount_paid = parseFloat(document.querySelector('#id_amount_paid').value);
+            let validation = false
+
             const data = {
-                amount_paid: parseFloat(document.querySelector('#id_amount_paid').value),
+                amount_paid: amount_paid,
                 payment_method: paymentMethod
             }
-            console.log(data, document.querySelector('#id_amount_paid').value)
 
             loaderModal.show(); 
-    
-            fetch(`/finance/invoice/update/${invoice_id}/`, {
-                method: "POST",
-                headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCookie("csrftoken"), 
-                },
-                body: JSON.stringify(data),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loaderModal.hide()
-                    window.location.href='{% url "finance:invoice" %}'
-                } else {
-                    loaderModal.hide()
-                    error.textContent='*' + data.message
-                }
-            })
-            .catch((error) => {
-            console.error("Error:", error);
-            });
-    
+
+            let customerName = '{{invoice.customer.name}}'
+            error.textContent = `Updating ${customerName}(s) invoice`
+
+            if (paymentMethod == ''){
+                error.textContent = `Please choose payment method`
+            }
+            else if (amount_paid == '' || amount_paid < 0){
+                error.textContent = `Amount cannot be zero or negative `
+            }
+            else{
+                validation = true
+            }
+
+           if(validation){
+                fetch(`/finance/invoice/update/${invoice_id}/`, {
+                    method: "POST",
+                    headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken"), 
+                    },
+                    body: JSON.stringify(data),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loaderModal.hide()
+                        window.location.href='{% url "finance:invoice" %}'
+                    } else {
+                        loaderModal.hide()
+                        error.textContent='*' + data.message
+                    }
+                })
+                .catch((error) => {
+                console.error("Error:", error);
+                });
+            }
         }
 
         function getCookie(name) {

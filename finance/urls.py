@@ -31,7 +31,9 @@ urlpatterns = [
     path('customer/account/<int:customer_id>/', customer_account, name='customer'),
     path('customers/update/<int:customer_id>/', update_customer, name='update_customer'),
     path('customer/delete/<int:customer_id>/delete/', delete_customer, name='customer_delete'),
+    path('customer/payments/json/', customer_account_payments_json, name='customer_payments_json'),
     path('customer/account/json/<int:customer_id>/', customer_account_json, name='customer_account_json'),
+    path('customer/transactions/json/', customer_account_transactions_json, name='customer_transactions_json'),
     
     #currency
     path('currency/', currency, name='currency'),

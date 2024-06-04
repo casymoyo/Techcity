@@ -1,0 +1,22 @@
+{% extends 'base.html' %} 
+{% load crispy_forms_tags %} 
+
+{% block content %}
+    <h5 class="fw-bold mt-2 mb-2">{% if branch %}Edit Branch{% else %}Add Branch{% endif %}</h5>
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }} 
+        <div class='d-flex justify-content-end'>
+            <button type="submit" class="btn btn-danger btn-sm">
+                <i class='bx bx-reset'></i>
+                reset
+            </button>
+            <span class='px-2'>
+                <button type="submit" class="btn btn-secondary btn-sm">
+                    <i class='bx bx-save'></i>
+                    save
+                </button>
+            </span>
+        </div>
+    </form>
+{% endblock %}

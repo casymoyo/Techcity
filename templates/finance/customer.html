@@ -5,32 +5,6 @@
 {% block content %}
 <div class="finance d-flex">
     <div class="px-2 main-content ">
-        <div class="finance-navbar mt-2">
-            <nav class="d-flex justify-content-between align-items-center p-2 border rounded">
-                <div class="d-flex w-100 justify-content-between">
-                    <div class='mt-1'>
-                        <h4 class='fw-bold'>{{customer.name}}</h4>
-                    </div>
-                    <div class='px-1 d-flex'> 
-                        <form method="get">
-                            <input type="search" name='search_query' type="text" class='form-control' value='{{search_query}}' placeholder='search...'/>
-                        </form>
-                        <span class='px-1'></span>
-                        <form method='get' class='d-flex'>
-                            <select name='q' class='form-control' value="{{q}}">
-                                <option value=''>All</option>
-                                <option value='Paid'>Paid</option>
-                                <option value='Partial'>Partial</option>
-                            </select>
-                            <span class='px-1'></span>
-                            <button class='btn btn-light btn-sm'>
-                                <i class='bx bx-filter'></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </nav>
-        </div>
         <div class='row mt-2 px-2'>
             <div class='col shadow rounded px-1'>
                 <div class='img mt-4 d-flex align-items-center flex-column'>
@@ -45,7 +19,8 @@
                             </div>
                         {% endif %}
                     {% endwith %}
-                   <div class="mt-2">
+                    <h6 class='fw-bold mt-2'>{{ customer.name }}</h6>
+                   <div class="mt-2 text-center">
                         <small>
                             <span>
                                 <i class='bx bx-user'></i>
@@ -72,99 +47,214 @@
                     <div class='card-body rounded'>
                         <h6>Account</h6>
                         {% for balance in account %}
-                        <h6 class='text-center text-light text-muted'>{{balance.currency.symbol}} {{balance.balance}}</h6>
+                        <h6 class='text-center text-light fw-bold text-muted'>{{balance.currency.symbol}} {{balance.balance}}</h6>
                         {% endfor %}
                     </div>
                 </div>
                 <div class='card mt-2'>
                     <div class='card-body rounded'>
                         <h6>Invoice Count</h6>
-                        <h6 class='text-center text-light text-muted'>{{invoice_count}}</h6>
-                        <h6 class='text-center text-light text-muted'></h6>
+                        <h6 class='text-center text-light fw-bold text-muted'>{{invoice_count}}</h6>
                     </div>
                 </div>
             </div>
         </div>
         
         <div class='mt-3 mb-3'>
-            <div class='mt-2 fw-bold'>Transactions</div>
+            <nav class='recent-nav navbar navbar-expand-lg navbar-light bg-light px-2'>
+                <ul class='navbar-nav items  mr-auto'>
+                    <li class='nav-item active' data-name="transactions">Transactions</li>
+                    <li class='nav-item px-2' data-name="payments">Account Payments</li>
+                </ul>
+            </nav>
         </div>
         
-        <table class="table border rounded table-responsive table-sm p-2">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Invoice #</th>
-                    <th>Amount Paid</th>
-                    <th>Amount Due</th>
-                    <th>Amount</th>
-                    <th>Processed by</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for invoice in invoices %}
-                    <tr style='color: #6c757d;'>
-                        {% if invoice.payment_status == 'Paid'%}
-                            <td><small>{{invoice.issue_date}}</small></td>
-                            <td><small>#{{invoice.invoice_number}}</small></td>
-                            <td>{{invoice.amount_paid}}</td>
-                            <td>{{invoice.amount_due}}</td>
-                            <td>${{invoice.amount}}</td>
-                            <td>{{invoice.user.username}}</td>
-                            <td>
-                                <span>
-                                    <a href="{% url 'finance:invoice_preview' invoice.id %}" class='btn btn-light btn-sm'>
-                                        <i class='bx bx-show'></i>
-                                    </a>
-                                </span>  
-                            </td>
-                        {% else %}
-                            <td class='text-danger'><small>{{invoice.issue_date}}</small></td>
-                            <td class='text-danger'><small>#{{invoice.invoice_number}}</small></td>
-                            <td class='text-danger'>{{invoice.amount_paid}}</td>
-                            <td class='text-danger'>{{invoice.amount_due}}</td>
-                            <td class='text-danger'>${{invoice.amount}}</td>
-                            <td class='text-danger'>{{invoice.user.username}}</td>
-                            <td>
-                                <span>
-                                    <a href="{% url 'finance:invoice_preview' invoice.id %}" class='btn btn-light btn-sm'>
-                                        <i class='bx bx-show'></i>
-                                    </a>
-                                </span>  
-                            </td>
-                        {% endif %}
+        <div class='transactions'>
+            <div class="d-flex mb-3">
+                <input
+                    type="search"
+                    id="invoice_q"
+                    name="invoice_q"
+                    placeholder="search by invoice number"
+                    class="form-control"
+                />
+            </div>
+            <table class="table border rounded table-hover table-responsive table-sm p-2">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Invoice #</th>
+                        <th>Product(s)</th>
+                        <th>Amount Paid</th>
+                        <th>Amount Due</th>
+                        <th>Amount</th>
+                        <th>Processed by</th>
+                        <th>Action</th>
                     </tr>
-                {% endfor %}
-            </tbody>  
-        </table>
-    </div>
+                </thead>
+                <tbody id="transaction_items"></tbody>  
+            </table>
+        </div>
 
-    <div class="invoice-modal hidden">
-        <div class="modal-content">
-            {% include 'finance/expenses/add_expense.html'%}
+        <div class='payments hidden'>
+            <div class="d-flex mb-3">
+                <input
+                    type="search"
+                    id="trans_q"
+                    name="trans_q"
+                    placeholder="search by invoice number"
+                    class="form-control"
+                />
+                <span>
+                    <button type="button" id="viewBtn" class="btn btn-light btn-sm"><small>view statement</small></button>
+                </span>
+            </div>
+            <table class="table border rounded table-hover table-responsive table-sm p-2">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Invoice #</th>
+                        <th>Amount Paid</th>
+                        <th>Invoice Amount</th>
+                        <th>Amount Due</th>
+                        <th>Processed by</th>
+                    </tr>
+                </thead>
+                <tbody id="payments"></tbody>  
+            </table>
         </div>
     </div>
-    <div class="overlay hidden"></div>
+
+    <div class="modal fade" id="accountModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    {% include 'finance/customers/account_statement.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
+<script src="{% static 'js/jquery.js'%}"></script> 
+<script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script> 
 <script type="text/javascript">
-    const modal = document.querySelector('.invoice-modal')
-    const overlay = document.querySelector('.overlay')
-    const expButton = document.querySelector('#id_expense_button')
+    let paymentsData= []
+    let transactionsData= []
+
+    const trans = $('.transactions')
+    const payments = $('.payments')
+    const navButtons = document.querySelectorAll('.nav-item')
+
+    const transactionsTable = document.querySelector('#transaction_items')
+    const paymentsTable = document.querySelector('#payments')
+
+    const viewBtn = document.querySelector('#viewBtn')
+    const accountModal = new bootstrap.Modal(document.querySelector('#accountModal'))
+
+    viewBtn.addEventListener('click', ()=>{
+        accountModal.show()
+    })
+
+    navButtons.forEach((btn)=>{
+        btn.addEventListener(
+            'click', ()=>{
+                navButtons.forEach(b => b.classList.remove('active')); 
+                event.target.classList.add('active'); 
+                show(btn.dataset.name)
+            }
+        )
+    })
+
+    function show(name){
+        trans.addClass('hidden')
+        payments.addClass('hidden')
+        $(`.${name}`).removeClass('hidden'); 
+    }
+
+    // transactions
+    $.ajax({
+        url: '{% url "finance:customer_transactions_json" %}',
+        type: 'GET',
+        data: {'type': 'invoices', 'customer_id': {{customer.id}}},
+        }).done(function(response) {
+            const data = response
+            console.log(data)
+            transactionsData.push(data)
+            displayTransactionTable(data)
+    })
+
+    // transaction search 
+    document.querySelector('#invoice_q').addEventListener('input', ()=>{
+        const search_q = document.querySelector('#invoice_q').value
+        let filteredData = transactionsData[0].filter((data)=>{
+            return(data.invoice_number.includes(search_q))
+        })
+        transactionsTable.innerHTML=''
+        displayTransactionTable(filteredData)
+    })
+
+    // transaction display
+    function displayTransactionTable(data){
+        data.forEach((data)=>{
+            transactionsTable.innerHTML += `
+            <tr>
+                <td><small>${new Date(data.issue_date).toDateString()}<small></td>
+                <td><small>#${data.invoice_number}</small></td>
+                <td><small>${data.products_purchased}</small></td>
+                <td><small>${data.amount_paid}</small></td>
+                <td><small>${data.amount_due}</small></td>
+                <td><small>${data.amount}</small></td>
+                <td><small>${data.user__username}</small></td>
+                <td>
+                    <span>
+                        <a href="/finance/invoice/preview/${data.id}/" class="text-dark">
+                            <i class='bx bx-show'></i>
+                        </a>
+                    </span>  
+                </td>
+        `
+        })
+    }
     
-    expButton.addEventListener(
-        'click', ()=>{
-            modal.classList.remove('hidden')
-            overlay.classList.remove('hidden')
-        }
-    )
+    // payments
+    $.ajax({
+        url: '{% url "finance:customer_payments_json" %}',
+        type: 'GET',
+        data: {'type': 'invoice_payments', 'customer_id': {{customer.id}}},
+        }).done(function(response) {
+            const data = response
+            console.log(data)
+            paymentsData.push(data)
+            displaypaymentsTable(data)
+    })
+
+    // payment search 
+    document.querySelector('#trans_q').addEventListener('input', ()=>{
+        const search_q = document.querySelector('#trans_q').value
+        let filteredData = paymentsData[0].filter((data)=>{
+            return(data.invoice__invoice_number.includes(search_q))
+        })
+        paymentsTable.innerHTML=''
+        displaypaymentsTable(filteredData)
+    })
+
+    // payment display
+    function displaypaymentsTable(data){
+        data.forEach((data)=>{
+            paymentsTable.innerHTML += `
+            <tr>
+                <td><small>${new Date(data.payment_date).toDateString()}</small></td>
+                <td><small>#${data.invoice__invoice_number}</small></td>
+                <td><small>${data.invoice__currency__symbol} ${data.amount_paid}</small></td>
+                <td><small>${data.invoice__currency__symbol} ${data.invoice__amount}</small></td>
+                <td><small>${data.invoice__currency__symbol} ${data.invoice__amount_due}</small></td>
+                <td><small>${data.user__username}</small></td>
+            `
+        })
+    }
     
-    document.querySelector('#btn-close').addEventListener(
-        'click', ()=>{
-            modal.classList.add('hidden')
-            overlay.classList.add('hidden')
-        }
-    ) 
+
 </script>
 {% endblock content %}

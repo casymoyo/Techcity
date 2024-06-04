@@ -43,8 +43,6 @@ class Finance(View):
         
         # Recent Transactions
         recent_sales = Sale.objects.filter(transaction__branch=request.user.branch).order_by('-date')[:5]
-        
-        print(recent_sales)
 
         # 3. Expense Summary (Optional)
         expenses_by_category = Expense.objects.values('category__name').annotate(
@@ -196,11 +194,12 @@ def invoice(request):
         )
 
     if day == 'today':
-        invoices = invoices.filter(issue_date=today)
+        invoices = invoices.filter(issue_date=timezone.now() - timedelta(days=2))
 
     if day == 'yesterday':
         yesterday = today - timedelta(days=1)
         invoices = invoices.filter(issue_date=yesterday)
+        
 
     if day == 't_week':
         start_of_week = today - timedelta(days=today.weekday())
@@ -247,24 +246,23 @@ def update_invoice(request, invoice_id):
     
     if request.method == 'POST':
         data = json.loads(request.body)
-    
-        amount_paid = Decimal(data['amount_paid'])
         
-        if amount_paid < 0:
-            return JsonResponse({'success':False, 'message':'Amount cant be below zero'})
+        amount_paid = Decimal(data['amount_paid'])
         
         if Decimal(amount_paid) >= invoice.amount_due:
             invoice.payment_status=invoice.PaymentStatus.PAID
             invoice.amount_due = 0
+            print(amount_paid)
         else:
             invoice.amount_due -= Decimal(amount_paid)
-            
+            print('here')
         invoice.amount_paid += Decimal(amount_paid)
             
         Payment.objects.create(
             invoice=invoice,
             amount_paid=Decimal(amount_paid),
-            payment_method=data['payment_method']
+            payment_method=data['payment_method'],
+            user=request.user
         )
         
         account_types = {
@@ -354,7 +352,8 @@ def create_invoice(request):
                     Payment.objects.create(
                         invoice=due_invoice,
                         amount_paid=due_invoice.amount_due,
-                        payment_method='Cash'
+                        payment_method=invoice_data['payment_method'],
+                        user=request.user
                     )
                     
                     customer_account_balance.balance -= due_invoice.amount_due
@@ -367,7 +366,8 @@ def create_invoice(request):
                     Payment.objects.create(
                         invoice=due_invoice,
                         amount_paid=amount_paid,
-                        payment_method='Cash'
+                        payment_method=invoice_data['payment_method'],
+                        user=request.user
                     )
         
                     customer_account_balance.balance -= amount_paid
@@ -468,7 +468,8 @@ def create_invoice(request):
                 Payment.objects.create(
                     invoice=invoice,
                     amount_paid=amount_paid,
-                    payment_method=invoice_data['payment_method']
+                    payment_method=invoice_data['payment_method'],
+                    user=request.user
                 )
                 
                 # updae account balance
@@ -567,8 +568,14 @@ def customer_list(request):
             column_letter = openpyxl.utils.get_column_letter(col_num)
             worksheet.column_dimensions[column_letter].width = max(len(header_title), 20)
 
-        for customer in customers:
-            worksheet.append([customer.customer.name, customer.customer.phone_number, customer.customer.email, customer.balance])  
+        customer_accounts = CustomerAccountBalances.objects.all()
+        for customer in customer_accounts:
+            worksheet.append(
+                [customer.account.customer.name, 
+                 customer.account.customer.phone_number, 
+                 customer.account.customer.email, 
+                 customer.balance if customer.balance else 0,
+                ])  
             
         workbook.save(response)
         return response
@@ -605,27 +612,90 @@ def delete_customer(request, customer_id):
 def customer_account(request, customer_id):
     q = request.GET.get('q', '')
     search_query = request.GET.get('search_query', '')
+    send_mail = request.GET.get('email_bool', '')
     
     customer = Customer.objects.get(id=customer_id)
     account = CustomerAccountBalances.objects.filter(account__customer=customer)
+    
     invoices = Invoice.objects.filter(customer=customer, branch=request.user.branch, status=True)
+
+    invoice_payments = Payment.objects.filter(invoice__branch=request.user.branch, invoice__customer=customer).order_by('-payment_date')
     
     if q:
         invoices = invoices.filter(payment_status=q)
+        
     if search_query:
         invoices = invoices.filter(Q(invoice_number__icontains=search_query) | Q(issue_date__icontains=search_query) )
+        
+    if send_mail:
+        html_string = render_to_string('finance/customers/email_temp.html', {"invoice_payments":invoice_payments, "customer":customer, 'request':request})
+        buffer = BytesIO()
+
+        pisa.CreatePDF(html_string, dest=buffer) 
+
+        email = EmailMessage(
+            'Your Account Statement',
+            'Please find your invoice attached.',
+            'your_email@example.com',
+            ['recipient_email@example.com'],
+        )
+        
+        buffer.seek(0)
+        email.attach(f'account statement({customer.name}).pdf', buffer.getvalue(), 'application/pdf')
+        
+        buffer.seek(0)
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename=account statement({customer.name}).pdf'
+
+        email.send()
+        return response
+        # return JsonResponse({'message': 'Email sent'})
 
     
     return render(request, 'finance/customer.html', {
         'q':q,
         'account':account,
-        'invoice_count':invoices.count(),
         'invoices':invoices,
         'customer':customer,
         'search_query':search_query,
+        'invoice_count':invoices.count(),
+        'invoice_payments':invoice_payments,
         'paid':Invoice.objects.filter(payment_status='Paid', customer=customer, branch=request.user.branch, status=True).count(),
         'due':Invoice.objects.filter(payment_status='Partial', customer=customer, branch=request.user.branch, status=True).count(),
     })
+    
+@login_required    
+def customer_account_transactions_json(request):
+    customer_id = request.GET.get('customer_id', '')
+    transaction_type = request.GET.get('type', '')
+    
+    customer = Customer.objects.get(id=customer_id)
+    
+    invoices = Invoice.objects.filter(customer=customer, branch=request.user.branch, status=True).order_by('-issue_date').values(
+        'issue_date', 'invoice_number', 'products_purchased', 'amount_paid', 'amount_due', 'amount', 'user__username'
+    )
+    
+    if transaction_type == 'invoices':
+        return JsonResponse(list(invoices), safe=False)
+    
+    
+    return JsonResponse({'message': f'Error fetching {customer.name} data.'})
+
+@login_required    
+def customer_account_payments_json(request):
+    customer_id = request.GET.get('customer_id', '')
+    transaction_type = request.GET.get('type', '')
+    
+    customer = Customer.objects.get(id=customer_id)
+    
+    invoice_payments = Payment.objects.filter(invoice__branch=request.user.branch, invoice__customer=customer).order_by('-payment_date').values(
+        'payment_date', 'invoice__invoice_number', 'invoice__currency__symbol', 'invoice__amount_due', 'invoice__amount', 'user__username', 'amount_paid'
+    )
+
+    if transaction_type == 'invoice_payments':
+        return JsonResponse(list(invoice_payments), safe=False)
+    
+    return JsonResponse({'message': f'Error fetching {customer.name} data.'})
 
 @login_required
 def customer_account_json(request, customer_id):
@@ -735,6 +805,7 @@ def expenses_report(request):
         }
     )
 
+
 @login_required 
 def invoice_preview(request, invoice_id):
     invoice = Invoice.objects.get(id=invoice_id)
@@ -767,7 +838,7 @@ def invoice_pdf(request):
         }
     )
     
-# email
+# emails
 @login_required
 def send_invoice_email(request):
     if request.method == 'POST':
@@ -803,6 +874,7 @@ def send_invoice_email(request):
         
         return response
     return JsonResponse({'success': False, 'error':'error'})
+
 
 #whatsapp
 @login_required
@@ -1002,10 +1074,17 @@ def end_of_day(request):
     
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
-def invoice_payment_track(request, invoice_id):
-    invoice = Invoice.objects.get(id=invoice_id)
-    payments = Payment.objects.filter(invoice=invoice)
-    return render(request, 'finance/payments.html', {'invoice':invoice, 'payments':payments})
+@login_required
+def invoice_payment_track(request):
+    invoice_id = request.GET.get('invoice_id', '')
+    
+    if invoice_id:
+        payments = Payment.objects.filter(invoice__id=invoice_id).order_by('-payment_date').values(
+            'payment_date', 'amount_paid', 'payment_method', 'user__username'
+        )
+    return JsonResponse(list(payments), safe=False)
+
+
 
 @login_required
 def day_report(request, inventory_data):

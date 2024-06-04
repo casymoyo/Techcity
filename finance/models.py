@@ -276,3 +276,7 @@ class Payment(models.Model):
         ('credit_card', 'Credit Card'),
         ('Ecocash','Ecocash')
     ])
+    user = models.ForeignKey('users.user', on_delete=models.PROTECT)
+    
+    def __str__(self):
+        return f'{self.invoice.invoice_number} {self.amount_paid}'

@@ -8,11 +8,11 @@
         <div class="customer-navbar mt-2">
             <nav class="d-flex justify-content-between align-items-center p-2 border rounded">
                 <div class="mt-2">
-                    <h5>Customers</h5>
+                    <h5 class='fw-bold'>Customers</h5>
                 </div>
                 <div class='d-flex'>
-                    <a href="?download=true" class="btn btn-secondary btn-sm">
-                        <i class='bx bx-download mt-1'></i>
+                    <a href="?download=true" class="btn btn-sm">
+                        <i class='bx bx-file mt-1'></i>
                     </a> 
                     <form method="get" class='px-2'>
                         <div>
@@ -29,14 +29,13 @@
                 </div>
             </nav>
         </div>
-        <table class="table border rounded p-2 mt-2">
-            <thead>
+        <table class="table border table-hover rounded p-2 mt-2">
+            <thead class='bg-primary'>
                 <tr>
                     <th>Name</th>
                     <th>Cellphone</th>
                     <th>Email</th>
-                    <th>Account</th>
-                    <th></th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -60,7 +59,7 @@
                         </td>
                         <td>
                             <div class='td-contents'>
-                                <a href='https://wa.me/{{customer.customer.phone_number}}' class="text-success">
+                                <a href='https://wa.me/{{customer.customer.phone_number}}' class="text-dark">
                                     <i class='bx bxl-whatsapp'></i>
                                     {{customer.customer.phone_number}}
                                 </a>
@@ -75,48 +74,49 @@
                            </div>
                         </td>
                         <td>
-                            <div class='td-contents'>
-                                {{customer.balance}}
-                            </div>
-                        </td>
-                        <td>
                             <div class='td-contents'>                   
-                                <a href="{% url 'finance:update_customer' customer.customer.id %}"  class="btn btn-light btn-sm text-primary">
+                                <a href="{% url 'finance:update_customer' customer.customer.id %}" class='text-dark'>
                                     <i class='bx bx-edit'></i>
                                 </a>
-                                <button disabled type='button' data-id="{{customer.customer.id}}" id="delete" onclick="productId(this)" class="btn btn-light btn-sm text-danger">
+                                <span disabled type='button' data-id="{{customer.customer.id}}" id="delete" onclick="productId(this)" class="btn text-dark">
                                     <i class='bx bx-trash'></i>
-                                </button>
+                                </span>
                             </div>
                         </td>
                     </tr>
                 {% endfor %}
             </tbody>  
         </table>
-        <div class="delete-modal hidden">
-            <div class="modal-content d-flex justify-content-center align-items-center mt-5">
-                <p class="fs-4 fw-bold">Confirm Product deletion</p>
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <p class="fs-4 fw-bold text-center">Confirm Product Deletion</p>
                 <div>
-                    <button class="btn btn-secondary btn-sm yes">
+                    <button class="btn btn-secondary w-100 yes">
                         yes
                     </button>
                 </div>
-                <div>
-                    <button id="btn-close" class="btn btn-danger btn-sm">
-                        no
-                    </button>
                 </div>
             </div>
         </div>
-        <div class="overlay hidden"></div>
+    </div>
+    <div class="modal fade" id="endOfDayModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    {% include 'end_of_day_modal.html' %}
+                </div>
+            </div>
+        </div>
     </div>
 </div> 
 
+<script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>
 <script src="{% static 'js/jquery.js'%}"></script>
 <script>
     let customer_id = ''
-    const modal = document.querySelector('.delete-modal')
-    const overlay = document.querySelector('.overlay')
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'))
     const deleteButtons = document.querySelectorAll('#delete')
 
     const productId=(element)=>{
@@ -127,8 +127,7 @@
     deleteButtons.forEach((button)=>{
         button.addEventListener(
             'click', ()=>{
-                modal.classList.remove('hidden')
-                overlay.classList.remove('hidden')
+               deleteModal.show()
             }
         )
     })
@@ -139,12 +138,6 @@
         }
     )
 
-    document.querySelector('#btn-close').addEventListener(
-        'click', ()=>{
-            modal.classList.add('hidden')
-            overlay.classList.add('hidden')
-        }
-    )
 
     async function deleteCustomer(customerId) {
         const response = await fetch(`/finance/customer/delete/${customerId}/delete/`, {
@@ -159,6 +152,7 @@
     
         if (data.status === 'success') {
             alert(data.message); 
+            window.location.reload()
         } else {
             alert(data.message); 
         }

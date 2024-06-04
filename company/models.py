@@ -46,8 +46,9 @@ class Branch(models.Model):
 
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
-    description = models.TextField(blank=True) 
     address = models.CharField(max_length=255, blank=True)  
+    phonenumber = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(max_length=255, blank=True)
     
     def __str__(self) -> str:
         return self.name
