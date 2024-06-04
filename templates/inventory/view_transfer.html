@@ -14,29 +14,7 @@
                 <th>Destination</th>
                 <th>Actions</th>
             </tr>
-            <tbody id='transfersTable'>
-                {% for transfer in transfers %}
-                    <tr>
-                        <td><small>{{transfer.product.name}}</small></td>
-                        <td><small>{{transfer.quantity}}</small></td>
-                        <td><small>{{transfer.from_branch}}</small></td>
-                        <td><small>{{transfer.to_branch}}</small></td>
-                        <td>
-                            <span>
-                                {% if transfer.declined == False %}
-                                    {% if transfer.received == False %}
-                                        <small>not yet received</small>
-                                    {% else %}
-                                       <small class='text-success'>Recieved</small>
-                                    {% endif %}
-                                {% else %}
-                                    <small class='text-danger'>Declined</small>
-                                {% endif %}
-                            </span>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
+            <tbody id='transfersTable'></tbody>
         </table>
         
         <div class=''>
@@ -73,31 +51,30 @@
                 data.foreach((data)=>{
                     transfersTable.innerHTML=`
                     <tr>
-                        <td><small>${new Date(data.date).toLocaleDateString}</small></td>
+                        <td><small>${new Date(data.date).toLocaleDateString()}</small></td>
                         <td><small>{data.product__name}</small></td>
                         <td><small>{data.quantity}</small></td>
                         <td><small>{data.from_branch__name}</small></td>
                         <td><small>{data.to_branch__name}</small></td>
                         <td>
                             <span>
-                                {if data.declined == False %}
-                                    {% if transfer.received == False %}
-                                        <small>not yet received</small>
-                                    {% else %}
-                                       <small class='text-success'>Recieved</small>
-                                    {% endif %}
-                                {% else %}
-                                    <small class='text-danger'>Declined</small>
-                                {% endif %}
+                              ${data.declined ? (
+                                `<small class='text-danger'>Declined</small>`
+                              ) : (
+                                data.received ? (
+                                  `<small class='text-success'>Received</small>`
+                                ) : (
+                                  `<small>Not yet received</small>`
+                                )
+                              )}
                             </span>
-                        </td>
+                          </td>
+                  
                     </tr>
                     `
                 })
             }
 
-
-            
             $('#transfers').submit(function(e) {
                 const data = {
                     product: $('#id_product').val(),

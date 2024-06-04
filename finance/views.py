@@ -643,13 +643,7 @@ def customer_account(request, customer_id):
         buffer.seek(0)
         email.attach(f'account statement({customer.name}).pdf', buffer.getvalue(), 'application/pdf')
         
-        buffer.seek(0)
-        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename=account statement({customer.name}).pdf'
-
-        email.send()
-        return response
-        # return JsonResponse({'message': 'Email sent'})
+        return JsonResponse({'message': 'Email sent'})
 
     
     return render(request, 'finance/customer.html', {
