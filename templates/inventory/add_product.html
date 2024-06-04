@@ -5,18 +5,13 @@
 {% block content %}
    <div class="inventory">
         <div class='add-product'>
-            <div class='add-product-nav rounded bg-light d-flex mt-2 py-3 px-2 align-items-center'>
+            <div class='add-product-nav rounded d-flex py-3 px-2 align-items-center'>
                 <div>
-                    <a href='{% url 'inventory:inventory'%}' class='btn btn-primary btn-sm'>
-                        <i class='bx bx-left-arrow-alt'></i>
-                    </a>
-                </div>
-                <div>
-                    <p class='fw-normal px-2 mt-3'>Add Inventory</p>
+                    <h5 class='fw-normal px-2 mt-3 fw-bold'>Add Inventory</h5>
                 </div>
             </div>
             <form method="post" class='mt-2 border rounded p-2'>
-                {% csrf_token %}   
+                {% csrf_token %} 
                 <div id="div_id_batch_code" class="mb-3"> 
                     <label for="id_batch_code" class="form-label requiredField">
                         Batch code<span class="asteriskField">*</span>
@@ -102,6 +97,19 @@
                         <option value="standard">Standard</option> 
                         <option value="zero rated">Zero Rated</option>
                     </select> 
+                </div>
+                <div id="div_id_min_stock_level" class="mb-3"> 
+                    <label for="id_min_stock_level" class="form-label requiredField">
+                        Min stock level
+                        <span class="asteriskField">*</span> 
+                    </label> 
+                    <input 
+                        type="number" 
+                        name="min_stock_level" 
+                        value="0" 
+                        class="numberinput form-control" 
+                        required id="id_min_stock_level"
+                    > 
                 </div>
                 <div id="div_id_description" class="mb-3"> 
                     <label for="id_description" class="form-label requiredField">

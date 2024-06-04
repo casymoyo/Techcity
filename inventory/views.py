@@ -269,24 +269,38 @@ def edit_inventory(request, product_name):
             product = Product.objects.get(name=product_name)
             product.name=request.POST['name']
             product.batch_code=request.POST['batch_code']
-            # product.description=request.POST['description']
+            product.description=request.POST['description']
             product.save()
-    
-            inv_product.quantity = int(request.POST['quantity'])
+            
+            if inv_product.quantity < int(request.POST['quantity']):
+                quantity = int(request.POST['quantity']) - inv_product.quantity
+                inv_product.quantity += quantity
+                action = 'Stock in'
+                
+            elif inv_product.quantity > int(request.POST['quantity']):
+                quantity = inv_product.quantity - int(request.POST['quantity']) 
+                inv_product.quantity += quantity
+                action = 'Update'
+            
+            else:
+                quantity = inv_product.quantity 
+                action = 'Edit'
+                
             inv_product.price = Decimal(request.POST['price'])
             inv_product.cost = Decimal(request.POST['cost'])
+                
             inv_product.save()
             
             ActivityLog.objects.create(
                 branch = request.user.branch,
                 user=request.user,
-                action= 'Edit',
+                action= action,
                 inventory=inv_product,
-                quantity=inv_product.quantity,
-                total_quantity=inv_product.quantity
+                quantity=quantity,
+                total_quantity=inv_product.quantity,
             )
             
-            messages.success(request, 'Inventory edited succesfully')
+            messages.success(request, f'{product.name} update succesfully')
             return redirect('inventory:inventory')
         return render(request, 'inventory/inventory_form.html', {'product':inv_product})
 
@@ -502,6 +516,10 @@ def transfers_report(request):
     branch_id = request.GET.get('branch', '')
     end_date_str = request.GET.get('date_from', '') 
     start_date_str = request.GET.get('date_to', '')
+    view = request.GET.get('view', '')
+    
+    
+    
 
     if start_date_str or end_date_str: 
         try:
@@ -527,6 +545,19 @@ def transfers_report(request):
         transfers = transfers.filter(to_branch_id=branch_id)
     if start_date and end_date:
         transfers = transfers.filter(date__range=(start_date, end_date))
+        
+    if view:
+        return JsonResponse(list(transfers.values(
+                'date', 
+                'product__name', 
+                'quantity', 
+                'from_branch__name',
+                'to_branch__name'
+                'recieved',
+                'declined'
+            )), 
+            safe=False
+        )
     
     return generate_pdf(
         template_name,

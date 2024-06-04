@@ -28,6 +28,7 @@ class Product(models.Model):
     quantity = models.IntegerField(default=0, null=True)
     category = models.ForeignKey(ProductCategory, on_delete=models.SET_NULL, null=True)
     tax_type = models.CharField(max_length=50, choices=tax_choices)
+    min_stock_level = models.IntegerField(default=0, null=True)
     description = models.TextField()
     
     def __str__(self):
@@ -100,7 +101,6 @@ class ActivityLog(models.Model):
         ('returns', 'Returns'),
         ('sale', 'Sale'), 
         ('declined', 'Declined'),
-        ('Stock adj', 'Stock adj')
     ]
     
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)

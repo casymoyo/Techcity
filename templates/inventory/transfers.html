@@ -5,13 +5,9 @@
    <div class="inventory">
         <div class="inventory-navbar mt-2">
             <nav class="d-flex justify-content-between align-items-center p-2 border rounded">
-                <div class="d-flex">
-                    <div>
-                        <a href='{% url 'inventory:inventory'%}' class='btn btn-primary btn-sm'>
-                            <i class='bx bx-left-arrow-alt'></i>
-                        </a>
-                    </div>
-                    <div class='px-1'> 
+                <div class="d-flex align-items-center">
+                    <h5 class='fw-bold'>Transfers</h5>
+                    <div class='px-2'> 
                         <a href='{% url 'inventory:add_transfer' %}' class="btn btn-light btn-sm">
                             <i class='bx bx-plus'></i>
                             Transfer
@@ -58,66 +54,67 @@
             {% include "inventory/components/transfers_table.html" %}
         </div>
         <!-- transfers pdf modal -->
-        <div class="transfers-modal hidden">
-            <div class="modal-content w-100 mt-2">
-                <div class="text-center">
-                    <button class=" closebtn btn-close text-danger btn-sm"></button>
+
+        <div class="modal fade" id="transferModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <div class="d-flex justify-content-between align-items-center py-2">
+                            <div class="fs-5 fw-bold">
+                                Create transfers report
+                            </div>
+                            <hr style="border: 1px solid #333 !important;">
+                        </div>
+                        <form method="get" id='transfers'>
+                            <div class='mb-2'>
+                                <label for="id_product">Select Product</label>
+                                    <select
+                                        class="form-select"
+                                        name="branch"
+                                        id="id_product"
+                                    >
+                                        <option value="">------------</option>
+                                        <option value="">All products</option>
+                                        {% for product in inventory %}
+                                            <option value="{{product.id}}">{{product.product.name}}</option>
+                                        {% endfor %}
+                                    </select>
+                            </div>
+                            <div class='mb-2'>
+                                <label for="id_branch">Select Destination Branch</label>
+                                <select
+                                    class="form-select"
+                                    name="branch"
+                                    id="id_branch"
+                                >
+                                    <option value="">------------</option>
+                                    <option value="">All branches</option>
+                                    {% for branch in branches %}
+                                        {% if branch.name != request.user.branch.name %}
+                                            <option value="{{branch.id}}">{{branch.name}}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="py-3">Choose dates</small>
+                            <div class='mb-2'>
+                                <label for="id_from">From</label>
+                                <input type="date" name="from" id="id_from" class="form-control">
+                            </div>
+                            <div class='mb-2'>
+                                <label for="id_to">To</label>
+                                <input type="date" name="to" id="id_to" class="form-control">
+                            </div>
+                            <div class="d-flex justify-content-end mt-3">
+                                <button class="btn btn-secondary btn-sm" type="submit">
+                                    <i class='bx bx-download'></i> download
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div class="d-flex justify-content-between align-items-center py-2">
-                    <div class="fs-5 fw-bold">
-                        Create transfers report
-                    </div>
-                    <hr style="border: 1px solid #333 !important;">
-                </div>
-                <form method="get" id='transfers'>
-                    <div class='mb-2'>
-                        <label for="id_product">Select Product</label>
-                            <select
-                                class="form-select"
-                                name="branch"
-                                id="id_product"
-                            >
-                                <option value="">------------</option>
-                                <option value="">All products</option>
-                                {% for product in inventory %}
-                                    <option value="{{product.id}}">{{product.product.name}}</option>
-                                {% endfor %}
-                            </select>
-                    </div>
-                    <div class='mb-2'>
-                        <label for="id_branch">Select Destination Branch</label>
-                        <select
-                            class="form-select"
-                            name="branch"
-                            id="id_branch"
-                        >
-                            <option value="">------------</option>
-                            <option value="">All branches</option>
-                            {% for branch in branches %}
-                                {% if branch.name != request.user.branch.name %}
-                                    <option value="{{branch.id}}">{{branch.name}}</option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <small class="py-3">Choose dates</small>
-                    <div class='mb-2'>
-                        <label for="id_from">From</label>
-                        <input type="date" name="from" id="id_from" class="form-control">
-                    </div>
-                    <div class='mb-2'>
-                        <label for="id_to">To</label>
-                        <input type="date" name="to" id="id_to" class="form-control">
-                    </div>
-                    <div class="d-flex justify-content-end mt-3">
-                        <button class="btn btn-secondary btn-sm" type="submit">
-                            <i class='bx bx-download'></i> download
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
-        <div class="overlay hidden"></div>
    </div>  
    <script>
         document.addEventListener('DOMContentLoaded', (event) => {
@@ -125,19 +122,15 @@
             const modal = document.querySelector('.transfers-modal');
             const closeModalBtn = document.querySelector(".btn-close");
 
+            const transferModal = new bootstrap.Modal(document.querySelector('#transferModal'))
+
             document.querySelector('.pdf-gen').addEventListener(
                 'click', ()=>{
-                    modal.classList.remove("hidden");
-                    overlay.classList.remove("hidden");
+                    transferModal.show()
                 }
             )
 
-            closeModalBtn.addEventListener(
-                'click', ()=>{
-                    modal.classList.add("hidden");
-                    overlay.classList.add("hidden");
-                }
-            )
+            
 
             $('#transfers').submit(function(e) {
                 e.preventDefault();

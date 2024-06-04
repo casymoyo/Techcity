@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             model_name="payment",
             name="user",
             field=models.ForeignKey(
-                default=4,
+                default=1,
                 on_delete=django.db.models.deletion.PROTECT,
                 to=settings.AUTH_USER_MODEL,
             ),

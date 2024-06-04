@@ -60,15 +60,18 @@
                             {% else %}
                                 <td data-id="{{log.product_transfer.id}}" id="transfer" style="cursor:pointer;">{{log.product_transfer.transfer_ref}}</td>
                             {% endif %}
-                            <td>{% if log.action == 'Create' or log.action == 'Update' %}
+                            <td>
+                                {% if log.action == 'Stock in' or log.action == 'Update' %}
                                     <span class='text-success'>{{log.quantity}}</span>
                                     <i class='text-success bx bx-chevron-up'></i>
-                                {% elif log.action == 'Edit'%}
-                                    <span class='text-primary'>{{log.quantity}}</span>
-                                    <i class='text-primary bx bxs-circle bx-rotate-90 bx-tada' undefined ></i>
+                                {% elif log.action == 'Update'%}
+                                    <span class='text-danger'>{{log.quantity}}</span>
+                                    <i class='text-danger bx bx-chevron-down'></i>
                                 {% elif log.action == 'Decline'%}
                                     <span class='text-danger'>{{log.quantity}}</span>
-                                    <i class='text-danger bx bxs-circle bx-rotate-90 bx-tada' undefined ></i>
+                                    <i class='text-danger bx bxs-circle bx-rotate-90 bx-tada'></i>
+                                {% elif log.action == 'Edit'%}
+                                    <span class='text-dark'>{{log.quantity}}</span>
                                 {% else %}
                                     <span class='text-danger'>{{log.quantity}}</span>
                                     <i class='text-danger bx bx-chevron-down'></i>

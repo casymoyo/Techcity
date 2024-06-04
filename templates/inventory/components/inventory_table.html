@@ -2,14 +2,16 @@
 {% block content %}
    <div class="table mt-2">
         <!-- inventory table -->
-        <table class='table border rounded p-2'>
-            <tr>
-                <th>Name</th>
-                <th>Quantity</th>
-                <th>Cost</th>
-                <th>Price</th>
-                <th>Actions</th>
-            </tr>
+        <table class='table border table-striped table-hover rounded p-2'>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Quantity</th>
+                    <th>Cost</th>
+                    <th>Price</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
             <tbody>
                 {% for product in inventory %}
                     <tr>
@@ -19,22 +21,22 @@
                         <td>${{product.price}}</td>
                         <td>
                             <span>
-                                <a href="{% url 'inventory:inventory_detail' product.id %}" class="btn btn-light btn-sm">
+                                <a href="{% url 'inventory:inventory_detail' product.id %}" class='text-dark'>
                                     <i class='bx bx-show'></i>
                                 </a>
                             </span>
                             <span>
                                 {%  if request.user.role == 'admin' %}
-                                    <a href="{% url 'inventory:edit_inventory' product.product.name %}" class="btn btn-light btn-sm text-primary">
+                                    <a href="{% url 'inventory:edit_inventory' product.product.name %}" class="text-dark">
                                         <i class='bx bx-edit-alt'></i>
                                     </a>
                                 {% endif %}
                             </span>
                             <span>
                                 {% if request.user.role == 'admin' %}
-                                    <button id='delete' data-id="{{product.id}}" onclick="productId(this)" class="btn btn-light btn-sm text-danger">
+                                    <span id='delete' data-id="{{product.id}}" onclick="productId(this)" class="text-dark">
                                         <i class='bx bx-trash-alt'></i>
-                                    </button>
+                                    </span>
                                 {% endif %}
                             </span>
                         </td>

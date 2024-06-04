@@ -4,15 +4,19 @@
         <!-- inventory table -->
         <table class='table table-striped border rounded p-2'>
             <tr>
-                <th>Name</th>
-                <th>Quantity</th>
-                <th>Source</th>
-                <th>Destination</th>
-                <th>Actions</th>
+                <thead>
+                    <th>Date</th>
+                    <th>Name</th>
+                    <th>Quantity</th>
+                    <th>Source</th>
+                    <th>Destination</th>
+                    <th>Actions</th>
+                </thead>
             </tr>
             <tbody>
                 {% for transfer in transfers %}
                     <tr>
+                        <td><small>{{transfer.date}}</small></td>
                         <td><small>{{transfer.product.name}}</small></td>
                         <td><small>{{transfer.quantity}}</small></td>
                         <td><small>{{transfer.from_branch}}</small></td>
