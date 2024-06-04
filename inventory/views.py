@@ -19,6 +19,13 @@ from django.shortcuts import render, redirect, get_object_or_404, get_list_or_40
 from permissions.permissions import admin_required, sales_required, accountant_required
 
 @login_required
+def notifications_json(request):
+    notifications = StockNotifications.objects.filter(inventory__branch=request.user.branch).values(
+        'inventory__product__name', 'type', 'notification', 'inventory__id'
+    )
+    return JsonResponse(list(notifications), safe=False)
+
+@login_required
 def product_list(request): 
     queryset = Inventory.objects.filter(branch=request.user.branch, status=True)
     search_query = request.GET.get('q', '') 
@@ -132,7 +139,8 @@ class AddProductView(View):
                 quantity=product.quantity,
                 price=product.price,
                 cost=product.cost,
-                branch=self.request.user.branch
+                branch=self.request.user.branch,
+                stock_level_threshold=product.min_stock_level
             )
             self.activity_log(log_action, inventory, inv=0)  
     
@@ -337,7 +345,7 @@ def inventory_transfers(request):
     q = request.GET.get('q', '') 
     branch_id = request.GET.get('branch', '')
 
-    transfers = Transfer.objects.filter(from_branch=request.user.branch)
+    transfers = Transfer.objects.filter(from_branch=request.user.branch).order_by('-date')
     
     if q:
         transfers = transfers.filter(Q(product__name__icontains=q) | Q(date__icontains=q) )
@@ -345,10 +353,7 @@ def inventory_transfers(request):
     if branch_id: 
         transfers =transfers.filter(to_branch__id=branch_id)
 
-    return render(request, 'inventory/transfers.html', {
-        'transfers': transfers,
-        'search_query': q  
-    })
+    return render(request, 'inventory/transfers.html', {'transfers': transfers,'search_query': q })
     
     
 @login_required
@@ -519,8 +524,6 @@ def transfers_report(request):
     view = request.GET.get('view', '')
     
     
-    
-
     if start_date_str or end_date_str: 
         try:
             end_date = datetime.date.fromisoformat(end_date_str)
@@ -535,7 +538,7 @@ def transfers_report(request):
         product_id = int(product_id) if product_id else None
         branch_id = int(branch_id) if branch_id else None
     except ValueError:
-        messages.error(request, 'Invalid product or branch ID.')
+        return JsonResponse({'messages':'Invalid product or branch ID.'})
 
     transfers = Transfer.objects.filter()  
 
@@ -547,13 +550,13 @@ def transfers_report(request):
         transfers = transfers.filter(date__range=(start_date, end_date))
         
     if view:
-        return JsonResponse(list(transfers.values(
+        return JsonResponse(list(transfers.order_by('-date').values(
                 'date', 
                 'product__name', 
                 'quantity', 
                 'from_branch__name',
-                'to_branch__name'
-                'recieved',
+                'to_branch__name',
+                'received',
                 'declined'
             )), 
             safe=False

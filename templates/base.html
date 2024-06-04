@@ -45,10 +45,58 @@
                     {% block content %}{% endblock %}
                 </div>
             </div>
+            <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog modal-dialog-right">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h5>Notifications</h5>
+                                <div>
+                                    <input
+                                        id="id_notis"
+                                        type="search"
+                                        class="form-control"
+                                        placeholder="search by type"
+                                    />
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <ul id="notis"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>    
     <script src="{% static 'js/jquery.js'%}"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        const notisModal = new bootstrap.Modal(document.querySelector('#notificationModal'))
+        const notisButton = document.querySelector('#notisBtn')
+        notisButton.addEventListener('click', ()=>{
+            notisModal.show()
+        })
+
+        $.ajax({
+            url: '{% url "inventory:notifications_json" %}',
+            type: 'GET',
+            }).done(function(response) {
+                const data = response;
+                console.log(data)
+                displayNotifications(data)
+            })
+        
+        function displayNotifications(data){
+            const ul = document.querySelector('#notis');
+
+            data.forEach((data)=>{
+                const li = document.createElement('li');
+                li.innerHTML = `<a href='/inventory/inventory-detail/${data.inventory__id}/'>` + data.notification + `</a>`
+                ul.appendChild(li);
+            })
+        }
+    </script>
 </body>
 </html>

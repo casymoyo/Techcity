@@ -1,29 +1,29 @@
+from django.dispatch import receiver, Signal
+from .models import Inventory, StockNotifications
 from django.db.models.signals import post_save, pre_delete
-from django.dispatch import receiver
-from .models import ActivityLog, Inventory
+from inventory.middleware import _request
 
-# Connect the signal to the User model's save and delete methods
-@receiver(post_save, sender=Inventory)  # Replace Inventory with the relevant model
-def log_activity_on_save(sender, instance, created, **kwargs):
-    if created:
-        action = 'create'
+@receiver(post_save, sender=Inventory)
+def low_stock_notification(sender, instance, **kwargs):
+    request = _request.request
+    
+    if instance.quantity < instance.stock_level_threshold:
+        StockNotifications.objects.create(
+            inventory = instance,
+            notification = f'{instance.product.name} stock level is now below stock threshold',
+            status = True,
+            type = 'stock level' 
+        )
     else:
-        action = 'update'
-
-    # Create an ActivityLog entry
-    ActivityLog.objects.create(
-        branch=instance.branch,
-        inventory=instance.inventory,
-        user=instance.user,
-        action=action,
-    )
-
-@receiver(pre_delete, sender=Inventory)  # Replace Inventory with the relevant model
-def log_activity_on_delete(sender, instance, **kwargs):
-    # Create a log entry for deletion
-    ActivityLog.objects.create(
-        branch=instance.branch,
-        inventory=instance.inventory,
-        user=instance.user,
-        action='delete',
-    )
+        notifications = StockNotifications.objects.filter(
+            inventory=instance, 
+            type='stock level', 
+            inventory__branch=request.user.branch,
+            status=True
+        )
+        for notification in notifications:
+            notification.status = False
+            notification.save()
+           
+       
+            

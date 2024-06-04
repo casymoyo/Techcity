@@ -106,8 +106,8 @@
                                 <input type="date" name="to" id="id_to" class="form-control">
                             </div>
                             <div class="d-flex justify-content-end mt-3">
-                                <button class="btn btn-secondary btn-sm" type="submit">
-                                    <i class='bx bx-download'></i> download
+                                <button id='viewBtn' class="btn btn-secondary btn-sm" type="button">
+                                    view
                                 </button>
                             </div>
                         </form>
@@ -115,14 +115,22 @@
                 </div>
             </div>
         </div>
+
+        <div class="modal fade" id="transferReportModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        {% include 'inventory/view_transfer.html' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
    </div>  
    <script>
         document.addEventListener('DOMContentLoaded', (event) => {
-            const overlay = document.querySelector(".overlay");
-            const modal = document.querySelector('.transfers-modal');
-            const closeModalBtn = document.querySelector(".btn-close");
-
             const transferModal = new bootstrap.Modal(document.querySelector('#transferModal'))
+            const transferReportModal = new bootstrap.Modal(document.querySelector('#transferReportModal'))
 
             document.querySelector('.pdf-gen').addEventListener(
                 'click', ()=>{
@@ -130,9 +138,61 @@
                 }
             )
 
-            
+            document.querySelector('#viewBtn').addEventListener(
+                'click', ()=>{
+                    transferReportModal.show()
+                    transfers()
+                }
+            )
+            const transfersTable = document.querySelector('#transfersTable');
 
-            $('#transfers').submit(function(e) {
+            function transfers(){
+                $.ajax({
+                    url: '{% url "inventory:transfers_report" %}',
+                    type: 'GET',
+                    data:{
+                        product: $('#id_product').val(),
+                        branch: $('#id_branch').val(),
+                        date_from: $('#id_to').val(),
+                        date_to: $('#id_from').val(),
+                        view: true,
+                    } 
+                    }).done(function(response) {
+                        const data = response;
+                        console.log(data)
+                        displayTransfersTable(data);
+                    })
+            } 
+
+            function displayTransfersTable(data){
+                transfersTable.innerHTML = ''
+                data.forEach((data)=>{
+                    transfersTable.innerHTML +=`
+                    <tr>
+                        <td><small>${new Date(data.date).toLocaleDateString()}</small></td>
+                        <td><small>${data.product__name}</small></td>
+                        <td><small>${data.quantity}</small></td>
+                        <td><small>${data.from_branch__name}</small></td>
+                        <td><small>${data.to_branch__name}</small></td>
+                        <td>
+                            <span>
+                              ${data.declined ? (
+                                `<small class='text-danger'>Declined</small>`
+                              ) : (
+                                data.received ? (
+                                  `<small class='text-success'>Received</small>`
+                                ) : (
+                                  `<small>Not yet received</small>`
+                                )
+                              )}
+                            </span>
+                          </td>
+                  
+                    </tr>
+                    `
+                })
+            }
+            $('#downloadTransferReport').click(function(e) {
                 e.preventDefault();
                 const data = {
                     product: $('#id_product').val(),
@@ -148,7 +208,6 @@
 
                 })
             })
-
         })
     </script>
 {% endblock content %}

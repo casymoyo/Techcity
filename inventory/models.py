@@ -41,6 +41,7 @@ class Inventory(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.IntegerField()
     status = models.BooleanField(default=True)
+    stock_level_threshold = models.IntegerField(default=5)
     
     def __str__(self):
         return f'{self.branch.name} : ({self.product.name}) quantity ({self.quantity})'
@@ -115,6 +116,18 @@ class ActivityLog(models.Model):
 
     def __str__(self):
         return f"{self.user} ({self.timestamp})"
+    
+class StockNotifications(models.Model):
+    inventory = models.ForeignKey(Inventory, on_delete=models.PROTECT)
+    notification = models.CharField(max_length=255)
+    status = models.BooleanField(default=False)
+    type = models.CharField(max_length=30, choices=[
+        ('stock level', 'Stock level'),
+        ('stock take', 'stock take')
+    ])
+    
+    def __str__(self):
+        return f'{self.inventory.product.name}: {self.notification}'
 
 
 

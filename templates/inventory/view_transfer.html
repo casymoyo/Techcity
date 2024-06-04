@@ -1,97 +1,28 @@
-{% extends "base.html" %}
 {% load static%}
-{% block title%} Inventory Transfers {% endblock%}
 {% block content %}
    <div class="inventory">
-        
         <h5 class='fw-bold'>Transfers</h5>
-
         <table class='table table-striped border rounded p-2'>
             <tr>
-                <th>Name</th>
-                <th>Quantity</th>
-                <th>Source</th>
-                <th>Destination</th>
-                <th>Actions</th>
+                <thead>
+                    <th>Date</th>
+                    <th>Name</th>
+                    <th>Quantity</th>
+                    <th>Source</th>
+                    <th>Destination</th>
+                    <th>Actions</th>
+                </thead>
             </tr>
             <tbody id='transfersTable'></tbody>
         </table>
         
         <div class=''>
             <div class="d-flex justify-content-end mt-3">
-                <button class="btn btn-secondary btn-sm" type="submit">
+                <button class="btn btn-secondary btn-sm" id="downloadTransferReport" type="button">
                     <i class='bx bx-download'></i>
                     download
                 </button>
             </div>        
         </div>
    </div>  
-   <script>
-        document.addEventListener('DOMContentLoaded', (event) => {    
-            const transfersTable = document.querySelector('#transfersTable');
-
-            
-            $.ajax({
-                url: '{% url "finance:customer_transactions_json" %}',
-                type: 'GET',
-                data:{
-                    product: $('#id_product').val(),
-                    branch: $('#id_branch').val(),
-                    date_from: $('#id_to').val(),
-                    date_to: $('#id_from').val(),
-                    view: true,
-                } 
-                }).done(function(response) {
-                    const data = response
-                    console.log(data)
-                    displayTransfersTable(data)
-                })
-            
-            function displayTransfersTable(data){
-                data.foreach((data)=>{
-                    transfersTable.innerHTML=`
-                    <tr>
-                        <td><small>${new Date(data.date).toLocaleDateString()}</small></td>
-                        <td><small>{data.product__name}</small></td>
-                        <td><small>{data.quantity}</small></td>
-                        <td><small>{data.from_branch__name}</small></td>
-                        <td><small>{data.to_branch__name}</small></td>
-                        <td>
-                            <span>
-                              ${data.declined ? (
-                                `<small class='text-danger'>Declined</small>`
-                              ) : (
-                                data.received ? (
-                                  `<small class='text-success'>Received</small>`
-                                ) : (
-                                  `<small>Not yet received</small>`
-                                )
-                              )}
-                            </span>
-                          </td>
-                  
-                    </tr>
-                    `
-                })
-            }
-
-            $('#transfers').submit(function(e) {
-                const data = {
-                    product: $('#id_product').val(),
-                    branch: $('#id_branch').val(),
-                    date_from: $('#id_to').val(),
-                    date_to: $('#id_from').val(),
-                }
-                e.preventDefault();
-                $.ajax({
-                    url: '{% url 'inventory:transfers_report'%}',
-                    type: 'GET',
-                    data: data,
-                    }).done(function(response) {
-
-                })
-            })
-
-        })
-    </script>
 {% endblock content %}

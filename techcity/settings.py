@@ -62,6 +62,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'inventory.middleware.RequestMiddleware',
 ]
 
 ROOT_URLCONF = "techcity.urls"
@@ -81,7 +82,8 @@ TEMPLATES = [
                 # custom 
                 "company.context_processors.branch_list",
                 "inventory.context_processors.product_list",
-                "inventory.context_processors.product_category_list",
+                "inventory.context_processors.product_category_list",     
+                "inventory.context_processors.stock_notification_count",
                 
                 #finance
                 "finance.context_processors.client_list",
