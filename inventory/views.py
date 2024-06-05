@@ -116,7 +116,7 @@ class AddProductView(View):
                 if form.is_valid():
                     product = form.save()
                     message = 'Product successfully created'
-                    log_action = 'Create'
+                    log_action = 'stock in'
                 else:
                     return redirect('inventory:inventory')
                 

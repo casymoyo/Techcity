@@ -5,22 +5,26 @@
 <div class="currency d-flex">
     <div class="mt-2 w-100">
         <nav class="border rounded d-flex justify-content-between align-items-center p-2">
-            <div>
-                <a href={% url 'finance:add_currency' %} class='btn btn-secondary btn-sm btn-flat'>
+            <div class='mt-2'>
+                <h5 class='fw-bold'>Currency</h5>
+            </div>
+            <div class='d-flex'>
+                <a href={% url 'finance:add_currency' %} class='btn btn-primary'>
                     <i class='bx bx-plus'></i>
                     Add currency
                 </a>
+                <span class='px-2'></span>
+                <form method="get" class="d-flex justify-content-between align-items-center">
+                    <input
+                        id="search"
+                        name="q"
+                        type="search"
+                        value="{{search_query}}"
+                        class="form-control"
+                        placeholder="search..."
+                    />
+                </form>
             </div>
-            <form method="get" class="d-flex justify-content-between align-items-center">
-                <input
-                    id="search"
-                    name="q"
-                    type="search"
-                    value="{{search_query}}"
-                    class="form-control"
-                    placeholder="search..."
-                />
-            </form>
         </nav>
 
         <table class="table border rounded p-2 mt-2">
@@ -36,23 +40,23 @@
             <tbody>
                 {% for currency in currencies %}
                     <tr style='color: #6c757d;'>
-                        <td>{{currency.code}}</td>
-                        <td>{{currency.name}}</td>
-                        <td >${{currency.symbol}}</td>
-                        <td >{{currency.exchange_rate}}</td>
+                        <td><small>{{currency.code}}</small></td>
+                        <td><small>{{currency.name}}</small></td>
+                        <td><small>{{currency.symbol}}</small></td>
+                        <td><small>{{currency.exchange_rate}}</small></td>
                         <td>
                             <span>
                                 {%  if request.user.role == 'admin' %}
-                                    <a href="{% url 'finance:update_currency' currency.id%}" class="btn btn-light btn-sm text-primary">
+                                    <a href="{% url 'finance:update_currency' currency.id%}" class="text-dark">
                                         <i class='bx bx-edit-alt'></i>
                                     </a>
                                 {% endif %}
                             </span>
                             <span>
                                 {% if request.user.role == 'admin' %}
-                                    <button  data-id={{currency.id}} id='delete' class="btn btn-light btn-sm text-danger">
+                                    <span  data-id={{currency.id}} id='delete' class="text-dark px-2">
                                         <i class='bx bx-trash-alt'></i>
-                                    </button>
+                                    </span>
                                 {% endif %}
                             </span>
                         </td>

@@ -9,23 +9,19 @@
 
         <div class=" menu mt-5 px-4 d-flex justify-content-cente align-items-center">
             <ul class="menu list-unstyled">
-                {% if request.user.branch == 'Warehouse'%}
                     <li class="menu-link mb-4">
                         <a href="{% url 'pos:pos'%}">
                             <i class='bx bx-check-circle' ></i>
                             <span class='px-2'>Sell</span>
                         </a>
                     </li>
-                {% endif %}
                 {% if request.user.role == 'admin' %}
-                    {% if request.user.branch == 'Warehouse'%}
                         <li class="menu-link mb-4">
                             <a href="{% url 'dashboard:dashboard'%}">
                                 <i class='bx bxs-dashboard' ></i>
                                 <span class='px-2'>Dashboard</span>
                             </a>
                         </li>
-                    {% endif %}
                 
                 <li class="menu-link mb-4">
                     <a href="{% url 'inventory:inventory' %}">

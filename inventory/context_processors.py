@@ -13,6 +13,7 @@ def product_list(request):
 def stock_notification_count(request):
     if request.user.id != None:
        return { 'notis_count': StockNotifications.objects.filter(
+           type='stock level',
            status=True,
            inventory__branch=request.user.branch
         ).count()}

@@ -98,14 +98,13 @@ class VATTransaction(models.Model):
         INPUT = 'Input', _('Input')
         OUTPUT = 'Output', _('Output')
 
-    transaction = models.OneToOneField(Transaction, on_delete=models.CASCADE)
-    stock_transaction = models.OneToOneField('finance.StockTransaction', on_delete=models.CASCADE, null=True, blank=True)
+    invoice = models.OneToOneField('finance.invoice', on_delete=models.CASCADE, null=True)
     vat_type = models.CharField(max_length=6, choices=VATType.choices)
     vat_rate = models.DecimalField(max_digits=5, decimal_places=2)
     tax_amount = models.DecimalField(max_digits=15, decimal_places=2)
     
     def __str__(self):
-        return f"VAT Transaction for {self.transaction} ({self.vat_type})"
+        return f"VAT Transaction for {self.invoice}"
 
 class Account(models.Model):
 

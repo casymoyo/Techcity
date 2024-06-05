@@ -31,7 +31,8 @@
             <div class="nav-bar"> {% include "base/pos_navbar.html" %} </div>
         </div>
         <div class='row mt-2'>
-            <div class='col-8'>
+            <div class="aside-bar col-2 text-light"> {% include "base/aside.html" %} </div>
+            <div class='col-6'>
                 <div class='main-pos-area  px-2'>
                     
                     <div class="d-flex align-content-center justify-content-between w-100">
@@ -78,7 +79,7 @@
                             <div>
                                 <small>Due</small>
                             </div>
-                            <div id="due_balance"></div>
+                            <div id="due_balance" class='d-flex flex-column'></div>
                         </div>
                         <div class="d-flex justify-content-between">
                             <button class=" p-2 btn btn-light w-100 btn-sm" id='id_add_client'>
@@ -178,9 +179,14 @@
         </div>
     </div>
     </div>
-    <div class="client-modal hidden">
-        <div class="modal-content">
-            {% include 'Pos/add_client.html' %}
+    
+    <div class="modal fade" id="clientModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    {% include 'Pos/add_client.html' %}
+                </div>
+            </div>
         </div>
     </div>
 
@@ -275,7 +281,7 @@
     // modals
     const overlay = document.querySelector(".overlay");
     const modal = document.querySelector('.payment-modal');
-    const clientModal = document.querySelector('.client-modal');
+    const clientModal = new bootstrap.Modal(document.querySelector('#clientModal'));
     const closeModalBtn = document.querySelectorAll(".btn-close");
 
     document.querySelector('#id_pay').addEventListener(
@@ -297,8 +303,7 @@
 
     document.querySelector('#id_add_client').addEventListener(
         'click',()=>{
-            clientModal.classList.remove('hidden');
-            overlay.classList.remove('hidden')
+            clientModal.show()
         }
     )
 
@@ -398,8 +403,6 @@
             productListContainer.appendChild(productDiv);
         });
     }
-
-
     
     // Cart 
     async function fetchProductData (product){
@@ -572,7 +575,7 @@
         document.querySelector('#id_interest_amount').textContent = `${ currencyData[0][0].symbol + ' ' +  '<span class="inter">' + 0.00 + "</span>"}`
         document.querySelector('#id_due_amount').textContent = `${ currencyData[0][0].symbol + ' ' + payable.toFixed(2)}`
         document.querySelector('#id_balance').textContent = `${ currencyData[0][0].symbol + ' ' + (payable.toFixed(2) - amount_paid.toFixed(2))}` // payable + due amount - paid amount
-        document.querySelector('#id_amount_paid').value = payable.toFixed(2)
+        
     }
 
     // pay amount event
@@ -717,7 +720,7 @@
     }
     
     document.querySelector('#search-input').addEventListener(
-        'input',()=>{
+        'change',()=>{
             fetchCustomerAccount(document.querySelector('#search-input').value)
         }
     )
@@ -733,11 +736,10 @@
         })
         .then(response => response.json())
         .then(data => {
-            console.log(data[0].balance)
-
             const balanceEl = document.querySelector('#due_balance')
+            balanceEl.innerHTML=''
+
             data.forEach((balance)=>{
-                console.log(balance)
                 balanceEl.innerHTML +=`<small id='id_due' class='text-danger'>${balance.currency__symbol} ${balance.balance}</small>`
             })
         })
@@ -746,9 +748,6 @@
     });
     }
 
-    function displayCuatomerBalances(){
-        console.log(data)
-    }
 
     function getCookie(name) {
         let cookieValue = null;

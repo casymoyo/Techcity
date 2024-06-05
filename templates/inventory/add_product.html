@@ -7,7 +7,7 @@
         <div class='add-product'>
             <div class='add-product-nav rounded d-flex py-3 px-2 align-items-center'>
                 <div>
-                    <h5 class='fw-normal px-2 mt-3 fw-bold'>Add Inventory</h5>
+                    <h5 class='fw-normal mt-3 fw-bold'>Add Inventory</h5>
                 </div>
             </div>
             <form method="post" class='mt-2 border rounded p-2'>
@@ -142,23 +142,26 @@
             </form>
         </div>
    </div>  
-   <div class='category-modal hidden'>
-        <div class='modal-content'>
-            {% include 'inventory/components/category_modal.html'%}
+
+   <div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    {% include 'inventory/components/category_modal.html'%}
+                </div>
+            </div>
         </div>
-   </div>
-   <div class='overlay hidden'></div>
+    </div>
+  
 
    <script src="{% static 'js/jquery.js'%}"></script>
    <script src='{% static "js/productValidation.js"%}'></script>
    <script>
-        const modal = document.querySelector('.category-modal')
-        const overlay = document.querySelector('.overlay')
+        const categoryModal = new bootstrap.Modal(document.querySelector('#categoryModal'))
 
         document.querySelector('#id_add_category').addEventListener(
             'click', ()=>{
-                modal.classList.remove('hidden')
-                overlay.classList.remove('hidden')
+                categoryModal.show()
             }
         )
         

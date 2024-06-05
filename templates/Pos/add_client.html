@@ -1,11 +1,8 @@
 {% load static%}
 {% block content %}
 <div class='client w-100'>
-    <div class="text-center">
-        <button class="btn-close text-danger btn-sm"></button>
-    </div>
-        <h5 class="">Add client</h5>
-        <form class='' id='id_client_form' method='post'>
+        <h5 class="fw-bold">Add client</h5>
+        <form class='mt-2' id='id_client_form' method='post'>
             <div class='mb-2'>
                 <label for="id_name">Full name:</label>
                 <input
@@ -47,7 +44,7 @@
             </div>
             <p class='text-danger' id='id_client_error'></p>
             <div class="client-btn d-flex justify-content-end">
-                <button class="btn btn-seconday btn-sm" type='button' onclick='submitClient();'>
+                <button class="btn btn-secondary btn-sm" type='button' onclick='submitClient();'>
                     <i class='bx bx-save'></i>
                     save
                 </button>

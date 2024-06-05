@@ -49,19 +49,19 @@
                 <div class="modal-dialog modal-dialog-right">
                     <div class="modal-content">
                         <div class="modal-body">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <h5>Notifications</h5>
-                                <div>
+                            <div class="">
+                                <p class='fw-bold'>Notifications</p>
+                                {% comment %} <div>
                                     <input
                                         id="id_notis"
                                         type="search"
                                         class="form-control"
                                         placeholder="search by type"
                                     />
-                                </div>
+                                </div> {% endcomment %}
                             </div>
                             <div class="mt-4">
-                                <ul id="notis"></ul>
+                                <ul class='list-unstyled' id="notis"></ul>
                             </div>
                         </div>
                     </div>
@@ -89,12 +89,12 @@
             })
         
         function displayNotifications(data){
-            const ul = document.querySelector('#notis');
+            const ol = document.querySelector('#notis');
 
             data.forEach((data)=>{
                 const li = document.createElement('li');
-                li.innerHTML = `<a href='/inventory/inventory-detail/${data.inventory__id}/'>` + data.notification + `</a>`
-                ul.appendChild(li);
+                li.innerHTML = `<small><a href='/inventory/inventory-detail/${data.inventory__id}/'>` + data.notification + `</a></small>`
+                ol.appendChild(li);
             })
         }
     </script>

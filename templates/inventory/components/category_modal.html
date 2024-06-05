@@ -1,14 +1,10 @@
 {% load static%}
-{% load crispy_forms_tags %}
 {% block content %}
    <div class="inventory">
         <div class='add-product-category' id="id_category_form">
-            <div class="text-center">
-                <button id="close-btn" class="btn-close text-danger btn-sm"></button>
-            </div>
             <div class='add-product-category-nav d-flex mt-2 py-3 px-2 align-items-center'>
                 <div>
-                    <h6 class='mt-2'>Add Category</h6>
+                    <h6 class='mt-2 fw-bold'>Add Category</h6>
                 </div>
             </div>
             <form method='post' class='px-2'>
@@ -25,23 +21,20 @@
                 <small id='id_error'></small>
                 <div class="d-flex justify-content-end">
                     <div class="">
-                        <button type="reset" class="btn btn-danger w-100">Reset</button>
+                        <button type="reset" class="btn btn-danger btn-sm w-100">
+                            <i class='bx bx-reset'></i>
+                            reset
+                        </button>
                     </div>
                     <span class="px-1"></span>
                     <div class="">
-                        <button type="button" onclick="categorySubmit();" class="btn btn-primary w-100">Save</button>
+                        <button type="button" onclick="categorySubmit();" class="btn btn-secondary btn-sm w-100">
+                            <i class='bx bx-save'></i>
+                            save
+                        </button>
                     </div>
                 </div>
             </form>
         </div>
    </div>  
-  <script>
-    console.log(document.querySelector('.close-btn'))
-    document.querySelector('#close-btn').addEventListener(
-        'click', ()=>{
-            modal.classList.add('hidden')
-            overlay.classList.add('hidden')
-        }
-    )
-  </script>
 {% endblock content %}

@@ -44,41 +44,41 @@
                 </thead>
                 <tbody>
                     {% for invoice in invoices %}
-                        <tr style='color: #6c757d; cursor:pointer' id="tr" data-invoiceID={{invoice.id}}>
+                        <tr style='color: #6c757d; cursor:pointer'>
                             {% if invoice.payment_status == 'Paid'%}
                                 <td scope="row"><small>{{invoice.issue_date}}</small></td>
                                 <td><small>#{{invoice.invoice_number}}</small></td>
-                                <td><a href="{% url 'finance:customer' invoice.customer.id%}">{{invoice.customer.name}}</a></td>
+                                <td><small><a href="{% url 'finance:customer' invoice.customer.id%}">{{invoice.customer.name}}</a></small></td>
                                 <td><small>{{invoice.products_purchased}}</small></td>
-                                <td><small>{{invoice.currency.symbol}} {{invoice.amount_paid}}</small></td>
+                                <td id="tr" data-invoiceID={{invoice.id}} ><small>{{invoice.currency.symbol}} {{invoice.amount_paid}}</small></td>
                                 <td><small>{{invoice.currency.symbol}} {{invoice.amount_due}}</small></td>
                                 <td><small>{{invoice.currency.symbol}} {{invoice.amount}}</small></td>
                                 <td><small>{{invoice.user.username}}</small></td>
                                 <td>
                                     <span>
-                                        <a href="{% url 'finance:invoice_preview' invoice.id %}" class='btn btn-light btn-sm'>
+                                        <a href="{% url 'finance:invoice_preview' invoice.id %}" class='text-dark'>
                                             <i class='bx bx-show'></i>
                                         </a>
                                     </span>  
-                                    <span>
+                                    <span class='px-2'>
                                         {% if request.user.role == 'admin' %}
-                                            <button type="button" class="btn btn-light btn-sm text-success" disabled>
-                                                <i class='bx bx-rectangle'></i>
-                                            </button>
+                                            <span style='cursor:pointer;' data-id={{ invoice.id }} id='id_update' class="text-dark">
+                                                <i class='bx bx-right-arrow'></i>
+                                            </span>
                                         {% endif %}
                                     </span>
                                     <span>
                                         {% if request.user.role == 'admin' %}
-                                            <button type="button" data-id={{invoice.id}} id='whatsappBtn' class="btn btn-light btn-sm text-success">
+                                            <span data-id={{invoice.id}} id='whatsappBtn'>
                                                 <i class='bx bxl-whatsapp'></i>
-                                            </button>
+                                            </span>
                                         {% endif %}
                                     </span>
-                                    <span>
+                                    <span class='px-2'>
                                         {% if request.user.role == 'admin' %}
-                                            <button type="button" class="btn btn-light btn-sm text-danger">
+                                            <span id='id_delete' data-id={{invoice.id}}>
                                                 <i class='bx bx-trash'></i>
-                                            </button>
+                                            </span>
                                         {% endif %}
                                     </span>  
                                 </td>
@@ -87,35 +87,35 @@
                                 <td class='text-danger'><small>#{{invoice.invoice_number}}</small></td>
                                 <td><a href="{% url 'finance:customer' invoice.customer.id%}">{{invoice.customer.name}}</a></td>
                                 <td><small>{{invoice.products_purchased}}</small></td>
-                                <td class='text-danger'><small>{{invoice.currency.symbol}} {{invoice.amount_paid}}</small></td>
+                                <td id="tr" data-invoiceID={{invoice.id}} class='text-danger'><small>{{invoice.currency.symbol}} {{invoice.amount_paid}}</small></td>
                                 <td class='text-danger'><small>{{invoice.currency.symbol}} {{invoice.amount_due}}</small></td>
                                 <td class='text-danger'><small>{{invoice.currency.symbol}} {{invoice.amount}}</small></td>
                                 <td class='text-danger'><small>{{invoice.user.username}}</small></td>
                                 <td>
                                     <span>
-                                        <a href="{% url 'finance:invoice_preview' invoice.id %}" class='btn btn-light btn-sm'>
+                                        <a href="{% url 'finance:invoice_preview' invoice.id %}" class='text-dark'>
                                             <i class='bx bx-show'></i>
                                         </a>
                                     </span>  
-                                    <span>
+                                    <span class='px-2'>
                                         {% if request.user.role == 'admin' %}
-                                            <a href={% url 'finance:update_invoice' invoice.id %} class="btn btn-light btn-sm text-success">
+                                            <span style='cursor:pointer;' data-id={{ invoice.id }} id='id_update' class="text-dark">
                                                 <i class='bx bx-right-arrow'></i>
-                                            </a>
+                                            </span>
                                         {% endif %}
                                     </span>
                                     <span>
                                         {% if request.user.role == 'admin' %}
-                                            <button type="button" data-id={{invoice.id}} id='whatsappBtn' class="btn btn-light btn-sm text-success">
+                                            <span data-id={{invoice.id}} id='whatsappBtn'>
                                                 <i class='bx bxl-whatsapp'></i>
-                                            </button>
+                                            </span>
                                         {% endif %}
                                     </span>
-                                    <span>
+                                    <span class='px-2'>
                                         {% if request.user.role == 'admin' %}
-                                            <button type="button"  class="btn btn-light btn-sm text-danger">
+                                            <span id='id_delete' data-id={{invoice.id}}>
                                                 <i class='bx bx-trash'></i>
-                                            </button>
+                                            </span>
                                         {% endif %}
                                     </span>  
                                 </td>
@@ -217,13 +217,36 @@
             </div>
         </div>
 
+        <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body" id='delete_content'>
+                        <h5 class='fw-bold'>Delete Invoice</h5>
+                        <div>
+                            <button class='btn btn-secondary w-100' onclick='deleteInvoice();'>Yes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body" id='delete_content'>
+                        {% include 'finance/invoices/update_invoice.html' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
 <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script type="text/javascript">
     const whatsappBtn = document.getElementById('whatsappBtn');
-    const loaderModal = new bootstrap.Modal(document.getElementById('appModal'));
+    const appModal = new bootstrap.Modal(document.getElementById('appModal'));
 
     const filterBtn = document.getElementById('filterBtn');
     const filterModal = new bootstrap.Modal(document.getElementById('filterModal'));
@@ -232,8 +255,125 @@
     const trEl = document.querySelectorAll('#tr')
     const paymentsModal = new bootstrap.Modal(document.getElementById('paymentsModal'));
 
+    const deleteBtn = document.querySelectorAll('#id_delete')
+    const deleteContent = document.querySelector('#delete_content')
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+    const updateBtn = document.querySelectorAll('#id_update')
+    const updateModal = new bootstrap.Modal(document.getElementById('updateModal'));
+
     const loader = new bootstrap.Modal(document.getElementById('loaderModal'));
 
+    let invoiceId
+    let paymentMethod = ''
+    const error = document.querySelector('#error_message');
+    const loaderModal = new bootstrap.Modal(document.getElementById('loaderModal'));
+
+    // payment methods
+    document.querySelectorAll('.pm').forEach(button => {
+        button.addEventListener('click', () => {
+            console.log(button.dataset.name);
+            if (button.dataset.name === 'cash') { 
+                paymentMethod = button.dataset.name
+            } else if (button.dataset.name === 'ecocash'){
+                paymentMethod = button.dataset.name
+            } else if (button.dataset.name === 'bank'){
+                paymentMethod = button.dataset.name
+            }
+            updatePayment();
+        });
+    });
+
+    // update payment
+    function updatePayment(){
+        const amount_paid = parseFloat(document.querySelector('#id_amount_paid').value);
+        let validation = false
+
+        const data = {
+            amount_paid: amount_paid,
+            payment_method: paymentMethod
+        }
+
+        loaderModal.show(); 
+
+        let customerName = '{{invoice.customer.name}}'
+        error.textContent = `Updating ${customerName}(s) invoice`
+
+        if (paymentMethod == ''){
+            error.textContent = `Please choose payment method`
+        }
+        else if (amount_paid == '' || amount_paid < 0){
+            error.textContent = `Amount cannot be zero or negative `
+        }
+        else{
+            validation = true
+        }
+
+        if(validation){
+            fetch(`/finance/invoice/update/${invoiceId}/`, {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"), 
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loaderModal.hide()
+                    window.location.href='{% url "finance:invoice" %}'
+                } else {
+                    loaderModal.hide()
+                    error.textContent='*' + data.message
+                }
+            })
+            .catch((error) => {
+            console.error("Error:", error);
+            });
+        }
+    }
+
+    updateBtn.forEach((btn)=>{
+        btn.addEventListener(
+            'click', ()=>{
+                invoiceId= btn.dataset.id
+                updateModal.show()
+                console.log(invoiceId)
+            }   
+        )
+    })
+
+
+    deleteBtn.forEach((btn)=>{
+        btn.addEventListener(
+            'click', ()=>{
+                invoiceId = btn.dataset.id
+                deleteModal.show()
+                console.log(invoiceId)
+            }   
+        )
+    })
+
+    function deleteInvoice(){
+        fetch(`/finance/invoice/delete/${invoiceId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data)
+            deleteContent.innerHTML=''
+            deleteContent.innerHTML=data.message
+            window.location.reload()
+        })
+        .catch(error => {
+
+        });
+    }
 
 
     trEl.forEach((tr)=>{
@@ -249,7 +389,7 @@
     })
 
     whatsappBtn.addEventListener('click', function() {
-        loaderModal.show(); 
+        appModal.show(); 
         whatsappBtn.disabled = true; 
 
         const invoiceId = this.dataset.id;
@@ -263,11 +403,9 @@
         })
         .then(response => response.json())
         .then(data => {
-            loaderModal.hide();
             whatsappBtn.disabled = false;
         })
         .catch(error => {
-            loaderModal.hide();
             whatsappBtn.disabled = false; 
             console.error('Error:', error);
         });

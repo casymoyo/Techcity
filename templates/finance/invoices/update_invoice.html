@@ -1,7 +1,5 @@
-{% extends "base.html" %}
 {% load static%}
 {% load crispy_forms_tags %}
-{% block title%} Update Invoice {% endblock%}
 {% block content %}
    <div class="finance">
         <div class='update-invoice'>
@@ -17,16 +15,9 @@
                         {% csrf_token %}
                         {{form|crispy}}
                         <p id="id_amount_error" class="text-danger"></p>
-                        <div class="d-flex justify-content-end">
-                            <button type="button" onclick="updatePayment();" class="btn btn-success btn-sm">
-                                <i class="bx bx-save"></i>
-                                update
-                            </button>
-                        </div>
                     </form>
                 </div>
                 <div class="col-4">
-                    <h5 class="mb-3">Payment Methods</h5>
                     <div class='button-choose w-100'>
                         <div class="w-100 p-2">
                             <button type="button"  class='btn btn-light btn-lg w-100 pm' data-name='cash' id="id_cash_btn">
@@ -62,93 +53,4 @@
             </div>
         </div>        
    </div> 
-   
-   <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>
-   <script>
-        let paymentMethod = ''
-        {% comment %} const error = document.querySelector('#id_amount_error') {% endcomment %}
-        const loaderModal = new bootstrap.Modal(document.getElementById('loaderModal'));
-
-        // payment methods
-        document.querySelectorAll('.pm').forEach(button => {
-            button.addEventListener('click', () => {
-                console.log(button.dataset.name);
-                if (button.dataset.name === 'cash') { 
-                    paymentMethod = button.dataset.name
-                } else if (button.dataset.name === 'ecocash'){
-                    paymentMethod = button.dataset.name
-                } else if (button.dataset.name === 'bank'){
-                    paymentMethod = button.dataset.name
-                }
-            });
-        });
-
-        // update payment
-        function updatePayment(){
-            const invoice_id = {{invoice.id}}
-            const error = document.querySelector('#error_message');
-            const amount_paid = parseFloat(document.querySelector('#id_amount_paid').value);
-            let validation = false
-
-            const data = {
-                amount_paid: amount_paid,
-                payment_method: paymentMethod
-            }
-
-            loaderModal.show(); 
-
-            let customerName = '{{invoice.customer.name}}'
-            error.textContent = `Updating ${customerName}(s) invoice`
-
-            if (paymentMethod == ''){
-                error.textContent = `Please choose payment method`
-            }
-            else if (amount_paid == '' || amount_paid < 0){
-                error.textContent = `Amount cannot be zero or negative `
-            }
-            else{
-                validation = true
-            }
-
-           if(validation){
-                fetch(`/finance/invoice/update/${invoice_id}/`, {
-                    method: "POST",
-                    headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken"), 
-                    },
-                    body: JSON.stringify(data),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        loaderModal.hide()
-                        window.location.href='{% url "finance:invoice" %}'
-                    } else {
-                        loaderModal.hide()
-                        error.textContent='*' + data.message
-                    }
-                })
-                .catch((error) => {
-                console.error("Error:", error);
-                });
-            }
-        }
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== "") {
-              const cookies = document.cookie.split(";");
-              for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === name + "=") {
-                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                  break;
-                }
-              }
-            }
-            return cookieValue;
-          }    
-    
-   </script> 
 {% endblock %}
