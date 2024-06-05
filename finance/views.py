@@ -28,7 +28,7 @@ from django.template.loader import render_to_string
 from django.core.mail import send_mail, EmailMessage
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
-from . forms import ExpenseForm, ExpenseCategoryForm, CurrencyForm, InvoiceForm, CustomerForm
+from . forms import ExpenseForm, ExpenseCategoryForm, CurrencyForm, InvoiceForm, CustomerForm, TransferForm
 
 import logging
 
@@ -1222,7 +1222,18 @@ def day_report(request, inventory_data):
 
    
 
+def cash_transfer(request):
+    form = TransferForm()
+    
+    if request.Method == 'POST':
+        form = TransferForm(request.POST)
+        
+        if form.is_valid():
+            transfer = form.save(commit=False)
+            transfer.user = request.user
 
+            
+    return render(request, 'finance/transfers/cash_transfer.html', {form:form})
     
     
     

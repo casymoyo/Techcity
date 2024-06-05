@@ -3,43 +3,46 @@
 {% block title%} Inventory {% endblock%}
 {% block content %}
    <div class="inventory">
-        <div class="row mt-2">
+    <div class='px-2 py-2 bg-dark text-light align-items-center rounded'>
+        <div class='h5'><i class='bx bx-cabinet'></i>Products</div>
+    </div>
+        <div class="row mt-3">
             <div class="col">
-                <div class="card border rounded bg-light">
-                    <div class="card-body ">
-                        <h6>Total Inventory Cost </h6>
-                        <h6 class='text-center text-muted'>${{total_cost}}</h6>
+                <div class="card shadow bg-light">
+                    <div class="card-body">
+                        <h6 class='text-muted fw-bold'>Total Inventory Cost </h6>
+                        <h6 class='text-center text-muted fw-bold'>USD {{total_cost}}</h6>
                     </div>
                 </div>
             </div>
             <div class="col-6">
-                <div class="card border rounded bg-light">
+                <div class="card shadow bg-light">
                     <div class="card-body">
-                        <h6>Total Inventory Price</h6>
-                        <h6 class='text-center text-light text-muted'>${{total_price}}</h6>
+                        <h6 class='text-muted fw-bold'>Total Inventory Price</h6>
+                        <h6 class='text-center text-light fw-bold text-muted'>USD {{total_price}}</h6>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="inventory-navbar mt-2">
-            <nav class="d-flex justify-content-between align-items-center border rounded p-2">
+        <div class="inventory-navbar mt-3">
+            <nav class="d-flex justify-content-between align-items-center p-2">
                 <div class="d-flex">
                     {% if request.user.role == 'admin' %}
                         <div>
-                            <a href='{% url 'inventory:add_product' %}' class="btn btn-light btn-sm">
+                            <a href='{% url 'inventory:add_product' %}' class="btn btn-primary shadow btn-sm">
                                 <i class='bx bx-plus'></i> 
                                 Inventory
                             </a>
                         </div>
                     {% endif %}
                     <div class="px-1">
-                        <a href='{% url 'inventory:transfers' %}' class="btn btn-light btn-sm">
+                        <a href='{% url 'inventory:transfers' %}' class="btn btn-primary shadow btn-sm">
                             <i class='bx bx-transfer-alt' ></i>
                             Product
                         </a>
                     </div>
                     <div>
-                        <a href='{% url 'inventory:receive_inventory' %}'  class="btn btn-light btn-sm">
+                        <a href='{% url 'inventory:receive_inventory' %}'  class="btn btn-primary shadow btn-sm">
                             Receive Stock
                             <span class="badge badge-light ">{{transfers_count}}</span>
                         </a>
@@ -76,9 +79,8 @@
             </nav>
         </div>
         <div>
-            <div class='mt-3 px-1 d-flex justify-content-between align-items-center'>
-                <p class=''>Inventory List</p>
-               
+            <div class='mt-3 px-1 d-flex justify-content-between py-2 bg-dark text-light align-items-center rounded'>
+                <div class='px-2'>List</div>
                 <form method='get' class="d-flex" id="inventory-pdf">
                     <select 
                         name='category'

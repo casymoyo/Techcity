@@ -279,3 +279,24 @@ class Payment(models.Model):
     
     def __str__(self):
         return f'{self.invoice.invoice_number} {self.amount_paid}'
+
+class CashTransfers(models.Model):
+    class TransferMethod(models.TextChoices):
+        BANK = ('Bank'), _('Bank')
+        CASH = ('Cash'), _('Cash')
+        ECOCASH =('Ecocash'), _('Cash')
+        
+    from_branch = models.ForeignKey('company.Branch', on_delete=models.CASCADE, related_name='kwarikuenda')
+    to = models.ForeignKey('company.Branch', on_delete=models.CASCADE, related_name='to')
+    branch = models.ForeignKey('company.branch', on_delete=models.CASCADE, related_name='parent')
+    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0, editable=False)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
+    user = models.ForeignKey('users.User', on_delete=models.PROTECT)
+    reason = models.CharField(max_length=255)
+    transfer_method = models.CharField(max_length=10, choices=TransferMethod.choices, default=TransferMethod.CASH)
+    received_status = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f'{self.to_branch}: {self.amount}'
+    
+    

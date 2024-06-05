@@ -6,20 +6,21 @@
             <div class="logo px-2 ">
                 <img src="{% static 'assets/logo.png' %}" width="100px"/>
             </div>
-            <div class="mt-1">
+            <div class="">
                 {% if request.user.role == 'admin' or request.user.role == 'accountant'%}
-                <a href='{% url "dashboard:dashboard" %}' class="btn">
-                    <i class='bx bxs-grid'></i>
-                </a>
+                    <button class="btn" id='branchButton'>
+                        <i class='bx bxs-grid'></i>
+                    </button>
                 {% endif %}
             </div>
             <div>
-                <span class='text-muted mt-2'>{{request.user.branch.name}}</span>
-                {% block title%} {% endblock title %}
+                <div class='mt-2'>
+                    <h6 class='fw-bold'>{{request.user.branch.name}}</h6>
+                </div>
             </div>
         </div>
         <!-- middle links -->
-        
+
         <!-- user and logout -->
         <div class='user mt-3  px-2 d-flex justify-content-end w-75'>
             <ul class="menu list-unstyled d-flex align-items-center">
@@ -75,4 +76,30 @@
             </ul>
         </div>
     </nav>
+    <div class="modal fade" id="branchModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-right">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="">
+                        <p class='fw-bold'>Choose Branch</p>
+                    </div>
+                    <div class="mt-4">
+                        <ul class='list-unstyled'>
+                            {% for branch in branches %}
+                                <li><a href="{% url 'company:switch_branch' branch.id %}" class="px-3 text-dark">{{ branch.name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const branchModal = new bootstrap.Modal(document.querySelector('#branchModal'))
+        const branchButton = document.querySelector('#branchButton')
+
+        branchButton.addEventListener('click', ()=>{
+            branchModal.show()
+        })
+    </script>
 {% endblock content %}

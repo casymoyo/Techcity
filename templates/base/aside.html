@@ -1,12 +1,6 @@
 {% load static%}
 {% block content %}
     <aside class="d-flex flex-column">
-        <div clas='d-flex align-items-center'>
-            <div class="aside-logo py-3  px-3 border rounded shadow">
-                <img src="{% static 'assets/logo.png' %}" width="100px"/>
-            </div>
-        </div>
-
         <div class=" menu mt-5 px-4 d-flex justify-content-cente align-items-center">
             <ul class="menu list-unstyled">
                     <li class="menu-link mb-4">
@@ -64,18 +58,11 @@
                         <span class='px-2'>Anaytics</span>
                     </a>
                 </li>
-                <li class="menu-link dropdown mb-4">
-                    <a href="{% url 'company:branch_list' %}" class='dropdown-toggle'>
+                <li class="menu-link mb-4">
+                    <a href="{% url 'company:branch_list' %}">
                         <i class='bx bx-building'></i>
                         <span class='px-2'>Branches</span>
                     </a>
-                    <ul class="dropdown-menu shadow w-50 bg-light">
-                        {% for branch in branches %}
-                            <li class="dropdown-link">
-                                <a href="{% url 'company:switch_branch' branch.id %}" class="px-3 fs-6">{{branch.name}}</a>
-                            </li>
-                        {% endfor %}
-                    </ul>
                 </li>
                 <li class="menu-link mb-4">
                     <a href="{% url 'users:users' %}">

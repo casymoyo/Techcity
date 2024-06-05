@@ -180,9 +180,7 @@ class ProcessTransferCartView(View):
         branch_inventory = Inventory.objects.get(product__name=item['product'], branch__name=item['from_branch'])
         
         branch_inventory.quantity -= int(item['quantity'])
-        print(branch_inventory.quantity, int(item['quantity']))
         branch_inventory.save()
-        print(branch_inventory.quantity)
         self.activity_log('Transfer', branch_inventory,  item, transfer_item, )
         
     # def send_stock_notification(self, item):
@@ -214,7 +212,6 @@ def transfer_details(request, transfer_id):
     transfer = Transfer.objects.filter(id=transfer_id, from_branch=request.user.branch).values(
         'product__name', 'transfer_ref', 'quantity', 'price', 'from_branch__name', 'to_branch__name'
     )
-    print(transfer)
     return JsonResponse(list(transfer), safe=False)
 
 @login_required
@@ -241,7 +238,7 @@ def inventory_index(request):
         if category == 'inactive':
             inventory = Inventory.objects.filter(branch=request.user.branch, status=False)
         else:
-            inventory = inventory.filter(product__category__name=category)
+            inventory = inventory.filter(product__category__id=category)
         
     if q:
         inventory = inventory.filter(Q(product__name__icontains=q) | Q(product__batch_code__icontains=q))

@@ -27,23 +27,25 @@
 <body>
     <div class="techcity">
         <div class="row">
-            <div class="aside-bar col-2 text-light"> {% include "base/aside.html" %} </div>
-            <div class=" top-bar col-lg-10 col-12">
+            <div class=" top-bar">
                 <div class="nav-bar"> {% include "base/navbar.html" %} </div>
-                <div class="app-area">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-                            {{ message }}
-                            <button type="button"
-                                    class="btn-close"
-                                    data-bs-dismiss="alert"
-                                    aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                    {% block content %}{% endblock %}
-                </div>
+                <div class='row'>
+                    <div class="aside-bar col-2 text-light"> {% include "base/aside.html" %} </div>
+                    <div class="app-area col w-100 bg-light">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                                {{ message }}
+                                <button type="button"
+                                        class="btn-close"
+                                        data-bs-dismiss="alert"
+                                        aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        {% block content %}{% endblock %}
+                    </div>
+                </row>
             </div>
             <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
                 <div class="modal-dialog modal-dialog-right">
@@ -51,17 +53,27 @@
                         <div class="modal-body">
                             <div class="">
                                 <p class='fw-bold'>Notifications</p>
-                                {% comment %} <div>
-                                    <input
-                                        id="id_notis"
-                                        type="search"
-                                        class="form-control"
-                                        placeholder="search by type"
-                                    />
-                                </div> {% endcomment %}
                             </div>
                             <div class="mt-4">
                                 <ul class='list-unstyled' id="notis"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="branchModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog modal-dialog-right">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <div class="">
+                                <p class='fw-bold'>Choose Branch</p>
+                            </div>
+                            <div class="mt-4">
+                                <ul class='list-unstyled'>
+                                    {% for branch in branches %}
+                                        <li><a href="{% url 'company:switch_branch' branch.id %}" class="px-3 text-dark">{{ branch.name }}</a></li>
+                                    {% endfor %}
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -75,6 +87,14 @@
     <script>
         const notisModal = new bootstrap.Modal(document.querySelector('#notificationModal'))
         const notisButton = document.querySelector('#notisBtn')
+
+        const branchModal = new bootstrap.Modal(document.querySelector('#branchModal'))
+        const branchButton = document.querySelector('#branchButton')
+
+        branchButton.addEventListener('click', ()=>{
+            branchModal.show()
+        })
+
         notisButton.addEventListener('click', ()=>{
             notisModal.show()
         })

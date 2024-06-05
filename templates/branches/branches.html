@@ -4,16 +4,16 @@
 
 <div class="row">
   <div class="col">
-  <div class='d-flex align-items-center'>
-    <h5 class='fw-bold'> Branches </h5>
-    <div class='px-2 mt-2'>
-      <a class="btn btn-secondary btn-sm mb-3" href="{% url 'company:add_branch' %}">
+  <div class='d-flex align-items-center justify-content-between bg-dark text-light shadow p-2'>
+    <div class='h5'><i class='bx bx-building'></i> Branches </div>
+    <div class=''>
+      <a class="btn btn-primary btn-sm shadow" href="{% url 'company:add_branch' %}">
         <i class='bx bx-plus'></i>
         new branch
       </a>
     </div>
   </div>
-<table class="table table-hover table-striped">
+<table class="table table-hover table-striped mt-3">
 <thead class="bg-primary">
     <tr>
       <th scope="col">ID</th>
@@ -27,13 +27,13 @@
   <tbody>
     {% for branch in branches %}
       <tr>
-        <th scope="row">{{ branch.id }}</th>
-        <td>{{ branch.name }}</td>
-        <td>{{ branch.address }}</td>
-        <td>{{ branch.phonenumber }}</td>
-        <td>{{ branch.email }}
+        <th scope="row"><small>{{ branch.id }}</small></th>
+        <td><small>{{ branch.name }}</small></td>
+        <td><small>{{ branch.address }}</small></td>
+        <td><small>{{ branch.phonenumber }}</small></td>
+        <td><small>{{ branch.email }}</small></td>
         <td>
-          <a class="btn btn-sm text-primary" href="{% url 'company:edit_branch' branch.id %}">
+          <a class="text-dark" href="{% url 'company:edit_branch' branch.id %}">
             <i class='bx bx-edit'></i>
           </a>
         </td>

@@ -184,6 +184,9 @@
     }
 
     .inventory{
+        .card{
+            border:none;
+        }
         .add-product{
             .add-product-nav{
                 height: 56px;
@@ -211,6 +214,9 @@
         // .sale{
         //     display:block;
         // }
+        .card{
+            border:none;
+        }
         .main-content { 
             flex: 1; 
             padding-right: 20px;
@@ -450,7 +456,6 @@
         padding: 5px;
       }
       .nav-item.active {
-        color: #333;
         border-top: 1px #007bff solid ;            
       }
     

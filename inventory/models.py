@@ -60,8 +60,8 @@ class Transfer(models.Model):
     @classmethod
     def generate_transfer_number(cls):
         while True:
-            characters = string.ascii_uppercase + string.digits  # A-Z and 0-9
-            transfer_ref = ''.join(random.choices(characters, k=6))  # Generate 6 random chars
+            characters = string.ascii_uppercase + string.digits  
+            transfer_ref = ''.join(random.choices(characters, k=6))  
             if not cls.objects.filter(transfer_ref=transfer_ref).exists():
                 return transfer_ref
 

@@ -17,7 +17,8 @@
         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     {% endblock css %}
 
-    <script defer src="{% static 'css/bootstrap/js/bootstrap.min.js'%}"></script>
+    <script src="{% static 'css/bootstrap/js/bootstrap.min.js'%}"></script>
+    <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'js/jquery.js'%}"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
@@ -30,11 +31,10 @@
         <div class="top-bar">
             <div class="nav-bar"> {% include "base/pos_navbar.html" %} </div>
         </div>
-        <div class='row mt-2'>
+        <div class='row'>
             <div class="aside-bar col-2 text-light"> {% include "base/aside.html" %} </div>
             <div class='col-6'>
-                <div class='main-pos-area  px-2'>
-                    
+                <div class='mt-2 main-pos-area  px-2'>
                     <div class="d-flex align-content-center justify-content-between w-100">
                         <div class="d-flex align-items-center product-search">
                             <div ><i class="bx bx-search"></i></div>

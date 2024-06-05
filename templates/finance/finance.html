@@ -4,17 +4,44 @@
 {% block content %}
 <div class="finance d-flex">
     <div class="main-content">
-        <div class="row mt-2">
+        <div class='px-2 py-2 bg-dark text-light align-items-center rounded'>
+            <div class='h5'>
+                <i class='bx bx-credit-card-front'></i> 
+                Finance
+            </div>
+        </div>
+
+        <div class="row mt-3">
             {% for balance in balances %}
-            <div class="col">
-                <div class="card">
+            <div class="col-4 mb-2">
+                <a href='' class="card">
                     <div class="card-body shadow bg-secondary rounded text-light ">
                         <h6 class='text-center'>{{balance.account.name}}</h6>
                         <h6 class='text-center'>{{balance.currency.symbol}} {{balance.balance}}</h6>
                     </div>
-                </div>
+                </a>
             </div>
             {% endfor %}
+        </div>
+
+        <div class='mt-3 px-1 d-flex justify-content-between py-2 bg-dark text-light align-items-center rounded'>
+            <div class='d-flex'>
+                <div>
+                    <button type="button" id="cashBtn" class='btn btn-light btn-sm'>
+                        <i class='bx bx-book'></i>
+                        Cash Book
+                    </button>
+                </div>
+                <div class='px-2'>
+                    <a class='btn btn-light btn-sm'>
+                        <i class='bx bx-book'></i>
+                        Expenses
+                    </a>
+                </div>
+            </div>
+            <div>
+                
+            </div>
         </div>
 
         <div class="mt-3 border rounded p-2">
@@ -50,5 +77,22 @@
             </div>
         {% endblock expenses%}
     </div>
+    <div class="modal fade" id="cashModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-right">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    {% include 'finance/cashbook.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    const cashBtn = document.querySelector('#cashBtn')
+    const cashModal = new bootstrap.Modal(document.querySelector('#cashModal'))
+    cashBtn.addEventListener('click', ()=>{
+        cashModal.show()
+    })
+</script>
 {% endblock content %}

@@ -2,8 +2,8 @@
 {% load crispy_forms_tags %} 
 
 {% block content %}
-    <h5 class="fw-bold mt-2 mb-2">{% if branch %}Edit Branch{% else %}Add Branch{% endif %}</h5>
-    <form method="post">
+    <div class='p-2 shadow'><h5 class="fw-bold mt-2 mb-2">{% if branch %}Edit Branch{% else %}Add Branch{% endif %}</h5></div>
+    <form method="post" class='mt-2'>
         {% csrf_token %}
         {{ form|crispy }} 
         <div class='d-flex justify-content-end'>
