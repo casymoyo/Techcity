@@ -3,22 +3,13 @@
 {% load crispy_forms_tags %}
 {% block content %}
 <div>
-    <div class="d-flex justify-content-between align-items-center py-2">
-        <div class="fs-5 fw-bold">
+    <div class="d-flex bg-dark text-light shadow rounded align-items-center p-2">
+        <div class="h5">
             Add Expense
         </div>
-        <hr style="border: 1px solid #333 !important;">
     </div>
-    <form method='post'>
-        {% csrf_token %}
-        <div id="div_id_date" class="mb-3"> 
-            <label
-                for="id_date" class="form-label requiredField">
-                Date
-                <span class="asteriskField">*</span> 
-            </label> 
-            <input type="date" name="date" class="dateinput form-control" required id="id_date"> 
-        </div> 
+    <form method='post' class='bg-secondary mt-2 p-2 rounded'>
+        {% csrf_token %} 
         <div id="div_id_payment_method" class="mb-3"> <label
             for="id_payment_method" class="form-label requiredField">
             Payment method<span class="asteriskField">*</span> </label> <select name="payment_method" class="select form-select" required id="id_payment_method"> <option value="" selected>---------</option> <option value="cash">cash</option> <option value="bank">bank</option> <option value="ecocash">ecocash</option>
@@ -49,7 +40,7 @@
                         <option value="{{category.id}}">{{category.name}}</option> 
                     {% endfor %}
                 </select> 
-                <button class='btn btn-primary btn-sm' id='id_category_button' type="button">
+                <button class='btn btn-secondary btn-sm' id='id_category_button' type="button">
                     <i class='bx bx-plus'></i>
                 </button>
             </div>
@@ -62,40 +53,42 @@
                 <textarea name="description" cols="40" rows="3" maxlength="200" class="textarea form-control" required id="id_description"></textarea> 
             </div>
         </div>
-        <div class="d-flex justify-content-end mt-3">
-            <button class="btn btn-secondary btn-sm" type="submit">
-                <i class='bx bx-save'></i> 
-                Save
-            </button>
+        <div class="d-flex justify-content-end mt-2">
+            <div class="">
+                <button type="reset" class="btn btn-danger btn-sm w-100">
+                    <i class='bx bx-reset'></i>
+                    Reset
+                </button>
+            </div>
+            <span class="px-1"></span>
+            <div class="">
+                <button type="submit" id="id_submit" class="btn btn-secondary btn-sm w-100">
+                    <i class='bx bx-save'></i>
+                    Save
+                </button>
+            </div>
         </div>
     </form>
-    <div class="expense-modal hidden">
-        <div class="modal-content">
-            {% include 'finance/expenses/add_category.html'%}
+    <div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <h5 class='fw-bold'>Add Category</h5>
+                    {% include 'finance/expenses/add_category.html'%}
+                </div>
+            </div>
         </div>
     </div>
-    <div class="overlay hidden"></div>
 </div>
 <script type="text/javascript">
-    const modal = document.querySelector('.expense-modal')
-    const overlay = document.querySelector('.overlay')
     const expButton = document.querySelector('#id_category_button')
-
+    const categoryModal = new bootstrap.Modal(document.querySelector('#categoryModal'))
     
     expButton.addEventListener(
         'click', ()=>{
-            modal.classList.remove('hidden')
-            overlay.classList.remove('hidden')
+            categoryModal.show()
         }
     )
-    
-    document.querySelector('#btn-close').addEventListener(
-        'click', ()=>{
-            modal.classList.add('hidden')
-            overlay.classList.add('hidden')
-            window.location.reload()
-        }
-    ) 
 
     document.querySelector('#id_amount').addEventListener(
         'change', ()=>{

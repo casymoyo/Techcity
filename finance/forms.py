@@ -4,11 +4,7 @@ from .models import Expense, ExpenseCategory, Customer, Currency, Invoice, CashT
 class ExpenseForm(forms.ModelForm):
     class Meta:
         model = Expense
-        fields = ['date','payment_method', 'currency', 'amount', 'category', 'description', ]  
-        widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}), 
-            'description': forms.Textarea(attrs={'rows': 3}),  
-        }
+        fields = ['payment_method', 'currency', 'amount', 'category', 'description', ] 
 
     def __init__(self, *args, **kwargs):
         super(ExpenseForm, self).__init__(*args, **kwargs)
@@ -38,5 +34,5 @@ class InvoiceForm(forms.ModelForm):
 class TransferForm(forms.ModelForm):
     class Meta:
         model = CashTransfers
-        exclude = ['user']
+        exclude = ['user', 'from_branch', 'branch', 'received_status']
         

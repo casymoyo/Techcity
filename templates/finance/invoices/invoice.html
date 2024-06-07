@@ -86,7 +86,7 @@
                             {% else %}
                                 <td scope="row" class='text-danger' ><small>{{invoice.issue_date}}</small></td>
                                 <td class='text-danger'><small>#{{invoice.invoice_number}}</small></td>
-                                <td><a href="{% url 'finance:customer' invoice.customer.id%}">{{invoice.customer.name}}</a></td>
+                                <td><small><a href="{% url 'finance:customer' invoice.customer.id%}">{{invoice.customer.name}}</a></small></td>
                                 <td><small>{{invoice.products_purchased}}</small></td>
                                 <td id="tr" data-invoiceID={{invoice.id}} class='text-danger'><small>{{invoice.currency.symbol}} {{invoice.amount_paid}}</small></td>
                                 <td class='text-danger'><small>{{invoice.currency.symbol}} {{invoice.amount_due}}</small></td>
@@ -143,7 +143,7 @@
         <div class="modal fade" id="paymentsModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-body text-center">
+                    <div class="modal-body text-center" id='payment_content'>
                         {% include 'finance/invoices/invoice_payments.html' %}
                     </div>
                 </div>
@@ -154,9 +154,8 @@
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-body text-center">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
+                        <i class='bx bx-check-circle h1'></i>
+                        <h2>Payment Successfull</h2>
                     </div>
                 </div>
             </div>
@@ -234,7 +233,7 @@
         <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-body" id='delete_content'>
+                    <div class="modal-body" id='payment_content'>
                         {% include 'finance/invoices/update_invoice.html' %}
                     </div>
                 </div>
@@ -295,8 +294,6 @@
             payment_method: paymentMethod
         }
 
-        loaderModal.show(); 
-
         let customerName = '{{invoice.customer.name}}'
         error.textContent = `Updating ${customerName}(s) invoice`
 
@@ -322,8 +319,11 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    loaderModal.hide()
-                    window.location.href='{% url "finance:invoice" %}'
+                    updateModal.hide()
+                    loaderModal.show()
+                    setTimeout(() => {
+                        window.location.href='{% url "finance:invoice" %}';
+                    }, 2000);
                 } else {
                     loaderModal.hide()
                     error.textContent='*' + data.message

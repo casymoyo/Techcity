@@ -1,6 +1,6 @@
 from django.urls import re_path
-from .consumers import InvoiceNotificationConsumer
+from .consumers import CashTransferConsumer
 
 websocket_urlpatterns = [
-    re_path(r'ws/invoice-notifications/$', InvoiceNotificationConsumer.as_asgi()),
+    re_path(r'ws/cash_transfers/$', CashTransferConsumer.as_asgi()),
 ]

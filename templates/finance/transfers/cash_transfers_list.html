@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load static%}
+{% load crispy_forms_tags %}
+{% block title%} Reciver Money Transfers {% endblock%}
+{% block content %}
+<div class="customer">
+    <div class="px-2 main-content ">
+        <div class="customer-navbar">
+            <nav class="d-flex justify-content-between align-items-center bg-dark text-light p-2 rounded shadow">
+                <div class="mt-2">
+                    <h5> <i class='bx bx-money mt-1'></i> Receive Money Transfers</h5>
+                </div>
+                <div class='d-flex'>
+                    <button type='button' id='transferBtn' class="btn btn-primary btn-sm">
+                        <i class='bx bx-plus mt-1'></i>
+                        Transfer
+                    </button> 
+                    <form method="get" class='px-2'>
+                        <div>
+                            <input
+                                id="search"
+                                name="q"
+                                type="search"
+                                value="{{search_query}}"
+                                class="form-control"
+                                placeholder="search by date"
+                            />
+                        </div>
+                    </form>
+                </div>
+            </nav>
+        </div>
+        <table class="table border table-hover rounded p-2 mt-3">
+            <thead class='bg-primary'>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Source</th>
+                    <th>status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transfer in transfers %}
+                    <tr>
+                       <td><small>{{ transfer.date }}</small></td>
+                       <td><small>{{ transfer.reason }}</small></td>
+                       <td><small>{{ transfer.currency }} {{ transfer.amount }}</small></td>
+                       <td><small>{{ transfer.from_branch }}</small></td>
+                       <td>
+                            <small>
+                                {% if transfer.received_status == False %}
+                                    <small><button class='btn btn-success btn-sm' data-id={{ transfer.id }} id='acceptBtn'>Accept Transfer</button></small>
+                                {% else %}
+                                    <span class='text-success'>money received</span>
+                                {% endif %}
+                            </small>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>  
+        </table>
+    
+    <div class="modal fade" id="acceptModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <h5 class='fw-bold'>Accept Money Transfer</h5>
+                    <div>
+                        <button onClick='acceptTransfer();' class='btn btn-secondary w-100'>Yes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
+
+<script src="{% static 'js/jquery.js'%}"></script>
+<script>
+    const acceptBtn = document.querySelectorAll('#acceptBtn')
+    const acceptModal = new bootstrap.Modal(document.querySelector('#acceptModal'))
+
+    let transferId = ''
+
+    acceptBtn.forEach((btn)=>{
+        btn.addEventListener('click', ()=>{
+            acceptModal.show()
+            transferId = btn.dataset.id
+            console.lg(transferId)
+        })      
+    
+    })
+
+    function acceptTransfer(){
+        fetch(`/finance/transfer/cash/receive/${transferId}/`, {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"), 
+            },
+            body: JSON.stringify({'':''}),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                window.location.href='{% url "finance:cash_transfer_list" %}'
+            } else {
+                //error.textContent='*' + data.message
+            }
+        })
+        .catch((error) => {
+        console.error("Error:", error);
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+
+</script>
+{% endblock content %}

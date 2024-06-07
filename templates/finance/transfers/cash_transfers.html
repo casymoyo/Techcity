@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static%}
+{% load crispy_forms_tags %}
+{% block title%} Money Transfers {% endblock%}
+{% block content %}
+<div class="customer">
+    <div class="px-2 main-content ">
+        <div class="customer-navbar">
+            <nav class="d-flex justify-content-between align-items-center bg-dark text-light p-2 rounded shadow">
+                <div class="mt-2">
+                    <h5> <i class='bx bx-money mt-1'></i> Money Transfers</h5>
+                </div>
+                <div class='d-flex'>
+                    <button type='button' id='transferBtn' class="btn btn-primary btn-sm">
+                        <i class='bx bx-plus mt-1'></i>
+                        Transfer
+                    </button> 
+                    <span class='px-2'></span>
+                    <a href={% url 'finance:cash_transfer_list'%} class="btn btn-primary btn-sm">
+                        Receive Money
+                    </a> 
+                    <form method="get" class='px-2'>
+                        <div>
+                            <input
+                                id="search"
+                                name="q"
+                                type="search"
+                                value="{{search_query}}"
+                                class="form-control"
+                                placeholder="search by name"
+                            />
+                        </div>
+                    </form>
+                </div>
+            </nav>
+        </div>
+        <table class="table border table-hover rounded p-2 mt-3">
+            <thead class='bg-primary'>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Destination</th>
+                    <th>status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transfer in transfers %}
+                    <tr>
+                       <td><small>{{ transfer.date }}</small></td>
+                       <td><small>{{ transfer.reason }}</small></td>
+                       <td><small>{{ transfer.currency }} {{ transfer.amount }}</small></td>
+                       <td><small>{{ transfer.to }}</small></td>
+                       <td>
+                            <small>
+                                {% if transfer.received_status == False %}
+                                    <span class='text-danger'>money not yet received</span>
+                                {% else %}
+                                    <span class='text-success'>money received</span>
+                                {% endif %}
+                            </small>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>  
+        </table>
+    <div class="modal fade" id="addTransferModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="h5 fw-bod">Add Transfer</div>
+                    <form method='post'>
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <div class="d-flex justify-content-end">
+                            <div class="">
+                                <button type="reset" class="btn btn-danger btn-sm w-100">
+                                    <i class='bx bx-reset'></i>
+                                    Reset
+                                </button>
+                            </div>
+                            <span class="px-1"></span>
+                            <div class="">
+                                <button type="submit" id="id_submit" class="btn btn-secondary btn-sm w-100">
+                                    <i class='bx bx-save'></i>
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="endOfDayModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    {% include 'end_of_day_modal.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
+
+<script src="{% static 'js/jquery.js'%}"></script>
+<script>
+    const addTransferBtn = document.querySelector('#transferBtn')
+    const addTransferModal = new bootstrap.Modal(document.querySelector('#addTransferModal'))
+
+    addTransferBtn.addEventListener('click', ()=>{
+        addTransferModal.show()
+    })
+
+</script>
+{% endblock content %}

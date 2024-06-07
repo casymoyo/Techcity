@@ -1,6 +1,6 @@
-from django.dispatch import receiver, Signal
+from django.dispatch import receiver
 from .models import Inventory, StockNotifications
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import post_save
 from inventory.middleware import _request
 
 @receiver(post_save, sender=Inventory)

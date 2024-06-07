@@ -1,10 +1,6 @@
 {% load static%}
 {% block content %}
-<style>
-    .payment-details{
-        font-family:adobe;
-    }
-</style>
+
 <div class='payment'>
     <div class="bg-secondary text-light border d-flex justify-content-between align-items-center rounded w-100 py-2">
         <h4 class='px-2' id="id_customer_details">Process Payment -> <span>Cash</span></h4>
@@ -15,11 +11,12 @@
     <div class='row mt-2 payment-details'>
         <div class='col-3 border p-2'>
             <h5>Order details</h5>
-            <table class="table">
+            <table class="table table-borderless">
                 <tbody id="order_details"></tbody>
             </table>
 
-            <table id="oder_details_foot" class="table">
+           <div>
+            <table id="oder_details_foot" class="table table-borderless">
                 <tr>
                     <td class='px-5 fw-bold'>Subtotal</td>
                     <td class="d-flex justify-content-end" id="id_subtotal"></td>
@@ -65,13 +62,12 @@
                     <td class="d-flex justify-content-end" id="id_balance">0.00</td>
                 </tr>
             </table>
+           </div>
             
             <table>
                 <tr>
                     <td class='fw-bold px-5'>Cur & Pre Due</td>
-                    <td class="d-flex justify-content-end" id="previous_due">
-                        <span class='fw-bold'>0.00</span>
-                    </td>
+                    <td class="d-flex justify-content-end" id="previous_due"></td>
                 </tr>
             </table>
         </div>
@@ -87,7 +83,7 @@
                      />
                 </div>
 
-                <div class="credit border rounded p-2 mb-2 hidden">
+                <div class="credit border rounded p-2 mb-2">
                     <p>Credit details</p>
                     <div class="mb-2">
                         <label for="id_date">Credit Duration</label>
@@ -111,37 +107,25 @@
                         placeholder=""
                     ></textarea>
                 </div>
-
-                <div class="payment-btn w-100 ">
-                    <button type="button" class="btn btn-success btn-sm w-100 py-2" onclick="processCart()">
-                        PAY
-                    </button>
-                </div>
             </div>
         </div>
         <div class="col-3">
             <h5 class="mb-3">Payment Methods</h5>
             <div class='button-choose w-100'>
                 <div class="w-100 p-2">
-                    <button type="button"  class='btn btn-light btn-lg w-100 pm' data-name='cash' id="id_cash_btn">
+                    <button type="button"  class='btn btn-light btn-lg w-100 pm' data-name='cash' id="id_cash_btn" onclick="processCart()">
                         CASH
-                    </button>
-                </div>
-                
-                <div class="w-100 mt-2 p-2">
-                    <button class='btn btn-danger btn-lg w-100 pm' data-name='cash' id="id_credit_btn">
-                        CREDIT
                     </button>
                 </div>
 
                 <div class="w-100 mt-2 p-2">
-                    <button type="button" class='bank btn btn-secondary btn-lg w-100 pm' data-name='bank' id="id_bank_transfer">
+                    <button type="button" class='bank btn btn-secondary btn-lg w-100 pm' data-name='bank' id="id_bank_transfer" onclick="processCart()">
                         BANK CARD
                     </button>
                 </div>
 
                 <div class="w-100 mt-2 p-2">
-                    <button type="button" class='ecocash btn btn-primary btn-lg w-100 pm' data-name='ecocash' id="id_credit_ecocash">
+                    <button type="button" class='ecocash btn btn-primary btn-lg w-100 pm' data-name='ecocash' id="id_credit_ecocash" onclick="processCart()">
                         ECOCASH
                     </button>
                 </div>

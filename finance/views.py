@@ -1,6 +1,7 @@
 from .models import *
 from decimal import Decimal
 from io import BytesIO
+from .consumers import CashTransferConsumer 
 from xhtml2pdf import pisa 
 from django.views import View
 from django.db.models import Q
@@ -14,9 +15,12 @@ from utils.utils import generate_pdf
 from django.http import JsonResponse
 from utils.utils import generate_pdf
 from celery.result import AsyncResult
+from asgiref.sync import async_to_sync, sync_to_async
 from inventory.models import Inventory
+from channels.layers import get_channel_layer
 import json, datetime, os, boto3, openpyxl 
 from .tasks import send_invoice_email_task
+from pytz import timezone as pytz_timezone 
 from openpyxl.styles import Alignment, Font
 from . utils import calculate_expenses_totals
 from django.utils.dateparse import parse_date
@@ -39,7 +43,7 @@ class Finance(View):
 
     def get(self, request, *args, **kwargs):
         # Balances
-        balances = AccountBalance.objects.all()
+        balances = AccountBalance.objects.filter(branch=request.user.branch)
         
         # Recent Transactions
         recent_sales = Sale.objects.filter(transaction__branch=request.user.branch).order_by('-date')[:5]
@@ -115,22 +119,29 @@ class ExpenseView(View):
     
 @login_required
 def create_expense(request):
-    form = ExpenseCategoryForm()
+    form = ExpenseForm()
+    expense_category_form = ExpenseCategoryForm() 
     if request.method == 'POST':
         form = ExpenseForm(request.POST)
-        
+
         if form.is_valid():
             expense = form.save(commit=False)
+            expense.date = datetime.date.today()  
             expense.branch = request.user.branch
             expense.user = request.user
             expense.save()
-            
-            messages.success(request, 'Expense successfuly created')
-            return redirect('finance:expense_list')
 
-    return render(request, 'finance/expenses/add_expense.html', {'form': form})
+            messages.success(request, 'Expense successfully created!')
+            return redirect('finance:expense_list')  
+
+        else:
+            messages.error(request, "Invalid form data. Please correct the errors.")  
+
+    return render(request, 'finance/expenses/add_expense.html', {'form': form, 'expense_category_form': expense_category_form}) 
+
 
 @login_required
+@transaction.atomic  
 def confirm_expense(request, expense_id):
     expense = Expense.objects.get(id=expense_id)
     
@@ -140,11 +151,18 @@ def confirm_expense(request, expense_id):
             'ecocash': Account.AccountType.ECOCASH,
         }
 
-    account_name = f"{expense.currency.name} {expense.payment_method.capitalize()} Account"
-
-    account = Account.objects.get(name=account_name, type=account_types[expense.payment_method])
+    account_name = f"{request.user.branch} {expense.currency.name} {expense.payment_method.capitalize()} Account"
     
-    account_balance = AccountBalance.objects.get(account=account,  branch=request.user.branch)
+    try:
+        account = Account.objects.get(name=account_name, type=account_types[expense.payment_method])
+    except Account.DoesNotExist:
+        messages.error(request, f'{account_name} doesnt exists')
+        return redirect('finance:expense_list')
+    try:
+        account_balance = AccountBalance.objects.get(account=account,  branch=request.user.branch)
+    except AccountBalance.DoesNotExist:
+        messages.error(request, f'Account Balances for account {account_name} doesnt exists')
+        return redirect('finance:expense_list')
     
     account_balance.balance -= Decimal(expense.amount)
     
@@ -155,139 +173,150 @@ def confirm_expense(request, expense_id):
     
     messages.success(request, 'Expense confirmed')
     return redirect('finance:expense_list')
+
     
+
 @login_required
 def create_expense_category(request):
     if request.method == 'POST':
-        form = ExpenseCategoryForm(request.POST) 
-        
-        if ExpenseCategory.objects.filter(name=request.POST['name']).exists():
-            return JsonResponse({ 'message': 'Category exists'})
-        
+        form = ExpenseCategoryForm(request.POST)
+
+        if ExpenseCategory.objects.filter(
+            name__iexact=request.POST['name'] 
+        ).exists():
+            return JsonResponse({'message': 'Category already exists.'})  
+
         if form.is_valid():
             category = form.save()
             return JsonResponse({
-                'message': 'Expense category created successfully!',
-                'category_id': category.pk
+                'message': 'Expense category created successfully!'
             })
         else:
             return JsonResponse({
-                'errors': form.errors,
+                'errors': form.errors,  
                 'message': 'Expense category creation failed. Please check the errors.'
-            }, status=400)  
+            })
+        
+    return JsonResponse({'message': 'Invalid request method.'}) 
 
-    return JsonResponse({'message': 'Invalid request method.'}, status=405)
 
-@login_required       
+@login_required
 def invoice(request):
     form = InvoiceForm()
-    day = request.GET.get('day', '')
-    q = request.GET.get('q', '')
-    
     invoices = Invoice.objects.filter(branch=request.user.branch, status=True).order_by('-issue_date')
-    today = timezone.now().date()  
     
-    if q:
-        invoices = invoices.filter(Q(customer__name__icontains=q)|Q(invoice_number__icontains=q)|Q(issue_date__icontains=q))
+    query_params = request.GET
+    if query_params.get('q'):
+        search_query = query_params['q']
+        invoices = invoices.filter(
+            Q(customer__name__icontains=search_query) |
+            Q(invoice_number__icontains=search_query) |
+            Q(issue_date__icontains=search_query)
+        )
 
-    if day == 'today':
-        invoices = invoices.filter(issue_date=timezone.now() - timedelta(days=2))
+    user_timezone_str = request.user.timezone if hasattr(request.user, 'timezone') else 'UTC'
+    user_timezone = pytz_timezone(user_timezone_str)  
 
-    if day == 'yesterday':
-        yesterday = today - timedelta(days=1)
-        invoices = invoices.filter(issue_date=yesterday)
+    def filter_by_date_range(start_date, end_date):
+        start_datetime = user_timezone.localize(
+            timezone.datetime.combine(start_date, timezone.datetime.min.time())
+        )
+        end_datetime = user_timezone.localize(
+            timezone.datetime.combine(end_date, timezone.datetime.max.time())
+        )
+        return invoices.filter(issue_date__range=[start_datetime, end_datetime])
 
-    if day == 't_week':
-        start_of_week = today - timedelta(days=today.weekday())
-        end_of_week = start_of_week + timedelta(days=6)
-        invoices = invoices.filter(issue_date__range=[start_of_week, end_of_week])
+    now = timezone.now().astimezone(user_timezone)
+    today = now.date()
 
-    if day == 'l_week':
-        end_of_last_week = today - timedelta(days=today.weekday() + 1)
-        start_of_last_week = end_of_last_week - timedelta(days=6)
-        invoices = invoices.filter(issue_date__range=[start_of_last_week, end_of_last_week])
+    now = timezone.now() 
+    today = now.date()  
+    date_filters = {
+        'today': lambda: filter_by_date_range(today, today),
+        'yesterday': lambda: filter_by_date_range(today - timedelta(days=1), today - timedelta(days=1)),
+        't_week': lambda: filter_by_date_range(today - timedelta(days=today.weekday()), today),
+        'l_week': lambda: filter_by_date_range(today - timedelta(days=today.weekday() + 7), today - timedelta(days=today.weekday() + 1)),
+        't_month': lambda: invoices.filter(issue_date__month=today.month, issue_date__year=today.year),
+        'l_month': lambda: invoices.filter(issue_date__month=today.month - 1 if today.month > 1 else 12, issue_date__year=today.year if today.month > 1 else today.year - 1),
+        't_year': lambda: invoices.filter(issue_date__year=today.year),
+    }
 
-    if day == 't_month':
-        invoices = invoices.filter(issue_date__month=today.month, issue_date__year=today.year)
-
-    if day == 'l_month':
-        last_month = today.month - 1 if today.month > 1 else 12
-        last_month_year = today.year if today.month > 1 else today.year - 1
-        invoices = invoices.filter(issue_date__month=last_month, issue_date__year=last_month_year)
-
-    if day == 't_year':
-        invoices = invoices.filter(issue_date__year=today.year)
+    if query_params.get('day') in date_filters:
+        invoices = date_filters[query_params['day']]()
 
     total_partial = invoices.filter(payment_status='Partial').aggregate(Sum('amount'))['amount__sum'] or 0
     total_paid = invoices.filter(payment_status='Paid').aggregate(Sum('amount'))['amount__sum'] or 0
     total_amount = invoices.aggregate(Sum('amount'))['amount__sum'] or 0
 
-
     return render(request, 'finance/invoices/invoice.html', {
-        'form':form,
-        'search_query':q,
+        'form': form,
         'invoices': invoices,
         'total_paid': total_paid,
         'total_due': total_partial,
-        'total_amount': total_amount, 
+        'total_amount': total_amount,
     })
 
+
 @login_required
+@transaction.atomic 
 def update_invoice(request, invoice_id):
-    invoice = Invoice.objects.get(id=invoice_id)
-    account = CustomerAccount.objects.get(customer=invoice.customer)
-    customer_account_balance = CustomerAccountBalances.objects.get(account=account, currency=invoice.currency)
-    
+    invoice = get_object_or_404(Invoice, id=invoice_id)
+    customer_account = get_object_or_404(CustomerAccount, customer=invoice.customer)
+    customer_account_balance = get_object_or_404(
+        CustomerAccountBalances, account=customer_account, currency=invoice.currency
+    )
+
     if request.method == 'POST':
         data = json.loads(request.body)
-        
         amount_paid = Decimal(data['amount_paid'])
-        
-        if Decimal(amount_paid) >= invoice.amount_due:
-            invoice.payment_status=invoice.PaymentStatus.PAID
-            invoice.amount_due = 0
-           
-        else:
-            invoice.amount_due -= Decimal(amount_paid)
 
-        invoice.amount_paid += Decimal(amount_paid)
-            
-        Payment.objects.create(
+        invoice = Invoice.objects.select_for_update().get(pk=invoice.pk)
+        customer_account_balance = CustomerAccountBalances.objects.select_for_update().get(pk=customer_account_balance.pk)
+
+        if amount_paid <= 0:
+            return JsonResponse({'success': False, 'message': 'Invalid amount paid.'}, status=400)
+
+        if amount_paid >= invoice.amount_due:
+            invoice.payment_status = Invoice.PaymentStatus.PAID
+            invoice.amount_due = 0
+        else:
+            invoice.amount_due -= amount_paid
+
+        invoice.amount_paid += amount_paid
+
+        payment = Payment.objects.create(
             invoice=invoice,
-            amount_paid=Decimal(amount_paid),
+            amount_paid=amount_paid,
             payment_method=data['payment_method'],
             user=request.user
         )
-        
-        account_types = {
-            'cash': Account.AccountType.CASH,
-            'bank': Account.AccountType.BANK,
-            'ecocash': Account.AccountType.ECOCASH,
-        }
 
-        account_name = f"{request.user.branch} {invoice.currency.name} {data['payment_method'].capitalize()} Account"
-
-        account, _ = Account.objects.get_or_create(name=account_name, type=account_types[data['payment_method']])
-        
+        account, _ = Account.objects.get_or_create(
+            name=f"{request.user.branch} {invoice.currency.name} {payment.payment_method.capitalize()} Account",
+            type=Account.AccountType[payment.payment_method.upper()] 
+        )
         account_balance, _ = AccountBalance.objects.get_or_create(
-                account=account,
-                currency=invoice.currency,
-                branch=request.user.branch,
-                defaults={'balance': 0}  
-            )
-        
-        account_balance.balance += Decimal(amount_paid)
-        
-        customer_account_balance.balance -= Decimal(amount_paid)
-        
+            account=account,
+            currency=invoice.currency,
+            branch=request.user.branch,
+            defaults={'balance': 0}
+        )
+
+        account_balance.balance += amount_paid
+        customer_account_balance.balance -= amount_paid
+
         account_balance.save()
         customer_account_balance.save()
         invoice.save()
-        
-        return JsonResponse({'success':True, 'message':'Invoice Successfully Updated'})
-    return JsonResponse({'success':False, 'message':'Update Failed'})
+        payment.save()
+
+        return JsonResponse({'success': True, 'message': 'Invoice successfully updated'})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method.'}) 
+
 
 @login_required
+@transaction.atomic 
 def create_invoice(request):
     if request.method == 'POST':
         try:
@@ -477,25 +506,27 @@ def create_invoice(request):
                 account_balance.balance = Decimal(invoice_data['payable']) + Decimal(account_balance.balance)
                 account_balance.save()
                 
-                return redirect('finance:invoice_preview', invoice.id)
+                # return redirect('finance:invoice_preview', invoice.id)
+                return JsonResponse({'success':True, 'invoice_id': invoice.id})
 
         except (KeyError, json.JSONDecodeError, Customer.DoesNotExist, Inventory.DoesNotExist) as e:
             return JsonResponse({'success': False, 'error': str(e)})
 
     return render(request, 'finance/invoices/add_invoice.html')
 
-@login_required
-def delete_invoice(request, invoice_id):
-    invoice = Invoice.objects.get(id=invoice_id)
-    account = CustomerAccount.objects.get(customer=invoice.customer)
-    customer_account_balance = CustomerAccountBalances.objects.get(account=account, currency=invoice.currency)
-    
-    sale = Sale.objects.get(transaction=invoice)
-    
-    invoice_payment = Payment.objects.get(invoice=invoice)
 
-    invoice_items = InvoiceItem.objects.filter(invoice=invoice)
-    
+@login_required
+@transaction.atomic
+def delete_invoice(request, invoice_id):
+    invoice = get_object_or_404(Invoice, id=invoice_id)
+    account = get_object_or_404(CustomerAccount, customer=invoice.customer)
+    customer_account_balance = get_object_or_404(CustomerAccountBalances, account=account, currency=invoice.currency)
+
+    sale = get_object_or_404(Sale, transaction=invoice)
+    invoice_payment = get_object_or_404(Payment, invoice=invoice)
+    stock_transactions = invoice.stocktransaction_set.all()  
+    vat_transaction = get_object_or_404(VATTransaction, invoice=invoice)
+
     if invoice.payment_status == Invoice.PaymentStatus.PARTIAL:
         customer_account_balance.balance -= invoice.amount_due
 
@@ -505,48 +536,39 @@ def delete_invoice(request, invoice_id):
         'ecocash': Account.AccountType.ECOCASH,
     }
 
-    account_name = f"{request.user.branch} {invoice.currency.name} {invoice_payment.payment_method.capitalize()} Account"
-
-    account = Account.objects.get(name=account_name, type=account_types[invoice_payment.payment_method])
-    
-    account_balance = AccountBalance.objects.get(account=account, currency=invoice.currency,branch=request.user.branch)
-    
+    account = get_object_or_404(
+        Account, 
+        name=f"{request.user.branch} {invoice.currency.name} {invoice_payment.payment_method.capitalize()} Account", 
+        type=account_types.get(invoice_payment.payment_method, None)  # Handle case if payment_method is invalid
+    )
+    account_balance = get_object_or_404(AccountBalance, account=account, currency=invoice.currency, branch=request.user.branch)
     account_balance.balance -= invoice.amount_paid
-    
-    stock_transaction = StockTransaction.objects.filter(invoice=invoice)
-    
-    vat_transaction = VATTransaction.objects.get(invoice=invoice)
-    
-    for stock in stock_transaction:
-        product = Inventory.objects.get(product = stock.item, branch=request.user.branch)
-        product.quantity += stock.quantity
+
+    for stock_transaction in stock_transactions:
+        product = Inventory.objects.get(product=stock_transaction.item, branch=request.user.branch)
+        product.quantity += stock_transaction.quantity
         product.save()
-        
+
         ActivityLog.objects.create(
-            invoice = invoice,
-            product_transfer = None,
-            branch = request.user.branch,
+            invoice=invoice,
+            product_transfer=None,
+            branch=request.user.branch,
             user=request.user,
-            action= 'sale cancelled',
+            action='sale cancelled',
             inventory=product,
-            quantity=stock.quantity,
+            quantity=stock_transaction.quantity,
             total_quantity=product.quantity
         )
-    
-    for item in invoice_items:
-        item.delete()
-        item.save()
+
+    InvoiceItem.objects.filter(invoice=invoice).delete() 
+    StockTransaction.objects.filter(invoice=invoice).delete()
     
     account_balance.save()
     customer_account_balance.save()
-     
     sale.delete()
-    # transaction.delete()
-    invoice_items.delete()
     vat_transaction.delete()
-    stock_transaction.delete()
     invoice.delete()
-    
+
     return JsonResponse({'message': f'Invoice {invoice.invoice_number} successfully deleted'})
     
     
@@ -573,16 +595,11 @@ def customer(request):
     elif request.method == 'POST':
         data = json.loads(request.body)
 
-        # Input Validation
-        required_fields = ['name', 'email', 'address', 'phonenumber']
-        if not all(data.get(field) for field in required_fields):
-            return JsonResponse({'success': False, 'message': 'Missing required fields'})
+    
 
-        #Check if customer with the same email exists 
-        if Customer.objects.filter(email=data['email']).exists():
+        if Customer.objects.filter(phone_number=data['phone_number']).exists():
             return JsonResponse({'success': False, 'message': 'Customer with this email already exists'})
 
-        # Customer and Account Creation
         customer = Customer.objects.create(
             name=data['name'],
             email=data['email'],
@@ -626,7 +643,6 @@ def customer_list(request):
             cell.font = header_font
             cell.alignment = header_alignment
             
-            #Adjust column width to fit content
             column_letter = openpyxl.utils.get_column_letter(col_num)
             worksheet.column_dimensions[column_letter].width = max(len(header_title), 20)
 
@@ -670,88 +686,104 @@ def delete_customer(request, customer_id):
     else:
         return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})  
     
-@login_required    
+
+@login_required
 def customer_account(request, customer_id):
-    q = request.GET.get('q', '')
-    search_query = request.GET.get('search_query', '')
-    send_mail = request.GET.get('email_bool', '')
-    
-    customer = Customer.objects.get(id=customer_id)
+    customer = get_object_or_404(Customer, id=customer_id)
+
     account = CustomerAccountBalances.objects.filter(account__customer=customer)
-    
-    invoices = Invoice.objects.filter(customer=customer, branch=request.user.branch, status=True)
 
-    invoice_payments = Payment.objects.filter(invoice__branch=request.user.branch, invoice__customer=customer).order_by('-payment_date')
-    
-    if q:
-        invoices = invoices.filter(payment_status=q)
-        
-    if search_query:
-        invoices = invoices.filter(Q(invoice_number__icontains=search_query) | Q(issue_date__icontains=search_query) )
-        
-    if send_mail:
-        html_string = render_to_string('finance/customers/email_temp.html', {"invoice_payments":invoice_payments, "customer":customer, 'request':request})
-        buffer = BytesIO()
+    invoices = Invoice.objects.filter(
+        customer=customer, 
+        branch=request.user.branch, 
+        status=True
+    )
+    invoice_payments = Payment.objects.filter(
+        invoice__branch=request.user.branch, 
+        invoice__customer=customer
+    ).order_by('-payment_date')
 
-        pisa.CreatePDF(html_string, dest=buffer) 
+    filters = Q()
+    if request.GET.get('q'):
+        filters &= Q(payment_status=request.GET['q'])
+    if request.GET.get('search_query'):
+        search_query = request.GET['search_query']
+        filters &= (Q(invoice_number__icontains=search_query) | Q(issue_date__icontains=search_query))
+
+    invoices = invoices.filter(filters)
+
+    if request.GET.get('email_bool'):
+        html_string = render_to_string('finance/customers/email_temp.html', {
+            "invoice_payments": invoice_payments, 
+            "customer": customer, 
+            'request': request
+        })
 
         email = EmailMessage(
             'Your Account Statement',
             'Please find your invoice attached.',
-            'your_email@example.com',
-            ['recipient_email@example.com'],
+            'your_email@example.com', 
+            [customer.email],
         )
-        
-        buffer.seek(0)
-        email.attach(f'account statement({customer.name}).pdf', buffer.getvalue(), 'application/pdf')
-        
+
+        with BytesIO() as buffer:
+            pisa.CreatePDF(html_string, dest=buffer)
+            buffer.seek(0)
+            email.attach(f'account statement({customer.name}).pdf', buffer.getvalue(), 'application/pdf')
+
+        email.send() 
         return JsonResponse({'message': 'Email sent'})
 
-    
     return render(request, 'finance/customer.html', {
-        'q':q,
-        'account':account,
-        'invoices':invoices,
-        'customer':customer,
-        'search_query':search_query,
-        'invoice_count':invoices.count(),
-        'invoice_payments':invoice_payments,
-        'paid':Invoice.objects.filter(payment_status='Paid', customer=customer, branch=request.user.branch, status=True).count(),
-        'due':Invoice.objects.filter(payment_status='Partial', customer=customer, branch=request.user.branch, status=True).count(),
+        'account': account,
+        'invoices': invoices,
+        'customer': customer,
+        'invoice_count': invoices.count(),
+        'invoice_payments': invoice_payments,
+        'paid': invoices.filter(payment_status='Paid').count(),  
+        'due': invoices.filter(payment_status='Partial').count(), 
     })
-    
-@login_required    
-def customer_account_transactions_json(request):
-    customer_id = request.GET.get('customer_id', '')
-    transaction_type = request.GET.get('type', '')
-    
-    customer = Customer.objects.get(id=customer_id)
-    
-    invoices = Invoice.objects.filter(customer=customer, branch=request.user.branch, status=True).order_by('-issue_date').values(
-        'issue_date', 'invoice_number', 'products_purchased', 'amount_paid', 'amount_due', 'amount', 'user__username'
-    )
-    
-    if transaction_type == 'invoices':
-        return JsonResponse(list(invoices), safe=False)
-    
-    
-    return JsonResponse({'message': f'Error fetching {customer.name} data.'})
 
-@login_required    
+
+@login_required
+def customer_account_transactions_json(request):
+    customer_id = request.GET.get('customer_id')
+    transaction_type = request.GET.get('type')
+
+    customer = get_object_or_404(Customer, id=customer_id)  
+
+    if transaction_type == 'invoices':
+        invoices = Invoice.objects.filter(
+            customer=customer, 
+            branch=request.user.branch, 
+            status=True
+        ).order_by('-issue_date').values(
+            'issue_date', 'invoice_number', 'products_purchased', 
+            'amount_paid', 'amount_due', 'amount', 'user__username'
+        )
+        return JsonResponse(list(invoices), safe=False)
+    else:
+        return JsonResponse({'message': 'Invalid transaction type.'}, status=400)  
+
+@login_required
 def customer_account_payments_json(request):
-    customer_id = request.GET.get('customer_id', '')
-    transaction_type = request.GET.get('type', '')
-    
-    customer = Customer.objects.get(id=customer_id)
-    
-    invoice_payments = Payment.objects.filter(invoice__branch=request.user.branch, invoice__customer=customer).order_by('-payment_date').values(
-        'payment_date', 'invoice__invoice_number', 'invoice__currency__symbol', 'invoice__amount_due', 'invoice__amount', 'user__username', 'amount_paid'
-    )
+    customer_id = request.GET.get('customer_id')
+    transaction_type = request.GET.get('type')
+
+    customer = get_object_or_404(Customer, id=customer_id)
 
     if transaction_type == 'invoice_payments':
+        invoice_payments = Payment.objects.select_related('invoice', 'invoice__currency', 'user').filter(
+            invoice__branch=request.user.branch, 
+            invoice__customer=customer
+        ).order_by('-payment_date').values(
+            'payment_date', 'invoice__invoice_number', 'invoice__currency__symbol',
+            'invoice__amount_due', 'invoice__amount', 'user__username', 'amount_paid'
+        )
         return JsonResponse(list(invoice_payments), safe=False)
-    
-    return JsonResponse({'message': f'Error fetching {customer.name} data.'})
+    else:
+        return JsonResponse({'message': 'Invalid transaction type.'}, status=400)  
+
 
 @login_required
 def customer_account_json(request, customer_id):
@@ -770,17 +802,24 @@ def currency_json(request):
     currency_id = request.GET.get('id', '')
     currency = Currency.objects.filter(id=currency_id).values()
     return JsonResponse(list(currency), safe=False)
+ # Import your Currency model
 
 @login_required
 def add_currency(request):
-    form = CurrencyForm()
     if request.method == 'POST':
         form = CurrencyForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Currency successfully created')
-            return redirect('finance:currency')
-    return render(request, 'finance/currency/currency_add.html', {'form':form})
+            try:
+                form.save()
+                messages.success(request, 'Currency added successfully!')  
+            except Exception as e: 
+                messages.error(request, f'Error adding currency: {e}')
+            return redirect('finance:currency') 
+    else:
+        form = CurrencyForm()
+
+    return render(request, 'finance/currency/currency_add.html', {'form': form})
+
 
 @login_required
 def update_currency(request, currency_id):
@@ -789,8 +828,11 @@ def update_currency(request, currency_id):
     if request.method == 'POST': 
         form = CurrencyForm(request.POST, instance=currency)  
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Currency updated successfully')  
+            try:
+                form.save()
+                messages.success(request, 'Currency updated successfully') 
+            except Exception as e: 
+                messages.error(request, f'Error updating currency: {e}')
             return redirect('finance:currency')  
     else:
         form = CurrencyForm(instance=currency) 
@@ -799,13 +841,26 @@ def update_currency(request, currency_id):
 
 @login_required
 def delete_currency(request, currency_id):
-    try:
-        currency = Currency.objects.get(id=currency_id)
-        currency.delete()
-    except Currency.DoesNotExist:
-        messages.error(request, 'Currency doesnt Exists')
-        return JsonResponse({'message':'Currency doesnt exists'})
-    return JsonResponse({'message':'Deleted Successfully'})
+    from django.http import JsonResponse, HttpResponseBadRequest
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+
+
+@login_required
+def delete_currency(request, currency_id):
+    if request.method == 'POST': 
+        currency = get_object_or_404(Currency, id=currency_id)
+        
+        try:
+            if currency.invoice_set.exists() or currency.accountbalance_set.exists() or currency.expense_set.exists():  
+                raise Exception("Currency is in use and cannot be deleted.")
+
+            currency.delete()
+            return JsonResponse({'message': 'Currency deleted successfully'})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'message':'Deletion Failed'})
+
 
 @login_required
 def finance_settings(request):
@@ -867,8 +922,47 @@ def invoice_preview(request, invoice_id):
     invoice = Invoice.objects.get(id=invoice_id)
     invoice_items = InvoiceItem.objects.filter(invoice=invoice)
     account = CustomerAccount.objects.get(customer__id = invoice.customer.id)
-    return render(request, 'Pos/receipt.html', {'invoice_id':invoice_id, 'invoice':invoice, 'invoice_items':invoice_items})
+    return render(request, 'Pos/printable_receipt.html', {'invoice_id':invoice_id, 'invoice':invoice, 'invoice_items':invoice_items})
 
+
+@login_required
+def invoice_preview_json(request, invoice_id):
+    try:
+        invoice = Invoice.objects.get(id=invoice_id)
+    except Invoice.DoesNotExist:
+        return JsonResponse({"error": "Invoice not found"}, status=404) 
+     
+    invoice_items = InvoiceItem.objects.filter(invoice=invoice).values(
+        'item__product__name', 
+        'quantity',
+        'item__product__description',
+        'total_amount'
+    )
+
+    invoice_dict = {
+        field.name: getattr(invoice, field.name)
+        for field in invoice._meta.fields
+        if field.name not in ['customer', 'currency', 'branch', 'user']
+    }
+
+    # Add selected customer fields
+    invoice_dict['customer_name'] = invoice.customer.name
+    invoice_dict['customer_email'] = invoice.customer.email 
+    invoice_dict['currency_symbol'] = invoice.currency.symbol
+    
+    if invoice.branch:
+        invoice_dict['branch_name'] = invoice.branch.name
+        invoice_dict['branch_phone'] = invoice.branch.phonenumber
+        invoice_dict['branch_email'] = invoice.branch.email
+        
+    invoice_dict['user_username'] = invoice.user.username  
+    
+    invoice_data = {
+        'invoice': invoice_dict,
+        'invoice_items': list(invoice_items),
+    }
+
+    return JsonResponse(invoice_data)
 
 @login_required
 def invoice_pdf(request):
@@ -881,9 +975,9 @@ def invoice_pdf(request):
             invoice_items = InvoiceItem.objects.filter(invoice=invoice)
             
         except Invoice.DoesNotExist:
-            return HttpResponse("Invoice not found", status=404)
+            return HttpResponse("Invoice not found")
     else:
-        return HttpResponse("Invoice ID is required", status=400)
+        return HttpResponse("Invoice ID is required")
     
     return generate_pdf(
         template_name,
@@ -1013,7 +1107,7 @@ def end_of_day(request):
         inventory_data = []
         for item in sold_inventory:
             sold_info = next((inv for inv in all_inventory if item['item__id'] == inv['id']), None)
-            print(sold_info)
+            
             if sold_info:
                 inventory_data.append({
                     'id': item['item__id'],
@@ -1023,7 +1117,7 @@ def end_of_day(request):
                     'remaining_quantity':sold_info['quantity'] if sold_info else 0,
                     'physical_count': None
                 })
-            print(inventory_data)
+           
         return JsonResponse({'inventory': inventory_data})
     
     elif request.method == 'POST':
@@ -1221,21 +1315,127 @@ def day_report(request, inventory_data):
         return JsonResponse({"error": "Error sending invoice via WhatsApp"})
 
    
-
+@login_required 
+@transaction.atomic 
 def cash_transfer(request):
     form = TransferForm()
+    transfers = CashTransfers.objects.filter(branch=request.user.branch)
     
-    if request.Method == 'POST':
+    account_types = {
+        'cash': Account.AccountType.CASH,
+        'bank': Account.AccountType.BANK,
+        'ecocash': Account.AccountType.ECOCASH,
+    }
+
+    if request.method == 'POST':
         form = TransferForm(request.POST)
         
         if form.is_valid():
             transfer = form.save(commit=False)
             transfer.user = request.user
-
+            transfer.notification_type = 'Expense'
+            transfer.from_branch = request.user.branch
+            transfer.branch = request.user.branch
             
-    return render(request, 'finance/transfers/cash_transfer.html', {form:form})
+            account_name = f"{request.user.branch} {transfer.currency.name} {transfer.transfer_method.capitalize()} Account"
+
+            try:
+                account = Account.objects.get(name=account_name, type=account_types[transfer.transfer_method.lower()])
+            except Account.DoesNotExist:
+                messages.error(request, f"Account '{account_name}' not found.")
+                return redirect('finance:cash_transfer')  
+
+            try:
+                account_balance = AccountBalance.objects.select_for_update().get(
+                    account=account,
+                    currency=transfer.currency,
+                    branch=request.user.branch
+                )
+            except AccountBalance.DoesNotExist:
+                messages.error(request, "Account balance record not found.")
+                return redirect('finance:cash_transfer')
+
+            if account_balance.balance < transfer.amount:
+                messages.error(request, "Insufficient funds in the account.")
+                return redirect('finance:cash_transfer')  
+
+            account_balance.balance -= transfer.amount
+            account_balance.save()
+            transfer.save()  
+            
+
+            # CashTransferConsumer.send_message({'message':'New cash transfer made!'})
+            
+            messages.success(request, 'Money successfully transferred.')
+            return redirect('finance:cash_transfer')  
+        else:
+            messages.error(request, "Invalid form data. Please correct the errors.")
+    return render(request, 'finance/transfers/cash_transfers.html', {'form': form, 'transfers':transfers})
+
+@login_required
+def finance_notifications_json(request):
+    notifications = FinanceNotifications.objects.filter(status=True).values(
+        'transfer__id', 
+        'transfer__to',
+        'expense__id',
+        'expense__branch',
+        'invoice__id',
+        'invoice__branch',
+        'notification',
+        'notification_type',
+        'id'
+    )
+    return JsonResponse(list(notifications), safe=False)
+
+
+@login_required
+@transaction.atomic
+def cash_transfer_list(request):
+    search_query = request.GET.get('q', '')
+    transfers = CashTransfers.objects.filter(to=request.user.branch.id)
     
-    
+    if search_query:
+        transfers = transfers.filter(Q(date__icontains=search_query))
+        
+    return render(request, 'finance/transfers/cash_transfers_list.html', {'transfers':transfers, 'search_query':search_query})
+
+@login_required
+@transaction.atomic
+def receive_money_transfer(request, transfer_id):
+    if transfer_id:
+        transfer = get_object_or_404(CashTransfers, id=transfer_id)
+        account_types = {
+            'cash': Account.AccountType.CASH,
+            'bank': Account.AccountType.BANK,
+            'ecocash': Account.AccountType.ECOCASH,
+        }
+        
+        account_name = f"{request.user.branch} {transfer.currency.name} {transfer.transfer_method.capitalize()} Account"
+
+        try:
+            account, _ = Account.objects.get_or_create(name=account_name, type=account_types[transfer.transfer_method.lower()])
+        except Account.DoesNotExist:
+            return JsonResponse({'message':f"Account '{account_name}' not found."}) 
+
+        try:
+            account_balance, _ = AccountBalance.objects.get_or_create(
+                account=account,
+                currency=transfer.currency,
+                branch=request.user.branch
+            )
+        except AccountBalance.DoesNotExist:
+            messages.error(request, )
+            return JsonResponse({'message':"Account balance record not found."})  
+
+        account_balance.balance += transfer.amount
+        account_balance.save()
+        
+        transfer.received_status = True
+        transfer.save() 
+        return JsonResponse({'message':True})  
+    return JsonResponse({'message':"Transfer ID is needed"})  
+
+
     
     
     

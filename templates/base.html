@@ -56,6 +56,7 @@
                             </div>
                             <div class="mt-4">
                                 <ul class='list-unstyled' id="notis"></ul>
+                                <ul class='list-unstyled' id="finance_notifications"></ul>
                             </div>
                         </div>
                     </div>
@@ -104,17 +105,54 @@
             type: 'GET',
             }).done(function(response) {
                 const data = response;
+                displayInventoryNotifications(data)
+            })
+
+        $.ajax({
+            url: '{% url "finance:finance_notifications_json" %}',
+            type: 'GET',
+            }).done(function(response) {
+                const data = response;
                 console.log(data)
-                displayNotifications(data)
+                displayFinanceNotifications(data)
             })
         
-        function displayNotifications(data){
-            const ol = document.querySelector('#notis');
+        function displayFinanceNotifications(data) {
+            const ul = document.querySelector('#finance_notifications');
+            const notificationTypes = {};
+            
+            data.forEach((notification) => {
+                if (!notificationTypes[notification.notification_type]) {
+                notificationTypes[notification.notification_type] = [];
+                }
+                notificationTypes[notification.notification_type].push(notification);
+            });
+            
+            Object.keys(notificationTypes).forEach((type) => {
+                
+                notificationTypes[type].forEach((notification) => {
+                const li = document.createElement('li');
+                if(notification.transfer__to === {{request.user.branch.id}}){
+                    li.innerHTML = `<small><a href='{% url "finance:cash_transfer_list" %}'>${notification.notification}</a></small>`;
+                }
+                if(notification.expense__branch === {{request.user.branch.id}}){
+                    li.innerHTML = `<small><a>${notification.notification}</a></small>`;
+                }
+                if(notification.invoice__branch === {{request.user.branch.id}}){
+                    li.innerHTML = `<small><a>${notification.notification}</a></small>`;
+                }
+                ul.appendChild(li);
+                });
+            });
+            }
+              
+        function displayInventoryNotifications(data){
+            const ul = document.querySelector('#notis');
 
             data.forEach((data)=>{
                 const li = document.createElement('li');
                 li.innerHTML = `<small><a href='/inventory/inventory-detail/${data.inventory__id}/'>` + data.notification + `</a></small>`
-                ol.appendChild(li);
+                ul.appendChild(li);
             })
         }
     </script>

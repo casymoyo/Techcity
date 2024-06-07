@@ -211,9 +211,9 @@
                     <td id="partialTr" data-id='{{partial_transaction.id}}' style='cursor:pointer;'><small>{{ partial_transaction.customer }}</small></td>
                     <td><small>{{partial_transaction.currency.symbol}}{{ partial_transaction.amount_due}}</small></td>
                     <td>
-                        <button type="button" id="whatsappBtn" data-id='{{partial_transaction.id}}'>
-                            <i class='bx bxl-whatsapp text-success'></i>
-                        </button>
+                        <span type="button" id="whatsappBtn" data-id='{{partial_transaction.id}}'>
+                            <i class='bx bxl-whatsapp text-dark'></i>
+                        </span>
                     </td>
                 </tr>
             {% endfor %}
@@ -242,7 +242,6 @@
             </div>
         </div>
     </div>
-
 </div>
 
 <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>  

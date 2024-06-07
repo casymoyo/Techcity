@@ -8,6 +8,8 @@ from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from io import BytesIO
 from xhtml2pdf import pisa 
+from django.utils import timezone
+from django.conf import settings 
 
 from finance.models import *
 
@@ -85,3 +87,59 @@ def send_invoice_email_task(invoice_id):
     email.send()
     print('done')
 
+@shared_task
+def send_email_notification(notification_id):
+    notification = FinanceNotifications.objects.get(pk=notification_id)
+    subject = 'Cash Transfer Notification'
+    message = notification.notification
+    from_email = 'test@email.com'
+    to_email = 'test@email.com'
+    email = EmailMessage(subject, message, from_email, [to_email])
+    email.send()
+
+@shared_task
+def send_expense_email_notification(expense_id):
+    expense = Expense.objects.get(pk=expense_id)
+    subject = 'Expense to be approved',
+    message = expense.notification
+    from_email = 'test@email.com'
+    to_email = 'test@email.com'
+    email = EmailMessage(subject, message, from_email, [to_email])
+    email.send()
+    
+@shared_task
+def check_and_send_invoice_reminders():
+    timezone.activate(settings.TIME_ZONE) 
+    now = timezone.now()
+    
+    due_invoices = Invoice.objects.filter(due_date__lte=now.date(), payment_status=Invoice.PaymentStatus.PARTIAL)  
+
+    for invoice in due_invoices:
+        days_overdue = (now.date() - invoice.due_date).days
+
+        # Internal Notification
+        internal_subject = f"Invoice #{invoice.id} Overdue by {days_overdue} Days"
+        internal_message = (
+            f"Invoice #{invoice.id} for {invoice.customer.name} is {days_overdue} days overdue. Payment status: Partial"
+        )
+        internal_recipients = ["your-team@example.com"]  
+        
+        email = EmailMessage(
+            internal_subject, internal_message, "from@example.com", internal_recipients
+        )
+        email.send()
+        
+        FinanceNotifications.objects.create(
+            invoice=Invoice,
+            notificatioin=f"Invoice #{invoice.id} for {invoice.customer.name} is {days_overdue} days overdue. Payment status: Partial",
+            status=False,
+            notification_type='Invoice'
+        )
+
+        # Customer Notification
+        customer_subject = f"Overdue Invoice Reminder (Invoice #{invoice.id})"
+        customer_message = f"Dear {invoice.customer.name},\n\nThis is a reminder that your invoice #{invoice.id} was due on {invoice.due_date} and is currently {days_overdue} days overdue. Please settle the remaining balance as soon as possible.\n\nThank you,\nYour Company"
+        email = EmailMessage(
+            customer_subject, customer_message, "from@example.com", [invoice.customer.email]
+        )
+        email.send()

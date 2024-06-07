@@ -4,7 +4,7 @@
 {% block content %}
 <div class="finance d-flex">
     <div class="main-content">
-        <div class='px-2 py-2 bg-dark text-light align-items-center rounded'>
+        <div class='px-2 py-2 bg-dark text-light shadow align-items-center rounded'>
             <div class='h5'>
                 <i class='bx bx-credit-card-front'></i> 
                 Finance
@@ -33,9 +33,21 @@
                     </button>
                 </div>
                 <div class='px-2'>
-                    <a class='btn btn-light btn-sm'>
+                    <a href="{% url 'finance:expense_list' %}"  class='btn btn-light btn-sm'>
                         <i class='bx bx-book'></i>
                         Expenses
+                    </a>
+                </div>
+                <div class=''>
+                    <a href="{% url 'finance:cash_transfer' %}" class='btn btn-light btn-sm'>
+                        <i class='bx bx-transfer-alt' ></i>
+                        Transfers
+                    </a>
+                </div>
+                <div class='px-2'>
+                    <a href="{% url 'finance:currency' %}" class='btn btn-light btn-sm'>
+                        <i class='bx bx-money' ></i>
+                        Currency
                     </a>
                 </div>
             </div>

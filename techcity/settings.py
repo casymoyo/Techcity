@@ -31,9 +31,11 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    "channels",
     "crispy_forms",
     "crispy_bootstrap5",
     'phonenumber_field',
+    'django_celery_results',
     'celery'
 ]
 
@@ -43,7 +45,8 @@ LOCAL_APPS = [
     'Dashboard',
     'inventory',
     'finance',
-    'pos'
+    'pos',
+    'settings'
 ]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -100,7 +103,17 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 WSGI_APPLICATION = "techcity.wsgi.application"
+ASGI_APPLICATION = 'techcity.wsgi.application'
 AUTH_USER_MODEL = 'users.User'
+
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels_rabbitmq.core.RabbitmqChannelLayer',
+#         'CONFIG': {
+#             'host': 'amqp://guest:guest/127.0.0.1:5672/',  
+#         },
+#     },
+# }
 
 
 SESSION_AUTH = True
@@ -230,12 +243,12 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Africa/Harare'
 
-# CELERY_BEAT_SCHEDULE = {
-#     'your_periodic_task_name': {
-#         'task': 'your_app_name.tasks.your_periodic_task',
-#         'schedule': crontab(minute='*/1'),  # Schedule the task to run every minute
-#     },
-# }
+CELERY_BEAT_SCHEDULE = {
+    'send-invoice-reminders': {
+        'task': 'finance.tasks.check_and_send_invoice_reminders',
+        'schedule': crontab(minute=0, hour=0), 
+    },
+}
 
 # EMAIL SETTINGS
 # settings.py

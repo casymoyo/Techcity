@@ -284,12 +284,13 @@ class CashTransfers(models.Model):
     class TransferMethod(models.TextChoices):
         BANK = ('Bank'), _('Bank')
         CASH = ('Cash'), _('Cash')
-        ECOCASH =('Ecocash'), _('Cash')
-        
+        ECOCASH =('Ecocash'), _('Ecocash')
+    
+    date = models.DateField(auto_now_add=True)    
     from_branch = models.ForeignKey('company.Branch', on_delete=models.CASCADE, related_name='kwarikuenda')
     to = models.ForeignKey('company.Branch', on_delete=models.CASCADE, related_name='to')
     branch = models.ForeignKey('company.branch', on_delete=models.CASCADE, related_name='parent')
-    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0, editable=False)
+    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     user = models.ForeignKey('users.User', on_delete=models.PROTECT)
     reason = models.CharField(max_length=255)
@@ -297,6 +298,22 @@ class CashTransfers(models.Model):
     received_status = models.BooleanField(default=False)
     
     def __str__(self):
-        return f'{self.to_branch}: {self.amount}'
+        return f'{self.to}: {self.amount}'
     
+class FinanceNotifications(models.Model):
+    expense = models.OneToOneField(Expense, on_delete=models.CASCADE, null=True)
+    invoice = models.OneToOneField(Invoice, on_delete=models.CASCADE, null=True)
+    transfer = models.OneToOneField(CashTransfers, on_delete=models.CASCADE, null=True)
+    notification = models.CharField(max_length=255)
+    status = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    notification_type = models.CharField(max_length=20, choices=[
+        ('Expense', 'Expense'),
+        ('Invoice', 'Invoice'),
+        ('Transfer', 'Transfer')
+    ])
+
+
+    def __str__(self):
+        return self.notification
     
