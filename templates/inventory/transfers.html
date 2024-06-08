@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% load static%}
+{% block title%} Inventory Transfers {% endblock%}
+{% block content %}
+   <div class="inventory">
+        <div class="inventory-navbar">
+            <nav class="d-flex justify-content-between align-items-center p-2 shadow">
+                <div>
+                    <h5 class='fw-bold'>Transfers</h5>
+                </div>
+                <div class="search d-flex align-items-center">
+                    <div class='px-2'> 
+                        <a href='{% url 'inventory:add_transfer' %}' class="btn btn-primary">
+                            <i class='bx bx-plus'></i>
+                            Transfer
+                        </a>
+                    </div>
+                    <form method='get'>
+                        <input
+                            id="search"
+                            name="q"
+                            value='{{search_query}}'
+                            type="search"
+                            class="form-control"
+                            placeholder="Transfer....."
+                        />
+                    </form>
+                    <span class="px-1"></span>
+                    <form method="get" class="d-flex">
+                        <select name="branch" class="form-control">
+                            <option value="">All Branches</option>
+                            {% for branch in branches %}
+                                <option value="{{ branch.id }}">{{ branch.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="px-1"></span>
+                        <button type="submit" class="btn btn-light btn-sm">
+                            <i class="bx bx-filter"></i>
+                        </button>
+                    </form>
+                </div>
+            </nav>
+        </div>
+        <div class='px-2'>
+            <div class='mt-3 mb-3 d-flex justify-content-between align-items-center'>
+                <div class=' mt-2'>Transfer(s) List</div>
+                <div>
+                    <button class='pdf-gen btn btn-secondary btn-sm'>
+                        Transfers Report
+                        <i class='bx bx-file text-light'></i>
+                    </button>
+                </div>
+            </div>
+            {% include "inventory/components/transfers_table.html" %}
+        </div>
+        <!-- transfers pdf modal -->
+
+        <div class="modal fade" id="transferModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <div class="d-flex justify-content-between align-items-center py-2">
+                            <div class="fs-5 fw-bold">
+                                Create transfers report
+                            </div>
+                            <hr style="border: 1px solid #333 !important;">
+                        </div>
+                        <form method="get" id='transfers'>
+                            <div class='mb-2'>
+                                <label for="id_product">Select Product</label>
+                                    <select
+                                        class="form-select"
+                                        name="branch"
+                                        id="id_product"
+                                    >
+                                        <option value="">------------</option>
+                                        <option value="">All products</option>
+                                        {% for product in inventory %}
+                                            <option value="{{product.id}}">{{product.product.name}}</option>
+                                        {% endfor %}
+                                    </select>
+                            </div>
+                            <div class='mb-2'>
+                                <label for="id_branch">Select Destination Branch</label>
+                                <select
+                                    class="form-select"
+                                    name="branch"
+                                    id="id_branch"
+                                >
+                                    <option value="">------------</option>
+                                    <option value="">All branches</option>
+                                    {% for branch in branches %}
+                                        {% if branch.name != request.user.branch.name %}
+                                            <option value="{{branch.id}}">{{branch.name}}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="py-3">Choose dates</small>
+                            <div class='mb-2'>
+                                <label for="id_from">From</label>
+                                <input type="date" name="from" id="id_from" class="form-control">
+                            </div>
+                            <div class='mb-2'>
+                                <label for="id_to">To</label>
+                                <input type="date" name="to" id="id_to" class="form-control">
+                            </div>
+                            <div class="d-flex justify-content-end mt-3">
+                                <button id='viewBtn' class="btn btn-secondary btn-sm" type="button">
+                                    view
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="transferReportModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        {% include 'inventory/view_transfer.html' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+   </div>  
+   <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const transferModal = new bootstrap.Modal(document.querySelector('#transferModal'))
+            const transferReportModal = new bootstrap.Modal(document.querySelector('#transferReportModal'))
+
+            document.querySelector('.pdf-gen').addEventListener(
+                'click', ()=>{
+                    transferModal.show()
+                }
+            )
+
+            document.querySelector('#viewBtn').addEventListener(
+                'click', ()=>{
+                    transferReportModal.show()
+                    transfers()
+                }
+            )
+            const transfersTable = document.querySelector('#transfersTable');
+
+            function transfers(){
+                $.ajax({
+                    url: '{% url "inventory:transfers_report" %}',
+                    type: 'GET',
+                    data:{
+                        product: $('#id_product').val(),
+                        branch: $('#id_branch').val(),
+                        date_from: $('#id_to').val(),
+                        date_to: $('#id_from').val(),
+                        view: true,
+                    } 
+                    }).done(function(response) {
+                        const data = response;
+                        console.log(data)
+                        displayTransfersTable(data);
+                    })
+            } 
+
+            function displayTransfersTable(data){
+                transfersTable.innerHTML = ''
+                data.forEach((data)=>{
+                    transfersTable.innerHTML +=`
+                    <tr>
+                        <td><small>${new Date(data.date).toLocaleDateString()}</small></td>
+                        <td><small>${data.product__name}</small></td>
+                        <td><small>${data.quantity}</small></td>
+                        <td><small>${data.from_branch__name}</small></td>
+                        <td><small>${data.to_branch__name}</small></td>
+                        <td>
+                            <span>
+                              ${data.declined ? (
+                                `<small class='text-danger'>Declined</small>`
+                              ) : (
+                                data.received ? (
+                                  `<small class='text-success'>Received</small>`
+                                ) : (
+                                  `<small>Not yet received</small>`
+                                )
+                              )}
+                            </span>
+                          </td>
+                  
+                    </tr>
+                    `
+                })
+            }
+            $('#downloadTransferReport').click(function(e) {
+                e.preventDefault();
+                const data = {
+                    product: $('#id_product').val(),
+                    branch: $('#id_branch').val(),
+                    date_from: $('#id_to').val(),
+                    date_to: $('#id_from').val(),
+                }
+                $.ajax({
+                    url: '{% url 'inventory:transfers_report'%}',
+                    type: 'GET',
+                    data: data,
+                    }).done(function(response) {
+
+                })
+            })
+        })
+    </script>
+{% endblock content %}

@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% load static%}
+{% load crispy_forms_tags %}
+{% block title%} Add Product {% endblock%}
+{% block content %}
+   <div class="inventory">
+        <div class='add-product'>
+            <div class='add-product-nav rounded d-flex py-3 px-2 align-items-center'>
+                <div>
+                    <h5 class='fw-normal mt-3 fw-bold'>Add Inventory</h5>
+                </div>
+            </div>
+            <form method="post" class='mt-2 border rounded p-2'>
+                {% csrf_token %} 
+                <div id="div_id_batch_code" class="mb-3"> 
+                    <label for="id_batch_code" class="form-label requiredField">
+                        Batch code<span class="asteriskField">*</span>
+                    </label>
+                    <input type="text" name="batch_code" maxlength="255" class="textinput form-control" required id="id_batch_code">
+                </div>
+                <div id="div_id_name" class="mb-3">
+                     <label for="id_name" class="form-label requiredField">
+                        Name
+                        <span class="asteriskField">*</span> 
+                    </label> 
+                    <input 
+                        type="text" 
+                        name="name" 
+                        maxlength="255" 
+                        class="textinput form-control" 
+                        required id="id_name"
+                    > 
+                </div>
+                <div id="div_id_cost" class="mb-3">
+                    <label for="id_cost" class="form-label requiredField">
+                        Cost<span class="asteriskField">*</span> 
+                    </label> 
+                    <input 
+                        type="number" 
+                        name="cost" 
+                        step="0.01" 
+                        class="numberinput form-control" 
+                        required 
+                        id="id_cost"
+                    > 
+                    <p id="cost_error" class="fs-6 text-danger"></p>
+                </div> 
+                <div id="div_id_price" class="mb-3">
+                    <label for="id_price" class="form-label requiredField">
+                        Price
+                        <span class="asteriskField">*</span> 
+                    </label> 
+                    <input 
+                        type="number" 
+                        name="price" step="0.01" 
+                        class="numberinput form-control" 
+                        required 
+                        id="id_price"
+                    >
+                    <p id="price_error" class="fs-6 text-danger"></p>
+                </div> 
+                <div id="div_id_quantity" class="mb-3"> 
+                    <label for="id_quantity" class="form-label requiredField">
+                        Quantity<span class="asteriskField">*</span> 
+                    </label> 
+                    <input 
+                        type="number" 
+                        name="quantity"
+                        value="" 
+                        min="0" 
+                        class="numberinput form-control" 
+                        required id="id_quantity"
+                    > 
+                    <p id="quantity_error" class="fs-6 text-danger"></p>
+                </div> 
+                <div id="div_id_category" class="mb-3"> 
+                    <label for="id_category" class="form-label requiredField">
+                        Category<span class="asteriskField">*</span> 
+                    </label> 
+                    <div class='d-flex align-items-center'>
+                        <select name="category" class="select form-select" required id="id_category"> 
+                            <option value="">---------</option> 
+                        </select> 
+                        <button class='btn btn-light small' type="button" id='id_add_category'>
+                            <i class='bx bx-plus'></i>
+                        </button>
+                    </div>
+                </div> 
+                <div id="div_id_tax_type" class="mb-3"> 
+                    <label for="id_tax_type" class="form-label requiredField">
+                    Tax type
+                    <span class="asteriskField">*</span> 
+                    </label> 
+                    <select name="tax_type" class="select form-select" required id="id_tax_type"> 
+                        <option value="" selected>---------</option>
+                        <option value="exempted">Exempted</option> 
+                        <option value="standard">Standard</option> 
+                        <option value="zero rated">Zero Rated</option>
+                    </select> 
+                </div>
+                <div id="div_id_min_stock_level" class="mb-3"> 
+                    <label for="id_min_stock_level" class="form-label requiredField">
+                        Min stock level
+                        <span class="asteriskField">*</span> 
+                    </label> 
+                    <input 
+                        type="number" 
+                        name="min_stock_level" 
+                        value="0" 
+                        class="numberinput form-control" 
+                        required id="id_min_stock_level"
+                    > 
+                </div>
+                <div id="div_id_description" class="mb-3"> 
+                    <label for="id_description" class="form-label requiredField">
+                        Description<span class="asteriskField">*</span> 
+                    </label> 
+                    <textarea 
+                        name="description" 
+                        cols="20" 
+                        rows="2" 
+                        class="textarea form-control" 
+                        required id="id_description"
+                    >
+                    </textarea> 
+                </div>
+                <div class="d-flex justify-content-end">
+                    <div class="">
+                        <button type="reset" class="btn btn-danger btn-sm w-100">
+                            <i class='bx bx-reset'></i>
+                            Reset
+                        </button>
+                    </div>
+                    <span class="px-1"></span>
+                    <div class="">
+                        <button type="submit" id="id_submit" class="btn btn-secondary btn-sm w-100">
+                            <i class='bx bx-save'></i>
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+   </div>  
+
+   <div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    {% include 'inventory/components/category_modal.html'%}
+                </div>
+            </div>
+        </div>
+    </div>
+  
+
+   <script src="{% static 'js/jquery.js'%}"></script>
+   <script src='{% static "js/productValidation.js"%}'></script>
+   <script>
+        const categoryModal = new bootstrap.Modal(document.querySelector('#categoryModal'))
+
+        document.querySelector('#id_add_category').addEventListener(
+            'click', ()=>{
+                categoryModal.show()
+            }
+        )
+        
+        function categorySubmit(){
+           
+            const data = {name:$('#id_category_name').val()}
+            console.log(data)
+            fetch("{% url 'inventory:add_product_category' %}", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": getCookie("csrftoken"), 
+                },
+                body: JSON.stringify(data),
+              })
+                .then((response) => {
+                  console.log(response)
+                  if (response.error) {
+                    document.querySelector('#id_error').textContent=response.error
+                  } else {
+                   fetchCategories()
+                   modal.classList.add('hidden')
+                    overlay.classList.add('hidden')
+                  }
+                })
+                .catch((error) => {
+                  console.error("Error:", error);
+                });
+        }
+
+        async function fetchCategories(){
+            try {
+                const response = await fetch('{% url "inventory:add_product_category" %}');
+    
+                if (!response.ok) {
+                    throw new Error('Network response was not ok.');
+                }
+                const data = await response.json();
+                console.log(data)
+                updateCategory(data);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            } finally {
+    
+                //loader.style.display = 'none';
+            }
+        }
+
+        fetchCategories()
+
+        function updateCategory(data){
+            const catElement = document.querySelector('#id_category')
+       
+            while(catElement.options.length > 1){
+                catElement.remove(1)
+            }
+            data.forEach((category)=>{
+                catElement.innerHTML += `<option value=${category.id}>${category.name}</option>`
+            })
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+              const cookies = document.cookie.split(";");
+              for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === name + "=") {
+                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                  break;
+                }
+              }
+            }
+            return cookieValue;
+          }  
+   </script>
+{% endblock content %}
