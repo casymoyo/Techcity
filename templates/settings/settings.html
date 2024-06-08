@@ -35,7 +35,7 @@
                         <h6 class='fw-bold'>Printer settings</h6>
                         <div class='row'>
                             <div class='col'>
-                                <h6>Current Printer Configurations</h6>
+                                <h2 class='mt-4'>Current Printer Configurations</h2>
                             </div>
                             <div class='col'>
                                 <div class="container mt-4">  
@@ -93,12 +93,31 @@
     const cron = $('.cron')
 
     async function scanForPrinters() {
-        // ... (Your existing device scanning code using Web Bluetooth or noble) ...
-    
-        availablePrinters.forEach(printer => {
-            // ... (Create and append options to printerSelect dropdown) ...
-        });
-    }
+        const printerDropdown = document.getElementById('printerSelect');
+        printerDropdown.innerHTML = ''; // Clear existing options
+      
+        try {
+          const device = await navigator.bluetooth.requestDevice({
+            filters: [{ services: ['18f0'] }], // Filter for devices offering the Printing Service
+            optionalServices: ['18f1']        // Optionally include the Scan Parameters Service
+          });
+      
+          // Extract device information (adjust as needed)
+          const printer = {
+            address: device.id,
+            name: device.name || 'Unknown Printer',
+          };
+      
+          // Add the printer to the dropdown
+          const option = document.createElement('option');
+          option.value = printer.address;
+          option.text = printer.name;
+          printerDropdown.add(option);
+        } catch (error) {
+          console.error('Error scanning for printers:', error);
+          // Handle error, e.g., show a message to the user
+        }
+      }      
     
     const selectPrinterBtn = document.getElementById('selectPrinterBtn');
     selectPrinterBtn.addEventListener('click', async () => {
