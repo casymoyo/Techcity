@@ -36,7 +36,8 @@ THIRD_PARTY_APPS = [
     "crispy_bootstrap5",
     'phonenumber_field',
     'django_celery_results',
-    'celery'
+    'celery',
+    'django_extensions',
 ]
 
 LOCAL_APPS = [
