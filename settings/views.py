@@ -22,17 +22,17 @@ def email_config_view(request):
     return render(request, 'settings/email_config.html', {'initial_data': initial_data})
 
 
-@login_required
-def save_email_config(request):
-    """Handles saving email configuration from the form."""
-    if request.method == 'POST':
-        env = environ.Env()
+# @login_required
+# def save_email_config(request):
+#     """Handles saving email configuration from the form."""
+#     if request.method == 'POST':
+#         env = environ.Env()
 
-        # Update environment variables (.env file)
-        for key, value in request.POST.items():
-            if key.startswith('EMAIL_'):  
-                env(key) = value
+#         # Update environment variables (.env file)
+#         for key, value in request.POST.items():
+#             if key.startswith('EMAIL_'):  
+#                 env(key) = value
 
-        return JsonResponse({'success': True, 'message': 'Email settings updated successfully!'})
+#         return JsonResponse({'success': True, 'message': 'Email settings updated successfully!'})
 
-    return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=400)
+#     return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=400)
