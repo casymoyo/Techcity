@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load static%}
+{% load crispy_forms_tags %}
+{% block title%} Users {% endblock%}
+{% block content %}
+<div class="users mt-2">
+    <div class='d-flex justify-content-between align-items-center border p-2 mt-2 mb-2'>
+        <div class="d-flex align-items-center">
+            <div>
+                <button class="btn btn-light " id="addUser">
+                    <i class="bx bx-plus"></i>
+                    User
+                </button>
+            </div>
+            
+        </div>
+        <form class="" method="GET">
+            <div class="input-group">
+                <input type="search" class="form-control" placeholder="Search by name or email" name="q" value="{{ search_query }}">
+            </div>
+        </form>
+    </div>
+
+    <p class="fw-bold py-2">Users</p>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Profile Picture</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>
+                    {% if user.profile.profile_image %} 
+                    <img src="{{ user.profile.profile_image.url }}" alt="Profile Picture" class="img-thumbnail" style="width: 50px; height: 50px;">
+                    {% else %}
+                    <img src="{% static 'assets/avatar.png' %}" alt="Default Profile Picture" class="img-thumbnail" style="width: 50px; height: 50px;">
+                    {% endif %}
+                </td>
+                <td><small>{{ user.get_full_name|default:user.username }}</small></td>
+                <td><small>{{ user.email }}</small></td>
+                <td>{{ user.role }}</td>  
+                <td>
+                    <a href="{% url 'users:user_detail' user.id %}" class="btn btn-light btn-sm">
+                        <i class="bx bx-show"></i>
+                    </a>
+                    {% if user != request.user %}
+                    <a href="{% url 'users:user_edit' user.id %}" class="btn btn-light btn-sm">
+                        <i class="bx bx-edit"></i>
+                    </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content w-100 p-4">
+            <h6 class="fw-bold">Add User</h6>
+            <form method="post">
+                {% csrf_token %}
+                {{form|crispy}}
+                <div class="d-flex justify-content-end">
+                    <div class="">
+                        <button type="reset" class="btn btn-danger btn-sm">
+                            <i class="bx bx-reset"></i>
+                            Reset
+                        </button>
+                    </div>
+                    <span class="px-2"></span>
+                    <div class="">
+                        <button type="submit" class="btn btn-secondary btn-sm">
+                            <i class="bx bx-save"></i>
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </form>
+            </div>
+        </div>
+      </div>
+    
+      <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            </div>
+        </div>
+      </div>
+    
+      <div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            </div>
+        </div>
+      </div>
+</div>
+
+<script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>  
+<script>
+    const addBtn = document.getElementById('addUser')
+    const addModal = new bootstrap.Modal(document.getElementById('addUserModal'));
+
+    addBtn.addEventListener('click', ()=>{
+        addModal.show()
+    })
+</script>
+{% endblock content %}

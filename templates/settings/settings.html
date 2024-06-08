@@ -33,6 +33,19 @@
                     </div>
                     <div class='printer hidden border p-2'>
                         <h6 class='fw-bold'>Printer settings</h6>
+                        <div class="container mt-4">  
+                            <h2>Bluetooth Printer Configuration</h2> 
+                        
+                            <div class="form-group">
+                                <label for="printerSelect" class="form-label">Select Bluetooth Printer:</label>
+                                <select class="form-select" id="printerSelect">
+                                </select>
+                            </div>
+                        
+                            <div class="mt-3">
+                                <button type="button" id="selectPrinterBtn" class="btn btn-primary">Select Printer</button>
+                            </div>
+                        </div>      
                     </div>
                 </div>
             </div>
@@ -72,6 +85,38 @@
     const email = $('.email')
     const cron = $('.cron')
 
+    async function scanForPrinters() {
+        // ... (Your existing device scanning code using Web Bluetooth or noble) ...
+    
+        availablePrinters.forEach(printer => {
+            // ... (Create and append options to printerSelect dropdown) ...
+        });
+    }
+    
+    const selectPrinterBtn = document.getElementById('selectPrinterBtn');
+    selectPrinterBtn.addEventListener('click', async () => {
+        const selectedPrinterAddress = document.getElementById('printerSelect').value;
+    
+        // Get additional printer details (if available from your scanning method)
+        const selectedPrinterName = availablePrinters.find(printer => printer.address === selectedPrinterAddress)?.name;
+        const selectedPrinterPort = availablePrinters.find(printer => printer.address === selectedPrinterAddress)?.port; // Add this line if you are getting the port from the frontend.
+    
+        fetch('{% url "', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ 
+                printer_address: selectedPrinterAddress,
+                printer_name: selectedPrinterName,
+                printer_port: selectedPrinterPort // Add this line 
+            })
+        })
+        // ... (rest of your fetch logic to handle the response)
+    });
+    
+
     navButtons.forEach((btn)=>{
         btn.addEventListener(
             'click', ()=>{
@@ -93,7 +138,6 @@
 
         $(`.${name}`).removeClass('hidden'); 
     }
-
     
     function getCookie(name) {
         let cookieValue = null;
