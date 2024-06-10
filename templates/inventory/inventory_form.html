@@ -4,17 +4,20 @@
 {% block title%} Edit Inventory {% endblock%}
 {% block content %}
    <div class="edit-inventory">
-        <div class='add-product-nav rounded bg-light d-flex mt-2 py-2 px-2 align-items-center'>
+        <div class='add-product-nav d-flex py-2 px-2 align-items-center shadow bg-dark text-light rounded'>
             <div>
-                <a href='{% url 'inventory:inventory'%}' class='btn btn-dark btn-sm'>back</a>
-            </div>
-            <div>
-                <h5 class='fw-normal px-2 mt-2'>Edit Inventory >> {{product.product.name}}</h5>
+                <h5 class='fw-normal px-2 mt-2n fw-bold'>Edit / Update Product - {{product.product.name}}</h5>
             </div>
         </div>
         
         <form method="post" class="rounded border mt-2 p-2">
             {% csrf_token %}
+            <div id="div_id_batch_code" class="mb-3"> 
+                <label for="id_batch_code" class="form-label requiredField">
+                    Batch code<span class="asteriskField">*</span>
+                </label>
+                <input type="text" name="batch_code" value='{{product.product.batch_code}}' maxlength="255" class="textinput form-control" required id="id_batch_code">
+            </div>
             <div id="div_id_name" class="mb-3">
                 <label for="id_name" class="form-label requiredField">
                    Name
@@ -51,13 +54,40 @@
                 <input type="number" name="quantity" value={{product.quantity}} min="0" class="numberinput form-control" required id="id_quantity"> 
                 <p id="quantity_error" class="fs-6 text-danger"></p>
             </div>
+            <div id="div_id_min_stock_level" class="mb-3"> 
+                <label for="id_min_stock_level" class="form-label requiredField">
+                    Min stock level
+                    <span class="asteriskField">*</span> 
+                </label> 
+                <input 
+                    type="number" 
+                    name="min_stock_level" 
+                    value="{{ product.min_stock_level }}" 
+                    class="numberinput form-control" 
+                    required id="id_min_stock_level"
+                > 
+            </div>
+            <div id="div_id_description" class="mb-3"> 
+                <label for="id_description" class="form-label requiredField">
+                    Description<span class="asteriskField">*</span> 
+                </label> 
+                <textarea 
+                    name="description" 
+                    cols="20" 
+                    rows="2" 
+                    class="form-control" 
+                    required id="id_description"
+                >
+                    {{ product.product.description }}
+                </textarea> 
+            </div>
             <div class="d-flex justify-content-end">
                 <div class="">
-                    <button type="reset" class="btn btn-danger w-100">Reset</button>
+                    <button type="reset" class="btn btn-danger btn-sm w-100">Reset</button>
                 </div>
                 <span class="px-1"></span>
                 <div class="">
-                    <button type="submit" class="btn btn-primary w-100">Save</button>
+                    <button type="submit" class="btn btn-secondary btn-sm y w-100">Save</button>
                 </div>
             </div>
         </form>

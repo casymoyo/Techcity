@@ -4,7 +4,7 @@
 {% block content %}
    <div class="inventory">
         <div class="inventory-navbar">
-            <nav class="d-flex justify-content-between align-items-center shadow p-2">
+            <nav class="d-flex justify-content-between align-items-center bg-dark text-light rounded p-2">
                 <div class="d-flex">
                     <div>
                         <h5 class='mt-1 fw-bold'>{{inventory.product.name}}</h5>
@@ -32,7 +32,7 @@
         <div class="table-detail mt-2">
             <!-- inventory table -->
             <table class='table border rounded p-2'>
-                <thead>
+                <thead class='bg-primary'>
                     <tr>
                         <th>Date</th>
                         <th>By (user)</th>
@@ -54,7 +54,7 @@
                                 <td data-id="{{log.product_transfer.id}}" id="transfer" style="cursor:pointer;"><small>{{log.product_transfer.transfer_ref}}</small></td>
                             {% endif %}
                             <td><small>
-                                {% if log.action == 'stock in' or log.action == 'Update' or log.action == 'sale cancelled' %}
+                                {% if log.action == 'Stock in' or log.action == 'Update' or log.action == 'sale cancelled' %}
                                     <span class='text-success'>{{log.quantity}}</span>
                                     <i class='text-success bx bx-chevron-up'></i>
                                 {% elif log.action == 'Update'%}

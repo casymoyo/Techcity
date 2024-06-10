@@ -301,7 +301,7 @@ def edit_inventory(request, product_name):
                 
             inv_product.price = Decimal(request.POST['price'])
             inv_product.cost = Decimal(request.POST['cost'])
-                
+            inv_product.min_stock_level = request.POST['min_stock_level']
             inv_product.save()
             
             ActivityLog.objects.create(
@@ -315,7 +315,7 @@ def edit_inventory(request, product_name):
             
             messages.success(request, f'{product.name} update succesfully')
             return redirect('inventory:inventory')
-        return render(request, 'inventory/inventory_form.html', {'product':inv_product})
+        return render(request, 'inventory/inventory_form.html', {'product':inv_product, 'title':f'Edit >>> {inv_product.product.name}'})
 
 @login_required
 def inventory_detail(request, id):
