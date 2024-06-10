@@ -379,7 +379,7 @@
         products.forEach(product => {
            
             const productDiv = document.createElement('div');
-            productDiv.className = 'col';
+            productDiv.className = 'col-3 mb-2';
             const outOfStock = product.quantity <= 0 ? 'Out of Stock': ''
             productDiv.innerHTML = `
             <div class="card" id='id_product_card' data-product=${product}>
