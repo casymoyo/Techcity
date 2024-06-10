@@ -133,7 +133,7 @@
     )
 
     document.querySelector('#id_quantity').addEventListener(
-      'change', ()=>{
+      'input', ()=>{
         const quantity = $('#id_quantity').val()
         console.log(prodData[0][0].quantity)
         if (quantity > prodData[0][0].quantity){

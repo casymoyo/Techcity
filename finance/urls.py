@@ -68,4 +68,7 @@ urlpatterns = [
     path('invoice/send/email/', send_invoice_email, name='invoice_email'),
     path('send_invoice_whatsapp/<int:invoice_id>/', send_invoice_whatsapp, name='send_invoice_whatsapp'),
     # path('invoice/email/status/<str:task_id>/', check_email_task_status, name='email_status')
+    
+    # cashbook
+    path('cashbook/', cashbook_view, name='cashbook'),
 ]

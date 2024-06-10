@@ -1336,6 +1336,7 @@ def cash_transfer(request):
             transfer.notification_type = 'Expense'
             transfer.from_branch = request.user.branch
             transfer.branch = request.user.branch
+            transfer.received_status = False
             
             account_name = f"{request.user.branch} {transfer.currency.name} {transfer.transfer_method.capitalize()} Account"
 
@@ -1434,6 +1435,25 @@ def receive_money_transfer(request, transfer_id):
         transfer.save() 
         return JsonResponse({'message':True})  
     return JsonResponse({'message':"Transfer ID is needed"})  
+
+
+@login_required
+def cashbook_view(request):
+    cashbook_entries = Cashbook.objects.all().order_by('date')
+
+    # Add b/f and c/d to the entries
+    for i, entry in enumerate(cashbook_entries):
+        if i == 0:
+            entry.b_f = 0  # First entry starts with 0 b/f
+        else:
+            entry.b_f = cashbook_entries[i - 1].balance  # Previous entry's balance
+        entry.c_d = entry.balance  # Current balance is the c/d for this entry
+
+    context = {
+        'cashbook_entries': cashbook_entries,
+    }
+    return render(request, 'finance/cashbook.html', context)
+
 
 
     

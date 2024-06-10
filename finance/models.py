@@ -280,6 +280,17 @@ class Payment(models.Model):
     def __str__(self):
         return f'{self.invoice.invoice_number} {self.amount_paid}'
 
+class Cashbook(models.Model):
+    date = models.DateField(auto_now_add=True)
+    description = models.CharField(max_length=255)
+    debit = models.BooleanField(default=True)
+    credit = models.BooleanField(default=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    balance = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    def __str__(self):
+        return f'{self.date}: {self.balance}'
+
 class CashTransfers(models.Model):
     class TransferMethod(models.TextChoices):
         BANK = ('Bank'), _('Bank')

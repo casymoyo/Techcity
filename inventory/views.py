@@ -111,15 +111,23 @@ class AddProductView(View):
                 product.save()
 
                 message = 'Product successfully updated'
-                log_action = 'Update'
+                log_action = 'Stock  update'
             except Product.DoesNotExist:
                 if form.is_valid():
-                    product = form.save()
-                    message = 'Product successfully created'
-                    log_action = 'stock in'
-                else:
-                    return redirect('inventory:inventory')
-                
+                    all_fields_filled = all(field.strip() != "" for field in form.cleaned_data.values())
+                    
+                    if all_fields_filled and form.is_valid():
+                        product = form.save()
+                        message = 'Product successfully created'
+                        log_action = 'Stock in'
+                        return redirect('inventory:inventory')  #
+                    else:
+                        if not all_fields_filled:
+                            messages.error(request, "Please fill in all fields.")
+                        else:  
+                            messages.error(request, "Product creation failed.")
+                            return redirect('inventory:inventory')
+                        
             self.create_branch_inventory(product, log_action)
             
             messages.success(request, message)
@@ -231,7 +239,7 @@ def inventory_index(request):
     q = request.GET.get('q', '')  
     category = request.GET.get('category', '')
     
-    inventory = Inventory.objects.filter(branch=request.user.branch, status=True)
+    inventory = Inventory.objects.filter(branch=request.user.branch, status=True).order_by('product__name')
     
     if category:
         
@@ -405,7 +413,7 @@ def receive_inventory(request):
                         ActivityLog.objects.create(
                             branch = request.user.branch,
                             user=request.user,
-                            action= 'Create',
+                            action= 'Stock in',
                             inventory=inventory,
                             quantity=inventory.quantity,
                             total_quantity=inventory.quantity

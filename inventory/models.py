@@ -90,11 +90,23 @@ class DefectiveProduct(models.Model):
     def __str__(self):
         return self.product.name
 
+class Cashbook(models.Model):
+    date = models.DateField(auto_now_add=True)
+    description = models.CharField(max_length=255)
+    debit = models.BooleanField(default=True)
+    credit = models.BooleanField(default=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    balance = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    def __str__(self):
+        return f'{self.date}: {self.balance}'
+
 class ActivityLog(models.Model):
     """Model for activity logs."""
 
     ACTION_CHOICES = [
         ('stock in', 'Stock in'),
+        ('Stock update', 'Stock update'),
         ('update', 'Update'),
         ('delete', 'Delete'),
         ('edit', 'Edit'),

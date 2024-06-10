@@ -77,7 +77,7 @@ def send_invoice_email_task(invoice_id):
         'Your Invoice',
         'Please find your invoice attached.',
         'your_email@example.com',
-        ['recipient_email@example.com'],
+        ['cassymyto'],
     )
     
     buffer.seek(0)
@@ -92,8 +92,8 @@ def send_email_notification(notification_id):
     notification = FinanceNotifications.objects.get(pk=notification_id)
     subject = 'Cash Transfer Notification'
     message = notification.notification
-    from_email = 'test@email.com'
-    to_email = 'test@email.com'
+    from_email = 'admin@techcity.co.zw'
+    to_email = 'cassymyo@gmail.com'
     email = EmailMessage(subject, message, from_email, [to_email])
     email.send()
 

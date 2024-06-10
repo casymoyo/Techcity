@@ -10,6 +10,12 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = environ.Env(
+    EMAIL_USE_TLS=(bool, False),
+    EMAIL_USE_SSL=(bool, False)
+)
+
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = "django-insecure-rb&d1ur&gv!uedx9&nym9zthkk(32-kdvh1x_b0+c+&^hny!o9"
 
@@ -65,6 +71,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # "asgiref.sync.AsyncToSyncMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'inventory.middleware.RequestMiddleware',
 ]
@@ -237,7 +244,7 @@ LOGGING = {
 }
 
 # Celery Configs
-CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672/'
+CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672//'
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
@@ -251,9 +258,20 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-# EMAIL SETTINGS
-# settings.py
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Email configuration
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = env('EMAIL_HOST')
+# EMAIL_PORT = env('EMAIL_PORT')
+# EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+# EMAIL_USE_TLS = env('EMAIL_USE_TLS')
+# EMAIL_USE_SSL = env('EMAIL_USE_SSL')
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Use SMTP backend
+EMAIL_HOST = 'mail.techcity.co.zw'  # Outgoing server from the image
+EMAIL_PORT = 465  # Outgoing port (SMTP) from the image
+EMAIL_USE_SSL = True  # Since it's using SSL/TLS (port 465)
+EMAIL_HOST_USER = 'admin@techcity.co.zw'  # Username from the image
+EMAIL_HOST_PASSWORD = 'kv]j[N~StShy'
 
 TWILIO_WHATSAPP_NUMBER = os.getenv('TWILIO_WHATSAPP_NUMBER')
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
