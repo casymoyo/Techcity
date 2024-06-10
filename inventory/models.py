@@ -49,6 +49,8 @@ class Inventory(models.Model):
 class Transfer(models.Model):
     batch_code = models.CharField(max_length=20)
     transfer_ref = models.CharField(max_length=20)
+    transfer_to = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='detination')
+    description =  models.CharField(max_length=266)
     
     @classmethod
     def generate_transfer_number(cls):
@@ -67,7 +69,7 @@ class Transfer(models.Model):
         return self.product.name
 
 class TransferItems(models.Model):
-    transfer_ref = models.CharField(max_length=20)
+    transfer = models.ForeignKey(Transfer, on_delete=models.CASCADE)
     from_branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='destination')
     to_branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='source')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
