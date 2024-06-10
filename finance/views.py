@@ -597,8 +597,8 @@ def customer(request):
 
     
 
-        if Customer.objects.filter(phone_number=data['phone_number']).exists():
-            return JsonResponse({'success': False, 'message': 'Customer with this email already exists'})
+        # if Customer.objects.filter(phone_number=data['phone_number']).exists():
+        #     return JsonResponse({'success': False, 'message': 'Customer with this email already exists'})
 
         customer = Customer.objects.create(
             name=data['name'],
