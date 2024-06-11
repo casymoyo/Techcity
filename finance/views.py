@@ -567,7 +567,8 @@ def delete_invoice(request, invoice_id):
     customer_account_balance.save()
     sale.delete()
     vat_transaction.delete()
-    invoice.delete()
+    invoice.cancelled=True
+    invoice.save()
 
     return JsonResponse({'message': f'Invoice {invoice.invoice_number} successfully deleted'})
     

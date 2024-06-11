@@ -13,6 +13,12 @@
     }
 }
 
+
+@mixin overflow($height) {
+    height: $height;
+    overflow-y: auto;
+}
+
 @mixin drop-down{
     .dropdown{
         position: relative;
@@ -52,6 +58,9 @@
 }
 
 .techcity{
+    .customer-table{
+        @include overflow(80vh)
+    }
     td{
         height:5px !important;
     }
@@ -214,6 +223,9 @@
         // .sale{
         //     display:block;
         // }
+        .invoice-table{
+            @include overflow(80vh)
+        }
         .card{
             border:none;
         }
@@ -235,6 +247,9 @@
     }
     .pos{
         height:100vh;
+        #product-list{
+            @include overflow(80vh);
+        }
         .products{
             .card{
                 height:200px !important;

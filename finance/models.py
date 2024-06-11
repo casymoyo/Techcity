@@ -220,6 +220,7 @@ class Invoice(models.Model):
     next_due_date = models.DateField(null=True, blank=True) 
     subtotal =  models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     note = models.TextField()
+    cancelled = models.BooleanField(default=False)
     products_purchased = models.TextField()
     
     def generate_invoice_number(branch):

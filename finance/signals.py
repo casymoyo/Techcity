@@ -73,7 +73,7 @@ def create_cashbook_entry(instance, description, debit, credit):
 
     new_balance = previous_balance + instance.amount
     Cashbook.objects.create(
-        date=instance.date,
+        date=instance.issue_date,
         description=description,
         debit=debit,
         credit=credit,

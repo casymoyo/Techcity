@@ -29,64 +29,66 @@
                 </div>
             </nav>
         </div>
-        <table class="table border table-hover rounded p-2 mt-3">
-            <thead class='bg-primary'>
-                <tr>
-                    <th>Name</th>
-                    <th>Cellphone</th>
-                    <th>Email</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for customer in customers %}
+        <div class='customer-table'>
+            <table class="table border table-hover rounded p-2 mt-3">
+                <thead class='bg-primary'>
                     <tr>
-                        <td>
-                            <a href="{% url 'finance:customer' customer.customer.id%}" class="text-dark d-flex align-items-center">
-                                {% with name_parts=customer.customer.name|split_name %}
-                                    {% if name_parts.first_name and name_parts.last_name %}
-                                        <div class='initials'>
-                                            <span class='content'>{{ name_parts.first_name.0 }}{{ name_parts.last_name.0 }}</span>
-                                        </div>
-                                    {% else %}
-                                        <div class='initials'>
-                                            <span class='content'>{{ name_parts.first_name.0 }}</span>
-                                        </div>
-                                    {% endif %}
-                                {% endwith %}
-                                <span class='px-2'>{{customer.customer.name}}</span>
-                            </a>
-                        </td>
-                        <td>
-                            <div class='td-contents'>
-                                <a href='https://wa.me/{{customer.customer.phone_number}}' class="text-dark">
-                                    <i class='bx bxl-whatsapp'></i>
-                                    {{customer.customer.phone_number}}
-                                </a>
-                            </div>
-                        </td>
-                        <td>
-                           <div class='td-contents'>
-                                <a href='mailto:{{customer.customer.email}}' class="text-dark">
-                                    <i class='bx bx-envelope'></i>
-                                    {{customer.customer.email}}
-                                </a>
-                           </div>
-                        </td>
-                        <td>
-                            <div class='td-contents'>                   
-                                <a href="{% url 'finance:update_customer' customer.customer.id %}" class='text-dark'>
-                                    <i class='bx bx-edit'></i>
-                                </a>
-                                <span disabled type='button' data-id="{{customer.customer.id}}" id="delete" onclick="productId(this)" class="btn text-dark">
-                                    <i class='bx bx-trash'></i>
-                                </span>
-                            </div>
-                        </td>
+                        <th>Name</th>
+                        <th>Cellphone</th>
+                        <th>Email</th>
+                        <th>Action</th>
                     </tr>
-                {% endfor %}
-            </tbody>  
-        </table>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'finance:customer' customer.customer.id%}" class="text-dark d-flex align-items-center">
+                                    {% with name_parts=customer.customer.name|split_name %}
+                                        {% if name_parts.first_name and name_parts.last_name %}
+                                            <div class='initials'>
+                                                <span class='content'>{{ name_parts.first_name.0 }}{{ name_parts.last_name.0 }}</span>
+                                            </div>
+                                        {% else %}
+                                            <div class='initials'>
+                                                <span class='content'>{{ name_parts.first_name.0 }}</span>
+                                            </div>
+                                        {% endif %}
+                                    {% endwith %}
+                                    <span class='px-2'>{{customer.customer.name}}</span>
+                                </a>
+                            </td>
+                            <td>
+                                <div class='td-contents'>
+                                    <a href='https://wa.me/{{customer.customer.phone_number}}' class="text-dark">
+                                        <i class='bx bxl-whatsapp'></i>
+                                        {{customer.customer.phone_number}}
+                                    </a>
+                                </div>
+                            </td>
+                            <td>
+                               <div class='td-contents'>
+                                    <a href='mailto:{{customer.customer.email}}' class="text-dark">
+                                        <i class='bx bx-envelope'></i>
+                                        {{customer.customer.email}}
+                                    </a>
+                               </div>
+                            </td>
+                            <td>
+                                <div class='td-contents'>                   
+                                    <a href="{% url 'finance:update_customer' customer.customer.id %}" class='text-dark'>
+                                        <i class='bx bx-edit'></i>
+                                    </a>
+                                    <span disabled type='button' data-id="{{customer.customer.id}}" id="delete" onclick="productId(this)" class="btn text-dark">
+                                        <i class='bx bx-trash'></i>
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>  
+            </table>
+        </div>
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">

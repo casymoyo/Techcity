@@ -17,7 +17,7 @@
                     <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.date }}</small></td>
                     <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.transfer_ref }}</small></td>
                     <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.transfer_to }}</small></td>
-                    <td><small><i class='bx bx-trash'></i></small></td>
+                    <td  data-id='{{ transfer.id }}'id="delete_transfer" style="cursor:pointer;"><small><i class='bx bx-trash'></i></small></td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -43,10 +43,63 @@
             </div>
         </div>
     </div>
-</div>  
+    
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <h5 class="fw-bold">Delete Transfer</h5>
+                    <button class="btn btn-secondary w-100" onclick="deleteTransfer()">Yes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="successDeleteModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <h5 class="fw-bold">Transfer Successfully Deleted</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
 <script>
+    let transfer_id = ''
     const transferBtn = document.querySelectorAll('.transfer-btn');
     const tranferItemsModal = new bootstrap.Modal(document.getElementById('transferItemsModal'));
+
+    const deleteTransferBtn = document.querySelectorAll('#delete_transfer')
+    const deleteTransferModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+    const deleteModal = new bootstrap.Modal(document.getElementById('successDeleteModal'));
+
+    deleteTransferBtn.forEach((btn)=>{
+        btn.addEventListener('click', ()=>{
+            deleteTransferModal.show()
+            transfer_id = btn.dataset.id
+            console.log(transfer_id,btn.dataset.id)
+        })
+    })
+    
+
+    function deleteTransfer(){
+        $.ajax({
+            url: `/inventory/delete/transfer/${transfer_id}/`,
+            type: 'GET',
+            data:{transfer_id:transfer_id} 
+            }).done(function(response) {
+                const data = response;
+                if (data.success){
+                    deleteTransferModal.hide()
+                    deleteModal.show()
+                    setTimeout(() => {
+                        window.location.reload()
+                    }, 2000);
+                }
+            })
+    }
 
     transferBtn.forEach((btn)=>{
        btn.addEventListener('click', ()=>{

@@ -13,6 +13,10 @@
   font-family: graphik;
   font-size: 0.9rem;
 }
+.techcity .customer-table {
+  height: 80vh;
+  overflow-y: auto;
+}
 .techcity td {
   height: 5px !important;
 }
@@ -199,6 +203,10 @@
   height: -moz-fit-content;
   height: fit-content;
 }
+.techcity .finance .invoice-table {
+  height: 80vh;
+  overflow-y: auto;
+}
 .techcity .finance .card {
   border: none;
 }
@@ -219,6 +227,10 @@
 }
 .techcity .pos {
   height: 100vh;
+}
+.techcity .pos #product-list {
+  height: 80vh;
+  overflow-y: auto;
 }
 .techcity .pos .products .card {
   height: 200px !important;

@@ -111,23 +111,20 @@ class AddProductView(View):
                 product.save()
 
                 message = 'Product successfully updated'
-                log_action = 'Stock in'
+                log_action = 'Update'
             except Product.DoesNotExist:
-                
                 if form.is_valid():
-                    
                     product = form.save()
                     message = 'Product successfully created'
-                    log_action = 'Stock in'
-                    return redirect('inventory:inventory')  
+                    log_action = 'stock in'
                 else:
-                    messages.error(request, "Product creation failed.")
                     return redirect('inventory:inventory')
-                        
+                
             self.create_branch_inventory(product, log_action)
             
             messages.success(request, message)
         return redirect('inventory:inventory')
+
 
     def create_branch_inventory(self, product, log_action):
         try:
@@ -204,6 +201,8 @@ class ProcessTransferCartView(View):
     #         }
     #     )
     
+        
+        
     def activity_log(self,  action, inventory, item, transfer_item,):
         ActivityLog.objects.create(
             invoice = None,
@@ -215,6 +214,14 @@ class ProcessTransferCartView(View):
             quantity=item['quantity'],
             total_quantity=inventory.quantity
         )
+
+@login_required
+def delete_transfer(request, transfer_id):
+    transfer = get_object_or_404(Transfer, id=transfer_id)
+
+    transfer.delete()
+    
+    return JsonResponse({'success':True})
         
 @login_required       
 def transfer_details(request, transfer_id):
