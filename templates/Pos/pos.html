@@ -220,6 +220,17 @@
         </div>
     </div>
 
+    <div class="modal fade" id="customerModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <i class='bx bx-check-circle h1'></i>
+                    <h2>Customer Successfully Created</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="overlay hidden"></div>
 </body>
 
@@ -247,6 +258,8 @@
     const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
     const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
     const loaderModal = new bootstrap.Modal(document.getElementById('loaderModal'));
+
+    const customerModal = new bootstrap.Modal(document.getElementById('customerModal'));
 
     document.querySelector('#end').addEventListener(
         'click', ()=>{
@@ -733,9 +746,10 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                clientModal.hide()
+                customerModal.show()
                 fetchCustomers()
-                clientModal.classList.add('hidden')
-                overlay.classList.add("hidden");
+
             } else {
                 document.querySelector('#id_client_error').textContent= '*' + data.message
             }

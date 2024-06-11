@@ -115,42 +115,29 @@
                         </a>
                     </div>
                     <div class='transfers hidden border p-2'>
-                        <table class='table'>
+                        <table class='table table-striped border rounded p-2'>
                             <tr>
-                                <th>Name</th>
-                                <th>Quantity</th>
-                                <th>Source</th>
-                                <th>Destination</th>
-                                <th>Transfer Status</th>
+                                <thead>
+                                    <th>Date</th>
+                                    <th>Trans Ref</th>
+                                    <th>Destination</th>
+                                    <th>Action</th>
+                                </thead>
                             </tr>
                             <tbody>
                                 {% for transfer in transfers %}
                                     <tr>
-                                        <td>{{transfer.product.name}}</td>
-                                        <td>{{transfer.quantity}}</td>
-                                        <td>{{transfer.from_branch}}</td>
-                                        <td>{{transfer.to_branch}}</td>
-                                        <td>
-                                            <span>
-                                                {% if transfer.declined == False %}
-                                                    {% if transfer.received == False %}
-                                                        not yet received
-                                                    {% else %}
-                                                       <span class='text-success'>Recieved</span>
-                                                    {% endif %}
-                                                {% else %}
-                                                    <span class='text-danger'>Declined</span>
-                                                {% endif %}
-                                            </span>
-                                        </td>
+                                        <td><small>{{transfer.date}}</small></td>
+                                        <td><small>{{transfer.transfer_ref}}</small></td>
+                                        <td><small>{{transfer.transfer_to}}</small></td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
-                        <a href="{% url 'inventory:add_transfer' %}" class='btn btn-primary btn-sm'>
+                        {% comment %} <a href="{% url 'inventory:add_transfer' %}" class='btn btn-primary btn-sm'>
                             <i class="bx bx-plus"></i>
                             Add Transfer
-                        </a>
+                        </a> {% endcomment %}
                         <span class="px-1"></span>
                         <a href="{% url 'inventory:transfers' %}" class='btn btn-success btn-flat btn-sm'>
                             <i class='bx bx-list-ul' ></i>

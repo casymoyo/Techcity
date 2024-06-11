@@ -45,13 +45,13 @@
                 <tbody>
                     {% for log in logs %}
                         <tr>
-                            <td><small>{{log.timestamp}}</small></td>
-                            <td><small><span>{{log.user}}</span></small></td>
-                            <td><small>{{log.action}}</small></td>
+                            <td><small>{{ log.timestamp }}</small></td>
+                            <td><small><span>{{ log.user }}</span></small></td>
+                            <td><small>{{ log.action }}</small></td>
                             {% if log.invoice.invoice_number %}
                                 <td data-id="{{log.invoice.id}}" id="invoice" style="cursor:pointer;"><small>{{log.invoice.invoice_number}}</small></td>
                             {% else %}
-                                <td data-id="{{log.product_transfer.id}}" id="transfer" style="cursor:pointer;"><small>{{log.product_transfer.transfer_ref}}</small></td>
+                                <td data-id="{{ log.product_transfer.id }}" id="transfer" style="cursor:pointer;"><small>{{log.product_transfer.transfer.transfer_ref}}</small></td>
                             {% endif %}
                             <td><small>
                                 {% if log.action == 'Stock in' or log.action == 'Update' or log.action == 'sale cancelled' %}
@@ -147,8 +147,9 @@
             .then(response => response.json())
             .then(data => {
                 // Populate transferDetails with data
+                console.log(data)
                 transferDetails.innerHTML = `
-                    <p>Transfer Reference: ${data[0]?.transfer_ref}</p>
+                    <p>Transfer Reference: ${data[0]?.transfer__transfer_ref}</p>
                     <p>Product Name: ${data[0]?.product__name}</p>
                     <p>Quantity: ${data[0]?.quantity}</p>
                     <p>Price: ${data[0]?.price}</p>

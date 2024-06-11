@@ -63,7 +63,6 @@ from finance.models import *
 
 @shared_task
 def send_invoice_email_task(invoice_id):
-    print(invoice_id)
     invoice = Invoice.objects.get(id=invoice_id)
     invoice_items = InvoiceItem.objects.filter(invoice=invoice)
     account = CustomerAccount.objects.get(customer__id = invoice.customer.id)

@@ -17,7 +17,7 @@ urlpatterns = [
     
     # transfers
     path('transfers', inventory_transfers, name='transfers'),
-    path('add-transfer', add_inventory_transfer, name='add_transfer'),
+    path('add/transfer/<str:transfer_ref>/', add_inventory_transfer, name='add_transfer'),
     path('receive-inventory', receive_inventory, name='receive_inventory'),
     path('inventory-detail/<int:id>/', inventory_detail, name='inventory_detail' ),
     path('transfer/detail/<int:transfer_id>/', transfer_details, name='transfer_details'),

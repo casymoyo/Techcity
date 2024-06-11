@@ -17,14 +17,6 @@
     </div>
 
 <script>
-    //remove duplicate 
-    //let table = document.querySelector('#invoicePaymentsTable')
-    //    let rows = table.rows
-
-    //    for(let i = rows.length - 1; i>=0; i--){
-    //        table.removeChild(rows[i])
-    //}
-
     function fetchInvoiceData(invoiceID){
         fetch('{% url 'finance:payments' %}'+`?invoice_id=${invoiceID}`)
         .then(response => response.json())

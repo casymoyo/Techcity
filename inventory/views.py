@@ -11,7 +11,7 @@ from asgiref.sync import async_to_sync
 from finance.models import StockTransaction
 from channels.layers import get_channel_layer 
 from . utils import calculate_inventory_totals
-from . forms import AddProductForm, addCategoryForm
+from . forms import AddProductForm, addCategoryForm, addTransferForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from channels.generic.websocket import  AsyncJsonWebsocketConsumer
@@ -111,22 +111,18 @@ class AddProductView(View):
                 product.save()
 
                 message = 'Product successfully updated'
-                log_action = 'Stock  update'
+                log_action = 'Stock in'
             except Product.DoesNotExist:
+                
                 if form.is_valid():
-                    all_fields_filled = all(field.strip() != "" for field in form.cleaned_data.values())
                     
-                    if all_fields_filled and form.is_valid():
-                        product = form.save()
-                        message = 'Product successfully created'
-                        log_action = 'Stock in'
-                        return redirect('inventory:inventory')  #
-                    else:
-                        if not all_fields_filled:
-                            messages.error(request, "Please fill in all fields.")
-                        else:  
-                            messages.error(request, "Product creation failed.")
-                            return redirect('inventory:inventory')
+                    product = form.save()
+                    message = 'Product successfully created'
+                    log_action = 'Stock in'
+                    return redirect('inventory:inventory')  
+                else:
+                    messages.error(request, "Product creation failed.")
+                    return redirect('inventory:inventory')
                         
             self.create_branch_inventory(product, log_action)
             
@@ -168,8 +164,12 @@ class ProcessTransferCartView(View):
         try:
             with transaction.atomic():
                 cart_data = json.loads(request.body)
-                for item in cart_data:
-                    transfer_item = Transfer(
+                print(cart_data)
+                transfer=Transfer.objects.get(id=cart_data['transfer_id'])
+                print(transfer)
+                for item in cart_data['cart']:
+                    transfer_item = TransferItems(
+                        transfer=transfer,
                         product= Product.objects.get(name=item['product']),
                         price=item['price'],
                         quantity=item['quantity'],
@@ -177,6 +177,7 @@ class ProcessTransferCartView(View):
                         to_branch= Branch.objects.get(name=item['to_branch']),
                     )            
                     transfer_item.save()
+                    print(transfer_item)
                     self.deduct_inventory(item, transfer_item)  
 
             return JsonResponse({'success': 'Transfer success'})
@@ -189,6 +190,7 @@ class ProcessTransferCartView(View):
         
         branch_inventory.quantity -= int(item['quantity'])
         branch_inventory.save()
+        print(branch_inventory.quantity)
         self.activity_log('Transfer', branch_inventory,  item, transfer_item, )
         
     # def send_stock_notification(self, item):
@@ -203,7 +205,6 @@ class ProcessTransferCartView(View):
     #     )
     
     def activity_log(self,  action, inventory, item, transfer_item,):
-        # print(transfer_item.id)
         ActivityLog.objects.create(
             invoice = None,
             product_transfer = transfer_item,
@@ -217,9 +218,10 @@ class ProcessTransferCartView(View):
         
 @login_required       
 def transfer_details(request, transfer_id):
-    transfer = Transfer.objects.filter(id=transfer_id, from_branch=request.user.branch).values(
-        'product__name', 'transfer_ref', 'quantity', 'price', 'from_branch__name', 'to_branch__name'
+    transfer = TransferItems.objects.filter(id=transfer_id).values(
+        'product__name', 'transfer__transfer_ref', 'quantity', 'price', 'from_branch__name', 'to_branch__name'
     )
+    print(transfer)
     return JsonResponse(list(transfer), safe=False)
 
 @login_required
@@ -252,7 +254,7 @@ def inventory_index(request):
         inventory = inventory.filter(Q(product__name__icontains=q) | Q(product__batch_code__icontains=q))
     
     # Filter pending transfers
-    pending_transfers = Transfer.objects.filter(
+    pending_transfers = TransferItems.objects.filter(
         to_branch=request.user.branch,
         received=False,
         declined=False
@@ -270,7 +272,7 @@ def inventory_index(request):
         'category':category,
         'total_price': totals[1],
         'total_cost':totals[0],
-        'transfers_count': pending_transfers.count()
+        # 'transfers_count': pending_transfers
     })
 
 @admin_required
@@ -325,9 +327,7 @@ def inventory_detail(request, id):
 
     inventory = Inventory.objects.get(id=id, branch=request.user.branch)
     
-    logs = ActivityLog.objects.filter(inventory=inventory, branch=request.user.branch)
-    stock_transactions = StockTransaction()
-    
+    logs = ActivityLog.objects.filter(inventory=inventory, branch=request.user.branch)    
 
     logs_filter = ActivityLog.objects.filter(
         Q(timestamp__icontains=q) |
@@ -343,29 +343,41 @@ def inventory_detail(request, id):
 
 @login_required    
 def inventory_transfers(request):
-    """
-    View for displaying inventory transfers, optionally filtered by search query.
-    """
-
+    form = addTransferForm()
     q = request.GET.get('q', '') 
     branch_id = request.GET.get('branch', '')
 
-    transfers = Transfer.objects.filter(from_branch=request.user.branch).order_by('-date')
+    transfers = Transfer.objects.filter(branch=request.user.branch).order_by('-date')
     
     if q:
-        transfers = transfers.filter(Q(product__name__icontains=q) | Q(date__icontains=q) )
+        transfers = transfers.filter(Q(transfer_ref__icontains=q) | Q(date__icontains=q) )
         
     if branch_id: 
         transfers =transfers.filter(to_branch__id=branch_id)
-
-    return render(request, 'inventory/transfers.html', {'transfers': transfers,'search_query': q })
+        
+    if request.method == 'POST':
+        form = addTransferForm(request.POST)
+        
+        if form.is_valid():
+            transfer=form.save(commit=False)
+            transfer_to = Branch.objects.get(id=int(request.POST['transfer_to']))
+            transfer.branch = request.user.branch
+            transfer.transfer_ref = Transfer.generate_transfer_ref(transfer.branch.name, transfer_to.name)
+            
+            transfer.save()
+            
+            return redirect('inventory:add_transfer', transfer.transfer_ref)
+            
+        messages.success(request, 'Transfer creation failed')
+    
+    return render(request, 'inventory/transfers.html', {'transfers': transfers,'search_query': q, 'form':form })
     
     
 @login_required
 def receive_inventory(request):
     q = request.GET.get('q', '')
     
-    transfers =  Transfer.objects.filter(
+    transfers =  TransferItems.objects.filter(
         to_branch=request.user.branch,
         received=False,
         declined=False
@@ -394,10 +406,11 @@ def receive_inventory(request):
                         ActivityLog.objects.create(
                             branch = request.user.branch,
                             user=request.user,
-                            action= 'Update',
+                            action= 'Stock in',
                             inventory=existing_inventory,
                             quantity=branch_transfer.quantity,
-                            total_quantity=existing_inventory.quantity
+                            total_quantity=existing_inventory.quantity,
+                            product_transfer=branch_transfer
                         )
                         messages.success(request, 'Product received')
                         
@@ -416,7 +429,8 @@ def receive_inventory(request):
                             action= 'Stock in',
                             inventory=inventory,
                             quantity=inventory.quantity,
-                            total_quantity=inventory.quantity
+                            total_quantity=inventory.quantity,
+                            product_transfer=branch_transfer
                         )
                         messages.success(request, 'Product received')
             else:
@@ -451,8 +465,14 @@ def receive_inventory(request):
 
 
 @login_required
-def add_inventory_transfer(request):
-    return render(request, 'inventory/add_transfer.html')
+def add_inventory_transfer(request, transfer_ref):
+    try:
+        transfer=Transfer.objects.get(transfer_ref=transfer_ref)
+    except Transfer.DoesNotExist:
+        transfer.delete()
+        messages.error(request, f'Transfer Does not Exist')
+        return redirect('inventory:transfers')
+    return render(request, 'inventory/add_transfer.html', {'transfer':transfer})
 
 @login_required
 @admin_required
@@ -527,6 +547,7 @@ def transfers_report(request):
     end_date_str = request.GET.get('date_from', '') 
     start_date_str = request.GET.get('date_to', '')
     view = request.GET.get('view', '')
+    transfer_id = request.GET.get('transfer_id', '')
     
     
     if start_date_str or end_date_str: 
@@ -554,10 +575,10 @@ def transfers_report(request):
     if start_date and end_date:
         transfers = transfers.filter(date__range=(start_date, end_date))
         
-    if view:
-        return JsonResponse(list(transfers.order_by('-date').values(
-                'date', 
+    if view or transfer_id:
+        return JsonResponse(list(TransferItems.objects.filter(transfer__id=transfer_id, transfer__branch=request.user.branch).values(
                 'product__name', 
+                'price',
                 'quantity', 
                 'from_branch__name',
                 'to_branch__name',

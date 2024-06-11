@@ -92,6 +92,7 @@
         const branchModal = new bootstrap.Modal(document.querySelector('#branchModal'))
         const branchButton = document.querySelector('#branchButton')
 
+
         branchButton.addEventListener('click', ()=>{
             branchModal.show()
         })
@@ -151,7 +152,13 @@
 
             data.forEach((data)=>{
                 const li = document.createElement('li');
-                li.innerHTML = `<small><a href='/inventory/inventory-detail/${data.inventory__id}/'>` + data.notification + `</a></small>`
+
+                if (data.notification_type === 'stock transfer'){
+                    li.innerHTML = `<small><a href='/inventory/inventory-detail/${ data.notification }</a></small>`
+                }else{
+                    li.innerHTML = `<small><a href='/inventory/inventory-detail/${data.inventory__id}/'>` + data.notification + `</a></small>`
+                }
+                
                 ul.appendChild(li);
             })
         }

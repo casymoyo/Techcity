@@ -129,22 +129,22 @@ SESSION_AUTH = True
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME':  'techcity',
-    #     'USER': 'casy',
-    #     'PASSWORD': 'neverfail',
-    #     'HOST': 'localhost',
-    #     'PORT': '5432'
-    # }
     'default': {
-        'ENGINE':'django.db.backends.postgresql',
-        'NAME':'railway',
-        'USER':'postgres',
-        'PASSWORD':'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
-        'HOST':'monorail.proxy.rlwy.net',
-        'PORT':'39004'
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME':  'techcity',
+        'USER': 'casy',
+        'PASSWORD': 'neverfail',
+        'HOST': 'localhost',
+        'PORT': '5432'
     }
+    # 'default': {
+    #     'ENGINE':'django.db.backends.postgresql',
+    #     'NAME':'railway',
+    #     'USER':'postgres',
+    #     'PASSWORD':'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
+    #     'HOST':'monorail.proxy.rlwy.net',
+    #     'PORT':'39004'
+    # }
 
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
@@ -266,11 +266,11 @@ CELERY_BEAT_SCHEDULE = {
 # EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 # EMAIL_USE_TLS = env('EMAIL_USE_TLS')
 # EMAIL_USE_SSL = env('EMAIL_USE_SSL')
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Use SMTP backend
-EMAIL_HOST = 'mail.techcity.co.zw'  # Outgoing server from the image
-EMAIL_PORT = 465  # Outgoing port (SMTP) from the image
-EMAIL_USE_SSL = True  # Since it's using SSL/TLS (port 465)
-EMAIL_HOST_USER = 'admin@techcity.co.zw'  # Username from the image
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  
+EMAIL_HOST = 'mail.techcity.co.zw'  
+EMAIL_PORT = 465  
+EMAIL_USE_SSL = True 
+EMAIL_HOST_USER = 'admin@techcity.co.zw' 
 EMAIL_HOST_PASSWORD = 'kv]j[N~StShy'
 
 TWILIO_WHATSAPP_NUMBER = os.getenv('TWILIO_WHATSAPP_NUMBER')

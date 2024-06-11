@@ -1,19 +1,20 @@
 {% extends "base.html" %}
 {% load static%}
-{% block title%} Inventory Transfers {% endblock%}
+{% load crispy_forms_tags %}
+{% block title%} Product Transfers {% endblock%}
 {% block content %}
    <div class="inventory">
         <div class="inventory-navbar">
-            <nav class="d-flex justify-content-between align-items-center p-2 shadow">
+            <nav class="d-flex justify-content-between align-items-center p-2 shadow bg-dark text-light rounded">
                 <div>
                     <h5 class='fw-bold'>Transfers</h5>
                 </div>
                 <div class="search d-flex align-items-center">
                     <div class='px-2'> 
-                        <a href='{% url 'inventory:add_transfer' %}' class="btn btn-primary">
+                        <button type="button" id="addTbtn" class="btn btn-primary">
                             <i class='bx bx-plus'></i>
                             Transfer
-                        </a>
+                        </button>
                     </div>
                     <form method='get'>
                         <input
@@ -53,6 +54,7 @@
             </div>
             {% include "inventory/components/transfers_table.html" %}
         </div>
+        
         <!-- transfers pdf modal -->
 
         <div class="modal fade" id="transferModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
@@ -126,11 +128,46 @@
             </div>
         </div>
 
+        <div class="modal fade" id="addTransfer" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <h5 class="fw-bold">Add Transfer</h5>
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form | crispy }}
+                            <div class="d-flex justify-content-end">
+                                <div class="">
+                                    <button type="reset" class="btn btn-danger btn-sm w-100">
+                                        <i class='bx bx-reset'></i>
+                                        Reset
+                                    </button>
+                                </div>
+                                <span class="px-1"></span>
+                                <div class="">
+                                    <button type="submit" class="btn btn-success btn-sm w-100">
+                                        <i class='bx bx-save'></i>
+                                        Proceed
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
    </div>  
    <script>
         document.addEventListener('DOMContentLoaded', (event) => {
-            const transferModal = new bootstrap.Modal(document.querySelector('#transferModal'))
-            const transferReportModal = new bootstrap.Modal(document.querySelector('#transferReportModal'))
+            const transferModal = new bootstrap.Modal(document.querySelector('#transferModal'));
+            const transferReportModal = new bootstrap.Modal(document.querySelector('#transferReportModal'));
+
+            const addTranferBtn = document.querySelector('#addTbtn');
+            const addTransfer = new bootstrap.Modal(document.querySelector('#addTransfer'));
+
+            addTranferBtn.addEventListener('click', ()=>{
+                addTransfer.show()
+            })
 
             document.querySelector('.pdf-gen').addEventListener(
                 'click', ()=>{

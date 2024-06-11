@@ -47,26 +47,29 @@ class Inventory(models.Model):
         return f'{self.branch.name} : ({self.product.name}) quantity ({self.quantity})'
     
 class Transfer(models.Model):
-    batch_code = models.CharField(max_length=20)
     transfer_ref = models.CharField(max_length=20)
-    transfer_to = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='detination')
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='branch')
+    transfer_to = models.ForeignKey(Branch, on_delete=models.CASCADE)
     description =  models.CharField(max_length=266)
+    date = models.DateField(auto_now_add=True)
     
     @classmethod
-    def generate_transfer_number(cls):
-        while True:
-            characters = string.ascii_uppercase + string.digits  
-            transfer_ref = ''.join(random.choices(characters, k=6))  
-            if not cls.objects.filter(transfer_ref=transfer_ref).exists():
-                return transfer_ref
-
-    def save(self, *args, **kwargs):
-        if not self.transfer_ref:
-            self.transfer_ref = self.generate_transfer_number()
-        super().save(*args, **kwargs)
+    def generate_transfer_ref(self, branch, destination_branch):
+        print(branch, destination_branch)
+        last_transfer = Transfer.objects.filter(branch__name=branch).order_by('-id').first()
+        if last_transfer:
+            if str(last_transfer.transfer_ref.split(':')[0])[-1] == branch[0]:
+                last_reference_number = int(last_transfer.transfer_ref.split('-')[1]) 
+                new__reference_number = last_reference_number + 1   
+            else:
+                new__reference_number  = 1
+            return f"{branch[:1]}:{destination_branch[:1]}-{new__reference_number:04d}"  
+        else:
+            new__reference_number = 1
+            return f"{branch[:1]}:{destination_branch[:1]}-{new__reference_number:04d}"  
     
     def __str__(self):
-        return self.product.name
+        return self.transfer_ref
 
 class TransferItems(models.Model):
     transfer = models.ForeignKey(Transfer, on_delete=models.CASCADE)
@@ -75,7 +78,6 @@ class TransferItems(models.Model):
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    date = models.DateField(auto_now_add=True)
     received = models.BooleanField(default=False)
     declined = models.BooleanField(default=False)
 
@@ -122,18 +124,20 @@ class ActivityLog(models.Model):
     total_quantity = models.IntegerField()
     timestamp = models.DateField(auto_now_add=True)
     invoice = models.ForeignKey('finance.invoice', null=True, blank=True, on_delete=models.SET_NULL)
-    product_transfer = models.ForeignKey(Transfer, null=True, blank=True, on_delete=models.SET_NULL)
+    product_transfer = models.ForeignKey(TransferItems, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return f"{self.user} ({self.timestamp})"
     
 class StockNotifications(models.Model):
-    inventory = models.ForeignKey(Inventory, on_delete=models.PROTECT)
+    inventory = models.ForeignKey(Inventory, null=True, blank=True, on_delete=models.SET_NULL)
+    transfer = models.ForeignKey(Transfer, null=True, blank=True, on_delete=models.SET_NULL)
     notification = models.CharField(max_length=255)
     status = models.BooleanField(default=False)
     type = models.CharField(max_length=30, choices=[
         ('stock level', 'Stock level'),
-        ('stock take', 'stock take')
+        ('stock take', 'stock take'),
+        ('stock transfer', 'stock transfer')
     ])
     
     def __str__(self):

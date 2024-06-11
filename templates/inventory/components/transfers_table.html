@@ -1,42 +1,99 @@
 {% load static%}
 {% block content %}
-   <div class="table transfers-table mt-2">
-        <!-- inventory table -->
-        <table class='table table-striped border rounded p-2'>
+<div class="table transfers-table mt-2">
+    <!-- inventory table -->
+    <table class='table table-striped border table-hover rounded p-2'>
+        <thead class='bg-primary'>
             <tr>
-                <thead>
-                    <th>Date</th>
-                    <th>Name</th>
-                    <th>Quantity</th>
-                    <th>Source</th>
-                    <th>Destination</th>
-                    <th>Action</th>
-                </thead>
+                <th>Date</th>
+                <th>Trans Ref</th>
+                <th>Destination</th>
+                <th>Action</th>
             </tr>
-            <tbody>
-                {% for transfer in transfers %}
-                    <tr>
-                        <td><small>{{transfer.date}}</small></td>
-                        <td><small>{{transfer.product.name}}</small></td>
-                        <td><small>{{transfer.quantity}}</small></td>
-                        <td><small>{{transfer.from_branch}}</small></td>
-                        <td><small>{{transfer.to_branch}}</small></td>
-                        <td>
-                            <span>
-                                {% if transfer.declined == False %}
-                                    {% if transfer.received == False %}
-                                        <small>not yet received</small>
-                                    {% else %}
-                                       <small class='text-success'>Recieved</small>
-                                    {% endif %}
-                                {% else %}
-                                    <small class='text-danger'>Declined</small>
-                                {% endif %}
-                            </span>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-   </div>  
+            </thead>
+        <tbody>
+            {% for transfer in transfers %}
+                <tr>
+                    <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.date }}</small></td>
+                    <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.transfer_ref }}</small></td>
+                    <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.transfer_to }}</small></td>
+                    <td><small><i class='bx bx-trash'></i></small></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="modal fade" id="transferItemsModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <h5 class="fw-bold">Transfered Products</h5>
+                    <table class='table table-striped border rounded p-2'>
+                        <tr>
+                            <thead>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Destination</th>
+                                <th>Status</th>
+                            </thead>
+                        </tr>
+                        <tbody id='itemsTransfersTable'></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>  
+<script>
+    const transferBtn = document.querySelectorAll('.transfer-btn');
+    const tranferItemsModal = new bootstrap.Modal(document.getElementById('transferItemsModal'));
+
+    transferBtn.forEach((btn)=>{
+       btn.addEventListener('click', ()=>{
+            tranferItemsModal.show()
+            fetchDisplayItems(btn.dataset.id)
+       })
+    })
+
+    function fetchDisplayItems(transferId){
+        $.ajax({
+            url: '{% url "inventory:transfers_report" %}',
+            type: 'GET',
+            data:{transfer_id: transferId} 
+            }).done(function(response) {
+                const data = response;
+                console.log(data)
+                displayItemsTransfersTable(data);
+            })
+    } 
+
+    function displayItemsTransfersTable(data){
+        itemsTransfersTable.innerHTML = ''
+        data.forEach((data)=>{
+            itemsTransfersTable.innerHTML +=`
+            <tr>
+                <td><small>${data.product__name}</small></td>
+                <td><small>${data.price}</small></td>
+                <td><small>${data.quantity}</small></td>
+                <td><small>${data.to_branch__name}</small></td>
+                <td>
+                    <span>
+                      ${data.declined ? (
+                        `<small class='text-danger'>Declined</small>`
+                      ) : (
+                        data.received ? (
+                          `<small class='text-success'>Received</small>`
+                        ) : (
+                          `<small>Not yet received</small>`
+                        )
+                      )}
+                    </span>
+                  </td>
+          
+            </tr>
+            `
+        })
+    }
+
+</script>
 {% endblock content %}
