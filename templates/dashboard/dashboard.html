@@ -67,7 +67,7 @@
                 <nav class='recent-nav navbar navbar-expand-lg navbar-light bg-dark text-light px-2'>
                     <ul class='navbar-nav items  mr-auto'>
                         <li class='nav-item active' data-name="sales">Sales</li>
-                        <li class='nav-item px-2' data-name="qoutations">Qoutations</li>
+                        <li class='nav-item px-2' data-name="quotations">Qoutations</li>
                         <li class='nav-item' data-name="transfers">Transfers</li>
                         <li class='nav-item px-2' data-name="customers">Customers</li>
                     </ul>
@@ -98,6 +98,49 @@
                                                 <small class='border rounded bg-success p-1 text-light'><small>Paid</small></small>
                                             {% else %}
                                                 <small class='border rounded bg-danger p-1 text-light'><small>Due</small></small>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <a href="{% url 'pos:pos' %}" class='btn btn-primary btn-sm'>
+                            <i class="bx bx-plus"></i>
+                            Add Sale
+                        </a>
+                        <span class="px-1"></span>
+                        <a href="{% url 'finance:invoice' %}" class='btn btn-success btn-flat btn-sm'>
+                            <i class='bx bx-list-ul' ></i>
+                            Sales List
+                        </a>
+                    </div>
+                    <div class='quotations hidden border  p-2'>
+                        <table class='table'>
+                            <thead>
+                                <th>Qoute #</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Products</th>
+                                <th>Amount</th>
+                                <th class="text-center">Status</th>
+                            </thead>
+                            <tbody>
+                                {% for qoute in qoutations %}
+                                    <tr>
+                                        <td>
+                                            <a href="">
+                                                <small>{{qoute.qoute_reference}}</small>
+                                            </a>
+                                        </td>
+                                        <td><small>{{qoute.date}}</small></td>
+                                        <td>{{qoute.customer.name}}</td>
+                                        <td>{{qoute.amount}}</td>
+                                        <td>{{qoute.amount}}</td>
+                                        <td class="text-center">
+                                            {% if qoute.status == True %}
+                                                <small class='border rounded bg-success p-1 text-light'><small>Processed</small></small>
+                                            {% else %}
+                                                <small class='border rounded bg-danger p-1 text-light'><small>Not yet processed</small></small>
                                             {% endif %}
                                         </td>
                                     </tr>
@@ -236,9 +279,11 @@
 <script>
     const navButtons = document.querySelectorAll('.nav-item')
     const sales = $('.sales')
-    //const qoute = $('.quotations')
+    const quotations = $('.quotations')
     const customers = $('.customers')
     const transfers = $('.transfers')
+
+    
 
     navButtons.forEach((btn)=>{
         btn.addEventListener(
@@ -255,7 +300,7 @@
 
     function show(name) {
         sales.addClass('hidden');
-        //quote.addClass('hidden'); 
+        quotations.addClass('hidden'); 
         customers.addClass('hidden');
         transfers.addClass('hidden');
 

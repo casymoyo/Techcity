@@ -623,7 +623,7 @@
     });
     
     // processing the product cart
-    function processCart() {
+    function processCart(el) {
         data = [
             {
                 subtotal:calculateTotalAmount(cart),
@@ -639,31 +639,62 @@
                 payment_method:paymentMethod,
             }
         ]
-        fetch("{% url 'finance:create_invoice' %}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCookie("csrftoken"), 
-            },
-            body: JSON.stringify({
-                data: data,
-                items: cart
-            }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log(data)
-            if (data.success) {
-                cart = [];
-                updateCartDisplay();
-                displayReceipt(data.invoice_id)
-            } else {
-                //put error modal
-            }
-        })
-        .catch(error => {
-            console.error("Error during request:", error.message); 
-    })};
+
+        if (el.dataset.name == 'qoutation'){
+            fetch("{% url 'finance:add_qoutation' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken"), 
+                },
+                body: JSON.stringify({
+                    data: data,
+                    items: cart
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+                if (data.success) {
+                    cart = [];
+                    updateCartDisplay();
+                    
+                } else {
+                    //put error modal
+                }
+            })
+            .catch(error => {
+                console.error("Error during request:", error.message);
+            })
+        }else{
+            fetch("{% url 'finance:create_invoice' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken"), 
+                },
+                body: JSON.stringify({
+                    data: data,
+                    items: cart
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+                if (data.success) {
+                    cart = [];
+                    updateCartDisplay();
+                    displayReceipt(data.invoice_id)
+                } else {
+                    //put error modal
+                }
+            })
+            .catch(error => {
+                console.error("Error during request:", error.message);
+            })
+        }
+        
+    };
     
     function displayReceipt(invoiceId) {
         fetch(`/finance/invoice/preview/json/${invoiceId}/`, {
@@ -724,7 +755,6 @@
             loaderModal.hide();
           });
       }
-      
       
     // customer get and post
     function submitClient(){

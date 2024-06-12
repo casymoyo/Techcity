@@ -12,13 +12,14 @@ def dashboard(request):
     sales = Sale.objects.filter(transaction__branch=request.user.branch).order_by('-date')[:5]
     customers = Customer.objects.all().order_by('-date')[:5]
     transfers = Transfer.objects.filter(branch = request.user.branch).order_by('-date')[:5]
+    qoutations = Qoutation.objects.filter(branch=request.user.branch)
     
     invoices = Invoice.objects.filter(payment_status='Partial', branch=request.user.branch).order_by('-issue_date')[:5]
-    
+
     return render(request, 'dashboard/dashboard.html', {
         'sales':sales,
         'transfers':transfers,
-        
+        'qoutations':qoutations,
         'products_count': Inventory.objects.filter(branch=request.user.branch, status=True).aggregate(total_products=Sum('quantity'))['total_products'] or 0,
         
         'customers':customers,

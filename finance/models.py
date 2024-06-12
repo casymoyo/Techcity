@@ -329,3 +329,39 @@ class FinanceNotifications(models.Model):
     def __str__(self):
         return self.notification
     
+class Qoutation(models.Model):
+    qoute_reference = models.CharField(max_length=255)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, null=True) 
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    status = models.BooleanField(default=False)
+    date = models.DateField(auto_now_add=True)
+    branch = models.ForeignKey('company.branch', on_delete=models.CASCADE)
+    products = models.CharField(max_length=255)
+    
+    def generate_qoute_number(branch):
+        last_invoice = Invoice.objects.filter(branch__name=branch).order_by('-id').first()
+        if last_invoice:
+            if str(last_invoice.invoice_number.split('-')[0])[-1] == branch[0]:
+                last_invoice_number = int(last_invoice.invoice_number.split('-')[1]) 
+                new_invoice_number = last_invoice_number + 1   
+            else:
+                new_invoice_number = 1
+            return f"Q{branch[:1]}-{new_invoice_number:04d}"  
+        else:
+            new_invoice_number = 1
+            return f"Q{branch[:1]}-{new_invoice_number:04d}"  
+    
+    def __str__(self):
+        return f'{self.qoute_reference} {self.customer.name}'
+    
+class QoutationItems(models.Model):
+    qoute = models.ForeignKey(Qoutation, on_delete=models.PROTECT, related_name='qoute_items')
+    product = models.ForeignKey('inventory.Inventory', on_delete=models.PROTECT)
+    quantity = models.PositiveIntegerField()
+    total_amount = models.DecimalField(max_digits=15, decimal_places=2)
+    unit_price = models.DecimalField(max_digits=15, decimal_places=2)
+    
+    
+    def __str__(self):
+        return f'{self.qoute.qoute_refence} {self.product.product.name}'

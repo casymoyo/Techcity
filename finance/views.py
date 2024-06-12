@@ -361,7 +361,7 @@ def create_invoice(request):
                 defaults={'balance': 0}
             )
            
-            
+            print(customer)
             
             amount_paid = Decimal(invoice_data['amount_paid'])
             invoice_total_amount = Decimal(invoice_data['payable'])
@@ -1436,6 +1436,47 @@ def receive_money_transfer(request, transfer_id):
         transfer.save() 
         return JsonResponse({'message':True})  
     return JsonResponse({'message':"Transfer ID is needed"})  
+
+
+@login_required
+@transaction.atomic
+def create_quotation(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        qoute_data = data['data'][0]  
+        items_data = data['items']
+        
+        customer = Customer.objects.get(id=int(qoute_data['client_id']))
+        currency = Currency.objects.get(id=qoute_data['currency'])
+        
+        print(customer)
+        
+        qoute = Qoutation.objects.create(
+            customer = customer,
+            amount =  Decimal(qoute_data['payable']),
+            branch = request.user.branch,
+            currency = currency,
+            qoute_reference = Qoutation.generate_qoute_number(request.user.branch.name),
+            products = ', '.join([f'{item['product_name']} x {item['quantity']}' for item in items_data])
+        )
+        
+        for item_data in items_data:
+            item = Inventory.objects.get(pk=item_data['inventory_id'])
+            
+            QoutationItems.objects.create(
+                qoute=qoute,
+                product=item,
+                unit_price=item.price,
+                quantity=item_data['quantity'],
+                total_amount= item.price * item_data['quantity'],
+            )
+        return JsonResponse({'success': True, 'qoute_id': qoute.id})
+    return JsonResponse({'success': False})
+        
+def qoutation_list(request):
+    qoutations = Qoutation.objects.filter(branch=request.user.branch)
+    return render(request, 'finance/qoutations.html', {'qoutations':qoutations})
+        
 
 
 @login_required
