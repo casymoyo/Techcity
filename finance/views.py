@@ -1451,7 +1451,7 @@ def create_quotation(request):
         
         qoute = Qoutation.objects.create(
             customer = customer,
-            amount =  Decimal(qoute_data['payable']),
+            amount =  Decimal(qoute_data['amount']),
             branch = request.user.branch,
             currency = currency,
             qoute_reference = Qoutation.generate_qoute_number(request.user.branch.name),
@@ -1481,6 +1481,10 @@ def qoute_preview(request, qoutation_id):
     qoute = Qoutation.objects.get(id=qoutation_id)
     qoute_items = QoutationItems.objects.filter(qoute=qoute)
     return render(request, 'Pos/qoute.html', {'qoute':qoute, 'qoute_items':qoute_items})
+
+@login_required
+def send_qoute_email(request, qoutation_id):
+    pass
 
 @login_required
 def cashbook_view(request):

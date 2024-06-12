@@ -122,27 +122,27 @@
                                 <th>Customer</th>
                                 <th>Products</th>
                                 <th>Amount</th>
-                                <th class="text-center">Status</th>
+                                <!-- <th class="text-center">Status</th> -->
                             </thead>
                             <tbody>
                                 {% for qoute in qoutations %}
                                     <tr>
                                         <td>
-                                            <a href="">
+                                            <a href="{% url 'finance:quotation_preview' qoute.id %}">
                                                 <small>{{qoute.qoute_reference}}</small>
                                             </a>
                                         </td>
                                         <td><small>{{qoute.date}}</small></td>
                                         <td>{{qoute.customer.name}}</td>
+                                        <td>{{qoute.products}}</td>
                                         <td>{{qoute.amount}}</td>
-                                        <td>{{qoute.amount}}</td>
-                                        <td class="text-center">
+                                        <!-- <td class="text-center">
                                             {% if qoute.status == True %}
                                                 <small class='border rounded bg-success p-1 text-light'><small>Processed</small></small>
                                             {% else %}
                                                 <small class='border rounded bg-danger p-1 text-light'><small>Not yet processed</small></small>
                                             {% endif %}
-                                        </td>
+                                        </td> -->
                                     </tr>
                                 {% endfor %}
                             </tbody>

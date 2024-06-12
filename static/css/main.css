@@ -1,11 +1,5 @@
 .receipt {
-  font-family: adobf;
-}
-@font-face {
-  font-family: "adobe";
-  src: url("../assets/fontts/Adobe.tff") format("opentype");
-  font-weight: normal;
-  font-style: normal;
+  font-family: adobe;
 }
 
 .techcity {

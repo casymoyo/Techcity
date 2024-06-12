@@ -340,17 +340,17 @@ class Qoutation(models.Model):
     products = models.CharField(max_length=255)
     
     def generate_qoute_number(branch):
-        last_invoice = Invoice.objects.filter(branch__name=branch).order_by('-id').first()
-        if last_invoice:
-            if str(last_invoice.invoice_number.split('-')[0])[-1] == branch[0]:
-                last_invoice_number = int(last_invoice.invoice_number.split('-')[1]) 
-                new_invoice_number = last_invoice_number + 1   
+        last_qoute = Qoutation.objects.filter(branch__name=branch).order_by('-id').first()
+        if last_qoute:
+            if str(last_qoute.qoute_reference.split('-')[0])[-1] == branch[0]:
+                last_qoute_number = int(last_qoute.qoute_reference.split('-')[1]) 
+                new_qoute_number = last_qoute_number + 1   
             else:
-                new_invoice_number = 1
-            return f"Q{branch[:1]}-{new_invoice_number:04d}"  
+                new_qoute_number = 1
+            return f"Q{branch[:1]}-{new_qoute_number :04d}"  
         else:
-            new_invoice_number = 1
-            return f"Q{branch[:1]}-{new_invoice_number:04d}"  
+            new_qoute_number  = 1
+            return f"Q{branch[:1]}-{new_qoute_number :04d}"  
     
     def __str__(self):
         return f'{self.qoute_reference} {self.customer.name}'
