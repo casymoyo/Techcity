@@ -231,6 +231,17 @@
         </div>
     </div>
 
+    <div class="modal fade" id="qouteModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <i class='bx bx-check-circle h1'></i>
+                    <h2>Qoutation Successfully Created</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="overlay hidden"></div>
 </body>
 
@@ -258,9 +269,10 @@
     const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
     const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
     const loaderModal = new bootstrap.Modal(document.getElementById('loaderModal'));
+    const qouteModal = new bootstrap.Modal(document.getElementById('qouteModal'));
 
     const customerModal = new bootstrap.Modal(document.getElementById('customerModal'));
-
+ 
     document.querySelector('#end').addEventListener(
         'click', ()=>{
             endOfDayModal.show()
@@ -294,6 +306,12 @@
     const modal = document.querySelector('.payment-modal');
     const clientModal = new bootstrap.Modal(document.querySelector('#clientModal'));
     const closeModalBtn = document.querySelectorAll(".btn-close");
+    const closebtn = document.querySelector('.closebtn')
+
+    closebtn.addEventListener('click', ()=>{
+        modal.add.classList('hidden')
+    })
+
 
     document.querySelector('#id_pay').addEventListener(
         'click', ()=>{
@@ -658,9 +676,12 @@
                 if (data.success) {
                     cart = [];
                     updateCartDisplay();
-                    
+                    qouteModal.show()
+                    setTimeout(() => {
+                        
+                    }, 2000); 
                 } else {
-                    //put error modal
+                    console.log('error')
                 }
             })
             .catch(error => {
@@ -695,6 +716,8 @@
         }
         
     };
+
+    printQoutation(data.qoute_id)
     
     function displayReceipt(invoiceId) {
         fetch(`/finance/invoice/preview/json/${invoiceId}/`, {
@@ -862,7 +885,6 @@
         console.error("Error:", error);
     });
     }
-
 
     function getCookie(name) {
         let cookieValue = null;
