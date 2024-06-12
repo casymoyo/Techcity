@@ -124,14 +124,14 @@ class ActivityLog(models.Model):
     total_quantity = models.IntegerField()
     timestamp = models.DateField(auto_now_add=True)
     invoice = models.ForeignKey('finance.invoice', null=True, blank=True, on_delete=models.SET_NULL)
-    # product_transfer = models.ForeignKey(TransferItems, null=True, blank=True, on_delete=models.SET_NULL)
+    product_transfer = models.ForeignKey(TransferItems, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return f"{self.user} ({self.timestamp})"
     
 class StockNotifications(models.Model):
     inventory = models.ForeignKey(Inventory, null=True, blank=True, on_delete=models.SET_NULL)
-    # transfer = models.ForeignKey(Transfer, null=True, blank=True, on_delete=models.SET_NULL)
+    transfer = models.ForeignKey(Transfer, null=True, blank=True, on_delete=models.SET_NULL)
     notification = models.CharField(max_length=255)
     status = models.BooleanField(default=False)
     type = models.CharField(max_length=30, choices=[
