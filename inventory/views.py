@@ -11,7 +11,7 @@ from asgiref.sync import async_to_sync
 from finance.models import StockTransaction
 from channels.layers import get_channel_layer 
 from . utils import calculate_inventory_totals
-from . forms import AddProductForm, addCategoryForm, addTransferForm
+from . forms import AddProductForm, addCategoryForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from channels.generic.websocket import  AsyncJsonWebsocketConsumer
