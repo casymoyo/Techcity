@@ -1451,7 +1451,7 @@ def create_quotation(request):
         
         qoute = Qoutation.objects.create(
             customer = customer,
-            amount =  Decimal(qoute_data['amount']),
+            amount =  Decimal(qoute_data['subtotal']),
             branch = request.user.branch,
             currency = currency,
             qoute_reference = Qoutation.generate_qoute_number(request.user.branch.name),
