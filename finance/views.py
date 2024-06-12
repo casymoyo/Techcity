@@ -1449,8 +1449,6 @@ def create_quotation(request):
         customer = Customer.objects.get(id=int(qoute_data['client_id']))
         currency = Currency.objects.get(id=qoute_data['currency'])
         
-        print(customer)
-        
         qoute = Qoutation.objects.create(
             customer = customer,
             amount =  Decimal(qoute_data['payable']),
@@ -1472,12 +1470,17 @@ def create_quotation(request):
             )
         return JsonResponse({'success': True, 'qoute_id': qoute.id})
     return JsonResponse({'success': False})
-        
+
+@login_required        
 def qoutation_list(request):
     qoutations = Qoutation.objects.filter(branch=request.user.branch)
     return render(request, 'finance/qoutations.html', {'qoutations':qoutations})
         
-
+@login_required 
+def qoute_preview(request, qoutation_id):
+    qoute = Qoutation.objects.get(id=qoutation_id)
+    qoute_items = QoutationItems.objects.filter(qoute=qoute)
+    return render(request, 'Pos/qoute.html', {'qoute':qoute, 'qoute_items':qoute_items})
 
 @login_required
 def cashbook_view(request):

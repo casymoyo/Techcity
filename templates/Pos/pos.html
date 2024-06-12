@@ -677,7 +677,11 @@
                     cart = [];
                     updateCartDisplay();
                     qouteModal.show()
+                    modal.classList.add('hidden')
+                    overlay.classList.add('hidden')
                     setTimeout(() => {
+                        qouteModal.hide()
+                        window.location.href=`/finance/qoutation/preview/${data.qoute_id}`
                         
                     }, 2000); 
                 } else {
@@ -717,7 +721,6 @@
         
     };
 
-    printQoutation(data.qoute_id)
     
     function displayReceipt(invoiceId) {
         fetch(`/finance/invoice/preview/json/${invoiceId}/`, {

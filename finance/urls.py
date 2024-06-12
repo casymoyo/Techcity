@@ -38,8 +38,9 @@ urlpatterns = [
     path('customer/transactions/json/', customer_account_transactions_json, name='customer_transactions_json'),
     
     # qoutation
-    path('qoutation/add/', create_quotation, name='add_qoutation'),
     path('qoutation/list/', qoutation_list, name='qoutation'),
+    path('qoutation/add/', create_quotation, name='add_qoutation'),
+    path('qoutation/preview/<int:qoutation_id>/', qoute_preview, name='quotation_preview'),
     
     # transfers
     path('transfer/cash/', cash_transfer, name='cash_transfer'),
