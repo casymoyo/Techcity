@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required
 def dashboard(request):
     sales = Sale.objects.filter(transaction__branch=request.user.branch).order_by('-date')[:5]
     customers = Customer.objects.all().order_by('-date')[:5]
-    transfers = Transfer.objects.filter(branch__id = request.user.branch.id).order_by('-date')[:5]
+    transfers = Transfer.objects.filter(branch = request.user.branch).order_by('-date')[:5]
     qoutations = Qoutation.objects.filter(branch=request.user.branch)
     
     invoices = Invoice.objects.filter(payment_status='Partial', branch=request.user.branch).order_by('-issue_date')[:5]

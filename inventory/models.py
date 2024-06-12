@@ -48,7 +48,7 @@ class Inventory(models.Model):
     
 class Transfer(models.Model):
     transfer_ref = models.CharField(max_length=20)
-    # branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='user_branch')
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='user_branch')
     transfer_to = models.ForeignKey(Branch, on_delete=models.CASCADE)
     description =  models.CharField(max_length=266)
     date = models.DateField(auto_now_add=True)
