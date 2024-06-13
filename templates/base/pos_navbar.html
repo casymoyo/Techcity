@@ -40,6 +40,13 @@
                     </a>
                 </li>
                 <span class='px-2'></span>
+                <li class="menu-link invoice btn btn-warning p-1" id='end'>
+                    <a href='{% url 'finance:qoutation_list' %}' class='px-1'>
+                        Qoutations
+                        <span class='badge badge-sm text-light'>{{qoute_count}}</span>
+                    </a>
+                </li>
+                <span class='px-2'></span>
                 <li class="menu-link invoice btn btn-light p-1" id='end'>
                     <span class='px-1'>
                         End Of Day

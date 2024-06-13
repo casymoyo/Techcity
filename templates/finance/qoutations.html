@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static%}
+{% block title%} Invoices {% endblock%}
+{% block content %}
+<div class="finance d-flex">
+    <div class="px-2 main-content ">
+        <div class="finance-navbar">
+            <nav class="d-flex justify-content-between align-items-center bg-dark text-light rounded shadow p-2">
+                <div class='h5'>
+                    Qoutations
+                </div>
+                <div class='d-flex'>
+                    <form method="get" class="d-flex justify-content-between align-items-center">
+                        <input
+                            id="search"
+                            name="q"
+                            type="search"
+                            value="{{search_query}}"
+                            class="form-control"
+                            placeholder="search..."
+                        />
+                    </form>
+                    {% comment %} <div class='d-flex px-2'>
+                        <button type="button" id='filterBtn' class='btn btn-light border rounded btn-sm'>Filters</button>
+                    </div> {% endcomment %}
+                </div>
+            </nav>
+        </div>
+
+        <div class='invoice-table mt-3 '>
+            <table class='table'>
+                <thead>
+                    <th>Qoute #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Products</th>
+                    <th>Amount</th>
+                    <th class="">Action</th>
+                </thead>
+                <tbody>
+                    {% for qoute in qoutations %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'finance:quotation_preview' qoute.id %}">
+                                    <i class='bx bx-show text-dark'></i>
+                                    <small>{{qoute.qoute_reference}}</small>
+                                </a>
+                            </td>
+                            <td><small>{{qoute.date}}</small></td>
+                            <td>{{qoute.customer.name}}</td>
+                            <td>{{qoute.products}}</td>
+                            <td>{{qoute.amount}}</td>
+                            <td id='id_delete' data-id={{ qoute.id }}>
+                                <i class='bx bx-trash'></i>
+                            </td>
+                            <!-- <td class="text-center">
+                                {% if qoute.status == True %}
+                                    <small class='border rounded bg-success p-1 text-light'><small>Processed</small></small>
+                                {% else %}
+                                    <small class='border rounded bg-danger p-1 text-light'><small>Not yet processed</small></small>
+                                {% endif %}
+                            </td> -->
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body" id='delete_content'>
+                        <h5 class='fw-bold'>Delete Qoute</h5>
+                        <div>
+                            <button class='btn btn-secondary w-100' onclick='deleteInvoice();'>Yes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script type="text/javascript">
+    let qouteId = '';
+    const deleteBtn = document.querySelectorAll('#id_delete');
+    const deleteContent = document.querySelector('#delete_content');
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+    deleteBtn.forEach((btn)=>{
+        btn.addEventListener(
+            'click', ()=>{
+                qouteId = btn.dataset.id
+                console.log(qouteId)
+                deleteModal.show()
+            }   
+        )
+    })
+
+    function deleteInvoice(){
+        fetch(`/finance/qoutation/delete/${qouteId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success){
+                deleteContent.innerHTML=''
+                deleteContent.innerHTML=data.message
+                setTimeout(()=>{
+                    window.location.reload()
+                }, 1000)
+            }
+        })
+        .catch(error => {
+            alert(error)
+            console.log(error)
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+</script>
+{% endblock content %}

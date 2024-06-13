@@ -1473,8 +1473,19 @@ def create_quotation(request):
 
 @login_required        
 def qoutation_list(request):
-    qoutations = Qoutation.objects.filter(branch=request.user.branch)
-    return render(request, 'finance/qoutations.html', {'qoutations':qoutations})
+    search_query = request.GET.get('q', '')
+    qoutations = Qoutation.objects.filter(branch=request.user.branch).order_by('-date')
+ 
+    if search_query:
+        print(search_query)
+        qoutations = qoutations.filter(
+            Q(customer__name__icontains=search_query)|
+            Q(products__icontains=search_query)|
+            Q(date__icontains=search_query)|
+            Q(qoute_reference__icontains=search_query)
+        )
+        
+    return render(request, 'finance/qoutations.html', {'qoutations':qoutations, 'search_query':search_query})
         
 @login_required 
 def qoute_preview(request, qoutation_id):
@@ -1483,8 +1494,10 @@ def qoute_preview(request, qoutation_id):
     return render(request, 'Pos/qoute.html', {'qoute':qoute, 'qoute_items':qoute_items})
 
 @login_required
-def send_qoute_email(request, qoutation_id):
-    pass
+def delete_qoute(request, qoutation_id):
+    qoute = get_object_or_404(Qoutation, id=qoutation_id)
+    qoute.delete()
+    return JsonResponse({'success':True, 'message':'Qoutation successfully deleted'}, status=200)
 
 @login_required
 def cashbook_view(request):

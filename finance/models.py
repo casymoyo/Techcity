@@ -356,7 +356,7 @@ class Qoutation(models.Model):
         return f'{self.qoute_reference} {self.customer.name}'
     
 class QoutationItems(models.Model):
-    qoute = models.ForeignKey(Qoutation, on_delete=models.PROTECT, related_name='qoute_items')
+    qoute = models.ForeignKey(Qoutation, on_delete=models.CASCADE, related_name='qoute_items')
     product = models.ForeignKey('inventory.Inventory', on_delete=models.PROTECT)
     quantity = models.PositiveIntegerField()
     total_amount = models.DecimalField(max_digits=15, decimal_places=2)
@@ -364,4 +364,4 @@ class QoutationItems(models.Model):
     
     
     def __str__(self):
-        return f'{self.qoute.qoute_refence} {self.product.product.name}'
+        return f'{self.qoute.qoute_reference} {self.product.product.name}'
