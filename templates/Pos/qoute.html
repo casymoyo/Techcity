@@ -73,7 +73,7 @@
         <img src='{% static 'assets/logo.png' %}' width='200px'/>
         <div class="mt-3">
             <small><i class='bx bx-phone'></i> {{ request.user.branch.phonenumber }} </small>
-            <small><i class='bx bx-building'></i> {{ request.user.branch.address }} </small>
+            <small class='px-2'><i class='bx bx-building'></i> {{ request.user.branch.address }} </small>
             <small><i class='bx bx-envelope'></i> {{ request.user.branch.email }} </small>
         </div>
     </div>
