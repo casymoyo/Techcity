@@ -65,7 +65,7 @@ def invoice_remove_notification(sender, instance, **kwargs):
 def create_cashbook_entry(instance, description, debit, credit):
     previous_day = datetime.date.today() - timedelta(days=1)
     Cashbook.objects.create(
-        date=instance.issue_date,
+        issue_date=instance.issue_date,
         description=description,
         debit=debit,
         credit=credit,
