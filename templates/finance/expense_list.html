@@ -67,7 +67,7 @@
                 {% for expense in expenses %}
                     <tr style='color: #6c757d;'>
                         {% if expense.status != True and request.user.role == 'admin' %}
-                            <td>{{expense.date}}</td>
+                            <td>{{expense.issue_date}}</td>
                             <td>{{expense.description}}</td>
                             <td>{{expense.currency.symbol}} {{expense.amount}}</td>
                             <td>{{expense.category.name}}</td>
@@ -82,7 +82,7 @@
                                 </a>
                             </td>
                         {% else %}   
-                            <td>{{expense.date}}</td>
+                            <td>{{expense.issue_date}}</td>
                             <td>{{expense.description}}</td>
                             <td>{{expense.currency.symbol}} {{expense.amount}}</td>
                             <td>{{expense.category.name}}</td>

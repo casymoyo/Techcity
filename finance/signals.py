@@ -64,21 +64,13 @@ def invoice_remove_notification(sender, instance, **kwargs):
 
 def create_cashbook_entry(instance, description, debit, credit):
     previous_day = datetime.date.today() - timedelta(days=1)
-
-    try:
-        latest_entry = Cashbook.objects.filter(date=previous_day).latest('date')
-        previous_balance = latest_entry.balance
-    except Cashbook.DoesNotExist:
-        previous_balance = 0 
-
-    new_balance = previous_balance + instance.amount
     Cashbook.objects.create(
         date=instance.issue_date,
         description=description,
         debit=debit,
         credit=credit,
         amount=instance.amount,
-        balance=new_balance
+        currency=instance.currency
     )
 
 @receiver(post_save, sender=Invoice)

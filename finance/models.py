@@ -159,7 +159,7 @@ class ExpenseCategory(models.Model):
         return self.name
 
 class Expense(models.Model):
-    date = models.DateField()
+    issue_date = models.DateField()
     amount = models.DecimalField(max_digits=15, decimal_places=2)
     payment_method = models.CharField(max_length=15, choices=[
         ('cash', 'cash'),
@@ -175,7 +175,7 @@ class Expense(models.Model):
     
 
     def __str__(self):
-        return f"{self.date} - {self.category} - {self.description} - ${self.amount}"
+        return f"{self.issue_date} - {self.category} - {self.description} - ${self.amount}"
     
 class Sale(models.Model):
     """
@@ -282,12 +282,12 @@ class Payment(models.Model):
         return f'{self.invoice.invoice_number} {self.amount_paid}'
 
 class Cashbook(models.Model):
-    date = models.DateField(auto_now_add=True)
+    issue_date = models.DateField(auto_now_add=True)
     description = models.CharField(max_length=255)
     debit = models.BooleanField(default=True)
     credit = models.BooleanField(default=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    balance = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     
     def __str__(self):
         return f'{self.date}: {self.balance}'
@@ -325,7 +325,6 @@ class FinanceNotifications(models.Model):
         ('Transfer', 'Transfer')
     ])
 
-
     def __str__(self):
         return self.notification
     
@@ -361,7 +360,6 @@ class QoutationItems(models.Model):
     quantity = models.PositiveIntegerField()
     total_amount = models.DecimalField(max_digits=15, decimal_places=2)
     unit_price = models.DecimalField(max_digits=15, decimal_places=2)
-    
     
     def __str__(self):
         return f'{self.qoute.qoute_reference} {self.product.product.name}'

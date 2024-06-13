@@ -70,7 +70,7 @@ class ExpenseView(View):
             form = self.form_class(instance=expense)
             return render(request, self.template_name, {'form': form, 'expense': expense})
         else:
-            expenses = Expense.objects.filter(branch=request.user.branch).order_by('-date')
+            expenses = Expense.objects.filter(branch=request.user.branch).order_by('-issue_date')
             expense_categories = ExpenseCategory.objects.all()
             
             search_query = request.GET.get('q','')
@@ -126,7 +126,7 @@ def create_expense(request):
 
         if form.is_valid():
             expense = form.save(commit=False)
-            expense.date = datetime.date.today()  
+            expense.issue_date = datetime.date.today()  
             expense.branch = request.user.branch
             expense.user = request.user
             expense.save()
@@ -231,6 +231,7 @@ def invoice(request):
 
     now = timezone.now() 
     today = now.date()  
+    
     date_filters = {
         'today': lambda: filter_by_date_range(today, today),
         'yesterday': lambda: filter_by_date_range(today - timedelta(days=1), today - timedelta(days=1)),
@@ -1501,18 +1502,42 @@ def delete_qoute(request, qoutation_id):
 
 @login_required
 def cashbook_view(request):
-    cashbook_entries = Cashbook.objects.all().order_by('date')
+    today = datetime.date.today()
+    cashbook_entries = Cashbook.objects.all()
+    today_entries = Cashbook.objects.filter(issue_date=today).order_by('issue_date')
+    
+    # previous
+    debit_balance = sum(
+        entry.amount for entry in cashbook_entries 
+        if entry.issue_date < today and entry.debit
+    )
 
-    # Add b/f and c/d to the entries
-    for i, entry in enumerate(cashbook_entries):
-        if i == 0:
-            entry.b_f = 0  # First entry starts with 0 b/f
-        else:
-            entry.b_f = cashbook_entries[i - 1].balance  # Previous entry's balance
-        entry.c_d = entry.balance  # Current balance is the c/d for this entry
+    credit_balance = sum(
+        entry.amount for entry in cashbook_entries
+        if entry.issue_date < today and entry.credit
+    )
+
+    # todays
+    today_debit_balance = sum(
+        entry.amount for entry in cashbook_entries 
+        if entry.issue_date == today and entry.debit
+    )
+
+    today_credit_balance = sum(
+        entry.amount for entry in cashbook_entries
+        if entry.issue_date == today and entry.credit
+    )
+
+    balance_before = debit_balance - credit_balance
+    balance_carried_forward = debit_balance + today_debit_balance - today_credit_balance
+    yesterday_date = today - timedelta(1)
 
     context = {
-        'cashbook_entries': cashbook_entries,
+        'today':today,
+        'cashbook_entries': today_entries,
+        'balance_before':balance_before,
+        'yesterday_date':yesterday_date,
+        'balance_carried_forward':balance_carried_forward
     }
     return render(request, 'finance/cashbook.html', context)
 

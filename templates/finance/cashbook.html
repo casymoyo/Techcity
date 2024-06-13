@@ -1,3 +1,4 @@
+{% extends "base.html" %}
 {% load static%}
 {% block title%} Cashbook {% endblock%}
 {% block content %}
@@ -22,13 +23,17 @@
                     </tr>
                 </thead>
                 <tbody id='debit'>
-                     {% for entry in cashbook_entries %}
+                    <tr>
+                        <td><small>{{ yesterday_date }}</small></td>
+                        <td><small>{{ 'Balance/bd' }}</small></td>
+                        <td><small>{{ entry.currency.symbol }} {{ balance_before }}</small></td>
+                    </tr>
+                    {% for entry in cashbook_entries %}
                         {% if entry.debit %}
                         <tr>
-                            <td><small>{{ entry.date }}</small></td>
+                            <td><small>{{ entry.issue_date }}</small></td>
                             <td><small>{{ entry.description }}</small></td>
-                            <td><small>{{ entry.amount }}</small></td>
-                            <td><small>{{ entry.b_f }}</small></td> 
+                            <td><small>{{ entry.currency.symbol }} {{ entry.amount }}</small></td>
                         </tr>
                         {% endif %}
                     {% endfor %}
@@ -49,13 +54,17 @@
                     {% for entry in cashbook_entries %}
                         {% if not entry.debit %}
                         <tr>
-                            <td><small>{{ entry.date }}</small></td>
+                            <td><small>{{ entry.issue_date }}</small></td>
                             <td><small>{{ entry.description }}</small></td>
                             <td><small>{{ entry.amount }}</small></td>
-                            <td><small>{{ entry.b_f }}</small></td> 
                         </tr>
                         {% endif %}
                     {% endfor %}
+                    <tr>
+                        <td><small>{{ today }}</small></td>
+                        <td><small>{{ 'balance c/d '}}</small></td>
+                        <td><small>{{ balance_carried_forward }}</small></td>
+                    </tr>
                 </tbody>
             </table>
         </div>
