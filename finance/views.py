@@ -1501,31 +1501,43 @@ def delete_qoute(request, qoutation_id):
     return JsonResponse({'success':True, 'message':'Qoutation successfully deleted'}, status=200)
 
 @login_required
-def cashbook_view(request):
+def cashbook_view(request): 
     today = datetime.date.today()
+    start_date = today 
     cashbook_entries = Cashbook.objects.all()
-    today_entries = Cashbook.objects.filter(issue_date=today).order_by('issue_date')
-    
+    today_entries = None
+    # Filtering 
+    filter_type = request.GET.get('day', 'today')  
+    if filter_type == 'yesterday':
+        start_date = today - timedelta(days=1)
+    elif filter_type == 'week':
+        start_date = today - timedelta(days=today.weekday())  
+    elif filter_type == 'year':
+        start_date = datetime.date(today.year, 1, 1)
+    else:
+        today_entries = Cashbook.objects.filter(issue_date=today).order_by('issue_date')
+
+    print(start_date, filter_type)
     # previous
     debit_balance = sum(
         entry.amount for entry in cashbook_entries 
-        if entry.issue_date < today and entry.debit
+        if entry.issue_date < start_date and entry.debit
     )
 
     credit_balance = sum(
         entry.amount for entry in cashbook_entries
-        if entry.issue_date < today and entry.credit
+        if entry.issue_date < start_date and entry.credit
     )
 
     # todays
     today_debit_balance = sum(
         entry.amount for entry in cashbook_entries 
-        if entry.issue_date == today and entry.debit
+        if entry.issue_date == start_date and entry.debit
     )
 
     today_credit_balance = sum(
         entry.amount for entry in cashbook_entries
-        if entry.issue_date == today and entry.credit
+        if entry.issue_date == start_date and entry.credit
     )
 
     balance_before = debit_balance - credit_balance
@@ -1534,7 +1546,7 @@ def cashbook_view(request):
 
     context = {
         'today':today,
-        'cashbook_entries': today_entries,
+        'cashbook_entries': today_entries if today_entries else cashbook_entries,
         'balance_before':balance_before,
         'yesterday_date':yesterday_date,
         'balance_carried_forward':balance_carried_forward

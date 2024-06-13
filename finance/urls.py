@@ -65,7 +65,7 @@ urlpatterns = [
     path('end_of_day/', end_of_day, name='end_of_day'),
     
     #settings
-    path('settings/', finance_settings, name='finance_settings'),
+path('settings/', finance_settings, name='finance_setings'),
     
     #reports
     path('expenses-report/', expenses_report, name='expenses_report'),  

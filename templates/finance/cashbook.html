@@ -6,9 +6,9 @@
     <div class='d-flex justify-content-between align-items-center bg-dark text-light p-2 shadow rounded'>
         <div class='h5'>Cash Book</div>
         <div>
-            <select name='filter' id='filter' class='form-control'>
+            <button class="btn btn-light" id='filterBtn'>
                 <option>Filter</option>
-            </select>
+            </button>
         </div>
     </div>
     <div class='row px-2'>
@@ -69,5 +69,46 @@
             </table>
         </div>
     </div>
+    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <h6 class="mt-2 fw-bold">Filters</h6>
+                    <form method='get' class='d-flex justify-content-center mt-2'>
+                        <input hidden name='day' value='today'/>
+                        <button type="submit" class='btn btn-large border w-100 btn-flat'>Today</button>
+                    </form> 
+
+                    <form method='get' class='d-flex justify-content-center mt-2'>
+                        <input hidden name='day' value='yesterday'/>
+                        <button type="submit" class='btn btn-large border w-100 btn-flat'>Yesterday</button>
+                    </form> 
+                    
+                    <form method='get' class='d-flex justify-content-center mt-2'>
+                        <input hidden name='day' value='week'/>
+                        <button type="submit" class='btn btn-large border w-100 btn-flat'>This Week</button>
+                    </form> 
+
+                    <form method='get' class='d-flex justify-content-center mt-2'>
+                        <input hidden name='day' value='month'/>
+                        <button type="submit" class='btn btn-large border w-100 btn-flat'>Last week</button>
+                    </form> 
+
+                    <form method='get' class='d-flex justify-content-center mt-2'>
+                        <input hidden name='day' value='year'/>
+                        <button type="submit" class='btn btn-large border w-100 btn-flat'>This month</button>
+                    </form> 
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+<script>
+    const filterBtn = document.getElementById('filterBtn');
+    const filterModal = new bootstrap.Modal(document.getElementById('filterModal'));
+
+    filterBtn.addEventListener('click', ()=>{
+        filterModal.show()
+    })
+</script>
 {% endblock%} 
