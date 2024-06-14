@@ -7,19 +7,46 @@
             <tr>
                 <th>Date</th>
                 <th>Trans Ref</th>
+                <th>Description</th>
                 <th>Destination</th>
-                <th>Action</th>
             </tr>
             </thead>
         <tbody>
             {% for transfer in transfers %}
                 <tr>
-                    <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.date }}</small></td>
-                    <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.transfer_ref }}</small></td>
-                    <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.transfer_to }}</small></td>
-                    <td  data-id='{{ transfer.id }}'id="delete_transfer" style="cursor:pointer;"><small><i class='bx bx-trash'></i></small></td>
+                    <td class='transfer-btn fw-bold' data-id={{ transfer.id }}><small>{{ transfer.date }}</small></td>
+                    <td class='transfer-btn fw-bold' data-id={{ transfer.id }}><small>{{ transfer.transfer_ref }}</small></td>
+                    <td class='transfer-btn fw-bold' data-id={{ transfer.id }}><small>{{ transfer.description }}</small></td>
+                    <td class='transfer-btn fw-bold' data-id={{ transfer.id }}><small>{{ transfer.transfer_to }}</small></td>
                 </tr>
+                <tbody  class='bg-primary'>
+                    {% for item in transfer_items %}
+                        {% if transfer.id == item.transfer.id %}
+                                <tr id="id_items" class="hidden">
+                                    <td></td>
+                                    <td><small>{{ item.transfer.transfer_ref }}</small></td>
+                                    <td ><small>{{ item.product.name }} x {{ item.quantity }}</small></td>
+                                    <td class='transfer-btn' data-id={{ transfer.id }}>
+                                        <small>
+                                            <span>
+                                                (
+                                                    {% if item.declined %}
+                                                        <small class='text-danger'>Declined</small>
+                                                    {% elif item.received %}
+                                                        <small class='text-success'>Received</small>
+                                                    {% else %}
+                                                        <small>Not yet received</small>
+                                                    {% endif %}
+                                                    )
+                                            </span>
+                                        </small>
+                                    </td>
+                                </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
             {% endfor %}
+
         </tbody>
     </table>
     <div class="modal fade" id="transferItemsModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
@@ -70,36 +97,18 @@
     const transferBtn = document.querySelectorAll('.transfer-btn');
     const tranferItemsModal = new bootstrap.Modal(document.getElementById('transferItemsModal'));
 
-    const deleteTransferBtn = document.querySelectorAll('#delete_transfer')
-    const deleteTransferModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    const expandBtn = document.querySelector('#id_expand')
+    const itemsEl = document.querySelectorAll('#id_items')
 
-    const deleteModal = new bootstrap.Modal(document.getElementById('successDeleteModal'));
-
-    deleteTransferBtn.forEach((btn)=>{
-        btn.addEventListener('click', ()=>{
-            deleteTransferModal.show()
-            transfer_id = btn.dataset.id
-            console.log(transfer_id,btn.dataset.id)
+    expandBtn.addEventListener('click', ()=>{
+        itemsEl.forEach((el)=>{
+            if (el.classList.contains('hidden')){
+                el.classList.remove('hidden')
+            }else{
+                el.classList.add('hidden')
+            }
         })
     })
-    
-
-    function deleteTransfer(){
-        $.ajax({
-            url: `/inventory/delete/transfer/${transfer_id}/`,
-            type: 'GET',
-            data:{transfer_id:transfer_id} 
-            }).done(function(response) {
-                const data = response;
-                if (data.success){
-                    deleteTransferModal.hide()
-                    deleteModal.show()
-                    setTimeout(() => {
-                        window.location.reload()
-                    }, 2000);
-                }
-            })
-    }
 
     transferBtn.forEach((btn)=>{
        btn.addEventListener('click', ()=>{

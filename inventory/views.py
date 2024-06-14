@@ -161,9 +161,7 @@ class ProcessTransferCartView(View):
         try:
             with transaction.atomic():
                 cart_data = json.loads(request.body)
-                print(cart_data)
                 transfer=Transfer.objects.get(id=cart_data['transfer_id'])
-                print(transfer)
                 for item in cart_data['cart']:
                     transfer_item = TransferItems(
                         transfer=transfer,
@@ -177,7 +175,7 @@ class ProcessTransferCartView(View):
                     print(transfer_item)
                     self.deduct_inventory(item, transfer_item)  
 
-            return JsonResponse({'success': 'Transfer success'})
+            return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
 
@@ -355,6 +353,7 @@ def inventory_transfers(request):
     branch_id = request.GET.get('branch', '')
 
     transfers = Transfer.objects.filter(branch=request.user.branch).order_by('-date')
+    transfer_items = TransferItems.objects.all()
     
     if q:
         transfers = transfers.filter(Q(transfer_ref__icontains=q) | Q(date__icontains=q) )
@@ -377,7 +376,7 @@ def inventory_transfers(request):
             
         messages.success(request, 'Transfer creation failed')
     
-    return render(request, 'inventory/transfers.html', {'transfers': transfers,'search_query': q, 'form':form })
+    return render(request, 'inventory/transfers.html', {'transfers': transfers,'search_query': q, 'form':form, 'transfer_items':transfer_items })
     
     
 @login_required
@@ -405,7 +404,7 @@ def receive_inventory(request):
             if request.POST['received'] == 'true':
                     if Inventory.objects.filter(product=branch_transfer.product, branch=request.user.branch).exists():
                         existing_inventory = Inventory.objects.get(product=branch_transfer.product, branch=request.user.branch)
-                        existing_inventory.quantity += branch_transfer.quantity
+                        existing_inventory.quantity += request.POST['quantity']
                         existing_inventory.price = branch_transfer.price
                         existing_inventory.save()
                         
@@ -415,7 +414,7 @@ def receive_inventory(request):
                             user=request.user,
                             action= 'Stock in',
                             inventory=existing_inventory,
-                            quantity=branch_transfer.quantity,
+                            quantity=request.POST['quantity'],
                             total_quantity=existing_inventory.quantity,
                             product_transfer=branch_transfer
                         )
@@ -427,7 +426,7 @@ def receive_inventory(request):
                             product=branch_transfer.product,
                             cost=branch_transfer.product.cost,  
                             price=branch_transfer.price,
-                            quantity=branch_transfer.quantity
+                            quantity=request.POST['quantity']
                         )
                         branch_transfer.received = True
                         ActivityLog.objects.create(

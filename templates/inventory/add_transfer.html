@@ -20,7 +20,7 @@
                         <select class="select form-select" id='id_product'>
                             <option value="">-----</option>
                             {% for product in inventory %}
-                                <option value={{product.product.name}}>{{product.product.name}}</option>
+                                <option value={{product.product.name}}>{{product.product.name}} [{{ product.quantity }}]</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -129,13 +129,13 @@
       'change', ()=>{
         const prodElement = document.getElementById('id_product')
         const prodSelectedOption = prodElement.options[prodElement.selectedIndex]
-        const name =  prodSelectedOption.textContent
-
+        let name =  prodSelectedOption.textContent
+        name = name.split('[')[0]
+        
         fetch(`/inventory/inventory/?name=${name}`)
         .then(response => response.json())
         .then(data=>{
           document.querySelector('#id_price').value=Number(data[0]?.price)
-          document.querySelector('#id_quantity').value=Number(data[0]?.quantity)
           prodData.push(data)
         })
         .catch(error => console.error('Error:', error))
@@ -197,7 +197,8 @@
     function addItem() {
         const pElement = document.getElementById('id_product')
         const pSelectedOption = pElement.options[pElement.selectedIndex] 
-        const product = pSelectedOption.textContent;
+        let product = pSelectedOption.textContent;
+        product = product.split(' [')[0]
 
         const price = Number(document.getElementById('id_price').value)
         const quantity =  Number(document.getElementById('id_quantity').value)
@@ -252,14 +253,14 @@
         },
         body: JSON.stringify({'cart':cart, 'transfer_id':{{ transfer.id }}}),
       })
-        .then((response) => {
-          console.log(response)
-          if (response.ok) {
+      .then(response => response.json())
+      .then(data=>{
+          if (data.success) {
             successModal.show()
             cart = []; 
             updateCartDisplay();
           } else {
-            alert('transfer failed')
+            alert(data.error)
           } 
         })
         .catch((error) => {

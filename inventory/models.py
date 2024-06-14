@@ -83,7 +83,6 @@ class TransferItems(models.Model):
 
     def __str__(self):
         return f'{self.product.name} to {self.to_branch}'
-    
 
 class DefectiveProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
@@ -105,7 +104,7 @@ class ActivityLog(models.Model):
     """Model for activity logs."""
 
     ACTION_CHOICES = [
-        ('stock in', 'Stock in'),
+        ('stock in', 'stock in'),
         ('Stock update', 'Stock update'),
         ('update', 'Update'),
         ('delete', 'Delete'),

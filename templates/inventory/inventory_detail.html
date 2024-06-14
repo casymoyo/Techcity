@@ -54,7 +54,7 @@
                                 <td data-id="{{ log.product_transfer.id }}" id="transfer" style="cursor:pointer;"><small>{{log.product_transfer.transfer.transfer_ref}}</small></td>
                             {% endif %}
                             <td><small>
-                                {% if log.action == 'Stock in' or log.action == 'Update' or log.action == 'sale cancelled' %}
+                                {% if log.action == 'stock in' or log.action == 'Update' or log.action == 'sale cancelled' %}
                                     <span class='text-success'>{{log.quantity}}</span>
                                     <i class='text-success bx bx-chevron-up'></i>
                                 {% elif log.action == 'Update'%}

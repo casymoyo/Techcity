@@ -35,18 +35,6 @@
                             </a>
                         </div>
                     {% endif %}
-                    <div class="px-1">
-                        <a href='{% url 'inventory:transfers' %}' class="btn btn-primary shadow btn-sm">
-                            <i class='bx bx-transfer-alt' ></i>
-                            Product
-                        </a>
-                    </div>
-                    <div>
-                        <a href='{% url 'inventory:receive_inventory' %}'  class="btn btn-primary shadow btn-sm">
-                            Receive Stock
-                            <span class="badge badge-light ">{{transfers_count}}</span>
-                        </a>
-                    </div>
                 </div>
                 <div class="search d-flex align-items-center">
                     <form method="get">
