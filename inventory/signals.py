@@ -7,7 +7,7 @@ from inventory.middleware import _request
 def low_stock_notification(sender, instance, **kwargs):
     request = _request.request
     
-    if instance.quantity < instance.stock_level_threshold:
+    if int(instance.quantity) < int(instance.stock_level_threshold):
         StockNotifications.objects.create(
             inventory = instance,
             notification = f'{instance.product.name} stock level is now below stock threshold',

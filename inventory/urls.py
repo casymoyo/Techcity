@@ -14,9 +14,11 @@ urlpatterns = [
     path('add_category/', add_product_category, name='add_product_category'),
     path('inventory/branches/', branches_inventory, name='branches_inventory'),
     path('edit-inventory/<str:product_name>/', edit_inventory, name='edit_inventory'),
+    path('defective_product_list/', defective_product_list, name='defective_product_list'),
     
     # transfers
     path('transfers', inventory_transfers, name='transfers'),
+    path('over_less_list/', over_less_list_stock, name='over_less_list_stock'),
     path('delete/transfer/<int:transfer_id>/', delete_transfer, name='delete_transfer'),
     path('add/transfer/<str:transfer_ref>/', add_inventory_transfer, name='add_transfer'),
     path('receive-inventory', receive_inventory, name='receive_inventory'),

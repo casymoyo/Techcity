@@ -77,15 +77,17 @@ class TransferItems(models.Model):
     to_branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='source')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField()
+    over_less_quantity = models.IntegerField(null=True, default=0)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     received = models.BooleanField(default=False)
-    declined = models.BooleanField(default=False)
+    declined = models.BooleanField(default=False) 
+    over_less = models.BooleanField(default=False) 
 
     def __str__(self):
         return f'{self.product.name} to {self.to_branch}'
 
 class DefectiveProduct(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    product = models.ForeignKey(Inventory, on_delete=models.SET_NULL, null=True)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     quantity = models.IntegerField()
     date = models.DateField(auto_now_add=True)
@@ -113,6 +115,7 @@ class ActivityLog(models.Model):
         ('returns', 'Returns'),
         ('sale', 'Sale'), 
         ('declined', 'Declined'),
+        ('write off', 'write off')
     ]
     
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
@@ -122,6 +125,7 @@ class ActivityLog(models.Model):
     quantity = models.IntegerField()
     total_quantity = models.IntegerField()
     timestamp = models.DateField(auto_now_add=True)
+    description = models.CharField(max_length=255, null=True)
     invoice = models.ForeignKey('finance.invoice', null=True, blank=True, on_delete=models.SET_NULL)
     product_transfer = models.ForeignKey(TransferItems, null=True, blank=True, on_delete=models.SET_NULL)
 

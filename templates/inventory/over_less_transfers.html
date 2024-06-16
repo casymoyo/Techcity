@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static%}
+{% block title%} Over / Less Transfers {% endblock%}
+{% block content %}
+   <div class="inventory">
+        <div class="inventory-navbar mb-2">
+            <nav class="d-flex justify-content-between align-items-center bg-dark text-light rounded shadow p-2">
+                <div class='fw-bold h5'>Over/Less Transfers</div>
+            </nav>
+        </div>
+        <div>
+            <table class='table border table-striped table-hover rounded p-2'>
+                <thead class='bg-primary'>
+                    <tr>
+                        <th>Name</th>
+                        <th>Quantity</th>
+                        <th>Source</th>
+                        <th>Destination</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transfer in over_less_transfers %}
+                        <tr>
+                            <td><small>{{ transfer.product.name }}</small></td>
+                            <td><small>{{ transfer.over_less_quantity }}</small></td>
+                            <td><small>{{ transfer.from_branch }}</small></td>
+                            <td><small>{{ transfer.to_branch }}</small></td>
+                            <td>
+                                <span><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="accept" class='btn btn-success btn-sm btn-primary'>accept back</button></span>
+                                <span><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="write_off" class='btn btn-success btn-sm btn-danger'>write off</button></span>
+                                <span><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="back" class='btn btn-success btn-sm btn-dark'>transfer back</button></span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="modal fade" id="dFormModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form|crispy }}
+                            <div class="d-flex justify-content-end">
+                                <div class="">
+                                    <button type="reset" class="btn btn-danger btn-sm w-100">
+                                        <i class='bx bx-reset'></i>
+                                        reset
+                                    </button>
+                                </div>
+                                <span class="px-1"></span>
+                                <div class="">
+                                    <button type="button" onclick="sendDefectiveData();" class="btn btn-secondary btn-sm w-100">
+                                        <i class='bx bx-save'></i>
+                                        save
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="loaderModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body text-center">
+                        <<h5>Success</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+   </div> 
+<script>
+    let action = '';
+    let transfer_id = '';
+    let data = [];
+
+    const formBtn = document.querySelectorAll('#formBtn');
+    const loaderModal = new bootstrap.Modal(document.querySelector('#loaderModal'));
+    const defectiveFormModal = new bootstrap.Modal(document.querySelector('#dFormModal'));
+
+    formBtn.forEach((btn)=>{
+        btn.addEventListener('click', ()=>{
+            action = btn.dataset.action;
+            transfer_id = btn.dataset.id; 
+
+            if (action === 'write_off'){
+                defectiveFormModal.show({});
+            }else{sendDefectiveData()}
+        })
+    })
+
+    // validate description length
+    document.querySelector('#id_reason').addEventListener('input', ()=>{
+
+    })
+
+    function sendDefectiveData(){
+        const data = {
+            'action':action,
+            'transfer_id':parseInt(transfer_id),
+            'status': document.querySelector('#id_status').value,
+            'reason': document.querySelector('#id_reason').value
+        };
+        console.log(data)
+        fetch(`{% url 'inventory:over_less_list_stock' %}`, {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"), 
+            },
+            body: JSON.stringify(data),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                defectiveFormModal.hide()
+                loaderModal.show()
+                setTimeout(() => {
+                    window.location.href='{% url "inventory:over_less_list_stock" %}';
+                }, 2000);
+            } else {
+                loaderModal.hide()
+                alert(error)
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            alert(error)
+        });
+    }
+
+    function getCookie(name){
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock content %}

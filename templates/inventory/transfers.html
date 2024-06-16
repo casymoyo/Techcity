@@ -17,12 +17,18 @@
                         </button>
                     </div>
                     <div class='px-2'>
-                        <a href='{% url 'inventory:receive_inventory' %}'  class="btn btn-primary shadow">
+                        <a href='{% url 'inventory:receive_inventory' %}'  class="btn btn-success shadow">
                             Receive Stock
                             <span class="badge badge-light ">{{transfers_count}}</span>
                         </a>
                     </div>
-                    <form method='get'>
+                    <div>
+                        <a href='{% url 'inventory:over_less_list_stock' %}'  class="btn btn-warning shadow">
+                            Over/Less Received Stocks
+                            <span class="badge badge-light ">{{transfers_count}}</span>
+                        </a>
+                    </div>
+                    <form method='get' class='px-2'>
                         <input
                             id="search"
                             name="q"

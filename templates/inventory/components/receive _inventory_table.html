@@ -1,5 +1,10 @@
 {% load static%}
 {% block content %}
+<style>
+    .number{
+        width:70px;
+    }
+</style>
    <div class="table mt-2">
         <!-- inventory table -->
         <table class='table border table-striped table-hover rounded p-2'>
@@ -24,9 +29,9 @@
                                 {% csrf_token %}
                                 <input name='id' value={{transfer.id}} type='text' hidden/>
                                 <input name='received' value='true' type='text' hidden/>
-                                <input type='number' name='quantity' class='form-control' style='width:70px;'/>
+                                <input type='number' name='quantity' class='form-control number'/>
                                 <span class='px-2'></span>
-                                <button type="button" class='btn btn-success btn-sm'>accept</button>
+                                <button type="submit" class='btn btn-success btn-sm'>accept</button>
                             </form>
                         </td>
                     </tr>

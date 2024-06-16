@@ -47,7 +47,12 @@
                         <tr>
                             <td><small>{{ log.timestamp }}</small></td>
                             <td><small><span>{{ log.user }}</span></small></td>
-                            <td><small>{{ log.action }}</small></td>
+                            <td>
+                                <small>
+                                    {{ log.action }} 
+                                    {% if log.description %}({{ log.description }}){% endif %}
+                                </small>
+                            </td>
                             {% if log.invoice.invoice_number %}
                                 <td data-id="{{log.invoice.id}}" id="invoice" style="cursor:pointer;"><small>{{log.invoice.invoice_number}}</small></td>
                             {% else %}

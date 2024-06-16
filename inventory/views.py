@@ -3,6 +3,7 @@ from . models import *
 from decimal import Decimal
 from django.views import View
 from django.db.models import Q
+from django.db.models import Sum
 from django.db import transaction
 from django.contrib import messages
 from utils.utils import generate_pdf
@@ -11,7 +12,7 @@ from asgiref.sync import async_to_sync
 from finance.models import StockTransaction
 from channels.layers import get_channel_layer 
 from . utils import calculate_inventory_totals
-from . forms import AddProductForm, addCategoryForm, addTransferForm
+from . forms import AddProductForm, addCategoryForm, addTransferForm, DefectiveForm, RestockForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from channels.generic.websocket import  AsyncJsonWebsocketConsumer
@@ -383,17 +384,9 @@ def inventory_transfers(request):
 def receive_inventory(request):
     q = request.GET.get('q', '')
     
-    transfers =  TransferItems.objects.filter(
-        to_branch=request.user.branch,
-        received=False,
-        declined=False
-    )
-    
+    transfers =  TransferItems.objects.filter(to_branch=request.user.branch, received=False, declined=False, over_less=False)
     if q:
-        transfers = transfers.filter(
-            Q(product__name__icontains=q) |
-            Q(date__icontains=q) 
-        ) 
+        transfers = transfers.filter(Q(product__name__icontains=q) |Q(date__icontains=q)) 
     
     if request.method == 'POST':
         transfer_id = request.POST.get('id')  
@@ -402,73 +395,195 @@ def receive_inventory(request):
             branch_transfer = get_object_or_404(transfers, id=transfer_id)
 
             if request.POST['received'] == 'true':
-                    if Inventory.objects.filter(product=branch_transfer.product, branch=request.user.branch).exists():
-                        existing_inventory = Inventory.objects.get(product=branch_transfer.product, branch=request.user.branch)
-                        existing_inventory.quantity += request.POST['quantity']
-                        existing_inventory.price = branch_transfer.price
-                        existing_inventory.save()
-                        
-                        branch_transfer.received = True
-                        ActivityLog.objects.create(
-                            branch = request.user.branch,
-                            user=request.user,
-                            action= 'Stock in',
-                            inventory=existing_inventory,
-                            quantity=request.POST['quantity'],
-                            total_quantity=existing_inventory.quantity,
-                            product_transfer=branch_transfer
-                        )
-                        messages.success(request, 'Product received')
-                        
-                    else:
-                        inventory = Inventory.objects.create(
-                            branch=request.user.branch,
-                            product=branch_transfer.product,
-                            cost=branch_transfer.product.cost,  
-                            price=branch_transfer.price,
-                            quantity=request.POST['quantity']
-                        )
-                        branch_transfer.received = True
-                        ActivityLog.objects.create(
-                            branch = request.user.branch,
-                            user=request.user,
-                            action= 'Stock in',
-                            inventory=inventory,
-                            quantity=inventory.quantity,
-                            total_quantity=inventory.quantity,
-                            product_transfer=branch_transfer
-                        )
-                        messages.success(request, 'Product received')
-            else:
-                try:
-                    declined_product = Inventory.objects.get(product=branch_transfer.product, branch=branch_transfer.from_branch)
+                if int(request.POST['quantity']) != int(branch_transfer.quantity):
+                    branch_transfer.over_less_quantity =  branch_transfer.quantity - int(request.POST['quantity']) 
+                    branch_transfer.over_less = True
+                    branch_transfer.save()
                     
-                    declined_product.quantity += branch_transfer.quantity
-                    declined_product.save()
+                if Inventory.objects.filter(product=branch_transfer.product, branch=request.user.branch).exists():
+                    existing_inventory = Inventory.objects.get(product=branch_transfer.product, branch=request.user.branch)
+                    existing_inventory.quantity += int(request.POST['quantity'])
+                    existing_inventory.price = branch_transfer.price
+                    existing_inventory.save()
                     
-                    branch_transfer.declined = True
+                    branch_transfer.received = True
                     ActivityLog.objects.create(
-                            branch = request.user.branch,
-                            user=request.user,
-                            action= 'Decline',
-                            inventory=declined_product,
-                            quantity=branch_transfer.quantity,
-                            total_quantity=declined_product.quantity
-                        )
-                    messages.success(request, 'Product declined')
-                except:
-                    messages.warning(request, 'Request failed')
-
+                        branch = request.user.branch,
+                        user=request.user,
+                        action= 'stock in',
+                        inventory=existing_inventory,
+                        quantity=int(request.POST['quantity']),
+                        total_quantity= existing_inventory.quantity,
+                        product_transfer=branch_transfer,
+                    )
+                    messages.success(request, 'Product received')
+                    
+                else:
+                    inventory = Inventory.objects.create(
+                        branch=request.user.branch,
+                        product=branch_transfer.product,
+                        cost=branch_transfer.product.cost,  
+                        price=branch_transfer.price,
+                        quantity=request.POST['quantity']
+                    )
+                    ActivityLog.objects.create(
+                        branch = request.user.branch,
+                        user=request.user,
+                        action= 'stock in',
+                        inventory=inventory,
+                        quantity=inventory.quantity,
+                        total_quantity=inventory.quantity,
+                        product_transfer=branch_transfer
+                    )
+                    messages.success(request, 'Product received')
             branch_transfer.save()
             return redirect('inventory:receive_inventory')  
 
         except Transfer.DoesNotExist:
             messages.error(request, 'Invalid transfer ID')
-        except Exception: 
-            messages.error(request, 'Error in processing the request')
+            return redirect('inventory:receive_inventory')  
 
     return render(request, 'inventory/receive_inventory.html', {'transfers': transfers})
 
+@login_required
+@transaction.atomic
+def over_less_list_stock(request):
+    form = DefectiveForm()
+    search_query = request.GET.get('search_query', '')
+    
+    transfers =  TransferItems.objects.filter(from_branch=request.user.branch, received=True, over_less=True)
+    
+    if search_query:
+        transfers = transfers.filter(
+            Q(transfer__product__name__icontains=search_query)|
+            Q(transfer__transfer_ref__icontains=search_query)|
+            Q(date__icontains=search_query)
+        )
+        
+    def activity_log(action, inventory, branch_transfer):
+        ActivityLog.objects.create(
+            branch = request.user.branch,
+            user=request.user,
+            action= action,
+            inventory=inventory,
+            quantity=branch_transfer.over_less_quantity,
+            total_quantity=inventory.quantity,
+            product_transfer=branch_transfer
+        )
+    
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        
+        action = data['action']
+        transfer_id = data['transfer_id']
+        reason = data['reason']
+        status = data['status']
+        
+        branch_transfer = get_object_or_404(transfers, id=transfer_id)
+        product = Inventory.objects.get(product=branch_transfer.product, branch=request.user.branch)
+       
+        if int(branch_transfer.over_less_quantity) > 0:
+            if action == 'write_off':    
+                product.quantity += branch_transfer.over_less_quantity 
+                product.save()
+                
+                activity_log('Stock in', product, branch_transfer )
+                
+                DefectiveProduct.objects.create(
+                    product = product,
+                    branch = request.user.branch,
+                    quantity = branch_transfer.over_less_quantity,
+                    reason = reason,
+                    status = status
+                )
+                
+                product.quantity -= branch_transfer.over_less_quantity 
+                branch_transfer.over_less = False
+                branch_transfer.save()
+                product.save()
+                
+                activity_log('write off', product, branch_transfer )
+                
+                messages.success(request, f'{product.product.name} write-off successfull')        
+
+                return JsonResponse({'success':True}, status=200)
+            
+            if action == 'accept':
+                product.quantity += branch_transfer.over_less_quantity 
+                product.quantity.save()
+                
+                activity_log('stock in', product, branch_transfer )
+                
+                branch_transfer.over_less = False
+                branch_transfer.save()
+                
+                messages.success(request, f'{product.product.name} accepted back successfully') 
+
+                return JsonResponse({'success':True}, status=200)
+            
+            if action == 'back':
+                product.quantity += branch_transfer.over_less_quantity 
+                product.save()
+                
+                activity_log('stock in', product, branch_transfer )
+                
+                branch_transfer.received = False
+                branch_transfer.quantity = branch_transfer.over_less_quantity
+                branch_transfer.save()
+                
+                product.quantity -= branch_transfer.over_less_quantity 
+                product.save()
+            
+                activity_log('transfer', product, branch_transfer )
+                
+                branch_transfer.over_less = False
+                branch_transfer.save()
+                
+                messages.success(request, f'{product.product.name} transfered back to {branch_transfer.to_branch.name} sucessfully') 
+                
+                return JsonResponse({'success':True}, status=200)
+            
+        messages.error(request, f'Product quantity cant be zero.')
+        return redirect('inventory:over_less_list_stock')
+                  
+    return render(request, 'inventory/over_less_transfers.html', {'over_less_transfers':transfers, 'form':form})
+
+@login_required
+@transaction.atomic
+def defective_product_list(request):
+    form = RestockForm()
+    defective_products = DefectiveProduct.objects.filter(branch=request.user.branch)
+    
+    # loss calculation
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        
+        product_id = data['product_id']
+        quantity = int(data['quantity'])
+        
+        product = Inventory.objects.filter(product__id=product_id, branch=request.user.branch)
+        product.quantity += quantity
+        product.status = False if product.status == True else product.status
+        product.save()
+        
+        ActivityLog.objects.create(
+            branch = request.user.branch,
+            user=request.user,
+            action= 'stock in',
+            inventory=product,
+            quantity=quantity,
+            total_quantity=product.quantity,
+            description = 'from defective products'
+        )
+        return JsonResponse({'success':True}, status=200)
+    
+    return render(request, 'inventory/defective_products.html', 
+        {
+            'total_cost': defective_products.aggregate(Sum('product__cost'))['product__cost__sum'] or 0,
+            'defective_products':defective_products,
+            'form':form
+        }
+    )
 
 @login_required
 def add_inventory_transfer(request, transfer_ref):

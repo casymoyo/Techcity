@@ -1,6 +1,4 @@
 from . models import ProductCategory, Inventory, StockNotifications
-from django.contrib.auth.decorators import login_required
-
 
 def product_category_list(request):
     return {'categories': ProductCategory.objects.all()}

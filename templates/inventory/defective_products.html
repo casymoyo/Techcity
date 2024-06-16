@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static%}
+{% block title%} Defective Products {% endblock%}
+{% block content %}
+   <div class="inventory">
+        <div class="inventory-navbar mb-2">
+            <nav class="d-flex justify-content-between align-items-center bg-dark text-light rounded shadow p-2">
+                <div class='fw-bold h5'>
+                    <i class='bx bx-cabinet'></i>
+                    Defective Products
+                </div>
+            </nav>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col">
+                <div class="card shadow bg-light">
+                    <div class="card-body">
+                        <h6 class='text-muted fw-bold'>Total Defective Inventory  </h6>
+                        <h6 class='text-center text-muted fw-bold'>USD {{total_cost}}</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class='mt-4'>
+            <table class='table border table-striped table-hover rounded p-2'>
+                <thead class='bg-primary'>
+                    <tr>
+                        <th>Date</th>
+                        <th>Name</th>
+                        <th>Reason</th>
+                        <th>Quantity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for defective in defective_products %}
+                        {% if defective.quantity != 0 %}
+                            <tr>
+                                <td><small>{{ defective.date }}</small></td>
+                                <td><small>{{ defective.product.product.name }}</small></td>
+                                <td><small>{{ defective.reason }}</small></td>
+                                <td><small>{{ defective.quantity }}</small></td>
+                                <td>
+                                    <span><button type="button" id='formBtn' data-id={{ defective.product.product.id }} class='btn btn-success btn-sm btn-primary'>re-stock</button></span>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="modal fade" id="dFormModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form|crispy }}
+                            <div class="d-flex justify-content-end">
+                                <div class="">
+                                    <button type="reset" class="btn btn-danger btn-sm w-100">
+                                        <i class='bx bx-reset'></i>
+                                        reset
+                                    </button>
+                                </div>
+                                <span class="px-1"></span>
+                                <div class="">
+                                    <button type="button" onclick="sendDefectiveData();" class="btn btn-secondary btn-sm w-100">
+                                        <i class='bx bx-save'></i>
+                                        save
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="loaderModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body text-center">
+                        <<h5>Success</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+   </div> 
+<script>
+    let product_id = '';
+
+    const formBtn = document.querySelector('#formBtn');
+    const loaderModal = new bootstrap.Modal(document.querySelector('#loaderModal'));
+    const defectiveFormModal = new bootstrap.Modal(document.querySelector('#dFormModal'));
+
+    formBtn.addEventListener('click', ()=>{
+        product_id = formBtn.dataset.id; 
+        console.log(product_id)
+        defectiveFormModal.show()
+    })
+
+    // validation cant be more than the defective quantity
+
+    function sendDefectiveData(){
+        const data = {
+            'product_id':parseInt(product_id),
+        };
+        fetch(`{% url 'inventory:defective_product_list' %}`, {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"), 
+            },
+            body: JSON.stringify(data),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                defectiveFormModal.hide()
+                loaderModal.show()
+                setTimeout(() => {
+                    window.location.href='{% url "inventory:over_less_list_stock" %}';
+                }, 2000);
+            } else {
+                loaderModal.hide()
+                alert(error)
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            alert(error)
+        });
+    }
+
+    function getCookie(name){
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock content %}
