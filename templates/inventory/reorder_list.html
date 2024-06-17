@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static%}
-{% block title%} Inventory {% endblock%}
+{% block title%} Re order {% endblock%}
 {% block content %}
    <div class="inventory">
         <div class="inventory-navbar">
@@ -40,7 +40,7 @@
                 <tbody>
                     {% for product in reorder_list %}
                         <tr>
-                            <td><small>{{ product.product.name }}</small></td>
+                            <td><small>{{ product.product.product.name }}</small></td>
                             <td id='remove' data-id={{ product.id }}><small><i class='bx bx-trash'></i></small></td>
                         </tr>
                     {% endfor %}
@@ -52,7 +52,7 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Remove product from list</h5>
-                            <button class='bt btn-secondary w-100' id='removeBtn'>Yes</button>
+                            <button class='btn btn-secondary w-100' id='removeBtn'>Yes</button>
                         </div>
                     </div>
                 </div>
@@ -93,13 +93,15 @@
 
     const removeBtn = document.querySelector('#removeBtn')
     const clearBtn = document.querySelector('#clear')
-    const rmToggle = document.querySelector('#remove')
+    const rmToggle = document.querySelectorAll('#remove')
 
-    rmToggle.addEventListener('click', ()=>{
-        product_id = rmToggle.dataset.id
-        removeModal.show()
+    rmToggle.forEach((btn)=>{
+        btn.addEventListener('click', ()=>{
+            product_id = btn.dataset.id
+            removeModal.show()
+        })
+    
     })
-
     removeBtn.addEventListener('click', ()=>{
         action = 'remove';
         deleteClear()
@@ -111,7 +113,46 @@
     })
 
     function deleteClear(){
+        const data = {'product_id':product_id, 'action':action}
 
+        fetch(`{% url "inventory:reoder_list" %}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"), 
+            },
+            body: JSON.stringify(data),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                removeModal.hide()
+                successModal.show()
+                setTimeout(() => {
+                    window.location.href='{% url "inventory:reoder_list" %}';
+                }, 2000);
+            } else {
+                alert('failed to delete the product')
+            }
+        })
+        .catch((error) => {
+        console.error("Error:", error);
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 
 </script>  

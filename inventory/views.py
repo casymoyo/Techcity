@@ -242,9 +242,21 @@ def inventory(request):
 @login_required
 def inventory_index(request):
     q = request.GET.get('q', '')  
-    category = request.GET.get('category', '')
+    category = request.GET.get('category', '')    
+    product_id = request.GET.get('product_id','')    
     
     inventory = Inventory.objects.filter(branch=request.user.branch, status=True).order_by('product__name')
+
+    if product_id:
+        product = get_object_or_404(Inventory, product__id=product_id, branch=request.user.branch)
+        ReoderList.objects.create(
+            product=product
+        )
+        product.reorder = True
+        product.save()
+        
+        messages.success(request, 'Product succefully added to re-oder list')
+        return redirect('inventory:inventory')
     
     if category:
         
@@ -255,6 +267,7 @@ def inventory_index(request):
         
     if q:
         inventory = inventory.filter(Q(product__name__icontains=q) | Q(product__batch_code__icontains=q))
+        
     
     if 'download' and 'excel' in request.GET:
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -320,7 +333,7 @@ def inventory_index(request):
 @login_required   
 def inventory_index_json(request):
     inventory = Inventory.objects.filter(branch=request.user.branch, status=True).values(
-        'id', 'product__name', 'product__id', 'price', 'cost', 'quantity'
+        'id', 'product__name', 'product__id', 'price', 'cost', 'quantity', 'reorder'
     ).order_by('product__name')
     return JsonResponse(list(inventory), safe=False)
 
@@ -685,24 +698,33 @@ def add_product_category(request):
 def reoder_list(request):
     reorder_list = ReoderList.objects.all()
     
+    if request.method == 'GET':
+        return render(request, 'inventory/reorder_list.html', {'reorder_list':reorder_list})
+
     if request.method == 'POST':
-        data = data.json(request.body)
-        action = request.POST['action']
-        product_id = request.POST['product_id']
+        data = json.loads(request.body)
+        action = data['action']
+        product_id = data['product_id']
         
         product = get_object_or_404(ReoderList, id=product_id)
+        inventory = get_object_or_404(Inventory, product__id=product_id, branch=request.user.branch)
         
         if action == 'remove':
             product.delete()
             product.save()
+            
+            inventory.reorder=False
+            inventory.save()
+            
             return JsonResponse({'success':True}, status=200)
         
         elif action == 'clear':
             reorder_list.delete()
+            
+            inventory.reorder=False
+            inventory.save()
+            
             return JsonResponse({'success':True}, status=200)
-        
-    return render(request, 'inventory/reorder_list.html', {'reorder_list':reorder_list})
-
 # reports
 @login_required
 def inventory_pdf(request):

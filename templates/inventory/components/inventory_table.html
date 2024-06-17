@@ -112,24 +112,33 @@
                 <tr>
                     <td><small>${data?.product__name}</small></td>
                     <td><small>${data?.quantity}</small></td>
-                        <td>${data?.cost}</td>
-                        <td>${data?.price}</td>
+                        <td><small>${data?.cost}</small></td>
+                        <td><small>${data?.price}</small></td>
                         <td>
-                            <span>
-                                <a href="/inventory/inventory-detail/${data?.id}/" class='text-dark'>
-                                    <i class='bx bx-show'></i>
-                                </a>
-                            </span>
-                            <span class='px-2'>
-                                <a href="/inventory/edit-inventory/${data?.product__name}/" class="text-dark">
-                                    <i class='bx bx-edit-alt'></i>
-                                </a>
-                            </span>
-                            <span>
-                                <span id='delete' data-id="${data?.product__id}" onclick="productId(this)" class="text-dark">
-                                    <i class='bx bx-trash-alt'></i>
+                            <small>
+                                <span>
+                                    <a href="/inventory/inventory-detail/${data?.id}/" class='text-dark'>
+                                        <i class='bx bx-show'></i>
+                                    </a>
                                 </span>
-                            </span>
+                                <span class='px-2'>
+                                    <a href="/inventory/edit-inventory/${data?.product__name}/" class="text-dark">
+                                        <i class='bx bx-edit-alt'></i>
+                                    </a>
+                                </span>
+                                <span>
+                                    <span id='delete' data-id="${data?.product__id}" onclick="productId(this)" class="text-dark">
+                                        <i class='bx bx-trash-alt'></i>
+                                    </span>
+                                </span>
+                                <span>
+                                    ${data?.reorder===false ? `<a href='?product_id=${data?.product__id}' class="btn btn-sm">
+                                            <i class='bx bx-plus'></i>
+                                            <i class='bx bx-list-ul'></i>
+                                        </a>`
+                                    : ''}
+                                </span>
+                            </small>
                         </td>
                 </tr>
                 `

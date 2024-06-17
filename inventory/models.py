@@ -42,6 +42,7 @@ class Inventory(models.Model):
     quantity = models.IntegerField()
     status = models.BooleanField(default=True)
     stock_level_threshold = models.IntegerField(default=5)
+    reorder = models.BooleanField(default=False)
     
     def __str__(self):
         return f'{self.branch.name} : ({self.product.name}) quantity ({self.quantity})'
