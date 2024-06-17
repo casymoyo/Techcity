@@ -40,6 +40,11 @@
                             Defective Products
                         </a>
                     </div>
+                    <div>
+                        <a href='{% url 'inventory:reoder_list' %}' class="btn btn-primary shadow btn-sm">
+                            Reorder list
+                        </a>
+                    </div>
                 </div>
                 <div class="search d-flex align-items-center">
                     <form method="get">
@@ -74,22 +79,18 @@
         <div>
             <div class='mt-3 px-1 d-flex justify-content-between py-2 bg-dark text-light align-items-center rounded'>
                 <div class='px-2'>List</div>
-                <form method='get' class="d-flex" id="inventory-pdf">
-                    <select 
-                        name='category'
-                        id="id_category"
-                        class='select form-select'
-                    >
-                        <option value=''>All</option>
-                        {% for category in categories %}
-                            <option value='{{category.name}}'>{{category.name}}</option>
-                        {% endfor %}
-                    </select>
-                    <span class="px-1"></span>
-                    <button class="btn btn-secondary btn-sm">
-                        <i class='bx bx-download'></i>
-                    </button>
-                </form>
+                <div>
+                    <span class='px-2'>
+                        <a href='?download=true&excel=true' class="btn btn-success btn-sm">
+                            <i class='bx bxl-excel'></i>
+                        </a>        
+                    </span>
+                    <span>
+                        <button class="btn btn-danger btn-sm">
+                            <i class='bx bxl-pdf'></i>
+                        </button>        
+                    </span>
+                </div>
             </div>
             {% include "inventory/components/inventory_table.html" %}
         </div>
@@ -98,7 +99,6 @@
    <script>
         $('#inventory-pdf').submit(function(e) {
             e.preventDefault();
-            console.log('here')
             const data = {
                 category: $('#id_category').val(),
             }

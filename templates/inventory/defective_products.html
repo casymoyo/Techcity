@@ -44,7 +44,7 @@
                                 <td><small>{{ defective.reason }}</small></td>
                                 <td><small>{{ defective.quantity }}</small></td>
                                 <td>
-                                    <span><button type="button" id='formBtn' data-id={{ defective.product.product.id }} class='btn btn-success btn-sm btn-primary'>re-stock</button></span>
+                                    <span><button type="button" id='formBtn' data-id={{ defective.product.product.id }} data-q={{ defective.quantity }} class='btn btn-success btn-sm btn-primary'>re-stock</button></span>
                                 </td>
                             </tr>
                         {% endif %}
@@ -59,6 +59,7 @@
                         <form method="post">
                             {% csrf_token %}
                             {{ form|crispy }}
+                            <p id="error_message" class="text-danger"></p>
                             <div class="d-flex justify-content-end">
                                 <div class="">
                                     <button type="reset" class="btn btn-danger btn-sm w-100">
@@ -68,7 +69,7 @@
                                 </div>
                                 <span class="px-1"></span>
                                 <div class="">
-                                    <button type="button" onclick="sendDefectiveData();" class="btn btn-secondary btn-sm w-100">
+                                    <button type="button" id="save-btn" onclick="sendDefectiveData();" class="btn btn-secondary btn-sm w-100">
                                         <i class='bx bx-save'></i>
                                         save
                                     </button>
@@ -92,23 +93,45 @@
    </div> 
 <script>
     let product_id = '';
+    let product_quantity = ''
+    let quantity = ''
 
     const formBtn = document.querySelector('#formBtn');
     const loaderModal = new bootstrap.Modal(document.querySelector('#loaderModal'));
     const defectiveFormModal = new bootstrap.Modal(document.querySelector('#dFormModal'));
 
     formBtn.addEventListener('click', ()=>{
-        product_id = formBtn.dataset.id; 
-        console.log(product_id)
-        defectiveFormModal.show()
+        product_id = parseInt(formBtn.dataset.id); 
+        product_quantity = parseInt(formBtn.dataset.q);
+        
+        defectiveFormModal.show();
     })
 
     // validation cant be more than the defective quantity
+    const error = document.querySelector('#error_message')
+    const saveBtn = document.querySelector('#save-btn')
+
+    document.querySelector('#id_quantity').addEventListener('input', ()=>{
+        quantity = parseInt(document.querySelector('#id_quantity').value)
+
+        if (quantity <= 0){
+            error.textContent = 'Quantity cant be zero or below zero';
+            saveBtn.disabled=true;
+        }else if (quantity > product_quantity){
+            error.textContent = 'Quantity cant be above the defective quantity';
+            saveBtn.disabled=true;
+        }else{
+            error.textContent = '';
+            saveBtn.disabled=false;
+        }
+    })
 
     function sendDefectiveData(){
         const data = {
-            'product_id':parseInt(product_id),
+            'product_id':product_id,
+            'quantity': quantity
         };
+        console.log(data)
         fetch(`{% url 'inventory:defective_product_list' %}`, {
             method: "POST",
             headers: {

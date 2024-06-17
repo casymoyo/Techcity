@@ -59,7 +59,7 @@
                                 <td data-id="{{ log.product_transfer.id }}" id="transfer" style="cursor:pointer;"><small>{{log.product_transfer.transfer.transfer_ref}}</small></td>
                             {% endif %}
                             <td><small>
-                                {% if log.action == 'stock in' or log.action == 'Update' or log.action == 'sale cancelled' %}
+                                {% if log.action == 'stock in' or log.action == 'Update' or log.action == 'sale cancelled' or log.action == 'Stock in' %}
                                     <span class='text-success'>{{log.quantity}}</span>
                                     <i class='text-success bx bx-chevron-up'></i>
                                 {% elif log.action == 'Update'%}
@@ -110,13 +110,11 @@
 
 <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>  
 <script>
-    // Get references to the modals and their body elements
     const invoiceModal = new bootstrap.Modal(document.getElementById('invoiceModal'));
     const invoiceDetails = document.getElementById('invoiceDetails');
     const transferModal = new bootstrap.Modal(document.getElementById('transferModal'));
     const transferDetails = document.getElementById('transferDetails');
 
-    // Event delegation for table rows
     document.querySelector('table').addEventListener('click', (event) => {
         const target = event.target.closest('td');
         if (target && target.id === 'invoice') {
@@ -128,12 +126,10 @@
         }
     });
 
-    // Fetch invoice details
     function fetchInvoiceDetails(invoiceId) {
         fetch(`/finance/invoice/details/${invoiceId}/`) 
             .then(response => response.json())
             .then(data => {
-                // Populate invoiceDetails with data
                 invoiceDetails.innerHTML = `
                     <p>Invoice Number: ${data[0]?.invoice_number}</p>
                     <p>Customer: <a href='/finance/customer/account/${data[0]?.customer__id}/'>${data[0]?.customer__name}</a></p>
@@ -141,17 +137,15 @@
                     <p>Amount: ${data[0]?.amount}</p>
                     <p>Payment Status: ${data[0]?.payment_status}</p>
                     </div>
-                `; // Add more details as needed
-                invoiceModal.show(); // Show the modal
+                `; 
+                invoiceModal.show(); 
             });
     }
-
-    // Fetch transfer details
+   
     function fetchTransferDetails(transferId) {
         fetch(`/inventory/transfer/detail/${transferId}/`)  
             .then(response => response.json())
             .then(data => {
-                // Populate transferDetails with data
                 console.log(data)
                 transferDetails.innerHTML = `
                     <p>Transfer Reference: ${data[0]?.transfer__transfer_ref}</p>
@@ -161,8 +155,8 @@
                     <p>From Branch: ${data[0]?.from_branch__name}</p>
                     <p>To Branch: ${data[0]?.to_branch__name}</p>
                     </div>
-                `; // Add more details as needed
-                transferModal.show(); // Show the modal
+                `; 
+                transferModal.show(); l
             });
     }
 </script>  

@@ -1,4 +1,5 @@
-import json, datetime
+import json, datetime, openpyxl 
+from openpyxl.styles import Alignment, Font, PatternFill
 from . models import *
 from decimal import Decimal
 from django.views import View
@@ -7,7 +8,7 @@ from django.db.models import Sum
 from django.db import transaction
 from django.contrib import messages
 from utils.utils import generate_pdf
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from asgiref.sync import async_to_sync
 from finance.models import StockTransaction
 from channels.layers import get_channel_layer 
@@ -240,10 +241,6 @@ def inventory(request):
 
 @login_required
 def inventory_index(request):
-    """
-    View for displaying inventory items and pending transfer notifications.
-    """
-
     q = request.GET.get('q', '')  
     category = request.GET.get('category', '')
     
@@ -259,13 +256,52 @@ def inventory_index(request):
     if q:
         inventory = inventory.filter(Q(product__name__icontains=q) | Q(product__batch_code__icontains=q))
     
-    # Filter pending transfers
-    pending_transfers = TransferItems.objects.filter(
-        to_branch=request.user.branch,
-        received=False,
-        declined=False
-    )
+    if 'download' and 'excel' in request.GET:
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename={request.user.branch.name} stock.xlsx'
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
+        
+        # Add products data
+        products = Inventory.objects.all()
+        branches = Branch.objects.all().values_list('name', flat=True).distinct()
+        row_offset = 0
+        for branch in branches:
+            worksheet['A' + str(row_offset + 1)] = f'{branch} Products'
+            worksheet.merge_cells('A' + str(row_offset + 1) + ':D' + str(row_offset + 1))
+            cell = worksheet['A' + str(row_offset + 1)]
+            cell.alignment = Alignment(horizontal='center')
+            cell.font = Font(size=16, bold=True)
+            cell.fill = PatternFill(fgColor='AAAAAA', fill_type='solid')
 
+            row_offset += 1 
+            
+            category_headers = ['Name', 'Cost', 'Price', 'Quantity']
+            for col_num, header_title in enumerate(category_headers, start=1):
+                cell = worksheet.cell(row=3, column=col_num)
+                cell.value = header_title
+                cell.font = Font(bold=True)
+                cell.alignment = Alignment(horizontal='center')
+
+            categories = Inventory.objects.filter(branch=request.user.branch).values_list('product__category__name', flat=True).distinct()
+            for category in categories:
+                products_in_category = products.filter(branch__name=branch, product__category__name=category)
+                if products_in_category.exists():
+                    worksheet['A' + str(row_offset + 1)] = category
+                    cell = worksheet['A' + str(row_offset + 1)]
+                    cell.font = Font(color='FFFFFF')
+                    cell.fill = PatternFill(fgColor='0066CC', fill_type='solid')
+                    worksheet.merge_cells('A' + str(row_offset + 1) + ':D' + str(row_offset + 1))
+                    row_offset += 2
+
+                for product in products.filter(branch__name=branch):
+                    if category == product.product.category.name:
+                        worksheet.append([product.product.name, product.cost, product.price, product.quantity])
+                        row_offset += 1
+
+        workbook.save(response)
+        return response
+    
     if request.user.branch.name == 'Warehouse':
         all_branches_inventory = Inventory.objects.all()
     else: all_branches_inventory = Inventory.objects.filter(branch=request.user.branch)
@@ -280,6 +316,13 @@ def inventory_index(request):
         'total_cost':totals[0],
         # 'transfers_count': pending_transfers
     })
+ 
+@login_required   
+def inventory_index_json(request):
+    inventory = Inventory.objects.filter(branch=request.user.branch, status=True).values(
+        'id', 'product__name', 'product__id', 'price', 'cost', 'quantity'
+    ).order_by('product__name')
+    return JsonResponse(list(inventory), safe=False)
 
 @admin_required
 @login_required
@@ -327,8 +370,6 @@ def edit_inventory(request, product_name):
 
 @login_required
 def inventory_detail(request, id):
-    """Inventory detail view."""
-    
     q = request.GET.get('q', '')
 
     inventory = Inventory.objects.get(id=id, branch=request.user.branch)
@@ -561,10 +602,14 @@ def defective_product_list(request):
         product_id = data['product_id']
         quantity = int(data['quantity'])
         
-        product = Inventory.objects.filter(product__id=product_id, branch=request.user.branch)
+        product = Inventory.objects.get(product__id=product_id, branch=request.user.branch)
         product.quantity += quantity
-        product.status = False if product.status == True else product.status
+        product.status = True if product.status == False else product.status
         product.save()
+        
+        defective_product = DefectiveProduct.objects.get(product=product, branch=request.user.branch)
+        defective_product.quantity -= quantity
+        defective_product.save()
         
         ActivityLog.objects.create(
             branch = request.user.branch,
@@ -576,10 +621,12 @@ def defective_product_list(request):
             description = 'from defective products'
         )
         return JsonResponse({'success':True}, status=200)
+    quantity = defective_products.aggregate(Sum('quantity'))['quantity__sum'] or 0
+    price = defective_products.aggregate(Sum('product__cost'))['product__cost__sum'] or 0
     
     return render(request, 'inventory/defective_products.html', 
         {
-            'total_cost': defective_products.aggregate(Sum('product__cost'))['product__cost__sum'] or 0,
+            'total_cost': quantity * price,
             'defective_products':defective_products,
             'form':form
         }
@@ -633,6 +680,28 @@ def add_product_category(request):
             name=category_name
         )
     return JsonResponse(list(categories), safe=False)       
+
+@login_required
+def reoder_list(request):
+    reorder_list = ReoderList.objects.all()
+    
+    if request.method == 'POST':
+        data = data.json(request.body)
+        action = request.POST['action']
+        product_id = request.POST['product_id']
+        
+        product = get_object_or_404(ReoderList, id=product_id)
+        
+        if action == 'remove':
+            product.delete()
+            product.save()
+            return JsonResponse({'success':True}, status=200)
+        
+        elif action == 'clear':
+            reorder_list.delete()
+            return JsonResponse({'success':True}, status=200)
+        
+    return render(request, 'inventory/reorder_list.html', {'reorder_list':reorder_list})
 
 # reports
 @login_required

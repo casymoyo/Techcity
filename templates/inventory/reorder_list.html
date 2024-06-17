@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load static%}
+{% block title%} Inventory {% endblock%}
+{% block content %}
+   <div class="inventory">
+        <div class="inventory-navbar">
+            <nav class="d-flex justify-content-between align-items-center bg-dark text-light rounded p-2">
+                <div class="d-flex">
+                    <div>
+                        <h5 class='mt-1 fw-bold'>Product Re-order List</h5>
+                    </div>
+                </div>
+                <div class="search d-flex align-items-center">
+                    <span class="px-1"></span>
+                    <form method="get">
+                        <div>
+                            <input
+                                id="search"
+                                name="q"
+                                type="search"
+                                value="{{search_query}}"
+                                class="form-control"
+                                placeholder="search by name"
+                            />
+                        </div>
+                    </form>
+                </div>
+            </nav>
+        </div>
+        <div>
+        <div class="table-detail mt-2">
+            <!-- inventory table -->
+            <table class='table border rounded p-2'>
+                <thead class='bg-primary'>
+                    <tr>
+                        <th>Product</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in reorder_list %}
+                        <tr>
+                            <td><small>{{ product.product.name }}</small></td>
+                            <td id='remove' data-id={{ product.id }}><small><i class='bx bx-trash'></i></small></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>  
+            
+            <div class="modal fade" id="removeModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Remove product from list</h5>
+                            <button class='bt btn-secondary w-100' id='removeBtn'>Yes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal fade" id="clearModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Clear order list</h5>
+                            <button class='bt btn-secondary w-100' id='clear'>Yes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header text-center">
+                            <h5 class="modal-title">Success</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+   </div>
+
+<script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>  
+<script>
+    let product_id = '';
+    let action = '';
+
+    const removeModal = new bootstrap.Modal(document.getElementById('removeModal'));
+    const clearModal = new bootstrap.Modal(document.getElementById('clearModal'));
+    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+
+    const removeBtn = document.querySelector('#removeBtn')
+    const clearBtn = document.querySelector('#clear')
+    const rmToggle = document.querySelector('#remove')
+
+    rmToggle.addEventListener('click', ()=>{
+        product_id = rmToggle.dataset.id
+        removeModal.show()
+    })
+
+    removeBtn.addEventListener('click', ()=>{
+        action = 'remove';
+        deleteClear()
+    })
+
+    clearBtn.addEventListener('click', ()=>{
+        action = 'clear';
+        deleteClear()
+    })
+
+    function deleteClear(){
+
+    }
+
+</script>  
+{% endblock content %}

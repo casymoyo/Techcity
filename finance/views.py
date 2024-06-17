@@ -361,8 +361,6 @@ def create_invoice(request):
                 currency=currency, 
                 defaults={'balance': 0}
             )
-           
-            print(customer)
             
             amount_paid = Decimal(invoice_data['amount_paid'])
             invoice_total_amount = Decimal(invoice_data['payable'])
@@ -947,7 +945,6 @@ def invoice_preview_json(request, invoice_id):
         if field.name not in ['customer', 'currency', 'branch', 'user']
     }
 
-    # Add selected customer fields
     invoice_dict['customer_name'] = invoice.customer.name
     invoice_dict['customer_email'] = invoice.customer.email 
     invoice_dict['currency_symbol'] = invoice.currency.symbol

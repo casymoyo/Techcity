@@ -7,12 +7,14 @@ app_name = 'inventory'
 urlpatterns = [
     path('', inventory_index, name='inventory'),
     path('inventory/', inventory, name='inventory_list'),
+    path('reorder/list/', reoder_list, name='reoder_list'),
     path('product/list/', product_list, name='product_list'),
     path('add-product/', AddProductView.as_view(), name='add_product'),
     path('delete-inventory/', delete_inventory, name='delete_inventory'),
     path('notifications/', notifications_json, name='notifications_json'),
     path('add_category/', add_product_category, name='add_product_category'),
     path('inventory/branches/', branches_inventory, name='branches_inventory'),
+    path('product/json/', inventory_index_json, name='inventory_index_json'),
     path('edit-inventory/<str:product_name>/', edit_inventory, name='edit_inventory'),
     path('defective_product_list/', defective_product_list, name='defective_product_list'),
     

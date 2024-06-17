@@ -12,64 +12,47 @@
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody>
-                {% for product in inventory %}
-                    <tr>
-                        <td>{{product.product.name}}</td>
-                        <td>{{product.quantity}}</td>
-                        <td>${{product.cost}}</td>
-                        <td>${{product.price}}</td>
-                        <td>
-                            <span>
-                                <a href="{% url 'inventory:inventory_detail' product.id %}" class='text-dark'>
-                                    <i class='bx bx-show'></i>
-                                </a>
-                            </span>
-                            <span class='px-2'>
-                                {%  if request.user.role == 'admin' %}
-                                    <a href="{% url 'inventory:edit_inventory' product.product.name %}" class="text-dark">
-                                        <i class='bx bx-edit-alt'></i>
-                                    </a>
-                                {% endif %}
-                            </span>
-                            <span>
-                                {% if request.user.role == 'admin' %}
-                                    <span id='delete' data-id="{{product.id}}" onclick="productId(this)" class="text-dark">
-                                        <i class='bx bx-trash-alt'></i>
-                                    </span>
-                                {% endif %}
-                            </span>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
+            <tbody id='inventory_table'></tbody>
         </table>
         
         <!-- delete modal -->
-        <div class="delete-modal hidden">
-            <div class="modal-content d-flex justify-content-center align-items-center mt-5">
-                <p class="fs-4 fw-bold">Confirm Product deletion</p>
-                <div>
-                    <button class="btn btn-secondary btn-sm yes">
-                        yes
-                    </button>
-                </div>
-                <div>
-                    <button id="btn-close" class="btn btn-danger btn-sm">
-                        no
-                    </button>
+        <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body" id='payment_content'>
+                        <p class="h5 fw-bold">Confirm Product deletion</p>
+                            <div>
+                                <button class="w-100 btn btn-secondary btn-sm yes">
+                                    yes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="overlay hidden"></div>
+
+        <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body" id='payment_content'>
+                        <p class="h5 fw-bold">Success</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
    </div> 
     
    <script src="{% static 'js/jquery.js'%}"></script>
    <script>
-        let product_id = ''
-        const modal = document.querySelector('.delete-modal')
-        const overlay = document.querySelector('.overlay')
-        const deleteButtons = document.querySelectorAll('#delete')
+        let product_id = '';
+        const inventoryData = [];
+        const modal = new bootstrap.Modal(document.querySelector('#deleteModal'));
+        const successModal = new bootstrap.Modal(document.querySelector('#successModal'));
+        const deleteButtons = document.querySelectorAll('#delete');
+
+        const inventoryTable = document.querySelector('#inventory_table');
 
         const productId=(element)=>{
             console.log(element)
@@ -79,8 +62,7 @@
         deleteButtons.forEach((button)=>{
             button.addEventListener(
                 'click', ()=>{
-                    modal.classList.remove('hidden')
-                    overlay.classList.remove('hidden')
+                    modal.show()
                 }
             )
         })
@@ -92,18 +74,67 @@
                     url: "{% url 'inventory:delete_inventory' %}?product_id=" + product_id,
                     type: 'GET',
                     }).done(function(response) {
-                        modal.classList.add('hidden')
-                        overlay.classList.add('hidden')
+                        modal.hide()
+                        successModal.show()
+                        setTimeout(()=>{
+                            window.location.reload()
+                        }, 2000)
                     }
                 )
             }
         )
 
-        document.querySelector('#btn-close').addEventListener(
-            'click', ()=>{
-                modal.classList.add('hidden')
-                overlay.classList.add('hidden')
+        $.ajax({
+            url: '{% url "inventory:inventory_index_json" %}',
+            type: 'GET',
+            }).done(function(response) {
+                const data = response
+                console.log(data)
+                inventoryData.push(data)
+                displayProductTable(data)
             }
         )
+
+        document.querySelector('#search').addEventListener(
+            'input', ()=>{
+                const search_q = document.querySelector('#search').value
+                let filteredData = inventoryData[0].filter((data)=>{
+                    return(data.product__name.includes(search_q))
+                })
+                inventoryTable.innerHTML=''
+                displayProductTable(filteredData)
+            }
+        )
+
+        function displayProductTable(data){
+            data.forEach((data)=>{
+                inventoryTable.innerHTML += `
+                <tr>
+                    <td><small>${data?.product__name}</small></td>
+                    <td><small>${data?.quantity}</small></td>
+                        <td>${data?.cost}</td>
+                        <td>${data?.price}</td>
+                        <td>
+                            <span>
+                                <a href="/inventory/inventory-detail/${data?.id}/" class='text-dark'>
+                                    <i class='bx bx-show'></i>
+                                </a>
+                            </span>
+                            <span class='px-2'>
+                                <a href="/inventory/edit-inventory/${data?.product__name}/" class="text-dark">
+                                    <i class='bx bx-edit-alt'></i>
+                                </a>
+                            </span>
+                            <span>
+                                <span id='delete' data-id="${data?.product__id}" onclick="productId(this)" class="text-dark">
+                                    <i class='bx bx-trash-alt'></i>
+                                </span>
+                            </span>
+                        </td>
+                </tr>
+                `
+            })
+        }
+
    </script>
 {% endblock content %}

@@ -145,6 +145,13 @@ class StockNotifications(models.Model):
     
     def __str__(self):
         return f'{self.inventory.product.name}: {self.notification}'
+    
+class ReoderList(models.Model):
+    product = models.ForeignKey(Inventory, on_delete=models.CASCADE)
+    
+    def __str__(self):
+        return f'{self.product.product.name}'
+    
 
 
 
