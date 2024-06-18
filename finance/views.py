@@ -1082,11 +1082,6 @@ def send_invoice_whatsapp(request, invoice_id):
         return JsonResponse({"error": "Error sending invoice via WhatsApp"})
     
 
-# analytics
-@login_required
-def analytics(request):
-    return render(request, 'finance/analytics/analytics.html')
-
 @login_required
 def end_of_day(request):
     today = timezone.now().date()

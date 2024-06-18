@@ -58,14 +58,13 @@ urlpatterns = [
     path('currency/add/', add_currency, name='add_currency'),
     path('currency/update/<int:currency_id>/', update_currency, name='update_currency'),
     path('currency/delete/<int:currency_id>/', delete_currency, name='delete_currency'),
-    
-    path('analytics/', analytics, name='analytics'),
+
     
     # end of day
     path('end_of_day/', end_of_day, name='end_of_day'),
     
     #settings
-path('settings/', finance_settings, name='finance_setings'),
+    path('settings/', finance_settings, name='finance_setings'),
     
     #reports
     path('expenses-report/', expenses_report, name='expenses_report'),  

@@ -11,6 +11,19 @@
                     </div>
                 </div>
                 <div class="search d-flex align-items-center">
+                    <div>
+                        <span class='px-2'>
+                            <a href='?download=true' class="btn btn-success btn-sm">
+                                excel
+                                <i class='bx bx-download'></i>
+                            </a>        
+                        </span>
+                        {% comment %} <span>
+                            <button type="button" class="btn btn-danger btn-sm">
+                                <i class='bx bxl-pdf'></i>
+                            </button>        
+                        </span> {% endcomment %}
+                    </div>
                     <span class="px-1"></span>
                     <form method="get">
                         <div>
@@ -123,6 +136,7 @@
         })
         .then(response => response.json())
         .then(data => {
+            console.log(data)
             if (data.success) {
                 removeModal.hide()
                 successModal.show()
@@ -130,7 +144,7 @@
                     window.location.href='{% url "inventory:reoder_list" %}';
                 }, 2000);
             } else {
-                alert('failed to delete the product')
+                alert(data.message)
             }
         })
         .catch((error) => {

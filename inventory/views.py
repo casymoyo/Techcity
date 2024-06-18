@@ -697,17 +697,59 @@ def add_product_category(request):
 @login_required
 def reoder_list(request):
     reorder_list = ReoderList.objects.filter()
-    print(reorder_list)
+    
     if request.method == 'GET':
+        if 'download' in request.GET:
+            response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            response['Content-Disposition'] = f'attachment; filename={request.user.branch.name} stock.xlsx'
+            workbook = openpyxl.Workbook()
+            worksheet = workbook.active
+
+            row_offset = 0
+            
+            worksheet['A' + str(row_offset + 1)] = f'Re-order Products'
+            worksheet.merge_cells('A' + str(row_offset + 1) + ':D' + str(row_offset + 1))
+            cell = worksheet['A' + str(row_offset + 1)]
+            cell.alignment = Alignment(horizontal='center')
+            cell.font = Font(size=14, bold=True)
+            cell.fill = PatternFill(fgColor='AAAAAA', fill_type='solid')
+
+            row_offset += 1 
+                
+            category_headers = ['Name', 'Quantity']
+            for col_num, header_title in enumerate(category_headers, start=1):
+                cell = worksheet.cell(row=3, column=col_num)
+                cell.value = header_title
+                cell.font = Font(bold=True)
+                cell.alignment = Alignment(horizontal='center')
+
+            categories = reorder_list.all().values_list('product__product__category__name', flat=True).distinct()
+            for category in categories:
+                products_in_category = reorder_list.filter(product__product__category__name=category)
+                if products_in_category.exists():
+                    worksheet['A' + str(row_offset + 1)] = category
+                    cell = worksheet['A' + str(row_offset + 1)]
+                    cell.font = Font(color='FFFFFF')
+                    cell.fill = PatternFill(fgColor='0066CC', fill_type='solid')
+                    worksheet.merge_cells('A' + str(row_offset + 1) + ':D' + str(row_offset + 1))
+                    row_offset += 2
+
+                for product in reorder_list:
+                    if category == product.product.product.category.name:
+                        worksheet.append([product.product.product.name])
+                        row_offset += 1
+
+            workbook.save(response)
+            return response
         return render(request, 'inventory/reorder_list.html', {'reorder_list':reorder_list})
 
     if request.method == 'POST':
         data = json.loads(request.body)
         action = data['action']
         product_id = data['product_id']
-   
-        product = get_object_or_404(ReoderList, id=product_id)
-        inventory = get_object_or_404(Inventory, product__id=product.product.id, branch=request.user.branch)
+    
+        product = ReoderList.objects.get(id=product_id)
+        inventory = Inventory.objects.get(product__id=product.product.product.id)
         
         if action == 'remove':
             product.delete()
@@ -724,7 +766,8 @@ def reoder_list(request):
             inventory.save()
             
             return JsonResponse({'success':True}, status=200)
-# reports
+
+
 @login_required
 def inventory_pdf(request):
     """Generates a PDF report of inventory items, optionally filtered by category."""

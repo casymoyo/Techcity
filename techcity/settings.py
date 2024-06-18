@@ -53,7 +53,8 @@ LOCAL_APPS = [
     'inventory',
     'finance',
     'pos',
-    'settings'
+    'settings',
+    'Analytics'
 ]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
