@@ -80,9 +80,7 @@
             </div>
 
         </div>
-   </div>
-
-<script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>  
+   </div> 
 <script>
     let product_id = '';
     let action = '';
@@ -115,7 +113,7 @@
     function deleteClear(){
         const data = {'product_id':product_id, 'action':action}
 
-        fetch(`{% url "inventory:reoder_list" %}`, {
+        fetch('/inventory/reorder/list', {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

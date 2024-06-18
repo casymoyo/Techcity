@@ -696,8 +696,8 @@ def add_product_category(request):
 
 @login_required
 def reoder_list(request):
-    reorder_list = ReoderList.objects.all()
-    
+    reorder_list = ReoderList.objects.filter()
+    print(reorder_list)
     if request.method == 'GET':
         return render(request, 'inventory/reorder_list.html', {'reorder_list':reorder_list})
 
@@ -706,12 +706,14 @@ def reoder_list(request):
         action = data['action']
         product_id = data['product_id']
         
+        print(action)
         product = get_object_or_404(ReoderList, id=product_id)
-        inventory = get_object_or_404(Inventory, product__id=product_id, branch=request.user.branch)
+        inventory = get_object_or_404(Inventory, product__id=product.product.id, branch=request.user.branch)
+        print(inventory)
         
         if action == 'remove':
             product.delete()
-            product.save()
+            print(product, 'here')
             
             inventory.reorder=False
             inventory.save()
