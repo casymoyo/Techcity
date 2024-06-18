@@ -1,12 +1,19 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.db.models import Count, Sum
+from django.db.models.functions import ExtractHour
 from matplotlib.pyplot import pie, savefig
 from django.contrib.auth.decorators import login_required
 from inventory.models import ActivityLog
 
 @login_required
 def analytics(request):
+    sales_logs = ActivityLog.objects.filter(action='sale')
+    sales_by_hour = sales_logs.annotate(hour=ExtractHour('invoice__issue_date')).values('hour').annotate(total_sales=Sum('quantity'))
+    hours = [log['hour'] for log in sales_by_hour]
+    sales = [log['total_sales'] for log in sales_by_hour]
+    
+    print(hours, sales)
     return render(request, 'finance/analytics/analytics.html')
 
 @login_required
@@ -44,14 +51,14 @@ def customers_chart_image(request):
         return response
     
 
-# @login_required
-# def sales_by_hour(request):
-#     sales_logs = ActivityLog.objects.filter(action='sale')
-#     sales_by_hour = sales_logs.annotate(hour=ExtractHour('invoice__issue_date')).values('hour').annotate(total_sales=Sum('quantity'))
-#     hours = [log['hour'] for log in sales_by_hour]
-#     sales = [log['total_sales'] for log in sales_by_hour]
+@login_required
+def sales_by_hour(request):
+    sales_logs = ActivityLog.objects.filter(action='sale')
+    sales_by_hour = sales_logs.annotate(hour=ExtractHour('invoice__issue_date')).values('hour').annotate(total_sales=Sum('quantity'))
+    hours = [log['hour'] for log in sales_by_hour]
+    sales = [log['total_sales'] for log in sales_by_hour]
     
-#     print(hours)
-#     return render(request, 'sales_by_hour.html', {'hours': hours, 'sales': sales})
+    print(hours)
+    return render(request, 'sales_by_hour.html', {'hours': hours, 'sales': sales})
 
 
