@@ -82,14 +82,15 @@
                 <div>
                     <span class='px-2'>
                         <a href='?download=true&excel=true' class="btn btn-success btn-sm">
-                            <i class='bx bxl-excel'></i>
+                            excel
+                            <i class='bx bx-download'></i>
                         </a>        
                     </span>
-                    <span>
+                    {% comment %} <span>
                         <button class="btn btn-danger btn-sm">
                             <i class='bx bxl-pdf'></i>
                         </button>        
-                    </span>
+                    </span> {% endcomment %}
                 </div>
             </div>
             {% include "inventory/components/inventory_table.html" %}

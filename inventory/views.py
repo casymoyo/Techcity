@@ -705,15 +705,12 @@ def reoder_list(request):
         data = json.loads(request.body)
         action = data['action']
         product_id = data['product_id']
-        
-        print(action)
+   
         product = get_object_or_404(ReoderList, id=product_id)
         inventory = get_object_or_404(Inventory, product__id=product.product.id, branch=request.user.branch)
-        print(inventory)
         
         if action == 'remove':
             product.delete()
-            print(product, 'here')
             
             inventory.reorder=False
             inventory.save()
