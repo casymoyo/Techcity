@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+{% load static%}
+{% load crispy_forms_tags %}
+{% block title%} Currency {% endblock%}
+{% block content %}
+<div class="withdrawal d-flex">
+    <div class="w-100">
+        <nav class="border rounded d-flex justify-content-between bg-dark text-light rounded shadow align-items-center p-2">
+            <div class=''>
+                <h5 class='fw-bold'>Currency</h5>
+            </div>
+            <div class='d-flex'>
+                <button id='cashWithdrawBtn' class='btn btn-primary'>
+                    <i class='bx bx-plus'></i>
+                    withdwrawal
+                </button>
+                <span class='px-2'></span>
+                <form method="get" class="d-flex justify-content-between align-items-center">
+                    <input
+                        id="search"
+                        name="q"
+                        type="search"
+                        value="{{search_query}}"
+                        class="form-control"
+                        placeholder="search..."
+                    />
+                </form>
+            </div>
+        </nav>
+
+        <table class="table border rounded p-2 mt-2">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>User</th>
+                    <th>Amount</th>
+                    <th>Reason</th>
+                    <th>Branch</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for withdrawal in withdrawals %}
+                    <tr style='color: #6c757d;'>
+                        <td><small>{{withdrawal.date}}</small></td>
+                        <td><small>{{withdrawal.user}}</small></td>
+                        <td><small>{{withdrawal.currency.symbol}} {{withdrawal.amount}}</small></td>
+                        <td><small>{{withdrawal.reason}}</small></td>
+                        <td><small>{{withdrawal.user.branch.name}}</small></td>
+                        <td>
+                            {% if withdrawal.status == False %}
+                                <span>
+                                    <button data-id={{ withdrawal.id}} id='expenseBtn' class="btn btn-primary btn-sm">
+                                        <i class='bx bx-plus'></i>
+                                        <span>Expense</span>
+                                    </button>
+                                </span>
+                                <span>
+                                    <a href="{% url 'finance:update_currency' withdrawal.id%}" class="btn btn-danger btn-sm">
+                                        <i class='bx bx-trash'></i>
+                                        <span>Cancel</span>
+                                    </a>
+                                </span>
+                            {% else %}
+                                Expensed
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>  
+        </table>
+    </div>
+    <div class="modal fade" id="cashModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <h5 class='fw-bold'>Add Withdrawal Form</h5>
+                    <form method='post' >
+                        {% csrf_token %}
+
+                        {{ form|crispy }}
+
+                        <small class='text-danger' id='cashWithdrawal_error'></small>
+
+                        <div class="d-flex justify-content-end">
+                            <div class="">
+                                <button type="reset" class="btn btn-danger btn-sm w-100">
+                                    <i class='bx bx-reset'></i>
+                                    Reset
+                                </button>
+                            </div>
+                            <span class="px-1"></span>
+                            <div class="">
+                                <button type="submit" id="id_submit_withdrawal" class="btn btn-secondary btn-sm w-100">
+                                    <i class='bx bx-save'></i>
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="expenseModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <h5 class='fw-bold'>Add to Expense</h5>
+                    <div>
+                        <form method='post' class='mt-2 p-2'>
+                            {% csrf_token %} 
+                            <div id="div_id_payment_method" class="mb-3"> <label
+                                for="id_payment_method" class="form-label requiredField">
+                                Payment method<span class="asteriskField">*</span> </label> <select name="payment_method" class="select form-select" required id="id_payment_method"> <option value="" selected>---------</option> <option value="cash">cash</option> <option value="bank">bank</option> <option value="ecocash">ecocash</option>
+                            </select> </div>
+                            <div id="div_id_currency" class="mb-3"> <label
+                                for="id_currency" class="form-label requiredField">
+                                Currency<span class="asteriskField">*</span> </label> <select name="currency" class="select form-select" required id="id_currency"> <option value="" selected>---------</option> <option value="1">USD</option> <option value="2">ZIG</option>
+                            </select> </div>
+                            <div id="div_id_amount" class="mb-3"> 
+                                <label
+                                    for="id_amount" class="form-label requiredField">
+                                    Amount
+                                    <span class="asteriskField">*</span> 
+                                </label> 
+                                <input type="number" name="amount" step="0.01" class="numberinput form-control" required id="id_amount"> 
+                                <p class="text-danger fs-6" id="id_amount_error"></p>
+                            </div> 
+                            <div id="div_id_category" class="mb-3"> 
+                                <label
+                                    for="id_category" class="form-label requiredField">
+                                    Category
+                                    <span class="asteriskField">*</span> 
+                                </label> 
+                                <div class='d-flex'>
+                                    <select name="category" class="select form-select" required id="id_category"> 
+                                        <option value="" selected>---------</option> 
+                                        {% for category in expense_categories%}
+                                            <option value="{{category.id}}">{{category.name}}</option> 
+                                        {% endfor %}
+                                    </select> 
+                                    <button class='btn btn-secondary btn-sm' id='id_category_button' type="button">
+                                        <i class='bx bx-plus'></i>
+                                    </button>
+                                </div>
+                            </div> 
+                            <div id="div_id_description" class="mb-3"> 
+                                <label
+                                    for="id_description" class="form-label requiredField">
+                                    Description<span class="asteriskField">*</span> 
+                                </label> 
+                                    <textarea name="description" cols="40" rows="3" maxlength="200" class="textarea form-control" required id="id_description"></textarea> 
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end mt-2">
+                                <div class="">
+                                    <button type="reset" class="btn btn-danger btn-sm w-100">
+                                        <i class='bx bx-reset'></i>
+                                        Reset
+                                    </button>
+                                </div>
+                                <span class="px-1"></span>
+                                <div class="">
+                                    <button type="submit" id="id_submit" class="btn btn-secondary btn-sm w-100">
+                                        <i class='bx bx-save'></i>
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                        <div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-body">
+                                        <h5 class='fw-bold'>Add Category</h5>
+                                        {% include 'finance/expenses/add_category.html'%}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="cashSuccessModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-right">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <h5>Success</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/jquery.js'%}"></script>
+<script>
+    let withdrawalId = '';
+    const cashWithdrawBtn = document.querySelector('#cashWithdrawBtn')
+    const amountEl = document.querySelector('#id_amount')
+    const cashModal = new bootstrap.Modal(document.querySelector('#cashModal'))
+
+    const expenseBtn = document.querySelectorAll('#expenseBtn')
+    const expenseModal = new bootstrap.Modal(document.querySelector('#expenseModal'))
+
+    cashWithdrawBtn.addEventListener('click', ()=>{
+        cashModal.show()
+    })
+    
+    expenseBtn.forEach((btn)=>{
+        btn.addEventListener('click', ()=>{
+            withdrawalId = btn.dataset.id
+            expenseModal.show()
+        })
+    })
+
+     // validations
+    amountEl.addEventListener('input', ()=>{
+        const amountValue = document.querySelector('#id_amount').value
+        console.log(amountValue)
+        if (amountValue <= 0){
+            cashWithdrawalError.textContent='Amount cant be less than Zero or Equal zero';
+            submitBtn.disabled=true;
+        }else{
+            cashWithdrawalError.textContent='';
+            submitBtn.disabled=false;
+        }
+    })
+
+    const expButton = document.querySelector('#id_category_button')
+    const categoryModal = new bootstrap.Modal(document.querySelector('#categoryModal'))
+    
+    expButton.addEventListener(
+        'click', ()=>{
+            categoryModal.show()
+        }
+    )
+
+
+    document.querySelector('#id_category_submit').addEventListener(
+        'click', ()=>{
+            const data = {
+                    name: $('#id_name').val(),
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+            }
+            $.ajax({
+                url: '{% url 'finance:create_expense_category'%}',
+                type: 'POST',
+                data: data,
+                }).done(function(response) {
+                    document.querySelector('#id_category_message').innerHTML=response.message
+                })
+        }
+    )
+
+    function fetchWthdrawalData(){
+        fetch(`/finance/withdrawals/json/`, {
+            method: "GET",
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.querySelector('#id_amount').value=data?.amount
+            document.querySelector('#id_description').value=data?.description
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+    }
+</script>
+{% endblock content %}

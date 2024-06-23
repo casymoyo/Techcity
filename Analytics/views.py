@@ -8,8 +8,8 @@ from inventory.models import ActivityLog
 
 @login_required
 def analytics(request):
-    sales_logs = ActivityLog.objects.filter(action='sale')
-    sales_by_hour = sales_logs.annotate(hour=ExtractHour('invoice__issue_date')).values('hour').annotate(total_sales=Sum('quantity'))
+    sales_logs = ActivityLog.objects.filter(action='Sale')
+    sales_by_hour = sales_logs.annotate(hour=ExtractHour('invoice__issue_date')).values('hour').annotate(total_sales=Sum('invoice__id'))
     hours = [log['hour'] for log in sales_by_hour]
     sales = [log['total_sales'] for log in sales_by_hour]
     

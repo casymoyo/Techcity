@@ -1,4 +1,5 @@
 {% load static%}
+{% load crispy_forms_tags %}
 {% block content %}
     <nav class="d-flex flex-row justify-content-between align-items-center w-100 border">
         <!-- toggle aside -->
@@ -25,7 +26,7 @@
         <div class='user mt-3  px-2 d-flex justify-content-end w-75'>
             <ul class="menu list-unstyled d-flex align-items-center">
                 <li class="menu-link dropdown">
-                    <select  id='currency' class='bg-dark text-light form-select'>
+                    <select  id='currency' class='bg-dark text-light shadow form-select'>
                         <option value=''>Currency</option>
                         {% for currency in currencies %}
                             <option value='{{currency.id}}'>{{currency.name}}</option>
@@ -33,26 +34,33 @@
                     </select>
                 </li>
                 <span class='px-2'></span>
-                <li class="menu-link invoice btn btn-secondary p-1">
+                <li class="menu-link invoice btn btn-secondary p-1 shadow">
                     <a href={% url 'finance:invoice' %}  class='text-light px-1'>
                         Invoices
                         <span class='badge badge-sm text-light'>{{invoice_count}}</span>
                     </a>
                 </li>
                 <span class='px-2'></span>
-                <li class="menu-link btn btn-warning p-1">
-                    <a href='{% url 'finance:qoutation_list' %}' class='px-1'>
+                <li class="menu-link btn btn-warning p-1 shadow">
+                    <a href='{% url 'finance:qoutation_list' %}' class='px-1 text-light'>
                         Qoutations
                         <span class='badge badge-sm text-light'>{{qoute_count}}</span>
                     </a>
                 </li>
                 <span class='px-2'></span>
-                <li class="menu-link invoice btn btn-light p-1" id='end'>
+                <li class="menu-link btn btn-primary p-1 shadow" id='cashWithdrawBtn'>
+                    <span class='px-1 text-light'>
+                        Cash Withdraw
+                    </span>
+                </li>
+                <span class='px-2'></span>
+                <li class="menu-link invoice btn btn-light p-1 shadow" id='end'>
                     <span class='px-1'>
                         End Of Day
                     </span>
                 </li>
                 <span class='px-2'></span>
+                <span class='p-1 shadow d-flex rounded'>
                 <li class="menu-link">
                     <a href={% url 'inventory:branches_inventory'%} class="">
                         <small class='bx bx-briefcase text-muted'></small>
@@ -80,6 +88,7 @@
                         <img class="rounded-circle" src="{% static 'assets/avatar.png'%}" width="25px"/>
                      {% endif %}
                 </li>
+            </span>
             </ul>
         </div>
     </nav>
@@ -101,12 +110,83 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="cashModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-right">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <h5 class='fw-bold'>Cash Withdrawal Form</h5>
+                    <form method='post' >
+                        {% csrf_token %}
+
+                        {{ form|crispy }}
+
+                        <small class='text-danger' id='cashWithdrawal_error'></small>
+
+                        <div class="d-flex justify-content-end">
+                            <div class="">
+                                <button type="reset" class="btn btn-danger btn-sm w-100">
+                                    <i class='bx bx-reset'></i>
+                                    Reset
+                                </button>
+                            </div>
+                            <span class="px-1"></span>
+                            <div class="">
+                                <button type="submit" id="id_submit_withdrawal" class="btn btn-secondary btn-sm w-100">
+                                    <i class='bx bx-save'></i>
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="cashSuccessModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-right">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <h5>Success</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const branchModal = new bootstrap.Modal(document.querySelector('#branchModal'))
         const branchButton = document.querySelector('#branchButton')
 
+        const cashModal = new bootstrap.Modal(document.querySelector('#cashModal'))
+        const cashSuccessModal = new bootstrap.Modal(document.querySelector('#cashSuccessModal'))
+        const cashWithdrawBtn = document.querySelector('#cashWithdrawBtn')
+
+        const cashWithdrawalError = document.querySelector('#cashWithdrawal_error')
+
+        const submitBtn = document.querySelector('#id_submit_withdrawal')
+
+        const amountEl = document.querySelector('#id_amount')
+
         branchButton.addEventListener('click', ()=>{
             branchModal.show()
         })
+
+        cashWithdrawBtn.addEventListener('click', ()=>{
+            cashModal.show()
+        })
+
+        // validations
+        amountEl.addEventListener('input', ()=>{
+            const amountValue = document.querySelector('#id_amount').value
+            console.log(amountValue)
+            if (amountValue <= 0){
+                cashWithdrawalError.textContent='Amount cant be less than Zero or Equal zero';
+                submitBtn.disabled=true;
+            }else{
+                cashWithdrawalError.textContent='';
+                submitBtn.disabled=false;
+            }
+        })
+
     </script>
 {% endblock content %}

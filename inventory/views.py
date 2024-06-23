@@ -315,9 +315,7 @@ def inventory_index(request):
         workbook.save(response)
         return response
     
-    if request.user.branch.name == 'Warehouse':
-        all_branches_inventory = Inventory.objects.all()
-    else: all_branches_inventory = Inventory.objects.filter(branch=request.user.branch)
+    all_branches_inventory = Inventory.objects.filter(branch=request.user.branch)
     
     totals = calculate_inventory_totals(all_branches_inventory.filter(status=True))
   
@@ -564,7 +562,7 @@ def over_less_list_stock(request):
             
             if action == 'accept':
                 product.quantity += branch_transfer.over_less_quantity 
-                product.quantity.save()
+                product.save()
                 
                 activity_log('stock in', product, branch_transfer )
                 

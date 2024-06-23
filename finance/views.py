@@ -1,6 +1,7 @@
 from .models import *
 from decimal import Decimal
 from io import BytesIO
+from users.models import User
 from .consumers import CashTransferConsumer 
 from xhtml2pdf import pisa 
 from django.views import View
@@ -32,7 +33,7 @@ from django.template.loader import render_to_string
 from django.core.mail import send_mail, EmailMessage
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
-from . forms import ExpenseForm, ExpenseCategoryForm, CurrencyForm, InvoiceForm, CustomerForm, TransferForm
+from . forms import ExpenseForm, ExpenseCategoryForm, CurrencyForm, InvoiceForm, CustomerForm, TransferForm, CashWithdrawForm, cashWithdrawExpenseForm
 
 import logging
 
@@ -1470,7 +1471,7 @@ def qoutation_list(request):
     qoutations = Qoutation.objects.filter(branch=request.user.branch).order_by('-date')
  
     if search_query:
-        print(search_query)
+
         qoutations = qoutations.filter(
             Q(customer__name__icontains=search_query)|
             Q(products__icontains=search_query)|
@@ -1498,6 +1499,7 @@ def cashbook_view(request):
     start_date = today 
     cashbook_entries = Cashbook.objects.all()
     today_entries = None
+    
     # Filtering 
     filter_type = request.GET.get('day', 'today')  
     if filter_type == 'yesterday':
@@ -1509,7 +1511,6 @@ def cashbook_view(request):
     else:
         today_entries = Cashbook.objects.filter(issue_date=today).order_by('issue_date')
 
-    print(start_date, filter_type)
     # previous
     debit_balance = sum(
         entry.amount for entry in cashbook_entries 
@@ -1545,6 +1546,58 @@ def cashbook_view(request):
     }
     return render(request, 'finance/cashbook.html', context)
 
+@login_required
+def cashWithdrawals(request):
+    search_query = request.GET.get('q', '')
+    withdrawals = CashWithdraw.objects.all()
+    
+    if search_query:
+        withdrawals = withdrawals.filter(
+            Q(user__branch__name__icontains=search_query)|
+            Q(amount__icontains=search_query)|
+            Q(date__icontains=search_query)|
+            Q(reason__icontains=search_query)
+        )
+    
+    form = CashWithdrawForm()
+    expense_form = cashWithdrawExpenseForm()
+    if request.method == 'POST':
+        form = CashWithdrawForm(request.POST)
+        
+        if form.is_valid():
+             
+            user_code = form.cleaned_data['user_code']
+            # validations
+            try:
+                user = User.objects.get(code=user_code)
+            except User.DoesNotExist:
+                messages.warning(request, 'Incorrect user code')
+                return redirect('pos:pos')
+            
+            cw_obj = form.save(commit=False)
+            cw_obj.user = user
+            cw_obj.save()
+
+            messages.success(request, 'Cash Withdrawal Successfully saved')
+        else:
+            messages.error(request, 'Invalid form data')
+    return render(request, 'finance/cashWithdaraws/withdrawals.html', 
+        {
+            'withdrawals':withdrawals,
+            'expense_form':expense_form,
+            'form':form,
+        }
+    )
+
+@login_required
+def cash_withdrawal_to_expense(request):
+    if request.method == 'GET':
+        withdrawals = CashWithdraw.objects.all().values(
+            'user__branch__name', 'amount', 'reason', 'currency__id', 'user__id'
+        )
+        return JsonResponse(list(withdrawals), safe=False)
+    if request.method == 'POST':
+        pass
 
 
     

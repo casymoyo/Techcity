@@ -59,6 +59,9 @@ urlpatterns = [
     path('currency/update/<int:currency_id>/', update_currency, name='update_currency'),
     path('currency/delete/<int:currency_id>/', delete_currency, name='delete_currency'),
 
+    # withdrawals
+    path('withdrawals/', cashWithdrawals, name='withdrawals'),
+    path('withdrawals/json/', cash_withdrawal_to_expense, name='withdraws_json'),
     
     # end of day
     path('end_of_day/', end_of_day, name='end_of_day'),

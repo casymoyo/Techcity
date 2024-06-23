@@ -1,5 +1,5 @@
 from django import forms
-from .models import Expense, ExpenseCategory, Customer, Currency, Invoice, CashTransfers
+from .models import Expense, ExpenseCategory, Customer, Currency, Invoice, CashTransfers, CashWithdraw
 
 class ExpenseForm(forms.ModelForm):
     class Meta:
@@ -36,3 +36,14 @@ class TransferForm(forms.ModelForm):
         model = CashTransfers
         exclude = ['user', 'from_branch', 'branch', 'received_status']
         
+
+class CashWithdrawForm(forms.ModelForm):
+    class Meta:
+        model = CashWithdraw
+        fields = ['amount', 'currency', 'reason', 'user_code']
+   
+
+class cashWithdrawExpenseForm(forms.ModelForm):
+    class Meta:
+        model = Expense
+        fields= ['currency', 'amount', 'category', 'description', 'description','category']     

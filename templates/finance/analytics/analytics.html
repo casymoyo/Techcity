@@ -21,5 +21,36 @@
             </div>
         </div>
     </div>
+
+    <h1>Best Hour for Sales</h1>
+    <div>
+        <canvas id="myChart" width="400" height="200"></canvas>
+    </div>
+
+    <script type='module' src="{% static 'js/node_modules/chart.js/dist/chart.js' %}">
+        {% comment %} const { Chart } = require('chart.js') {% endcomment %}
+        {% comment %} console.log('working')
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ hours|safe }},
+                datasets: [{
+                    label: 'Total Sales',
+                    data: {{ sales|safe }},
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        }); {% endcomment %}
+    </script>
 </div>
 {% endblock %}

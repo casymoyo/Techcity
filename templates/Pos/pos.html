@@ -31,6 +31,17 @@
         <div class="top-bar">
             <div class="nav-bar"> {% include "base/pos_navbar.html" %} </div>
         </div>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                {{ message }}
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
         <div class='row'>
             <div class="aside-bar col-2 text-light"> {% include "base/aside.html" %} </div>
             <div class='col-6'>
@@ -371,7 +382,7 @@
         }else if (typeof param === "string"){
             url += `?q=${param}`; 
         }
-        //loader.style.display = 'block';
+       
         try {
             const response = await fetch(url);
 
@@ -387,8 +398,6 @@
             console.error('Error fetching products:', error);
             productListContainer.innerHTML = '<p class="error-message">Error loading products. Please try again later.</p>';
         } finally {
-
-            //loader.style.display = 'none';
         }
     }
     
@@ -604,9 +613,6 @@
         document.querySelector('#id_interest_amount').textContent = `${ currencyData[0][0].symbol + ' ' +  '<span class="inter">' + 0.00 + "</span>"}`
         document.querySelector('#id_due_amount').textContent = `${ currencyData[0][0].symbol + ' ' + payable.toFixed(2)}`
         document.querySelector('#id_balance').textContent = `${ currencyData[0][0].symbol + ' ' + (payable.toFixed(2) - amount_paid.toFixed(2))}` // payable + due amount - paid amount
-        //$('#id_amount_paid').removeAttr('readonly')
-        //$('#id_amount_paid').val(payable.toFixed(2))
-        
     }
 
     // pay amount event
@@ -871,17 +877,18 @@
             balanceEl.innerHTML=''
 
             const previousDueEl = document.querySelector('#previous_due');
-          
+            console.log(currencyData[0], currencyData)
             const balance = data.find(item => item.currency__symbol === currencyData[0][0]?.symbol);
+           
             if (balance) {
               previousDueEl.textContent = `${balance.currency__symbol} ${balance.balance}`;
             } else {
               previousDueEl.textContent = "0.00" 
             }
-            console.log(previousDueEl)
+            
             
             data.forEach((balance)=>{
-                balanceEl.innerHTML +=`<small id='id_due' class='text-danger'>${balance.currency__symbol} ${balance.balance}</small>`
+                balanceEl.innerHTML +=`<small id='id_due' class='text-danger'>${balance?.currency__symbol} ${balance?.balance}</small>`
             })
         })
         .catch((error) => {
