@@ -149,6 +149,13 @@ DATABASES = {
     }
 
 }
+
+Q_CLUSTER = {
+   'retry': 5,
+   'workers': 4,
+   'orm': 'default',
+}
+
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 # https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-DEFAULT_AUTO_FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
