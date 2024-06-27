@@ -1,19 +1,24 @@
 {% extends "base.html" %}
 {% load static%}
 {% load crispy_forms_tags %}
-{% block title%} Currency {% endblock%}
+{% block title%} Withdrawals {% endblock%}
 {% block content %}
 <div class="withdrawal d-flex">
     <div class="w-100">
         <nav class="border rounded d-flex justify-content-between bg-dark text-light rounded shadow align-items-center p-2">
             <div class=''>
-                <h5 class='fw-bold'>Currency</h5>
+                <h5 class='fw-bold'>Withdrawals <small class='text-warning'>{{ count }}</small></h5>
             </div>
             <div class='d-flex'>
                 <button id='cashWithdrawBtn' class='btn btn-primary'>
                     <i class='bx bx-plus'></i>
                     withdwrawal
                 </button>
+                <span class='px-2'></span>
+                <a href='{% url "finance:withdrawals" %}?download=true' class='btn btn-primary'>
+                    excel 
+                    <i class='bx bx-download'></i>
+                </a>
                 <span class='px-2'></span>
                 <form method="get" class="d-flex justify-content-between align-items-center">
                     <input
@@ -25,11 +30,21 @@
                         placeholder="search..."
                     />
                 </form>
+                <span class='px-2'></span>
+                <form method="get" class="d-flex justify-content-between align-items-center">
+                    <select class='form-control' value='{{ selected_query }}' name='sq'>
+                        <option value=''>All</option>
+                        <option value='deleted'>Deleted</option>
+                    </select>
+                    <div class='px-2'>
+                        <button class='bx bx-filter btn text-light'></button>
+                    </div>
+                </form>
             </div>
         </nav>
 
         <table class="table border rounded p-2 mt-2">
-            <thead>
+            <thead class='bg-primary'>
                 <tr>
                     <th>Date</th>
                     <th>User</th>
@@ -41,28 +56,40 @@
             </thead>
             <tbody>
                 {% for withdrawal in withdrawals %}
-                    <tr style='color: #6c757d;'>
-                        <td><small>{{withdrawal.date}}</small></td>
-                        <td><small>{{withdrawal.user}}</small></td>
-                        <td><small>{{withdrawal.currency.symbol}} {{withdrawal.amount}}</small></td>
-                        <td><small>{{withdrawal.reason}}</small></td>
-                        <td><small>{{withdrawal.user.branch.name}}</small></td>
+                    <tr>
+                        {% if withdrawal.deleted %}
+                            <td><small class='text-decoration-line-through text-danger'>{{withdrawal.date}}</small></td>
+                            <td><small class='text-decoration-line-through text-danger'>{{withdrawal.user}}</small></td>
+                            <td><small class='text-decoration-line-through text-danger'>{{withdrawal.currency.symbol}} {{withdrawal.amount}}</small></td>
+                            <td><small class='text-decoration-line-through text-danger'>{{withdrawal.reason}}</small></td>
+                            <td><small class='text-decoration-line-through text-danger'>{{withdrawal.user.branch.name}}</small></td>
+                        {% else %}
+                            <td><small>{{withdrawal.date}}</small></td>
+                            <td><small>{{withdrawal.user}}</small></td>
+                            <td><small>{{withdrawal.currency.symbol}} {{withdrawal.amount}}</small></td>
+                            <td><small>{{withdrawal.reason}}</small></td>
+                            <td><small>{{withdrawal.user.branch.name}}</small></td>
+                        {% endif %}
                         <td>
-                            {% if withdrawal.status == False %}
-                                <span>
-                                    <button data-id={{ withdrawal.id}} id='expenseBtn' class="btn btn-primary btn-sm">
-                                        <i class='bx bx-plus'></i>
-                                        <span>Expense</span>
-                                    </button>
-                                </span>
-                                <span>
-                                    <a href="{% url 'finance:update_currency' withdrawal.id%}" class="btn btn-danger btn-sm">
-                                        <i class='bx bx-trash'></i>
-                                        <span>Cancel</span>
-                                    </a>
-                                </span>
+                            {% if withdrawal.deleted %}
+                                <small class='text-decoration-line-through text-danger'>Canceled</small>
                             {% else %}
-                                Expensed
+                                {% if withdrawal.status == False %}
+                                    <span>
+                                        <button data-id={{ withdrawal.id}} id='expenseBtn' class="btn btn-primary btn-sm">
+                                            <i class='bx bx-plus'></i>
+                                            <span>Expense</span>
+                                        </button>
+                                    </span>
+                                    <span>
+                                        <a href="{% url 'finance:delete_withdrawal' withdrawal.id%}" class="btn btn-danger btn-sm">
+                                            <i class='bx bx-trash'></i>
+                                            <span>Cancel</span>
+                                        </a>
+                                    </span>
+                                {% else %}
+                                    Expensed
+                                {% endif %}
                             {% endif %}
                         </td>
                     </tr>
@@ -111,21 +138,13 @@
                     <div>
                         <form method='post' class='mt-2 p-2'>
                             {% csrf_token %} 
-                            <div id="div_id_payment_method" class="mb-3"> <label
-                                for="id_payment_method" class="form-label requiredField">
-                                Payment method<span class="asteriskField">*</span> </label> <select name="payment_method" class="select form-select" required id="id_payment_method"> <option value="" selected>---------</option> <option value="cash">cash</option> <option value="bank">bank</option> <option value="ecocash">ecocash</option>
-                            </select> </div>
-                            <div id="div_id_currency" class="mb-3"> <label
-                                for="id_currency" class="form-label requiredField">
-                                Currency<span class="asteriskField">*</span> </label> <select name="currency" class="select form-select" required id="id_currency"> <option value="" selected>---------</option> <option value="1">USD</option> <option value="2">ZIG</option>
-                            </select> </div>
                             <div id="div_id_amount" class="mb-3"> 
                                 <label
                                     for="id_amount" class="form-label requiredField">
                                     Amount
                                     <span class="asteriskField">*</span> 
                                 </label> 
-                                <input type="number" name="amount" step="0.01" class="numberinput form-control" required id="id_amount"> 
+                                <input type="number" name="amount" step="0.01" class="numberinput form-control" required id="id_amnt" readonly='true'> 
                                 <p class="text-danger fs-6" id="id_amount_error"></p>
                             </div> 
                             <div id="div_id_category" class="mb-3"> 
@@ -136,7 +155,7 @@
                                 </label> 
                                 <div class='d-flex'>
                                     <select name="category" class="select form-select" required id="id_category"> 
-                                        <option value="" selected>---------</option> 
+                                        <option value=" ">---------</option> 
                                         {% for category in expense_categories%}
                                             <option value="{{category.id}}">{{category.name}}</option> 
                                         {% endfor %}
@@ -154,6 +173,7 @@
                                     <textarea name="description" cols="40" rows="3" maxlength="200" class="textarea form-control" required id="id_description"></textarea> 
                                 </div>
                             </div>
+                            <p id='id_exp_message' class='text-danger'></p>
                             <div class="d-flex justify-content-end mt-2">
                                 <div class="">
                                     <button type="reset" class="btn btn-danger btn-sm w-100">
@@ -163,7 +183,7 @@
                                 </div>
                                 <span class="px-1"></span>
                                 <div class="">
-                                    <button type="submit" id="id_submit" class="btn btn-secondary btn-sm w-100">
+                                    <button type="button" id="id_submit_exp" class="btn btn-secondary btn-sm w-100">
                                         <i class='bx bx-save'></i>
                                         Save
                                     </button>
@@ -187,10 +207,10 @@
     </div>
 
     <div class="modal fade" id="cashSuccessModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-        <div class="modal-dialog modal-dialog-right">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-body">
-                    <h5>Success</h5>
+                <div class="modal-body text-center">
+                    <h5 class='fw-bold'>Success</h5>
                 </div>
             </div>
         </div>
@@ -200,12 +220,22 @@
 <script src="{% static 'js/jquery.js'%}"></script>
 <script>
     let withdrawalId = '';
-    const cashWithdrawBtn = document.querySelector('#cashWithdrawBtn')
-    const amountEl = document.querySelector('#id_amount')
-    const cashModal = new bootstrap.Modal(document.querySelector('#cashModal'))
+    let withdrawalData = [];
+    const cashWithdrawBtn = document.querySelector('#cashWithdrawBtn');
+    const amountEl = document.querySelector('#id_amount');
+    const cashModal = new bootstrap.Modal(document.querySelector('#cashModal'));
 
-    const expenseBtn = document.querySelectorAll('#expenseBtn')
-    const expenseModal = new bootstrap.Modal(document.querySelector('#expenseModal'))
+    const successModal = new bootstrap.Modal(document.querySelector('#cashSuccessModal'));
+    const expenseBtn = document.querySelectorAll('#expenseBtn');
+    const expenseModal = new bootstrap.Modal(document.querySelector('#expenseModal'));
+
+    const saveBtn = document.querySelector('#id_submit_exp');
+    const expButton = document.querySelector('#id_category_button');
+
+    let catValue = '';
+    const category = document.querySelector('#id_category');
+    const categoryValue = document.querySelector('#id_category').value;
+    const categoryModal = new bootstrap.Modal(document.querySelector('#categoryModal'));
 
     cashWithdrawBtn.addEventListener('click', ()=>{
         cashModal.show()
@@ -215,7 +245,22 @@
         btn.addEventListener('click', ()=>{
             withdrawalId = btn.dataset.id
             expenseModal.show()
+            fetchWthdrawalData(withdrawalId)
         })
+    })
+
+    saveBtn.disabled=true;
+    category.addEventListener('change', ()=>{
+        if (category.value){
+            catValue = category.value
+            saveBtn.disabled=false
+        }else{
+            saveBtn.disabled=true 
+        }
+    })
+
+    saveBtn.addEventListener('click', ()=>{
+        add_to_expense()
     })
 
      // validations
@@ -230,16 +275,12 @@
             submitBtn.disabled=false;
         }
     })
-
-    const expButton = document.querySelector('#id_category_button')
-    const categoryModal = new bootstrap.Modal(document.querySelector('#categoryModal'))
     
     expButton.addEventListener(
         'click', ()=>{
             categoryModal.show()
         }
     )
-
 
     document.querySelector('#id_category_submit').addEventListener(
         'click', ()=>{
@@ -257,18 +298,68 @@
         }
     )
 
-    function fetchWthdrawalData(){
-        fetch(`/finance/withdrawals/json/`, {
+    function fetchWthdrawalData(id){
+        fetch(`/finance/withdrawals/json/?id=${id}`, {
             method: "GET",
         })
         .then(response => response.json())
         .then(data => {
-            document.querySelector('#id_amount').value=data?.amount
-            document.querySelector('#id_description').value=data?.description
+            withdrawalData.push(data);
+            document.querySelector('#id_amnt').value=Number(data[0]?.amount);
+            document.querySelector('#id_description').value=data[0]?.reason;
         })
         .catch((error) => {
             console.error("Error:", error);
         });
     }
+
+    function add_to_expense(){
+        const data = {
+            'withdrawal':withdrawalData[0],
+            'reason':document.querySelector('#id_description').value,
+            'withdrawal_id':withdrawalId,
+            'category_id': catValue
+        }
+        
+        fetch(`{% url 'finance:add_to_expense'%}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success){
+                    expenseModal.hide()
+                    successModal.show()
+                    setTimeout(()=>{
+                        window.location.reload()
+                    }, 1000)
+                }else{
+                    document.querySelector('#id_exp_message').innerHTML=data.message  
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
 </script>
 {% endblock content %}

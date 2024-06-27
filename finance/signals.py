@@ -63,7 +63,6 @@ def invoice_remove_notification(sender, instance, **kwargs):
         logger.warning(f"No active FinanceNotification found for Invoice #{instance.id}.")
 
 def create_cashbook_entry(instance, description, debit, credit):
-    previous_day = datetime.date.today() - timedelta(days=1)
     Cashbook.objects.create(
         issue_date=instance.issue_date,
         description=description,

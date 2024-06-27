@@ -27,11 +27,15 @@
                             <td><small>{{ transfer.over_less_quantity }}</small></td>
                             <td><small>{{ transfer.from_branch }}</small></td>
                             <td><small>{{ transfer.to_branch }}</small></td>
-                            <td>
-                                <span><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="accept" class='btn btn-success btn-sm btn-primary'>accept back</button></span>
-                                <span><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="write_off" class='btn btn-success btn-sm btn-danger'>write off</button></span>
-                                <span><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="back" class='btn btn-success btn-sm btn-dark'>transfer back</button></span>
-                            </td>
+                            {% if transfer.over_less == False %}
+                                <td><small>{{ transfer.over_less_description }}</small></td>
+                            {% else %}
+                                <td>
+                                    <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="accept" class='btn btn-success btn-sm btn-primary'>return back</button></small>
+                                    <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="write_off" class='btn btn-success btn-sm btn-danger'>write off</button></small>
+                                    <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="back" class='btn btn-success btn-sm btn-dark'>send back</button></small>
+                                </td>
+                            {% endif %}
                         </tr>
                     {% endfor %}
                 </tbody>

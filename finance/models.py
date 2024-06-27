@@ -373,6 +373,7 @@ class CashWithdraw(models.Model):
     status = models.BooleanField(default=False)
     reason = models.CharField(max_length=10)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
+    deleted = models.BooleanField(default=False)
     
     def __str__(self):
         return f'{self.date} {self.user.username} {self.amount}'

@@ -83,6 +83,8 @@ class TransferItems(models.Model):
     received = models.BooleanField(default=False)
     declined = models.BooleanField(default=False) 
     over_less = models.BooleanField(default=False) 
+    description = models.CharField(max_length=255, null=True, blank=True)
+    over_less_description = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f'{self.product.name} to {self.to_branch}'

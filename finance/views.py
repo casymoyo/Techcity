@@ -2,6 +2,7 @@ from .models import *
 from decimal import Decimal
 from io import BytesIO
 from users.models import User
+from company.models import Branch
 from .consumers import CashTransferConsumer 
 from xhtml2pdf import pisa 
 from django.views import View
@@ -43,13 +44,11 @@ class Finance(View):
     template_name = 'finance/finance.html'
 
     def get(self, request, *args, **kwargs):
-        # Balances
-        balances = AccountBalance.objects.filter(branch=request.user.branch)
         
-        # Recent Transactions
+        balances = AccountBalance.objects.filter(branch=request.user.branch)
+    
         recent_sales = Sale.objects.filter(transaction__branch=request.user.branch).order_by('-date')[:5]
 
-        # 3. Expense Summary (Optional)
         expenses_by_category = Expense.objects.values('category__name').annotate(
             total_amount=Sum('amount', output_field=DecimalField())
         )
@@ -595,12 +594,7 @@ def customer(request):
     
     elif request.method == 'POST':
         data = json.loads(request.body)
-
-    
-
-        # if Customer.objects.filter(phone_number=data['phone_number']).exists():
-        #     return JsonResponse({'success': False, 'message': 'Customer with this email already exists'})
-
+        
         customer = Customer.objects.create(
             name=data['name'],
             email=data['email'],
@@ -1549,7 +1543,9 @@ def cashbook_view(request):
 @login_required
 def cashWithdrawals(request):
     search_query = request.GET.get('q', '')
-    withdrawals = CashWithdraw.objects.all()
+    selected_query = request.GET.get('sq', '')
+    
+    withdrawals = CashWithdraw.objects.all().order_by('-date')
     
     if search_query:
         withdrawals = withdrawals.filter(
@@ -1558,48 +1554,164 @@ def cashWithdrawals(request):
             Q(date__icontains=search_query)|
             Q(reason__icontains=search_query)
         )
+    if selected_query:
+        withdrawals = CashWithdraw.objects.filter(deleted=True).order_by('-date')
+        
+    if 'download' in request.GET:
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=withdrawals.xlsx'
+
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
+        
+        header_font = Font(bold=True)
+        header_alignment = Alignment(horizontal='center')
+        for col_num, header_title in enumerate(['Date', 'User', 'Amount', 'Reason', 'Status'], start=1):
+            cell = worksheet.cell(row=1, column=col_num)
+            cell.value = header_title
+            cell.font = header_font
+            cell.alignment = header_alignment
+            
+            column_letter = openpyxl.utils.get_column_letter(col_num)
+            worksheet.column_dimensions[column_letter].width = max(len(header_title), 20)
+
+        withdrawals = CashWithdraw.objects.all().order_by('-date')
+        for withdrawal in withdrawals:
+            worksheet.append(
+                [
+                    withdrawal.date,
+                    withdrawal.user.username,
+                    withdrawal.amount,
+                    withdrawal.reason,
+                    'Canceled' if withdrawal.deleted else 'Expensed' if withdrawal.status else 'pending'
+                ])  
+            
+        workbook.save(response)
+        return response
     
     form = CashWithdrawForm()
     expense_form = cashWithdrawExpenseForm()
+    
     if request.method == 'POST':
         form = CashWithdrawForm(request.POST)
         
         if form.is_valid():
              
             user_code = form.cleaned_data['user_code']
+            currency = form.cleaned_data['currency']
+            amount = form.cleaned_data['amount']
+            
             # validations
             try:
                 user = User.objects.get(code=user_code)
             except User.DoesNotExist:
                 messages.warning(request, 'Incorrect user code')
-                return redirect('pos:pos')
+                return redirect('finance:withdrawals')
             
             cw_obj = form.save(commit=False)
             cw_obj.user = user
             cw_obj.save()
+            
+            account_name = f"{request.user.branch} {currency.name} {'Cash'} Account"
+            
+            try:
+                account = Account.objects.get(name=account_name, type=Account.AccountType.CASH)
+            except Account.DoesNotExist:
+                messages.error(request, f'{account_name} doesnt exists')
 
+            try:
+                account_balance = AccountBalance.objects.get(account=account,  branch=request.user.branch)
+            except AccountBalance.DoesNotExist:
+                messages.error(request, f'Account Balances for account {account_name} doesnt exists')
+                
+            account_balance.balance -= Decimal(amount)
+            account_balance.save()
             messages.success(request, 'Cash Withdrawal Successfully saved')
         else:
             messages.error(request, 'Invalid form data')
     return render(request, 'finance/cashWithdaraws/withdrawals.html', 
         {
             'withdrawals':withdrawals,
+            'count': withdrawals.filter(status=False, deleted=False).count(),
             'expense_form':expense_form,
             'form':form,
         }
     )
 
 @login_required
+@transaction.atomic
 def cash_withdrawal_to_expense(request):
     if request.method == 'GET':
-        withdrawals = CashWithdraw.objects.all().values(
+        cwte_id = request.GET.get('id', '')
+        withdrawals = CashWithdraw.objects.filter(id=cwte_id).values(
             'user__branch__name', 'amount', 'reason', 'currency__id', 'user__id'
         )
         return JsonResponse(list(withdrawals), safe=False)
-    if request.method == 'POST':
-        pass
-
-
     
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        
+        withdrawal_data = data['withdrawal'][0]
+        
+        reason = data['reason']
+        category_id = data['category_id']
+        withdrawal_id = data['withdrawal_id']
+        currency_id = withdrawal_data['currency__id']
+        branch_name = withdrawal_data['user__branch__name']
+        amount = withdrawal_data['amount']
+        
+        try:
+            currency = Currency.objects.get(id=currency_id)
+            branch = Branch.objects.get(name=branch_name)
+            withdrawal = CashWithdraw.objects.get(id=withdrawal_id)
+            category = ExpenseCategory.objects.get(id=category_id)
+        except:
+            return JsonResponse({'success':False,'message':'Invalid form data here'})
+        
+        Expense.objects.create(
+            category=category,
+            amount=amount,
+            branch=branch,
+            user = request.user,
+            currency = currency,
+            description=reason,
+            status=True,
+            issue_date=withdrawal.date,
+            payment_method='cash'
+        )
+        
+        withdrawal.status=True
+        withdrawal.save()
+        
+        return JsonResponse({'success':True, 'message':'Successfully added to expenses'}, status=201)
+    return JsonResponse({'success':False, 'message':'Invalid form data'}, status=400)
+       
+@login_required
+def delete_withdrawal(request, withdrawal_id):
+    try:
+        withdrawal = CashWithdraw.objects.get(id=withdrawal_id)
+    except User.DoesNotExist:
+        messages.warning(request, 'Withdrawal doesnt exist')
+        return redirect('finance:withdrawals')
+    
+    account_name = f"{request.user.branch} {withdrawal.currency.name} {'Cash'} Account"
+    
+    try:
+        account = Account.objects.get(name=account_name, type=Account.AccountType.CASH)
+    except Account.DoesNotExist:
+        messages.error(request, f'{account_name} doesnt exists')
+
+    try:
+        account_balance = AccountBalance.objects.get(account=account,  branch=request.user.branch)
+    except AccountBalance.DoesNotExist:
+        messages.error(request, f'Account Balances for account {account_name} doesnt exists')
+        
+    account_balance.balance += Decimal(withdrawal.amount)
+    account_balance.save()
+    withdrawal.deleted=True
+    withdrawal.save()
+    
+    messages.success(request, 'Withdrawal successfully deleted')
+    return redirect('finance:withdrawals')
     
     

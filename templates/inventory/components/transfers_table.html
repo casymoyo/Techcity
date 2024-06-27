@@ -33,7 +33,7 @@
                                                     {% if item.declined %}
                                                         <small class='text-danger'>Declined</small>
                                                     {% elif item.received %}
-                                                        <small class='text-success'>Received</small>
+                                                        <small class='text-success'>{{ item.description }}</small>
                                                     {% else %}
                                                         <small>Not yet received</small>
                                                     {% endif %}

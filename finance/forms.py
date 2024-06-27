@@ -46,4 +46,4 @@ class CashWithdrawForm(forms.ModelForm):
 class cashWithdrawExpenseForm(forms.ModelForm):
     class Meta:
         model = Expense
-        fields= ['currency', 'amount', 'category', 'description', 'description','category']     
+        fields= ['currency', 'amount', 'category', 'description']     

@@ -12,6 +12,14 @@ from django.utils import timezone
 from django.conf import settings 
 
 from finance.models import *
+from django_q.tasks import async_task
+
+# @async_task
+# def generate_invoices():
+#     # invoices = Invoice.filter(recuring=True)
+#     # print(invoices)
+#     print('invoices')
+    
 
 # @shared_task
 # def generate_recurring_invoices():

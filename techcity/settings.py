@@ -44,6 +44,7 @@ THIRD_PARTY_APPS = [
     'django_celery_results',
     'celery',
     'django_extensions',
+    'django_q',
 ]
 
 LOCAL_APPS = [

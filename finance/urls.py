@@ -61,6 +61,8 @@ urlpatterns = [
 
     # withdrawals
     path('withdrawals/', cashWithdrawals, name='withdrawals'),
+    path('delete/withdrawal/<int:withdrawal_id>/', delete_withdrawal, name='delete_withdrawal'),
+    path('add/to/expense/', cash_withdrawal_to_expense, name='add_to_expense'),
     path('withdrawals/json/', cash_withdrawal_to_expense, name='withdraws_json'),
     
     # end of day

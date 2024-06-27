@@ -832,7 +832,7 @@
             const customers = await response.json();
 
             customersData.push(customers)
-            console.log(customers)
+            
             displayCustomers(customers);
         } catch (error) {
             console.error('Error fetching products:', error);
