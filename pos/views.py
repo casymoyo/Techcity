@@ -29,7 +29,6 @@ def pos(request):
             # validations
             try:
                 user = User.objects.get(code=user_code)
-                currency = Currency.objects.get(id=currency)
             except User.DoesNotExist:
                 messages.warning(request, 'Incorrect user code')
                 return redirect('pos:pos')
@@ -44,7 +43,7 @@ def pos(request):
                 'ecocash': Account.AccountType.ECOCASH,
             }
 
-            account_name = f"{request.user.branch} {withdrawal.currency.name} {'Cash'} Account"
+            account_name = f"{request.user.branch} {currency.name} {'Cash'} Account"
             
             try:
                 account = Account.objects.get(name=account_name, type=Account.AccountType.CASH)
