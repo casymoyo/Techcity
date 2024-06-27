@@ -84,3 +84,5 @@ def create_expense_cashbook_entry(sender, instance, **kwargs):
 @receiver(post_save, sender=CashTransfers)
 def create_cash_transfer_cashbook_entry(sender, instance, **kwargs):
     create_cashbook_entry(instance, f'Cash Transfer of {instance.amount} from {instance.from_branch.name}', debit=True, credit=False)
+
+#fffff
