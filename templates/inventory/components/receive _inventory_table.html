@@ -5,42 +5,99 @@
         width:70px;
     }
 </style>
-   <div class="table mt-2">
-        <!-- inventory table -->
-        <table class='table border table-striped table-hover rounded p-2'>
-            <thead class='bg-primary'>
-                <tr>
-                    <th>Name</th>
-                    <th>Quantity</th>
-                    <th>Source</th>
-                    <th>Destination</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for transfer in transfers %}
-                    <tr>
-                        <td><small>{{transfer.product.name}}</small></td>
-                        <td><small>{{transfer.quantity}}</small></td>
-                        <td><small>{{transfer.from_branch}}</small></td>
-                        <td><small>{{transfer.to_branch}}</small></td>
-                        <td>
-                            {% if transfer.received %}
-                                {{ transfer.description }}
-                            {% else %}
-                                <form method='post' class='px-1 d-flex'>
-                                    {% csrf_token %}
-                                    <input name='id' value={{transfer.id}} type='text' hidden/>
-                                    <input name='received' value='true' type='text' hidden/>
-                                    <input type='number' name='quantity' class='form-control number'/>
-                                    <span class='px-2'></span>
-                                    <button type="submit" class='btn btn-success btn-sm'>accept</button>
-                                </form>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-   </div>  
+{% include 'components/loader.html' %}
+<div class="table mt-2 table-scroll hidden">
+    <table class='table border table-striped table-hover rounded p-2'>
+        <thead class='bg-primary'>
+            <tr>
+                <th>Date</th>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>From</th>
+                <th>Received by</th>
+                <th>Actions / Status</th>
+            </tr>
+        </thead>
+        <tbody id="rTable">
+        </tbody>
+    </table>
+</div>
+<script>
+    let rData = [];
+    const loader = document.querySelector('#loader');
+    const tableEl = document.querySelector('.table-scroll');
+    const receiveTable = document.querySelector('#rTable');
+    const search = document.querySelector('#search');
+
+    $.ajax({
+        url: '{% url "inventory:receive_inventory_json" %}',
+        type: 'GET',
+        }).done(function(response) {
+            const receivedData = response;
+            rData.push(receivedData);
+            displayReceivedData(receivedData)
+        })
+    
+    search.addEventListener('input', ()=>{
+        const search_q = search.value
+        
+        receiveTable.innerHTML=''
+        displayReceivedData(searchFilter(search_q))
+    })
+
+    const searchFilter = (search_q) =>{
+        const queryLower = search_q.toLowerCase()
+        return rData[0].filter((item)=>{
+            const user = item.received_by__username ? item.received_by__username.toLowerCase() : '';
+            const date = item.date ? item.date.toString(): '';
+            const dateReceived = item.date ? item.date.toString(): '';
+            const branchName = item.from_branch__name ? item.from_branch__name.toLowerCase() : '';
+            const productName = item.product__name.toLowerCase();
+            const description = item.description ? item.description.toLowerCase() : ''
+            
+            console.log(description)
+            return(
+                productName.includes(queryLower) ||
+                user.includes(queryLower) ||
+                date.includes(queryLower) ||
+                branchName.includes(queryLower)||
+                description.includes(queryLower)||
+                dateReceived.includes(queryLower) 
+            )
+        })
+    }
+
+    function displayReceivedData(data){
+        loader.classList.add('hidden');
+        loader.classList.remove('d-flex')
+        tableEl.classList.remove('hidden')
+        
+        data.forEach((data)=>{
+            receiveTable.innerHTML += `
+            <tr>
+                <td><small>${new Date(data?.date).toLocaleString()}</small></td>
+                <td><small>${data?.product__name}</small></td>
+                    <td><small>${data?.quantity}</small></td>
+                    <td><small>${data?.from_branch__name}</small></td>
+                    <td><small>${data?.received_by__username} (${new Date(data?.date_received).toDateString()})</small></td>
+                    <td>
+                        ${data?.received ? `
+                            <small>${data.description}</small>
+                        `: `
+                            <form method='post' class='px-1 d-flex'>
+                                {% csrf_token %}
+                                <input name='id' value={data?.id}type='text' hidden/>
+                                <input name='received' value='true' type='text' hidden/>
+                                <input type='number' name='quantity' class='form-control number'/>
+                                <span class='px-2'></span>
+                                <button type="submit" class='btn btn-success btn-sm'>accept</button>
+                            </form>
+                            `
+                        }
+                    </td>
+            </tr>
+            `
+        })
+    }
+</script>
 {% endblock content %}

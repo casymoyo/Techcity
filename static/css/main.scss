@@ -47,6 +47,7 @@
     }
 }
 
+
 .receipt{
     // @font-face {
     //     font-family: 'adobe';
@@ -58,6 +59,23 @@
 }
 
 .techcity{
+    .hover-dark{
+        background:#333;
+        color:#fff;
+    }
+    .cursor-pointer{
+        cursor:pointer;
+    }
+    .hidden{
+        display:none;
+    }
+    .loader{
+        height:80vh;
+    }
+    .table-scroll{
+        @include overflow(80vh)
+    }
+
     .customer-table{
         @include overflow(80vh)
     }
@@ -193,6 +211,12 @@
     }
 
     .inventory{
+        #id_time_frame{
+            .col:hover{
+                background:#373f4c;
+                color:white;
+            }
+        }
         .card{
             border:none;
         }

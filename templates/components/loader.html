@@ -1,0 +1,9 @@
+{% load static%}
+{% block content %}
+<div class ='loader hidden d-flex align-items-center justify-content-center' id='loader'>
+    <div>
+        <img src='{% static "assets/loader.gif" %}' alt='loader' width='70px'/>
+        <p><small>loading data...</small></p>
+    </div>
+</div>
+{% endblock content %}

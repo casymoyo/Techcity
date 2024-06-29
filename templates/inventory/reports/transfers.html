@@ -1,69 +1,66 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    {% comment %} <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css"
-          integrity="sha512-SbiR/eusphKoMVVXysTKG/7VseWii+Y3FdHrt0EpKgpToZeemhqHeZeLWLhJutz/2ut2Vw1uQEj2MbRF+TVBUA=="
-          crossorigin="anonymous"
-          referrerpolicy="no-referrer" /> {% endcomment %}
+    {% block css %}
+        <link rel="stylesheet" href="{% static 'css/main.css'%}">
+        <link rel="stylesheet" href="{% static 'css/bootstrap/css/bootstrap.min.css'%}">
+        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+        <link href='{% static "assets/boxicons/css/boxicons.css"%}' rel='stylesheet'>
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    {% endblock css %}
 
     <title>Transfers</title>
 </head>
-{% comment %} <style>
-    .table-body{
-        margin-top: 10px;
-    }
-    hr{
-        border-color:#664147 !important;
-    }
-</style> {% endcomment %}
 <body class="container">
     <div class="row container mt-5">
         <small>{{report_date}}</small>
-        <div class="title">
+        {% comment %} <div class="title">
             <h3 style="text-align: center;">TechCity</h3>
-        </div>
+        </div> {% endcomment %}
         <div class="col-12">
             <h4>{{title}} </h4>
             <p>Date range: {{date_range}}</p>
             <hr style="border:1px solid #664147 !important;">
-            <table class='table border rounded p-2'>
-                <tr>
-                    <td>Date</td>
-                    <td>Product</td>
-                    <td>Quantity</td>
-                    <td>Source</td>
-                    <td>Destination</td>
-                    <td>Status</td>
-                </tr>
-                <tbody>
-                    {% for transfer in transfers %}
+            <div class='table-scroll'>
+                <table class='table border rounded p-2' style='border:0/5px solid black;'>
                     <tr>
-                        <td>{{transfer.date}}</td>
-                        <td>{{transfer.product.name}}</td>
-                        <td>{{transfer.quantity}}</td>
-                        <td>{{transfer.from_branch}}</td>
-                        <td>{{transfer.to_branch}}</td>
-                        <td>
-                            <span>
-                                {% if transfer.declined == False %}
-                                    {% if transfer.received == False %}
-                                        not yet received
-                                    {% else %}
-                                       <span class='text-success'>Recieved</span>
-                                    {% endif %}
-                                {% else %}
-                                    <span class='text-danger'>Declined</span>
-                                {% endif %}
-                            </span>
-                        </td>
+                        <td>Date</td>
+                        <td>Product</td>
+                        <td>Quantity</td>
+                        <td>Source</td>
+                        <td>Destination</td>
+                        <td>Status</td>
                     </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+                    <tbody>
+                        {% for transfer in transfers %}
+                        <tr>
+                            <td>{{transfer.date}}</td>
+                            <td>{{transfer.product.name}}</td>
+                            <td>{{transfer.quantity}}</td>
+                            <td>{{transfer.from_branch}}</td>
+                            <td>{{transfer.to_branch}}</td>
+                            <td>
+                                <span>
+                                    {% if transfer.declined == False %}
+                                        {% if transfer.received == False %}
+                                            not yet received
+                                        {% else %}
+                                           <span class='text-success'>Recieved</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class='text-danger'>Declined</span>
+                                    {% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </body>

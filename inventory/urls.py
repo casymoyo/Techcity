@@ -20,10 +20,11 @@ urlpatterns = [
     
     # transfers
     path('transfers', inventory_transfers, name='transfers'),
+    path('receive/transfer/', receive_inventory, name='receive_inventory'),
+    path('receive/transfer/json/', receive_inventory_json, name='receive_inventory_json'),
     path('over_less_list/', over_less_list_stock, name='over_less_list_stock'),
     path('delete/transfer/<int:transfer_id>/', delete_transfer, name='delete_transfer'),
     path('add/transfer/<str:transfer_ref>/', add_inventory_transfer, name='add_transfer'),
-    path('receive-inventory', receive_inventory, name='receive_inventory'),
     path('inventory-detail/<int:id>/', inventory_detail, name='inventory_detail' ),
     path('transfer/detail/<int:transfer_id>/', transfer_details, name='transfer_details'),
     path('process-transfer-cart/', ProcessTransferCartView.as_view(), name='process_transfer_cart'),

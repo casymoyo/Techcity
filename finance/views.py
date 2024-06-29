@@ -41,6 +41,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Finance(View):
+    # authentication
     template_name = 'finance/finance.html'
 
     def get(self, request, *args, **kwargs):
@@ -184,10 +185,10 @@ def create_expense_category(request):
         if ExpenseCategory.objects.filter(
             name__iexact=request.POST['name'] 
         ).exists():
-            return JsonResponse({'message': 'Category already exists.'})  
+            return JsonResponse({'message': 'Category already exists.'}, status=400)  
 
         if form.is_valid():
-            category = form.save()
+            form.save()
             return JsonResponse({
                 'message': 'Expense category created successfully!'
             })
@@ -195,7 +196,7 @@ def create_expense_category(request):
             return JsonResponse({
                 'errors': form.errors,  
                 'message': 'Expense category creation failed. Please check the errors.'
-            })
+            }, status=400)
         
     return JsonResponse({'message': 'Invalid request method.'}) 
 

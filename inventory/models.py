@@ -53,10 +53,10 @@ class Transfer(models.Model):
     transfer_to = models.ForeignKey(Branch, on_delete=models.CASCADE)
     description =  models.CharField(max_length=266)
     date = models.DateField(auto_now_add=True)
+    user = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True)
     
     @classmethod
     def generate_transfer_ref(self, branch, destination_branch):
-        print(branch, destination_branch)
         last_transfer = Transfer.objects.filter(branch__name=branch).order_by('-id').first()
         if last_transfer:
             if str(last_transfer.transfer_ref.split(':')[0])[-1] == branch[0]:
@@ -73,6 +73,8 @@ class Transfer(models.Model):
         return self.transfer_ref
 
 class TransferItems(models.Model):
+    date = models.DateTimeField(auto_now_add=True)
+    date_received = models.DateTimeField(auto_now_add=True)
     transfer = models.ForeignKey(Transfer, on_delete=models.CASCADE)
     from_branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='destination')
     to_branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='source')
@@ -85,6 +87,7 @@ class TransferItems(models.Model):
     over_less = models.BooleanField(default=False) 
     description = models.CharField(max_length=255, null=True, blank=True)
     over_less_description = models.CharField(max_length=255, null=True, blank=True)
+    received_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return f'{self.product.name} to {self.to_branch}'

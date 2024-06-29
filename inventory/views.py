@@ -1,4 +1,5 @@
 import json, datetime, openpyxl 
+from datetime import timedelta
 from openpyxl.styles import Alignment, Font, PatternFill
 from . models import *
 from decimal import Decimal
@@ -172,7 +173,6 @@ class ProcessTransferCartView(View):
                         to_branch= Branch.objects.get(name=item['to_branch']),
                     )            
                     transfer_item.save()
-                    print(transfer_item)
                     self.deduct_inventory(item, transfer_item)  
 
             return JsonResponse({'success': True})
@@ -185,7 +185,6 @@ class ProcessTransferCartView(View):
         
         branch_inventory.quantity -= int(item['quantity'])
         branch_inventory.save()
-        print(branch_inventory.quantity)
         self.activity_log('Transfer', branch_inventory,  item, transfer_item, )
         
     # def send_stock_notification(self, item):
@@ -226,7 +225,6 @@ def transfer_details(request, transfer_id):
     transfer = TransferItems.objects.filter(id=transfer_id).values(
         'product__name', 'transfer__transfer_ref', 'quantity', 'price', 'from_branch__name', 'to_branch__name'
     )
-    print(transfer)
     return JsonResponse(list(transfer), safe=False)
 
 @login_required
@@ -410,7 +408,7 @@ def inventory_transfers(request):
         transfers = transfers.filter(Q(transfer_ref__icontains=q) | Q(date__icontains=q) )
         
     if branch_id: 
-        transfers =transfers.filter(to_branch__id=branch_id)
+        transfers = transfers.filter(transfer_to__id=branch_id)
         
     if request.method == 'POST':
         form = addTransferForm(request.POST)
@@ -419,6 +417,7 @@ def inventory_transfers(request):
             transfer=form.save(commit=False)
             transfer_to = Branch.objects.get(id=int(request.POST['transfer_to']))
             transfer.branch = request.user.branch
+            transfer.user = request.user
             transfer.transfer_ref = Transfer.generate_transfer_ref(transfer.branch.name, transfer_to.name)
             
             transfer.save()
@@ -431,14 +430,10 @@ def inventory_transfers(request):
     
     
 @login_required
+@transaction.atomic
 def receive_inventory(request):
-    q = request.GET.get('q', '')
-    
-    transfers =  TransferItems.objects.filter(to_branch=request.user.branch)
-    
-    if q:
-        transfers = transfers.filter(Q(product__name__icontains=q) |Q(date__icontains=q)) 
-    
+    transfers =  TransferItems.objects.filter(to_branch=request.user.branch).order_by('-date')
+
     if request.method == 'POST':
         transfer_id = request.POST.get('id')  
 
@@ -488,6 +483,7 @@ def receive_inventory(request):
                         description = f'received {request.POST['quantity']} out of {branch_transfer.quantity}'
                     )
                     messages.success(request, 'Product received')
+            branch_transfer.received_by = request.user
             branch_transfer.received = True
             branch_transfer.description = f'received {request.POST['quantity']} out of {branch_transfer.quantity}'
             branch_transfer.save()
@@ -496,9 +492,25 @@ def receive_inventory(request):
         except Transfer.DoesNotExist:
             messages.error(request, 'Invalid transfer ID')
             return redirect('inventory:receive_inventory')  
-    print(transfers.values())
     return render(request, 'inventory/receive_inventory.html', {'transfers': transfers})
 
+@login_required
+def receive_inventory_json(request):
+    transfers =  TransferItems.objects.filter(to_branch=request.user.branch).order_by('-date')
+    if request.method ==  'GET':
+        transfers = transfers.values(
+            'id',
+            'date', 
+            'quantity',
+            'received', 
+            'description',
+            'date_received',
+            'product__name', 
+            'from_branch__name',
+            'received_by__username'
+        )
+        return JsonResponse(list(transfers), safe=False)
+    
 @login_required
 @transaction.atomic
 def over_less_list_stock(request):
@@ -799,49 +811,77 @@ def inventory_pdf(request):
 
 @login_required
 def transfers_report(request):
-    """Generates a PDF report of expenses based on filtered transfers."""
     
     template_name = 'inventory/reports/transfers.html'
-    product_id = request.GET.get('product', '')
-    branch_id = request.GET.get('branch', '')
-    end_date_str = request.GET.get('date_from', '') 
-    start_date_str = request.GET.get('date_to', '')
-    view = request.GET.get('view', '')
-    transfer_id = request.GET.get('transfer_id', '')
-    
-    
-    if start_date_str or end_date_str: 
-        try:
-            end_date = datetime.date.fromisoformat(end_date_str)
-            start_date = datetime.date.fromisoformat(start_date_str)
-        except ValueError:
-            messages.error(request, 'Invalid date format. Please use YYYY-MM-DD.')
-    else:
-        start_date = ''
-        end_date = ''
-        
-    try:
-        product_id = int(product_id) if product_id else None
-        branch_id = int(branch_id) if branch_id else None
-    except ValueError:
-        return JsonResponse({'messages':'Invalid product or branch ID.'})
 
-    transfers = Transfer.objects.filter()  
+    view = request.GET.get('view', '')
+    choice = request.GET.get('type', '') 
+    time_frame = request.GET.get('timeFrame', '')
+    branch_id = request.GET.get('branch', '')
+    product_id = request.GET.get('product', '')
+    transfer_id = request.GET.get('transfer_id', '')
+    print(time_frame)
+
+    transfers = TransferItems.objects.all().order_by('-date') 
+    
+    today = datetime.date.today()
+    
+
 
     if product_id:
         transfers = transfers.filter(product__id=product_id)
+        print(transfers, product_id)
     if branch_id:
         transfers = transfers.filter(to_branch_id=branch_id)
-    if start_date and end_date:
-        transfers = transfers.filter(date__range=(start_date, end_date))
+    
+    def filter_by_date_range(start_date, end_date):
+        return transfers.filter(date__range=[start_date, end_date])
+    
+    date_filters = {
+        'today': lambda: filter_by_date_range(today, today),
+        'yesterday': lambda: filter_by_date_range(today - timedelta(days=1), today - timedelta(days=1)),
+        'this week': lambda: filter_by_date_range(today - timedelta(days=today.weekday()), today),
+        'this month': lambda: transfers.filter(date__month=today.month, issue_date__year=today.year),
+        'this year': lambda: transfers.filter(date__year=today.year),
+    }
+    
+    if time_frame in date_filters:
+        transfers = date_filters[time_frame]()
         
-    if view or transfer_id:
-        return JsonResponse(list(TransferItems.objects.filter(transfer__id=transfer_id, transfer__branch=request.user.branch).values(
+    print(transfers)
+    if view:
+        return JsonResponse(list(transfers.values(
+                'date',
                 'product__name', 
                 'price',
                 'quantity', 
                 'from_branch__name',
+                'from_branch__id',
+                'to_branch__id',
                 'to_branch__name',
+                'received_by__username',
+                'date_received',
+                'description',
+                'received',
+                'declined'
+            )), 
+            safe=False
+        )
+    
+    if transfer_id:
+        print(transfer_id)
+        return JsonResponse(list(transfers.filter(id=transfer_id).values(
+                'date',
+                'product__name', 
+                'price',
+                'quantity', 
+                'from_branch__name',
+                'from_branch__id',
+                'to_branch__id',
+                'to_branch__name',
+                'received_by__username',
+                'date_received',
+                'description',
                 'received',
                 'declined'
             )), 
@@ -852,7 +892,7 @@ def transfers_report(request):
         template_name,
         {
             'title': 'Transfers', 
-            'date_range': f"{start_date} to {end_date}", 
+            'date_range': time_frame if time_frame else 'All',
             'report_date': datetime.date.today(),
             'transfers':transfers
         },

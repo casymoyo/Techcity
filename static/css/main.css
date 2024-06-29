@@ -3,6 +3,23 @@
   font-family: graphik;
   font-size: 0.9rem;
 }
+.techcity .hover-dark {
+  background: #333;
+  color: #fff;
+}
+.techcity .cursor-pointer {
+  cursor: pointer;
+}
+.techcity .hidden {
+  display: none;
+}
+.techcity .loader {
+  height: 80vh;
+}
+.techcity .table-scroll {
+  height: 80vh;
+  overflow-y: auto;
+}
 .techcity .customer-table {
   height: 80vh;
   overflow-y: auto;
@@ -175,6 +192,10 @@
 }
 .techcity .login {
   height: 100vh;
+}
+.techcity .inventory #id_time_frame .col:hover {
+  background: #373f4c;
+  color: white;
 }
 .techcity .inventory .card {
   border: none;

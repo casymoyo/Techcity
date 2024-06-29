@@ -76,14 +76,56 @@
         <div class="modal fade" id="transferModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-body">
-                        <div class="d-flex justify-content-between align-items-center py-2">
-                            <div class="fs-5 fw-bold">
-                                Create transfers report
+                    <div class="modal-body p-4">
+                        <div id="id_choice">
+                            <div class="row">
+                                <div class="col shadow bg-primary btn" data-name="All">
+                                    <div class="card bg-primary text-light d-flex align-items-center justify-content-center">
+                                        <div class="card-body" >
+                                            <p>All</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="px-1"></span>
+                                <div class="col btn bg-success mt-2 mb-2 shadow" data-name="Received">
+                                    <div class="card bg-success text-light d-flex align-items-center justify-content-center">
+                                        <div class="card-body">
+                                            <p>Received</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="px-1"></span>
+                                <div class="col btn bg-warning shadow" data-name="Over/Less">
+                                    <div class="card  bg-warning text-light d-flex align-items-center justify-content-center">
+                                        <div class="card-body">
+                                            <p>Over/Less</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <hr style="border: 1px solid #333 !important;">
                         </div>
-                        <form method="get" id='transfers'>
+                        <div id="id_time_frame" class="hidden">
+                            <div class="d-flex justify-content-between align-items center p-2">
+                                <button type="button" data-name='time' class="bx bx-home btn back fx-4"></button>
+                                <h5 class="fw-bold choice_name"></h5>
+                            </div>
+                            <div class="row flex-column text-center">
+                                <div class="col border cursor-pointer hover-dark rounded mb-2 p-3" data-name="">All</div>
+                                <div class="col border cursor-pointer hover-dark rounded mb-2 p-3" data-name="today">Today</div>
+                                <div class="col border cursor-pointer hover-dark rounded mb-2 p-3" data-name="yesterday">Yesterday</div>
+                                <div class="col border cursor-pointer hover-dark rounded mb-2 p-3" data-name="this week">This Week</div>
+                                <div class="col border cursor-pointer hover-dark rounded mb-2 p-3" data-name="this month">This Month</div>
+                                <div class="col border cursor-pointer hover-dark rounded mb-2 p-3" data-name="this year">This Year</div>
+                            </div>
+                        </div>
+                        <form method="get" id='form' class='hidden'>
+                            <div class="d-flex justify-content-between align-items center p-2">
+                                <div>
+                                    <button type="button" data-name='previous' class="bx bx-arrow-back back btn fx-4"></button>
+                                    <button type="button" data-name='choice' class="bx bx-home btn back fx-4"></button>
+                                </div>
+                                <h5 class="fw-bold choice_name"></h5>
+                            </div>
                             <div class='mb-2'>
                                 <label for="id_product">Select Product</label>
                                     <select
@@ -91,7 +133,6 @@
                                         name="branch"
                                         id="id_product"
                                     >
-                                        <option value="">------------</option>
                                         <option value="">All products</option>
                                         {% for product in inventory %}
                                             <option value="{{product.id}}">{{product.product.name}}</option>
@@ -105,7 +146,6 @@
                                     name="branch"
                                     id="id_branch"
                                 >
-                                    <option value="">------------</option>
                                     <option value="">All branches</option>
                                     {% for branch in branches %}
                                         {% if branch.name != request.user.branch.name %}
@@ -114,18 +154,10 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <small class="py-3">Choose dates</small>
-                            <div class='mb-2'>
-                                <label for="id_from">From</label>
-                                <input type="date" name="from" id="id_from" class="form-control">
-                            </div>
-                            <div class='mb-2'>
-                                <label for="id_to">To</label>
-                                <input type="date" name="to" id="id_to" class="form-control">
-                            </div>
                             <div class="d-flex justify-content-end mt-3">
                                 <button id='viewBtn' class="btn btn-secondary btn-sm" type="button">
-                                    view
+                                    <i class="bx bx-show"></i>
+                                    view report
                                 </button>
                             </div>
                         </form>
@@ -181,9 +213,63 @@
             const addTranferBtn = document.querySelector('#addTbtn');
             const addTransfer = new bootstrap.Modal(document.querySelector('#addTransfer'));
 
+            const transfersTable = document.querySelector('#transfersTable');
+            const transfersOutTable = document.querySelector('#transfersOutTable');
+
+            let type = '';
+            let timeFrame = '';
+            const choiceValueEl = document.querySelectorAll('.choice_name');
+            const backBtn = document.querySelectorAll('.back');
+
+            const choice = document.querySelector('#id_choice');
+            const colEls = choice.querySelectorAll('.col');
+
+            const time = document.querySelector('#id_time_frame');
+            const colElsTime = time.querySelectorAll('.col');
+
+            const form = document.querySelector('#form');
+
+
+            colEls.forEach((col)=>{
+                col.addEventListener('click', ()=>{
+                    type = col.dataset.name;
+                    choice.classList.add('hidden');
+                    time.classList.remove('hidden')
+                    choiceValueEl[0].textContent = type;
+                })
+            })
+
+            colElsTime.forEach((col)=>{
+                col.addEventListener('click', ()=>{
+                    timeFrame = col.dataset.name;
+                    choice.classList.add('hidden');
+                    time.classList.add('hidden');
+                    form.classList.remove('hidden');
+                    choiceValueEl[1].textContent = type + ' ' + `(${timeFrame})`;
+                })
+            })
+
+            backBtn.forEach((btn)=>{
+                btn.addEventListener('click',()=>{
+                    if (btn.dataset.name === 'time'){
+                        choice.classList.remove('hidden');
+                        time.classList.add('hidden');
+                    }else if (btn.dataset.name === 'previous'){
+                        choice.classList.add('hidden');
+                        time.classList.remove('hidden');
+                        form.classList.add('hidden');
+                    }else{
+                        choice.classList.remove('hidden');
+                        time.classList.add('hidden');
+                        form.classList.add('hidden');
+                    }
+                })
+            })
+
             addTranferBtn.addEventListener('click', ()=>{
                 addTransfer.show()
             })
+
 
             document.querySelector('.pdf-gen').addEventListener(
                 'click', ()=>{
@@ -193,11 +279,12 @@
 
             document.querySelector('#viewBtn').addEventListener(
                 'click', ()=>{
+                    transferModal.hide()
                     transferReportModal.show()
                     transfers()
                 }
             )
-            const transfersTable = document.querySelector('#transfersTable');
+            
 
             function transfers(){
                 $.ajax({
@@ -206,13 +293,13 @@
                     data:{
                         product: $('#id_product').val(),
                         branch: $('#id_branch').val(),
-                        date_from: $('#id_to').val(),
-                        date_to: $('#id_from').val(),
+                        type: type,
+                        timeFrame: timeFrame,
                         view: true,
                     } 
                     }).done(function(response) {
+                        console.log(response)
                         const data = response;
-                        console.log(data)
                         displayTransfersTable(data);
                     })
             } 
@@ -220,29 +307,55 @@
             function displayTransfersTable(data){
                 transfersTable.innerHTML = ''
                 data.forEach((data)=>{
-                    transfersTable.innerHTML +=`
-                    <tr>
-                        <td><small>${new Date(data.date).toLocaleDateString()}</small></td>
-                        <td><small>${data.product__name}</small></td>
-                        <td><small>${data.quantity}</small></td>
-                        <td><small>${data.from_branch__name}</small></td>
-                        <td><small>${data.to_branch__name}</small></td>
-                        <td>
-                            <span>
-                              ${data.declined ? (
-                                `<small class='text-danger'>Declined</small>`
-                              ) : (
-                                data.received ? (
-                                  `<small class='text-success'>Received</small>`
+                    if(data.to_branch__id === {{ request.user.branch.id }}){
+                        transfersTable.innerHTML +=`
+                        <tr>
+                            <td><small>${new Date(data.date).toLocaleDateString()}</small></td>
+                            <td><small>${data.product__name}</small></td>
+                            <td><small>${data.quantity}</small></td>
+                            <td><small>${data.from_branch__name}</small></td>
+                            <td><small>${data.received_by__username}</small></td>
+                            <td>
+                                <span>
+                                ${data.declined ? (
+                                    `<small class='text-danger'>Declined</small>`
                                 ) : (
-                                  `<small>Not yet received</small>`
-                                )
-                              )}
-                            </span>
-                          </td>
-                  
-                    </tr>
-                    `
+                                    data.received ? (
+                                    `<small>${data.description}</small>`
+                                    ) : (
+                                    `<small>Not yet received</small>`
+                                    )
+                                )}
+                                </span>
+                            </td>
+                    
+                        </tr>
+                        `
+                    }else if(data.from_branch__id === {{ request.user.branch.id }}){
+                        transfersOutTable.innerHTML +=`
+                            <tr>
+                                <td><small>${new Date(data.date).toLocaleDateString()}</small></td>
+                                <td><small>${data.product__name}</small></td>
+                                <td><small>${data.quantity}</small></td>
+                                <td><small>${data.to_branch__name}</small></td>
+                                <td><small>${data.received_by__username}</small></td>
+                                <td>
+                                    <span>
+                                    ${data.declined ? (
+                                        `<small class='text-danger'>Declined</small>`
+                                    ) : (
+                                        data.received ? (
+                                        `<small>${data.description}</small>`
+                                        ) : (
+                                        `<small>Not yet received</small>`
+                                        )
+                                    )}
+                                    </span>
+                                </td>
+                        
+                            </tr>
+                        `
+                    }
                 })
             }
             $('#downloadTransferReport').click(function(e) {

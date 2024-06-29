@@ -1,26 +1,41 @@
 {% load static%}
 {% block content %}
    <div class="inventory">
-        <h5 class='fw-bold'>Transfers</h5>
         <table class='table table-striped border rounded p-2'>
+            <h5 class='fw-bold'>{{ request.user.branch.name }} Transfers In</h5>
             <tr>
                 <thead>
                     <th>Date</th>
                     <th>Name</th>
                     <th>Quantity</th>
-                    <th>Source</th>
-                    <th>Destination</th>
-                    <th>Actions</th>
+                    <th>From</th>
+                    <th>Received by</th>
+                    <th>Status</th>
                 </thead>
             </tr>
             <tbody id='transfersTable'></tbody>
         </table>
+
+        <table class='table table-striped border rounded p-2'>
+            <h5 class='fw-bold'>{{ request.user.branch.name }} Transfers Out</h5>
+            <tr>
+                <thead>
+                    <th>Date</th>
+                    <th>Name</th>
+                    <th>Quantity</th>
+                    <th>to</th>
+                    <th>Received by</th>
+                    <th>Status</th>
+                </thead>
+            </tr>
+            <tbody id='transfersOutTable'></tbody>
+        </table>
         
         <div class=''>
             <div class="d-flex justify-content-end mt-3">
-                <button class="btn btn-secondary btn-sm" id="downloadTransferReport" type="button">
+                <button class="btn btn-secondary w-100 btn-sm" id="downloadTransferReport" type="button">
                     <i class='bx bx-download'></i>
-                    download
+                    pdf
                 </button>
             </div>        
         </div>

@@ -1,7 +1,7 @@
 {% load static%}
 {% block content %}
 <div class="table transfers-table mt-2">
-    <!-- inventory table -->
+    <div class='table-scroll'>
     <table class='table table-striped border table-hover rounded p-2'>
         <thead class='bg-primary'>
             <tr>
@@ -12,7 +12,7 @@
             </tr>
             </thead>
         <tbody>
-            {% for transfer in transfers %}
+                {% for transfer in transfers %}
                 <tr>
                     <td class='transfer-btn fw-bold' data-id={{ transfer.id }}><small>{{ transfer.date }}</small></td>
                     <td class='transfer-btn fw-bold' data-id={{ transfer.id }}><small>{{ transfer.transfer_ref }}</small></td>
@@ -46,7 +46,7 @@
                     {% endfor %}
                 </tbody>
             {% endfor %}
-
+            </div>
         </tbody>
     </table>
     <div class="modal fade" id="transferItemsModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
