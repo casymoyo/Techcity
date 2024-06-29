@@ -53,6 +53,7 @@ class Transfer(models.Model):
     transfer_to = models.ForeignKey(Branch, on_delete=models.CASCADE)
     description =  models.CharField(max_length=266)
     date = models.DateField(auto_now_add=True)
+    time = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True)
     
     @classmethod

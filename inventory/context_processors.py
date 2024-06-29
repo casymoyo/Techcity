@@ -1,11 +1,11 @@
-from . models import ProductCategory, Inventory, StockNotifications
+from . models import ProductCategory, Inventory, StockNotifications, TransferItems
 
 def product_category_list(request):
     return {'categories': ProductCategory.objects.all()}
 
 def product_list(request):
     if request.user.id != None:
-       return { 'inventory': Inventory.objects.filter(branch=request.user.branch)}
+       return { 'inventory': Inventory.objects.filter(branch=request.user.branch, status=True)}
     return {}
 
 def stock_notification_count(request):
@@ -14,5 +14,13 @@ def stock_notification_count(request):
            type='stock level',
            status=True,
            inventory__branch=request.user.branch
+        ).count()}
+    return {}
+
+def transfers(request):
+    if request.user.id != None:
+        return { 'transfers_count': TransferItems.objects.filter(
+           received=False,
+           to_branch=request.user.branch
         ).count()}
     return {}

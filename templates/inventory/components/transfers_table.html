@@ -1,32 +1,35 @@
 {% load static%}
 {% block content %}
 <div class="table transfers-table mt-2">
+    {% include 'components/loader.html' %}
     <div class='table-scroll'>
-    <table class='table table-striped border table-hover rounded p-2'>
+    <table class='table table-bordered border table-hover rounded hidden p-2' id='transfers'>
         <thead class='bg-primary'>
             <tr>
                 <th>Date</th>
                 <th>Trans Ref</th>
                 <th>Description</th>
                 <th>Destination</th>
+                <th>Done by</th>
             </tr>
             </thead>
         <tbody>
                 {% for transfer in transfers %}
-                <tr>
-                    <td class='transfer-btn fw-bold' data-id={{ transfer.id }}><small>{{ transfer.date }}</small></td>
-                    <td class='transfer-btn fw-bold' data-id={{ transfer.id }}><small>{{ transfer.transfer_ref }}</small></td>
-                    <td class='transfer-btn fw-bold' data-id={{ transfer.id }}><small>{{ transfer.description }}</small></td>
-                    <td class='transfer-btn fw-bold' data-id={{ transfer.id }}><small>{{ transfer.transfer_to }}</small></td>
+               <tr>
+                    <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.time }}</small></td>
+                    <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.transfer_ref }}</small></td>
+                    <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.description }}</small></td>
+                    <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.transfer_to }}</small></td>
+                    <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.user.username }}</small></td>
                 </tr>
                 <tbody  class='bg-primary'>
                     {% for item in transfer_items %}
                         {% if transfer.id == item.transfer.id %}
                                 <tr id="id_items" class="hidden">
                                     <td></td>
-                                    <td><small>{{ item.transfer.transfer_ref }}</small></td>
+                                    <td><small></small></td>
                                     <td ><small>{{ item.product.name }} x {{ item.quantity }}</small></td>
-                                    <td class='transfer-btn' data-id={{ transfer.id }}>
+                                    <td>
                                         <small>
                                             <span>
                                                 (
@@ -53,7 +56,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-body">
-                    <h5 class="fw-bold">Transfered Products</h5>
+                    <h5>Transfered Products</h5>
                     <table class='table table-striped border rounded p-2'>
                         <tr>
                             <thead>
@@ -75,7 +78,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-body">
-                    <h5 class="fw-bold">Delete Transfer</h5>
+                    <h5>Delete Transfer</h5>
                     <button class="btn btn-secondary w-100" onclick="deleteTransfer()">Yes</button>
                 </div>
             </div>
@@ -86,7 +89,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-body text-center">
-                    <h5 class="fw-bold">Transfer Successfully Deleted</h5>
+                    <h5>Transfer Successfully Deleted</h5>
                 </div>
             </div>
         </div>
@@ -99,6 +102,15 @@
 
     const expandBtn = document.querySelector('#id_expand')
     const itemsEl = document.querySelectorAll('#id_items')
+
+    const loader = document.querySelector('#loader');
+    const tableEl = document.querySelector('#transfers');
+
+    setTimeout(()=>{
+        loader.classList.add('hidden');
+        loader.classList.remove('d-flex')
+        tableEl.classList.remove('hidden')
+    }, 300)
 
     expandBtn.addEventListener('click', ()=>{
         itemsEl.forEach((el)=>{

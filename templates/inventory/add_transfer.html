@@ -120,27 +120,28 @@
    <script src="{% static 'js/productValidation.js'%}"></script>
 <script>
     let cart = [];
-    let prodData = []
+    let prodData = [];
+    let searchValue = '';
+    let prodQauntity = '';
+
+    $(document).ready(function() {
+      $('#id_product').select2(
+          {placeholder: 'Select Product'}
+      )
+      .on('change', function (e){
+           searchValue = $(this).val()
+           fetch(`/inventory/inventory/?name=${searchValue}`)
+          .then(response => response.json())
+          .then(data=>{
+            document.querySelector('#id_price').value=Number(data[0]?.price)
+            prodData.push(data)
+          })
+          .catch(error => console.error('Error:', error))
+      })
+     
+  })
 
     const successModal = new bootstrap.Modal(document.querySelector('#successModal'))
-    {% comment %} onst loaderModal = new bootstrap.Modal(document.querySelector('#branchModal')) {% endcomment %}
-
-    document.querySelector('#id_product').addEventListener(
-      'change', ()=>{
-        const prodElement = document.getElementById('id_product')
-        const prodSelectedOption = prodElement.options[prodElement.selectedIndex]
-        let name =  prodSelectedOption.textContent
-        name = name.split('[')[0]
-        
-        fetch(`/inventory/inventory/?name=${name}`)
-        .then(response => response.json())
-        .then(data=>{
-          document.querySelector('#id_price').value=Number(data[0]?.price)
-          prodData.push(data)
-        })
-        .catch(error => console.error('Error:', error))
-      }
-    )
 
     document.querySelector('#id_quantity').addEventListener(
       'input', ()=>{
@@ -231,11 +232,6 @@
       }
     
       updateCartDisplay(); 
-
-      //clear values
-      document.getElementById('id_price').value = 0
-      document.getElementById('id_quantity').value = 0
-
     }
     
     const removeItem = (el) => {
@@ -259,6 +255,9 @@
             successModal.show()
             cart = []; 
             updateCartDisplay();
+            setTimeout(()=>{
+              window.location.reload()
+            }, 1000)
           } else {
             alert(data.error)
           } 

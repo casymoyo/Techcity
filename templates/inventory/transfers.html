@@ -19,13 +19,12 @@
                     <div class='px-2'>
                         <a href='{% url 'inventory:receive_inventory' %}'  class="btn btn-success shadow">
                             Receive Stock
-                            <span class="badge badge-light ">{{transfers_count}}</span>
+                            <span class="badge badge-dark text-light circle-rounded lick">{{transfers_count}}</span>
                         </a>
                     </div>
                     <div>
-                        <a href='{% url 'inventory:over_less_list_stock' %}'  class="btn btn-warning shadow">
+                        <a href='{% url 'inventory:over_less_list_stock' %}'  class="btn btn-warning shadow flick">
                             Over/Less Received Stocks
-                            <span class="badge badge-light ">{{transfers_count}}</span>
                         </a>
                     </div>
                     <form method='get' class='px-2'>
@@ -82,15 +81,15 @@
                                 <div class="col shadow bg-primary btn" data-name="All">
                                     <div class="card bg-primary text-light d-flex align-items-center justify-content-center">
                                         <div class="card-body" >
-                                            <p>All</p>
+                                            <p>All Transfers</p>
                                         </div>
                                     </div>
                                 </div>
                                 <span class="px-1"></span>
-                                <div class="col btn bg-success mt-2 mb-2 shadow" data-name="Received">
+                                <div class="col shadow bg-success mt-2 mb-2 btn" data-name="partial">
                                     <div class="card bg-success text-light d-flex align-items-center justify-content-center">
-                                        <div class="card-body">
-                                            <p>Received</p>
+                                        <div class="card-body" >
+                                            <p>Transfers (by product or branch)</p>
                                         </div>
                                     </div>
                                 </div>
@@ -98,7 +97,7 @@
                                 <div class="col btn bg-warning shadow" data-name="Over/Less">
                                     <div class="card  bg-warning text-light d-flex align-items-center justify-content-center">
                                         <div class="card-body">
-                                            <p>Over/Less</p>
+                                            <p>Over/Less Transfers</p>
                                         </div>
                                     </div>
                                 </div>
@@ -110,7 +109,7 @@
                                 <h5 class="fw-bold choice_name"></h5>
                             </div>
                             <div class="row flex-column text-center">
-                                <div class="col border cursor-pointer hover-dark rounded mb-2 p-3" data-name="">All</div>
+                                <div class="col border cursor-pointer hover-dark rounded mb-2 p-3" data-name="All">All</div>
                                 <div class="col border cursor-pointer hover-dark rounded mb-2 p-3" data-name="today">Today</div>
                                 <div class="col border cursor-pointer hover-dark rounded mb-2 p-3" data-name="yesterday">Yesterday</div>
                                 <div class="col border cursor-pointer hover-dark rounded mb-2 p-3" data-name="this week">This Week</div>
@@ -135,7 +134,7 @@
                                     >
                                         <option value="">All products</option>
                                         {% for product in inventory %}
-                                            <option value="{{product.id}}">{{product.product.name}}</option>
+                                            <option value="{{ product.product.id }}">{{product.product.name}}</option>
                                         {% endfor %}
                                     </select>
                             </div>
@@ -229,13 +228,27 @@
 
             const form = document.querySelector('#form');
 
-
+            $(document).ready(function() {
+                const transfersCount = parseInt($('.flick').text()); 
+              
+                if (transfersCount > 0) {
+                  $('.btn-success.flick').addClass('animated infinite flash'); 
+                }
+              });
+              
             colEls.forEach((col)=>{
                 col.addEventListener('click', ()=>{
                     type = col.dataset.name;
-                    choice.classList.add('hidden');
-                    time.classList.remove('hidden')
-                    choiceValueEl[0].textContent = type;
+
+                    if (type === 'All'){
+                        transfers()
+                        choice.classList.add('hidden')
+                        transferReportModal.show()
+                    }else{
+                        choice.classList.add('hidden');
+                        time.classList.remove('hidden')
+                        choiceValueEl[0].textContent = type;
+                    }
                 })
             })
 
@@ -285,7 +298,6 @@
                 }
             )
             
-
             function transfers(){
                 $.ajax({
                     url: '{% url "inventory:transfers_report" %}',
@@ -306,6 +318,7 @@
 
             function displayTransfersTable(data){
                 transfersTable.innerHTML = ''
+                transfersOutTable.innerHTML = ''
                 data.forEach((data)=>{
                     if(data.to_branch__id === {{ request.user.branch.id }}){
                         transfersTable.innerHTML +=`

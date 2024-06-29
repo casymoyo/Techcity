@@ -3,6 +3,10 @@
   font-family: graphik;
   font-size: 0.9rem;
 }
+.techcity .transfer-btn {
+  background-color: #0d6efd !important;
+  color: white;
+}
 .techcity .hover-dark {
   background: #333;
   color: #fff;
@@ -202,9 +206,6 @@
 }
 .techcity .inventory .add-product .add-product-nav {
   height: 56px;
-}
-.techcity .inventory .badge {
-  color: #ff6600 !important;
 }
 .techcity .inventory .table-detail {
   table-layout: fixed;

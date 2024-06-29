@@ -2,7 +2,8 @@
 {% block content %}
    <div class="table mt-2">
         <!-- inventory table -->
-        <table class='table border table-striped table-hover rounded p-2'>
+         {% include 'components/loader.html' %}
+        <table class='table border table-bordered table-striped table-hover rounded p-2 hidden' id='inventory'>
             <thead>
                 <tr>
                     <th>Name</th>
@@ -35,7 +36,7 @@
         <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-body" id='payment_content'>
+                    <div class="modal-body texr-center" id='payment_content'>
                         <p class="h5 fw-bold">Success</p>
                     </div>
                 </div>
@@ -51,12 +52,14 @@
         const modal = new bootstrap.Modal(document.querySelector('#deleteModal'));
         const successModal = new bootstrap.Modal(document.querySelector('#successModal'));
         const deleteButtons = document.querySelectorAll('#delete');
+        const loader = document.querySelector('#loader');
+        const tableEl = document.querySelector('#inventory');
 
         const inventoryTable = document.querySelector('#inventory_table');
 
         const productId=(element)=>{
-            console.log(element)
             product_id = element.dataset.id
+            modal.show()
         }
 
         deleteButtons.forEach((button)=>{
@@ -107,6 +110,10 @@
         )
 
         function displayProductTable(data){
+            loader.classList.add('hidden');
+            loader.classList.remove('d-flex')
+            tableEl.classList.remove('hidden')
+
             data.forEach((data)=>{
                 inventoryTable.innerHTML += `
                 <tr>
@@ -127,7 +134,7 @@
                                     </a>
                                 </span>
                                 <span>
-                                    <span id='delete' data-id="${data?.product__id}" onclick="productId(this)" class="text-dark">
+                                    <span id='delete' data-id="${data?.id}" onclick="productId(this)" class="text-dark">
                                         <i class='bx bx-trash-alt'></i>
                                     </span>
                                 </span>

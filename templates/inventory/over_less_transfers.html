@@ -19,7 +19,8 @@
             </nav>
         </div>
         <div>
-            <table class='table border table-striped table-hover rounded p-2'>
+            {% include 'components/loader.html' %}
+            <table class='table border table-bordered table-striped table-hover rounded p-2' id='over_less_transfers'>
                 <thead class='bg-primary'>
                     <tr>
                         <th>Name</th>
@@ -31,21 +32,23 @@
                 </thead>
                 <tbody>
                     {% for transfer in over_less_transfers %}
-                        <tr>
-                            <td><small>{{ transfer.product.name }}</small></td>
-                            <td><small>{{ transfer.over_less_quantity }}</small></td>
-                            <td><small>{{ transfer.from_branch }}</small></td>
-                            <td><small>{{ transfer.to_branch }}</small></td>
-                            {% if transfer.over_less == False %}
-                                <td><small>{{ transfer.over_less_description }}</small></td>
-                            {% else %}
-                                <td>
-                                    <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="accept" class='btn btn-success btn-sm btn-primary'>return back</button></small>
-                                    <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="write_off" class='btn btn-success btn-sm btn-danger'>write off</button></small>
-                                    <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="back" class='btn btn-success btn-sm btn-dark'>send back</button></small>
-                                </td>
-                            {% endif %}
-                        </tr>
+                        {% if transfer.quanity < 0 %}
+                            <tr>
+                                <td><small>{{ transfer.product.name }}</small></td>
+                                <td><small>{{ transfer.over_less_quantity }}</small></td>
+                                <td><small>{{ transfer.from_branch }}</small></td>
+                                <td><small>{{ transfer.to_branch }}</small></td>
+                                {% if transfer.over_less == False %}
+                                    <td><small>{{ transfer.over_less_description }}</small></td>
+                                {% else %}
+                                    <td>
+                                        <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="accept" class='btn btn-success btn-sm btn-primary'>return back</button></small>
+                                        <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="write_off" class='btn btn-success btn-sm btn-danger'>write off</button></small>
+                                        <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="back" class='btn btn-success btn-sm btn-dark'>send back</button></small>
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
@@ -96,6 +99,15 @@
     const formBtn = document.querySelectorAll('#formBtn');
     const loaderModal = new bootstrap.Modal(document.querySelector('#loaderModal'));
     const defectiveFormModal = new bootstrap.Modal(document.querySelector('#dFormModal'));
+
+    const loader = document.querySelector('#loader');
+    const tableEl = document.querySelector('#over_less_transfers');
+
+    setTimeout(()=>{
+        loader.classList.add('hidden');
+        loader.classList.remove('d-flex')
+        tableEl.classList.remove('hidden')
+    }, 300)
 
     formBtn.forEach((btn)=>{
         btn.addEventListener('click', ()=>{

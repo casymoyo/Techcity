@@ -17,63 +17,25 @@
                                 id="search"
                                 name="q"
                                 type="search"
-                                value="{{search_query}}"
                                 class="form-control"
                                 placeholder="search..."
                             />
                         </div>
                     </form>
-                    <span class="px-1"></span>
-                    <form method="get" class="d-flex">
-                        <select name="branches" value='{{branch}}' class="form-control" id='id_branches'>
-                            <option value="">All Branches</option>
-                            {% for branches in branches %}
-                                <option value="{{ branches.id }}">{{ branches.name }}</option>
-                            {% endfor %}
-                        </select>
-                        <span class="px-1"></span>
-                        <button type="submit" class="btn btn-light btn-sm">
-                            <i class="bx bx-filter"></i>
-                        </button>
-                    </form>
-                    <span class="px-1"></span>
-                    <form method="get" class="d-flex">
-                        <select name="category" value='{{category}}' class="form-control" id='id_category'>
-                            <option value="">All Categories</option>
-                            <option value='inactive'>Inactive</option>
-                            {% for category in categories %}
-                                <option value="{{ category.id }}">{{ category.name }}</option>
-                            {% endfor %}
-                        </select>
-                        <span class="px-1"></span>
-                        <button type="submit" class="btn btn-light btn-sm">
-                            <i class="bx bx-filter"></i>
-                        </button>
-                    </form>
                 </div>
             </nav>
         </div>
         <div class="table mt-2">
-                <!-- inventory table -->
-                <table class='table border rounded p-2 table-striped'>
+            <!-- {% include 'components/loader.html'%} -->
+                <table class='table border rounded p-2 table-striped' id="invTab">
                     <tr>
                         <th>Name</th>
                         <th>Quantity</th>
                         <th>Price</th>
                         <th>Branch</th>
                     </tr>
-                    <tbody>
-                        {% for product in branches_inventory %}
-                            <tr>
-                                <td>{{product.product.name}}</td>
-                                <td>{{product.quantity}}</td>
-                                <td>${{product.price}}</td>
-                                <td>{{product.branch}}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
+                    <tbody id="branchTable"></tbody>
                 </table>
-                
                 <!-- delete modal -->
                 <div class="delete-modal hidden">
                     <div class="modal-content d-flex justify-content-center align-items-center mt-5">
@@ -93,4 +55,58 @@
                 <div class="overlay hidden"></div>
         </div> 
     </div>
+<script>
+    let inventoryData = []
+    const branchTable = document.querySelector('#branchTable')
+    const search = document.querySelector('#search');
+    const loader = document.querySelector('#loader');
+    const invTab = document.querySelector('#invTab');
+
+    $.ajax({
+        url: '{% url "inventory:branches_inventory_json" %}',
+        }).done(function(response) {
+            const data = response;
+            inventoryData.push(data)
+            displayInventoryTable(data);
+        })
+
+    
+    search.addEventListener('input', ()=>{
+        const search_q = search.value
+        
+        branchTable.innerHTML=''
+        displayInventoryTable(searchFilter(search_q))
+    })
+
+    const searchFilter = (search_q) =>{
+        const queryLower = search_q.toLowerCase()
+        return inventoryData[0].filter((item)=>{
+            const quantity = item.quantiy ? item.quantity.toString(): '';
+            const branchName = item.branch__name ? item.branch__name.toLowerCase() : '';
+            const productName = item.product__name.toLowerCase();
+            const cost = item.cost ? item.cost.toLowerCase() : ''
+
+            return(
+                productName.includes(queryLower) ||
+                quantity.includes(queryLower) ||
+                branchName.includes(queryLower)||
+                cost.includes(queryLower)
+            )
+        })
+    }
+
+    function displayInventoryTable(data){
+        data.forEach((data)=>{
+            branchTable.innerHTML += `
+            <tr>
+                <td><small>${data?.product__name}</small></td>
+                <td><small>${data?.quantity}</small></td>
+                <td><small>${data?.price}</small></td>
+                <td><small>${data?.branch__name}</small></td>
+            </tr>
+            `
+        })
+    }
+
+</script>
 {% endblock content %}

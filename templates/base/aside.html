@@ -28,6 +28,12 @@
                     <a href='{% url 'inventory:transfers' %}'>
                         <i class='bx bx-transfer-alt' ></i>
                         <span class='px-2'>Transfers</span>
+                       
+                        {% if transfers_count > 0 %}
+                            <span class='badge circle-rounded bg-danger'>
+                                <small>{{transfers_count}}</small>
+                            </span>
+                        {% endif %}
                     </a>
                 </li>
                 

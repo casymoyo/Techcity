@@ -59,6 +59,10 @@
 }
 
 .techcity{
+    .transfer-btn{
+        background-color:#0d6efd !important;
+        color:white;
+    }
     .hover-dark{
         background:#333;
         color:#fff;
@@ -224,9 +228,6 @@
             .add-product-nav{
                 height: 56px;
             }
-        }
-        .badge{
-            color: #ff6600 !important;
         }
         .table-detail{ 
             table-layout: fixed; 

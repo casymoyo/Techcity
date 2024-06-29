@@ -97,12 +97,12 @@ TEMPLATES = [
                 "inventory.context_processors.product_list",
                 "inventory.context_processors.product_category_list",     
                 "inventory.context_processors.stock_notification_count",
+                "inventory.context_processors.transfers",
                 
                 #finance
                 "finance.context_processors.client_list",
                 "finance.context_processors.currency_list",
                 "finance.context_processors.expense_category_list",
-                
             ],
         },
     },

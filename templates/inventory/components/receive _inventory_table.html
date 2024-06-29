@@ -7,7 +7,7 @@
 </style>
 {% include 'components/loader.html' %}
 <div class="table mt-2 table-scroll hidden">
-    <table class='table border table-striped table-hover rounded p-2'>
+    <table class='table border table-striped table-bordered table-hover rounded p-2'>
         <thead class='bg-primary'>
             <tr>
                 <th>Date</th>
@@ -41,7 +41,7 @@
     search.addEventListener('input', ()=>{
         const search_q = search.value
         
-        receiveTable.innerHTML=''
+        receiveTable.innerHTML=''; 
         displayReceivedData(searchFilter(search_q))
     })
 
@@ -86,7 +86,7 @@
                         `: `
                             <form method='post' class='px-1 d-flex'>
                                 {% csrf_token %}
-                                <input name='id' value={data?.id}type='text' hidden/>
+                                <input name='id' value=${data?.id} type='text' hidden/>
                                 <input name='received' value='true' type='text' hidden/>
                                 <input type='number' name='quantity' class='form-control number'/>
                                 <span class='px-2'></span>

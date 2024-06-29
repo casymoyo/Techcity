@@ -64,30 +64,14 @@ def product_list(request):
 
 @login_required
 def branches_inventory(request):
-    search_query = request.GET.get('q', '')
-    branch = request.GET.get('branches', '')
-    category = request.GET.get('category', '')
-    
-    branches_inventory = Inventory.objects.filter(status=True)
-    
-    if search_query:
-         branches_inventory = branches_inventory.filter(Q(product__name__icontains=search_query))
-        
-    if branch:
-        branches_inventory = branches_inventory.filter(branch__id=branch)
-        
-    if category:
-        if category == 'inactive':
-            branches_inventory = branches_inventory.filter(status=False)
-        else:
-            branches_inventory = branches_inventory.filter(product__category__id=category)
-    
-    return render(request, 'inventory/branches_inventory.html', {
-        'branches_inventory':branches_inventory,
-        'branch':branch, 
-        'search_query':search_query,
-        'category':category
-    })
+    return render(request, 'inventory/branches_inventory.html')
+
+@login_required
+def branches_inventory_json(request):
+    branches_inventory = Inventory.objects.filter(status=True).values(
+        'product__name', 'price', 'quantity', 'branch__name'
+    )
+    return JsonResponse(list(branches_inventory), safe=False)
         
 class AddProductView(View):
     form_class = AddProductForm()
@@ -401,7 +385,7 @@ def inventory_transfers(request):
     q = request.GET.get('q', '') 
     branch_id = request.GET.get('branch', '')
 
-    transfers = Transfer.objects.filter(branch=request.user.branch).order_by('-date')
+    transfers = Transfer.objects.filter(branch=request.user.branch).order_by('-time')
     transfer_items = TransferItems.objects.all()
     
     if q:
@@ -440,6 +424,11 @@ def receive_inventory(request):
         try:
             branch_transfer = get_object_or_404(transfers, id=transfer_id)
 
+            # validation
+            if int(request.POST['quantity']) > branch_transfer.quantity:
+                messages.error(request, 'Quantity received cannot be more than quanity transfered') 
+                return redirect('inventory:receive_inventory')
+                
             if request.POST['received'] == 'true':
                 if int(request.POST['quantity']) != int(branch_transfer.quantity):
                     branch_transfer.over_less_quantity =  branch_transfer.quantity - int(request.POST['quantity']) 
@@ -544,7 +533,9 @@ def over_less_list_stock(request):
         transfer_id = data['transfer_id']
         reason = data['reason']
         status = data['status']
+        quantity = data['quantity']
         
+        # if quantity
         branch_transfer = get_object_or_404(transfers, id=transfer_id)
         product = Inventory.objects.get(product=branch_transfer.product, branch=request.user.branch)
        
@@ -676,12 +667,12 @@ def add_inventory_transfer(request, transfer_ref):
 @login_required
 @admin_required
 def delete_inventory(request):
-    """Deletes an inventory item. """
+    product_id = request.GET.get('product_id', '')
     
-    product_id = request.GET.get('product_id')
-    inv = Inventory.objects.get(id=product_id, branch=request.user.branch)
-    inv.status = False
-    inv.save()
+    if product_id:
+        inv = Inventory.objects.get(id=product_id, branch=request.user.branch)
+        inv.status = False
+        inv.save()
     
     ActivityLog.objects.create(
             branch = request.user.branch,
@@ -820,20 +811,28 @@ def transfers_report(request):
     transfer_id = request.GET.get('transfer_id', '')
     print(time_frame)
 
-    transfers = TransferItems.objects.all().order_by('-date') 
+    transfers = TransferItems.objects.filter().order_by('-date') 
     
     today = datetime.date.today()
+    
+    if choice == 'All':
+        pass
+    
+    if choice in ['All', '', 'Over/Less']:
+        transfers = transfers
     
     if product_id:
         transfers = transfers.filter(product__id=product_id)
         print(transfers, product_id)
     if branch_id:
+        print(branch_id)
         transfers = transfers.filter(to_branch_id=branch_id)
     
     def filter_by_date_range(start_date, end_date):
         return transfers.filter(date__range=[start_date, end_date])
     
     date_filters = {
+        'All': lambda: transfers, 
         'today': lambda: filter_by_date_range(today, today),
         'yesterday': lambda: filter_by_date_range(today - timedelta(days=1), today - timedelta(days=1)),
         'this week': lambda: filter_by_date_range(today - timedelta(days=today.weekday()), today),
@@ -841,10 +840,13 @@ def transfers_report(request):
         'this year': lambda: transfers.filter(date__year=today.year),
     }
     
+    print(time_frame, transfers)
+    
     if time_frame in date_filters:
+        print(time_frame)
         transfers = date_filters[time_frame]()
         
-    print(transfers)
+    # print(transfers)
     if view:
         return JsonResponse(list(transfers.values(
                 'date',

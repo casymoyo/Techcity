@@ -17,6 +17,7 @@ urlpatterns = [
     path('product/json/', inventory_index_json, name='inventory_index_json'),
     path('edit-inventory/<str:product_name>/', edit_inventory, name='edit_inventory'),
     path('defective_product_list/', defective_product_list, name='defective_product_list'),
+    path('inventory/branches/json', branches_inventory_json, name='branches_inventory_json'),
     
     # transfers
     path('transfers', inventory_transfers, name='transfers'),

@@ -19,7 +19,7 @@ class addCategoryForm(forms.ModelForm):
 class addTransferForm(forms.ModelForm):
     class Meta:
         model = Transfer
-        exclude = ['transfer_ref', 'branch']
+        exclude = ['transfer_ref', 'branch', 'user']
         
 
 class DefectiveForm(forms.ModelForm):
