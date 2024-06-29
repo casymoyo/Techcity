@@ -788,8 +788,6 @@ def reoder_list(request):
 
 @login_required
 def inventory_pdf(request):
-    """Generates a PDF report of inventory items, optionally filtered by category."""
-    
     template_name = 'inventory/reports/inventory_pdf.html'
     category = request.GET.get('category', '')
 
@@ -826,8 +824,6 @@ def transfers_report(request):
     
     today = datetime.date.today()
     
-
-
     if product_id:
         transfers = transfers.filter(product__id=product_id)
         print(transfers, product_id)
