@@ -44,7 +44,6 @@ THIRD_PARTY_APPS = [
     'django_celery_results',
     'celery',
     'django_extensions',
-    'django_q',
 ]
 
 LOCAL_APPS = [
@@ -275,6 +274,7 @@ CELERY_BEAT_SCHEDULE = {
 # EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 # EMAIL_USE_TLS = env('EMAIL_USE_TLS')
 # EMAIL_USE_SSL = env('EMAIL_USE_SSL')
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  
 EMAIL_HOST = 'mail.techcity.co.zw'  
 EMAIL_PORT = 465  
