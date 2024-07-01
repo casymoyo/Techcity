@@ -436,7 +436,7 @@ def receive_inventory(request):
 
         try:
             branch_transfer = get_object_or_404(transfers, id=transfer_id)
-            transfer_obj = get_object_or_404(all_transfers, cid=branch_transfer.transfer.id)
+            transfer_obj = get_object_or_404(all_transfers, id=branch_transfer.transfer.id)
             # validation
             if int(request.POST['quantity']) > branch_transfer.quantity:
                 messages.error(request, 'Quantity received cannot be more than quanity transfered') 

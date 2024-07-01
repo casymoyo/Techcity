@@ -20,13 +20,14 @@
         </div>
         <div>
             {% include 'components/loader.html' %}
-            <table class='table border table-bordered table-striped table-hover rounded p-2' id='over_less_transfers'>
+            <table class='table border table-bordered table-striped table-hover rounded p-2' style='width:100%' id='over_less_transfers'>
                 <thead class='bg-primary'>
                     <tr>
                         <th>Date</th>
                         <th>Name</th>
                         <th>Quantity</th>
-                        <th>From</th>
+                        <th>Source</th>
+                        <th>Destination</th>
                         <th>By</th>
                         <th>Actions</th>
                     </tr>
@@ -40,6 +41,7 @@
                                 <td><small>{{ transfer.product.name }}</small></td>
                                 <td><small>{{ transfer.over_less_quantity }}</small></td>
                                 <td><small>{{ transfer.from_branch }}</small></td>
+                                <td><small>{{ transfer.to_branch }}</small></td>
                                 <td>
                                     {% if transfer.action_by %}
                                         <small>{{ transfer.action_by }}</small>
@@ -51,9 +53,9 @@
                                     <td><small>{{ transfer.over_less_description }}</small></td>
                                 {% else %}
                                     <td>
-                                        <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="accept" class='btn btn-success btn-sm btn-primary'>return back</button></small>
+                                        <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="accept" class='btn btn-success btn-sm btn-primary'>return back </button></small>
                                         <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="write_off" class='btn btn-success btn-sm btn-danger'>write off</button></small>
-                                        <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="back" class='btn btn-success btn-sm btn-dark'>send back</button></small>
+                                        <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="back" class='btn btn-success btn-sm btn-dark'>send back </button></small>
                                     </td>
                                 {% endif %}
                             </tr>
@@ -104,6 +106,8 @@
     let action = '';
     let transfer_id = '';
     let data = [];
+
+    new DataTable('#over_less_transfers')
 
     const formBtn = document.querySelectorAll('#formBtn');
     const loaderModal = new bootstrap.Modal(document.querySelector('#loaderModal'));

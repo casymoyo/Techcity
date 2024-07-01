@@ -29,7 +29,7 @@
                                     <span class='hint--bottom' aria-label='All received'>
                                         <i class='bx bxs-circle text-success fs-3' ></i>
                                     </span>
-                                {% elif transfer.quantity < transfer.total_quantity_track and transfer.quantity > 0  %}
+                                {% elif transfer.total_quantity_track < transfer.quantity   and transfer.quantity > 0 %}
                                     <span class='hint--bottom' aria-label='Partial'>
                                         <i class='bx bxs-circle text-warning fs-3'></i>
                                     </span>
