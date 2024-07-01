@@ -1,7 +1,7 @@
 import random, string
 from django.db import models
 from company.models import Branch
-from django.db.utils import IntegrityError
+from django.db.models import Sum
 
 
 class ProductCategory(models.Model):
@@ -55,6 +55,9 @@ class Transfer(models.Model):
     date = models.DateField(auto_now_add=True)
     time = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True)
+    quantity =  models.IntegerField(default=0, null=True)
+    total_quantity_track = models.IntegerField(default=0, null=True)
+    defective_status = models.BooleanField(default=False)
     
     @classmethod
     def generate_transfer_ref(self, branch, destination_branch):
@@ -69,6 +72,7 @@ class Transfer(models.Model):
         else:
             new__reference_number = 1
             return f"{branch[:1]}:{destination_branch[:1]}-{new__reference_number:04d}"  
+    
     
     def __str__(self):
         return self.transfer_ref
@@ -85,7 +89,9 @@ class TransferItems(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     received = models.BooleanField(default=False)
     declined = models.BooleanField(default=False) 
-    over_less = models.BooleanField(default=False) 
+    over_less = models.BooleanField(default=False)
+    action_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, related_name='over_less_admin')
+    quantity_track = models.IntegerField(default=0, null=True)
     description = models.CharField(max_length=255, null=True, blank=True)
     over_less_description = models.CharField(max_length=255, null=True, blank=True)
     received_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True)
@@ -98,12 +104,12 @@ class DefectiveProduct(models.Model):
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     quantity = models.IntegerField()
     date = models.DateField(auto_now_add=True)
+    branch_loss = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='loss')
     reason = models.TextField()
     status = models.CharField(max_length=50, choices=[
-        ('pending','Pending'),
-        ('repaired', 'Repaired'),
-        ('replaced', 'Replaced'),
-        ('scrapped', 'Scrapped')
+        ('lost in transit','Lost in transit'),
+        ('stolen', 'stolen'),
+        ('damaged', 'Damage'),
     ])
     
     def __str__(self):

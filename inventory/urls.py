@@ -15,7 +15,7 @@ urlpatterns = [
     path('add_category/', add_product_category, name='add_product_category'),
     path('inventory/branches/', branches_inventory, name='branches_inventory'),
     path('product/json/', inventory_index_json, name='inventory_index_json'),
-    path('edit-inventory/<str:product_name>/', edit_inventory, name='edit_inventory'),
+    path('edit/<str:product_name>/', edit_inventory, name='edit_inventory'),
     path('defective_product_list/', defective_product_list, name='defective_product_list'),
     path('inventory/branches/json', branches_inventory_json, name='branches_inventory_json'),
     
@@ -26,7 +26,7 @@ urlpatterns = [
     path('over_less_list/', over_less_list_stock, name='over_less_list_stock'),
     path('delete/transfer/<int:transfer_id>/', delete_transfer, name='delete_transfer'),
     path('add/transfer/<str:transfer_ref>/', add_inventory_transfer, name='add_transfer'),
-    path('inventory-detail/<int:id>/', inventory_detail, name='inventory_detail' ),
+    path('detail/<int:id>/', inventory_detail, name='inventory_detail' ),
     path('transfer/detail/<int:transfer_id>/', transfer_details, name='transfer_details'),
     path('process-transfer-cart/', ProcessTransferCartView.as_view(), name='process_transfer_cart'),
     

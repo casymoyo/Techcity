@@ -12,7 +12,7 @@ from utils.utils import generate_pdf
 from django.http import JsonResponse, HttpResponse
 from asgiref.sync import async_to_sync
 from finance.models import StockTransaction
-from channels.layers import get_channel_layer 
+from channels.layers import get_channel_layer
 from . utils import calculate_inventory_totals
 from . forms import AddProductForm, addCategoryForm, addTransferForm, DefectiveForm, RestockForm
 from django.contrib.auth.decorators import login_required
@@ -147,6 +147,7 @@ class ProcessTransferCartView(View):
             with transaction.atomic():
                 cart_data = json.loads(request.body)
                 transfer=Transfer.objects.get(id=cart_data['transfer_id'])
+                
                 for item in cart_data['cart']:
                     transfer_item = TransferItems(
                         transfer=transfer,
@@ -157,33 +158,25 @@ class ProcessTransferCartView(View):
                         to_branch= Branch.objects.get(name=item['to_branch']),
                     )            
                     transfer_item.save()
-                    self.deduct_inventory(item, transfer_item)  
+                    self.deduct_inventory(item, transfer_item)
+                    self.transfer_update_quantity(transfer_item, transfer)  
 
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
 
     def deduct_inventory(self, item, transfer_item):
-        
         branch_inventory = Inventory.objects.get(product__name=item['product'], branch__name=item['from_branch'])
         
         branch_inventory.quantity -= int(item['quantity'])
         branch_inventory.save()
         self.activity_log('Transfer', branch_inventory,  item, transfer_item, )
         
-    # def send_stock_notification(self, item):
-    #     print('here')
-    #     channel_layer = get_channel_layer()
-    #     async_to_sync(channel_layer.group_send)(
-    #         f"branch_{item['to_branch']}",  
-    #         {
-    #             "type": "stock_transfer",
-    #             "message": f'Stock transfer from {item['from_branch']} ',
-    #         }
-    #     )
-    
-        
-        
+    def transfer_update_quantity(self, transfer_item, transfer):
+        transfer = Transfer.objects.get(id=transfer.id)
+        transfer.quantity += transfer_item.quantity
+        transfer.save()
+       
     def activity_log(self,  action, inventory, item, transfer_item,):
         ActivityLog.objects.create(
             invoice = None,
@@ -229,9 +222,7 @@ def inventory_index(request):
 
     if product_id:
         product = get_object_or_404(Inventory, product__id=product_id, branch=request.user.branch)
-        ReoderList.objects.create(
-            product=product
-        )
+        ReoderList.objects.create(product=product)
         product.reorder = True
         product.save()
         
@@ -239,16 +230,11 @@ def inventory_index(request):
         return redirect('inventory:inventory')
     
     if category:
-        
         if category == 'inactive':
             inventory = Inventory.objects.filter(branch=request.user.branch, status=False)
         else:
             inventory = inventory.filter(product__category__id=category)
-        
-    if q:
-        inventory = inventory.filter(Q(product__name__icontains=q) | Q(product__batch_code__icontains=q))
-        
-    
+                
     if 'download' and 'excel' in request.GET:
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = f'attachment; filename={request.user.branch.name} stock.xlsx'
@@ -305,7 +291,6 @@ def inventory_index(request):
         'category':category,
         'total_price': totals[1],
         'total_cost':totals[0],
-        # 'transfers_count': pending_transfers
     })
  
 @login_required   
@@ -361,21 +346,46 @@ def edit_inventory(request, product_name):
 
 @login_required
 def inventory_detail(request, id):
-    q = request.GET.get('q', '')
 
     inventory = Inventory.objects.get(id=id, branch=request.user.branch)
-    
-    logs = ActivityLog.objects.filter(inventory=inventory, branch=request.user.branch)    
+    logs = ActivityLog.objects.filter(inventory=inventory, branch=request.user.branch)
 
-    logs_filter = ActivityLog.objects.filter(
-        Q(timestamp__icontains=q) |
-        Q(user__username__icontains=q)
-    ) & ActivityLog.objects.filter(inventory=inventory, branch=request.user.branch)
-    
+    sales_data = {}
+    stock_in_data = {}
+    transfer_data = {}
+    labels = []
+
+    for log in logs:
+        month_name = log.timestamp.strftime('%B')  
+        year = log.timestamp.strftime('%Y')
+        month_year = f"{month_name} {year}"  
+
+        if log.action == 'Sale':
+            if month_year in sales_data:
+                sales_data[month_year] += log.quantity
+            else:
+                sales_data[month_year] = log.quantity
+        elif log.action in ('stock in', 'Update'):
+            if month_year in stock_in_data:
+                stock_in_data[month_year] += log.quantity
+            else:
+                stock_in_data[month_year] = log.quantity
+        elif log.action == 'Transfer':
+            if month_year in transfer_data:
+                transfer_data[month_year] += log.quantity
+            else:
+                transfer_data[month_year] = log.quantity
+
+        if month_year not in labels:
+            labels.append(month_year)
+
     return render(request, 'inventory/inventory_detail.html', {
-        'inventory':inventory,
-        'logs':logs_filter if logs_filter.exists() else logs ,
-        'search_query':q
+        'inventory': inventory,
+        'logs': logs,
+        'sales_data': list(sales_data.values()), 
+        'stock_in_data': list(stock_in_data.values()),
+        'transfer_data': list(transfer_data.values()),
+        'labels': labels
     })
 
 
@@ -417,13 +427,16 @@ def inventory_transfers(request):
 @transaction.atomic
 def receive_inventory(request):
     transfers =  TransferItems.objects.filter(to_branch=request.user.branch).order_by('-date')
+    all_transfers = Transfer.objects.filter(transfer_to=request.user.branch).order_by('-time')
+
+    
 
     if request.method == 'POST':
         transfer_id = request.POST.get('id')  
 
         try:
             branch_transfer = get_object_or_404(transfers, id=transfer_id)
-
+            transfer_obj = get_object_or_404(all_transfers, cid=branch_transfer.transfer.id)
             # validation
             if int(request.POST['quantity']) > branch_transfer.quantity:
                 messages.error(request, 'Quantity received cannot be more than quanity transfered') 
@@ -472,16 +485,21 @@ def receive_inventory(request):
                         description = f'received {request.POST['quantity']} out of {branch_transfer.quantity}'
                     )
                     messages.success(request, 'Product received')
+                    
+            branch_transfer.quantity_track = branch_transfer.quantity - int(request.POST['quantity'])
             branch_transfer.received_by = request.user
             branch_transfer.received = True
-            branch_transfer.description = f'received {request.POST['quantity']} out of {branch_transfer.quantity}'
+            branch_transfer.description = f'received {request.POST['quantity']} - {branch_transfer.quantity}'
             branch_transfer.save()
+            
+            transfer_obj.total_quantity_track -= int(request.POST['quantity'])
+            transfer_obj.save()
             return redirect('inventory:receive_inventory')  
 
         except Transfer.DoesNotExist:
             messages.error(request, 'Invalid transfer ID')
             return redirect('inventory:receive_inventory')  
-    return render(request, 'inventory/receive_inventory.html', {'transfers': transfers})
+    return render(request, 'inventory/receive_inventory.html', {'r_transfers': transfers, 'transfers':all_transfers})
 
 @login_required
 def receive_inventory_json(request):
@@ -507,7 +525,7 @@ def over_less_list_stock(request):
     search_query = request.GET.get('search_query', '')
     
     transfers =  TransferItems.objects.filter(from_branch=request.user.branch)
-    
+
     if search_query:
         transfers = transfers.filter(
             Q(transfer__product__name__icontains=search_query)|
@@ -533,10 +551,11 @@ def over_less_list_stock(request):
         transfer_id = data['transfer_id']
         reason = data['reason']
         status = data['status']
-        quantity = data['quantity']
+        branch_loss = data['branch_loss']
         
         # if quantity
         branch_transfer = get_object_or_404(transfers, id=transfer_id)
+        transfer = get_object_or_404(Transfer, id=branch_transfer.transfer.id)
         product = Inventory.objects.get(product=branch_transfer.product, branch=request.user.branch)
        
         if int(branch_transfer.over_less_quantity) > 0:
@@ -553,12 +572,18 @@ def over_less_list_stock(request):
                     branch = request.user.branch,
                     quantity = branch_transfer.over_less_quantity,
                     reason = reason,
-                    status = status
+                    status = status,
+                    branch_loss = get_object_or_404(Branch, id=branch_loss)
                 )
                 
                 product.quantity -= branch_transfer.over_less_quantity 
                 branch_transfer.over_less_description = description
+                branch_transfer.action_by = request.user
                 branch_transfer.over_less = False
+                
+                transfer.defective_status = True
+                
+                transfer.save()
                 branch_transfer.save()
                 product.save()
                 

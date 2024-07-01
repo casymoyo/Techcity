@@ -23,21 +23,30 @@
             <table class='table border table-bordered table-striped table-hover rounded p-2' id='over_less_transfers'>
                 <thead class='bg-primary'>
                     <tr>
+                        <th>Date</th>
                         <th>Name</th>
                         <th>Quantity</th>
-                        <th>Source</th>
-                        <th>Destination</th>
+                        <th>From</th>
+                        <th>By</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for transfer in over_less_transfers %}
-                        {% if transfer.quanity < 0 %}
+                        
+                        {% if transfer.over_less_quantity != 0 %}
                             <tr>
+                                <td><small>{{ transfer.date }}</small></td>
                                 <td><small>{{ transfer.product.name }}</small></td>
                                 <td><small>{{ transfer.over_less_quantity }}</small></td>
                                 <td><small>{{ transfer.from_branch }}</small></td>
-                                <td><small>{{ transfer.to_branch }}</small></td>
+                                <td>
+                                    {% if transfer.action_by %}
+                                        <small>{{ transfer.action_by }}</small>
+                                    {% else %}
+                                        <small>waiting to be actioned</small>
+                                    {% endif %}
+                                </td>
                                 {% if transfer.over_less == False %}
                                     <td><small>{{ transfer.over_less_description }}</small></td>
                                 {% else %}
@@ -130,7 +139,8 @@
             'action':action,
             'transfer_id':parseInt(transfer_id),
             'status': document.querySelector('#id_status').value,
-            'reason': document.querySelector('#id_reason').value
+            'reason': document.querySelector('#id_reason').value,
+            'branch_loss': document.querySelector('#id_branch_loss').value,
         };
         console.log(data)
         fetch(`{% url 'inventory:over_less_list_stock' %}`, {

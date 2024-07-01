@@ -1,9 +1,9 @@
 {% load static%}
 {% block content %}
-   <div class="table mt-2">
+   <div class="table mt-2 w-100">
         <!-- inventory table -->
          {% include 'components/loader.html' %}
-        <table class='table border table-bordered table-striped table-hover rounded p-2 hidden' id='inventory'>
+        <table class='table border table-bordered table-striped table-hover rounded p-2 hidden w-100' style="width:100%" id='inventory'>
             <thead>
                 <tr>
                     <th>Name</th>
@@ -13,7 +13,43 @@
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody id='inventory_table'></tbody>
+            <tbody id='inventory_table' >
+                {% for product in inventory %}
+                    <tr >
+                        <td><small>{{ product.product.name}}</small></td>
+                        <td><small>{{ product.quantity }}</small></td>
+                        <td><small>{{ product.cost }}</small></td>
+                        <td><small>{{ product.price }}</small></td>
+                        <td>
+                            <small>
+                                <span>
+                                    <a href="{% url 'inventory:inventory_detail' product.id %}" class='text-dark'>
+                                        <i class='bx bx-show'></i>
+                                    </a>
+                                </span>
+                                <span class='px-2'>
+                                    <a href="{% url 'inventory:edit_inventory' product.product.name %}" class="text-dark">
+                                        <i class='bx bx-edit-alt'></i>
+                                    </a>
+                                </span>
+                                <span>
+                                    <span id='delete' data-id="{{ product.id }}" onclick="productId(this)" class="text-dark">
+                                        <i class='bx bx-trash-alt'></i>
+                                    </span>
+                                </span>
+                                <span>
+                                    {%if productreorder == False %} 
+                                        <a href='?product_id={{ product.id }}' class="btn btn-sm">
+                                            <i class='bx bx-plus'></i>
+                                            <i class='bx bx-list-ul'></i>
+                                        </a>
+                                    {% endif %}
+                                </span>
+                            </small>
+                            </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
         </table>
         
         <!-- delete modal -->
@@ -55,7 +91,13 @@
         const loader = document.querySelector('#loader');
         const tableEl = document.querySelector('#inventory');
 
-        const inventoryTable = document.querySelector('#inventory_table');
+        const inventoryTable = document.querySelector('#inventory_table'); 
+
+        loader.classList.add('hidden');
+        loader.classList.remove('d-flex')
+        tableEl.classList.remove('hidden')
+
+        
 
         const productId=(element)=>{
             product_id = element.dataset.id
@@ -94,63 +136,7 @@
                 const data = response
                 console.log(data)
                 inventoryData.push(data)
-                displayProductTable(data)
             }
         )
-
-        document.querySelector('#search').addEventListener(
-            'input', ()=>{
-                const search_q = document.querySelector('#search').value
-                let filteredData = inventoryData[0].filter((data)=>{
-                    return(data.product__name.includes(search_q))
-                })
-                inventoryTable.innerHTML=''
-                displayProductTable(filteredData)
-            }
-        )
-
-        function displayProductTable(data){
-            loader.classList.add('hidden');
-            loader.classList.remove('d-flex')
-            tableEl.classList.remove('hidden')
-
-            data.forEach((data)=>{
-                inventoryTable.innerHTML += `
-                <tr>
-                    <td><small>${data?.product__name}</small></td>
-                    <td><small>${data?.quantity}</small></td>
-                        <td><small>${data?.cost}</small></td>
-                        <td><small>${data?.price}</small></td>
-                        <td>
-                            <small>
-                                <span>
-                                    <a href="/inventory/inventory-detail/${data?.id}/" class='text-dark'>
-                                        <i class='bx bx-show'></i>
-                                    </a>
-                                </span>
-                                <span class='px-2'>
-                                    <a href="/inventory/edit-inventory/${data?.product__name}/" class="text-dark">
-                                        <i class='bx bx-edit-alt'></i>
-                                    </a>
-                                </span>
-                                <span>
-                                    <span id='delete' data-id="${data?.id}" onclick="productId(this)" class="text-dark">
-                                        <i class='bx bx-trash-alt'></i>
-                                    </span>
-                                </span>
-                                <span>
-                                    ${data?.reorder===false ? `<a href='?product_id=${data?.product__id}' class="btn btn-sm">
-                                            <i class='bx bx-plus'></i>
-                                            <i class='bx bx-list-ul'></i>
-                                        </a>`
-                                    : ''}
-                                </span>
-                            </small>
-                        </td>
-                </tr>
-                `
-            })
-        }
-
    </script>
 {% endblock content %}

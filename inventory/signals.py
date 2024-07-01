@@ -1,5 +1,5 @@
 from django.dispatch import receiver
-from .models import Inventory, StockNotifications, Transfer
+from .models import Inventory, StockNotifications, Transfer, TransferItems
 from django.db.models.signals import post_save
 from inventory.middleware import _request
 
@@ -33,6 +33,14 @@ def stock_transfer_notification(sender, instance, **kwargs):
             status = True,
             type = 'stock transfer' 
         )
+
+@receiver(post_save, sender=TransferItems)
+def track_quantity(sender, instance, **kwargs):
+    print(instance.transfer.id)
+    transfer = Transfer.objects.get(id=instance.transfer.id)
+    transfer.total_quantity_track += instance.quantity
+    transfer.save()
+    
 
        
             

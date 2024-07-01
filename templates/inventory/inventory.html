@@ -3,7 +3,7 @@
 {% block title%} Inventory {% endblock%}
 {% block content %}
    <div class="inventory">
-    <div class='px-2 py-2 bg-dark text-light align-items-center rounded'>
+    <div class='px-2 py-2 bg-dark shadow text-light align-items-center rounded'>
         <div class='h5'><i class='bx bx-cabinet'></i>Products</div>
     </div>
         <div class="row mt-3">
@@ -47,19 +47,6 @@
                     </div>
                 </div>
                 <div class="search d-flex align-items-center">
-                    <form method="get">
-                        <div>
-                            <input
-                                id="search"
-                                name="q"
-                                type="search"
-                                value="{{search_query}}"
-                                class="form-control"
-                                placeholder="search..."
-                            />
-                        </div>
-                    </form>
-                    <span class="px-1"></span>
                     <form method="get" class="d-flex">
                         <select name="category" class="form-control" id='id_category'>
                             <option value="">All Categories</option>
@@ -86,31 +73,13 @@
                             <i class='bx bx-download'></i>
                         </a>        
                     </span>
-                    {% comment %} <span>
-                        <button class="btn btn-danger btn-sm">
-                            <i class='bx bxl-pdf'></i>
-                        </button>        
-                    </span> {% endcomment %}
                 </div>
             </div>
             {% include "inventory/components/inventory_table.html" %}
         </div>
    </div>  
-   <script  src="{% static 'js/jquery.js'%}"></script>
    <script>
-        $('#inventory-pdf').submit(function(e) {
-            e.preventDefault();
-            const data = {
-                category: $('#id_category').val(),
-            }
-            console.log(data)
-            $.ajax({
-                url: '{% url 'inventory:inventory_pdf'%}',
-                type: 'GET',
-                data: data,
-                }).done(function(response) {
-            })
-        })
-        document.querySelector('#id_category').value='{{category}}'
+     new DataTable('#inventory')
+     
    </script>
 {% endblock content %}

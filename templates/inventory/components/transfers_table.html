@@ -7,6 +7,7 @@
         <thead class='bg-primary'>
             <tr>
                 <th>Date</th>
+                <th class='text-center'>Status</th>
                 <th>Trans Ref</th>
                 <th>Description</th>
                 <th>Destination</th>
@@ -16,7 +17,30 @@
         <tbody>
                 {% for transfer in transfers %}
                <tr>
-                    <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.time }}</small></td>
+                    <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.time }} </small></td>
+                    <td class='transfer-btn text-center' data-id={{ transfer.id }}>
+                        <small>
+                            {% if transfer.defective_status %}
+                                <span class='hint--bottom' aria-label='Defective'>
+                                    <i class='bx bxs-circle fs-3' style='color:#6610f2;' ></i>
+                                </span>
+                            {% else %}
+                                {% if transfer.quantity == 0 %}
+                                    <span class='hint--bottom' aria-label='All received'>
+                                        <i class='bx bxs-circle text-success fs-3' ></i>
+                                    </span>
+                                {% elif transfer.quantity < transfer.total_quantity_track and transfer.quantity > 0  %}
+                                    <span class='hint--bottom' aria-label='Partial'>
+                                        <i class='bx bxs-circle text-warning fs-3'></i>
+                                    </span>
+                                {% elif transfer.quantity == transfer.total_quantity_track %}
+                                    <span class='hint--bottom' aria-label='Not yet received'>
+                                        <i class='bx bxs-circle text-danger fs-3'></i>
+                                    </span>
+                                {% endif %}
+                            {% endif %}
+                        </small>
+                    </td>
                     <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.transfer_ref }}</small></td>
                     <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.description }}</small></td>
                     <td class='transfer-btn' data-id={{ transfer.id }}><small>{{ transfer.transfer_to }}</small></td>
@@ -25,7 +49,7 @@
                 <tbody  class='bg-primary'>
                     {% for item in transfer_items %}
                         {% if transfer.id == item.transfer.id %}
-                                <tr id="id_items" class="hidden">
+                                <tr id="id_items" class="hidden" data-transfer-id="{{ transfer.id }}">
                                     <td></td>
                                     <td><small></small></td>
                                     <td ><small>{{ item.product.name }} x {{ item.quantity }}</small></td>
@@ -106,12 +130,25 @@
     const loader = document.querySelector('#loader');
     const tableEl = document.querySelector('#transfers');
 
+    const transferRows = document.querySelectorAll('.transfer-btn');
+
     setTimeout(()=>{
         loader.classList.add('hidden');
         loader.classList.remove('d-flex')
         tableEl.classList.remove('hidden')
     }, 300)
+    
+    transferRows.forEach(row => {
+        row.addEventListener('click', function() {
 
+            const transferId = this.dataset.id;
+            const relatedRows = document.querySelectorAll(`#id_items[data-transfer-id="${transferId}"]`);
+            relatedRows.forEach(relatedRow => {
+                relatedRow.classList.toggle('hidden');
+            });
+        });
+    });
+    
     expandBtn.addEventListener('click', ()=>{
         itemsEl.forEach((el)=>{
             if (el.classList.contains('hidden')){
@@ -121,53 +158,6 @@
             }
         })
     })
-
-    transferBtn.forEach((btn)=>{
-       btn.addEventListener('click', ()=>{
-            tranferItemsModal.show()
-            fetchDisplayItems(btn.dataset.id)
-       })
-    })
-
-    function fetchDisplayItems(transferId){
-        $.ajax({
-            url: '{% url "inventory:transfers_report" %}',
-            type: 'GET',
-            data:{transfer_id: transferId} 
-            }).done(function(response) {
-                const data = response;
-                console.log(data)
-                displayItemsTransfersTable(data);
-            })
-    } 
-
-    function displayItemsTransfersTable(data){
-        itemsTransfersTable.innerHTML = ''
-        data.forEach((data)=>{
-            itemsTransfersTable.innerHTML +=`
-            <tr>
-                <td><small>${data.product__name}</small></td>
-                <td><small>${data.price}</small></td>
-                <td><small>${data.quantity}</small></td>
-                <td><small>${data.to_branch__name}</small></td>
-                <td>
-                    <span>
-                      ${data.declined ? (
-                        `<small class='text-danger'>Declined</small>`
-                      ) : (
-                        data.received ? (
-                          `<small class='text-success'>Received</small>`
-                        ) : (
-                          `<small>Not yet received</small>`
-                        )
-                      )}
-                    </span>
-                  </td>
-          
-            </tr>
-            `
-        })
-    }
 
 </script>
 {% endblock content %}

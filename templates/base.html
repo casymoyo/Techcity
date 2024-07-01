@@ -13,14 +13,22 @@
     {% block css %}
         <link rel="stylesheet" href="{% static 'css/main.css'%}">
         <link rel="stylesheet" href="{% static 'css/bootstrap/css/bootstrap.css'%}">
+        <link rel="stylesheet" href="{% static 'assets/hint.css/hint.min.css'%}">
+        <link rel="stylesheet" href="{% static 'assets/DataTables/datatables.min.css'%}">
         <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
         <link href='{% static "assets/boxicons/css/boxicons.css"%}' rel='stylesheet'>
         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     {% endblock css %}
+    
 
     <script src="{% static 'js/jquery.js'%}"></script>
     <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/DataTables/datatables.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/Chart.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <title>
         {% block title %}Techcity{% endblock title %}
     </title>
@@ -93,6 +101,8 @@
         const branchModal = new bootstrap.Modal(document.querySelector('#branchModal'))
         const branchButton = document.querySelector('#branchButton')
 
+        const tableWrapper = document.querySelector('#detailTable_wrapper')
+        document.querySelector('.col-12')?.classList.add('w-100') 
 
         branchButton.addEventListener('click', ()=>{
             branchModal.show()

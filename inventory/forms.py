@@ -19,13 +19,13 @@ class addCategoryForm(forms.ModelForm):
 class addTransferForm(forms.ModelForm):
     class Meta:
         model = Transfer
-        exclude = ['transfer_ref', 'branch', 'user']
+        exclude = ['transfer_ref', 'branch', 'user', 'quantity', 'defective_status', 'total_quantity_track']
         
 
 class DefectiveForm(forms.ModelForm):
     class Meta:
         model = DefectiveProduct
-        fields = ['id','reason', 'status']
+        fields = ['id','reason', 'status', 'branch_loss']
         
 
 class RestockForm(forms.ModelForm):
