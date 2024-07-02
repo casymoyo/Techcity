@@ -53,9 +53,9 @@
                                     <td><small>{{ transfer.over_less_description }}</small></td>
                                 {% else %}
                                     <td>
-                                        <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="accept" class='btn btn-success btn-sm btn-primary'>return back </button></small>
+                                        <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="accept" class='btn btn-success btn-sm btn-primary'>return</button></small>
                                         <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="write_off" class='btn btn-success btn-sm btn-danger'>write off</button></small>
-                                        <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="back" class='btn btn-success btn-sm btn-dark'>send back </button></small>
+                                        <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="back" class='btn btn-success btn-sm btn-dark'>resend</button></small>
                                     </td>
                                 {% endif %}
                             </tr>

@@ -14,7 +14,7 @@ from asgiref.sync import async_to_sync
 from finance.models import StockTransaction
 from channels.layers import get_channel_layer
 from . utils import calculate_inventory_totals
-from . forms import AddProductForm, addCategoryForm, addTransferForm, DefectiveForm, RestockForm
+from . forms import AddProductForm, addCategoryForm, addTransferForm, DefectiveForm, RestockForm, AddDefectiveForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from channels.generic.websocket import  AsyncJsonWebsocketConsumer
@@ -427,9 +427,7 @@ def inventory_transfers(request):
 @transaction.atomic
 def receive_inventory(request):
     transfers =  TransferItems.objects.filter(to_branch=request.user.branch).order_by('-date')
-    all_transfers = Transfer.objects.filter(transfer_to=request.user.branch).order_by('-time')
-
-    
+    all_transfers = Transfer.objects.filter(transfer_to=request.user.branch).order_by('-time')    
 
     if request.method == 'POST':
         transfer_id = request.POST.get('id')  
@@ -640,6 +638,7 @@ def over_less_list_stock(request):
 @transaction.atomic
 def defective_product_list(request):
     form = RestockForm()
+    d_form = AddDefectiveForm()
     defective_products = DefectiveProduct.objects.filter(branch=request.user.branch)
     
     # loss calculation
@@ -675,7 +674,8 @@ def defective_product_list(request):
         {
             'total_cost': quantity * price,
             'defective_products':defective_products,
-            'form':form
+            'form':form,
+            'd_form':d_form
         }
     )
 

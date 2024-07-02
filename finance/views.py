@@ -1156,7 +1156,7 @@ def end_of_day(request):
                 'expenses':expenses,
                 'date': today,
                 'inventory_data': inventory_data,
-                'total_sales': paid_invoices.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0,
+                'total_sales': paid_invoices.aggregatea,
                 'partial_payments': partial_invoices.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0,
                 'total_paid_invoices': paid_invoices.count(),
                 'total_partial_invoices': partial_invoices.count(),
