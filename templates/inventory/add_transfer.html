@@ -130,7 +130,12 @@
       )
       .on('change', function (e){
            searchValue = $(this).val()
-           fetch(`/inventory/inventory/?name=${searchValue}`)
+           const pElement = document.getElementById('id_product')
+           const pSelectedOption = pElement.options[pElement.selectedIndex] 
+            let product = pSelectedOption.textContent;
+            product = product.split(' [')[0]
+            console.log(product)
+           fetch(`/inventory/inventory/?name=${product}`)
           .then(response => response.json())
           .then(data=>{
             document.querySelector('#id_price').value=Number(data[0]?.price)
