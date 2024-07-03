@@ -55,7 +55,7 @@
                                     {% if log.action == 'stock in' or log.action == 'Update' or log.action == 'sale cancelled' or log.action == 'Stock in' %}
                                         <span class='text-success'>{{log.quantity}}</span>
                                         <i class='text-success bx bx-chevron-up'></i>
-                                    {% elif log.action == 'Update'%}
+                                    {% elif log.action == 'defective'%}
                                         <span class='text-danger'>{{log.quantity}}</span>
                                         <i class='text-danger bx bx-chevron-down'></i>
                                     {% elif log.action == 'Decline'%}

@@ -638,7 +638,6 @@ def over_less_list_stock(request):
 @transaction.atomic
 def defective_product_list(request):
     form = RestockForm()
-    d_form = AddDefectiveForm()
     defective_products = DefectiveProduct.objects.filter(branch=request.user.branch)
     
     # loss calculation
@@ -675,9 +674,53 @@ def defective_product_list(request):
             'total_cost': quantity * price,
             'defective_products':defective_products,
             'form':form,
-            'd_form':d_form
         }
     )
+    
+@login_required
+@transaction.atomic
+def create_defective_product(request):
+    form = AddDefectiveForm()
+    if request.method == 'POST':
+        form = AddDefectiveForm(request.POST)
+
+        if form.is_valid():
+            branch = request.user.branch
+            product = form.cleaned_data['product']
+            quantity = form.cleaned_data['quantity']
+            
+            # validation
+            if quantity > product.quantity:
+                messages.warning(request, 'Defective quantity cannot more than the products quantity')
+                return redirect('inventory:create_defective_product')
+            elif quantity == 0:
+                messages.warning(request, 'Defective quantity cannot be less than zero')
+                return redirect('inventory:create_defective_product')
+            
+            product.quantity -= quantity
+            product.save()
+        
+            d_obj = form.save(commit=False)
+            d_obj.branch = branch
+            d_obj.branch_loss = branch
+            
+            d_obj.save()
+            
+            ActivityLog.objects.create(
+                branch = branch,
+                user=request.user,
+                action= 'defective',
+                inventory=product,
+                quantity=quantity,
+                total_quantity=product.quantity,
+                description = ''
+            )
+            messages.success(request, 'Product successfuly saved')
+            return redirect('inventory:defective_product_list')
+        else:
+            messages.success(request, 'Invalid form data')
+    return render(request, 'inventory/add_defective_product.html', {'form':form})
+        
 
 @login_required
 def add_inventory_transfer(request, transfer_ref):
