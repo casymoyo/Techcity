@@ -147,7 +147,6 @@ DATABASES = {
         'HOST':'monorail.proxy.rlwy.net',
         'PORT':'39004'
     }
-
 }
 
 DATABASES["default"]["ATOMIC_REQUESTS"] = True

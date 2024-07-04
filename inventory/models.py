@@ -129,7 +129,9 @@ class ActivityLog(models.Model):
         ('sale', 'Sale'), 
         ('declined', 'Declined'),
         ('write off', 'write off'),
-        ('defective', 'defective')
+        ('defective', 'defective'),
+        ('activated', 'activated'),
+        ('deactivated', 'deactivated')
     ]
     
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)

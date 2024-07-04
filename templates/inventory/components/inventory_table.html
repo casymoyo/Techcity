@@ -16,7 +16,7 @@
             <tbody id='inventory_table' >
                 {% for product in inventory %}
                     <tr >
-                        <td><small>{{ product.product.name}}</small></td>
+                        <td><small><span class='hint--bottom' aria-label='{{ product.product.description }}'>{{ product.product.name }}</span</small></td>
                         <td><small>{{ product.quantity }}</small></td>
                         <td><small>{{ product.cost }}</small></td>
                         <td><small>{{ product.price }}</small></td>
@@ -38,10 +38,9 @@
                                     </span>
                                 </span>
                                 <span>
-                                    {%if productreorder == False %} 
-                                        <a href='?product_id={{ product.id }}' class="btn btn-sm">
-                                            <i class='bx bx-plus'></i>
-                                            <i class='bx bx-list-ul'></i>
+                                    {%if product.status == False %} 
+                                        <a href='{% url "inventory:activate_inventory" product.id %}' class="btn btn-sm text-primary">
+                                            activate product
                                         </a>
                                     {% endif %}
                                 </span>

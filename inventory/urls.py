@@ -6,7 +6,7 @@ app_name = 'inventory'
 
 urlpatterns = [
     path('', inventory_index, name='inventory'),
-    path('inventory/', inventory, name='inventory_list'),
+    path('inventory', inventory, name='inventory_list'),
     path('product/list/', product_list, name='product_list'),
     path('add-product/', AddProductView.as_view(), name='add_product'),
     path('delete-inventory/', delete_inventory, name='delete_inventory'),
@@ -15,6 +15,7 @@ urlpatterns = [
     path('inventory/branches/', branches_inventory, name='branches_inventory'),
     path('product/json/', inventory_index_json, name='inventory_index_json'),
     path('edit/<str:product_name>/', edit_inventory, name='edit_inventory'),
+    path('activate/product/<int:product_id>/', activate_inventory, name='activate_inventory'),
     path('defective_product_list/', defective_product_list, name='defective_product_list'),
     path('inventory/branches/json', branches_inventory_json, name='branches_inventory_json'),
     
@@ -29,6 +30,7 @@ urlpatterns = [
     
     # transfers
     path('transfers', inventory_transfers, name='transfers'),
+    path('print/transfer/<int:transfer_id>/', print_transfer, name='print_transfer'),
     path('receive/transfer/', receive_inventory, name='receive_inventory'),
     path('receive/transfer/json/', receive_inventory_json, name='receive_inventory_json'),
     path('over_less_list/', over_less_list_stock, name='over_less_list_stock'),

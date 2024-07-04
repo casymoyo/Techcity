@@ -1,7 +1,14 @@
+@font-face {
+  font-family: Lato-Regular;
+  src: url("../fonts/Lato/Lato-Regular.ttf");
+}
 .techcity {
   overflow: hidden;
   font-family: graphik;
   font-size: 0.9rem;
+}
+.techcity .transfer-ibt {
+  font-family: lato-Regular;
 }
 .techcity .transfer-btn {
   background-color: #0d6efd !important;

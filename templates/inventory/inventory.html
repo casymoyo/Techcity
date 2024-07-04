@@ -48,11 +48,11 @@
                 </div>
                 <div class="search d-flex align-items-center">
                     <form method="get" class="d-flex">
-                        <select name="category" class="form-control" id='id_category'>
+                        <select name="category" class="form-control" id='id_category' value={{ category }}>
                             <option value="">All Categories</option>
                             <option value='inactive'>Inactive</option>
                             {% for category in categories %}
-                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                <option value="{{ category.name }}">{{ category.name }}</option>
                             {% endfor %}
                         </select>
                         <span class="px-1"></span>
@@ -80,5 +80,9 @@
    </div>  
 <script>
     new DataTable('#inventory')
+    const category = document.querySelector('#id_category')
+    category.addEventListener(
+        
+    )
 </script>
 {% endblock content %}

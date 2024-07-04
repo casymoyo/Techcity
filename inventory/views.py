@@ -216,24 +216,14 @@ def inventory(request):
 def inventory_index(request):
     q = request.GET.get('q', '')  
     category = request.GET.get('category', '')    
-    product_id = request.GET.get('product_id','')    
     
     inventory = Inventory.objects.filter(branch=request.user.branch, status=True).order_by('product__name')
-
-    if product_id:
-        product = get_object_or_404(Inventory, product__id=product_id, branch=request.user.branch)
-        ReorderList.objects.create(product=product)
-        product.reorder = True
-        product.save()
-        
-        messages.success(request, 'Product succefully added to re-oder list')
-        return redirect('inventory:inventory')
     
     if category:
         if category == 'inactive':
             inventory = Inventory.objects.filter(branch=request.user.branch, status=False)
         else:
-            inventory = inventory.filter(product__category__id=category)
+            inventory = inventory.filter(product__category__name=category)
                 
     if 'download' and 'excel' in request.GET:
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -299,6 +289,27 @@ def inventory_index_json(request):
         'id', 'product__name', 'product__id', 'price', 'cost', 'quantity', 'reorder'
     ).order_by('product__name')
     return JsonResponse(list(inventory), safe=False)
+
+@login_required 
+@transaction.atomic
+def activate_inventory(request, product_id):
+    product = get_object_or_404(Inventory, id=product_id)
+    product.status=True
+    product.save()
+    
+    ActivityLog.objects.create(
+        invoice = None,
+        product_transfer = None,
+        branch = request.user.branch,
+        user=request.user,
+        action= 'activated',
+        inventory=product,
+        quantity=product.quantity,
+        total_quantity=product.quantity
+    )
+    
+    messages.success(request, 'Product succefully activated')
+    return redirect('inventory:inventory')
 
 @admin_required
 @login_required
@@ -421,7 +432,23 @@ def inventory_transfers(request):
         messages.success(request, 'Transfer creation failed')
     
     return render(request, 'inventory/transfers.html', {'transfers': transfers,'search_query': q, 'form':form, 'transfer_items':transfer_items })
+
+@login_required
+def print_transfer(request, transfer_id):
     
+    try:
+        transfer = Transfer.objects.get(id=transfer_id)
+    except:
+        messages.warning(request, 'Transfer doesnt exists')
+        return redirect('inventory:transfers')
+    
+    transfer_items = TransferItems.objects.filter(transfer=transfer)
+    
+    return render(request, 'inventory/components/ibt.html', {
+        'date':datetime.datetime.now(),
+        'transfer':transfer, 
+        'transfer_items':transfer_items
+    })
     
 @login_required
 @transaction.atomic
