@@ -7,7 +7,6 @@ app_name = 'inventory'
 urlpatterns = [
     path('', inventory_index, name='inventory'),
     path('inventory/', inventory, name='inventory_list'),
-    path('reorder/list', reoder_list, name='reoder_list'),
     path('product/list/', product_list, name='product_list'),
     path('add-product/', AddProductView.as_view(), name='add_product'),
     path('delete-inventory/', delete_inventory, name='delete_inventory'),
@@ -21,6 +20,12 @@ urlpatterns = [
     
     # defective
     path('add/defective/product/', create_defective_product, name='create_defective_product'),
+    
+    # re-oder
+    path('reorder/list', reorder_list, name='reorder_list'),
+    path('create/order/list/', create_order_list, name='create_order_list'),
+    path('reorder/list/json', reorder_list_json, name='reorder_list_json'),
+    path('clear/reorder/list/', clear_reorder_list, name='clear_reorder_list'),
     
     # transfers
     path('transfers', inventory_transfers, name='transfers'),

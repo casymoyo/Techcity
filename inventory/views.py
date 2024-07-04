@@ -222,7 +222,7 @@ def inventory_index(request):
 
     if product_id:
         product = get_object_or_404(Inventory, product__id=product_id, branch=request.user.branch)
-        ReoderList.objects.create(product=product)
+        ReorderList.objects.create(product=product)
         product.reorder = True
         product.save()
         
@@ -318,8 +318,8 @@ def edit_inventory(request, product_name):
                 action = 'Stock in'
                 
             elif inv_product.quantity > int(request.POST['quantity']):
-                quantity = inv_product.quantity - int(request.POST['quantity']) 
-                inv_product.quantity += quantity
+                quantity =  int(request.POST['quantity']) 
+                inv_product.quantity += int(request.POST['quantity']) 
                 action = 'Update'
             
             else:
@@ -644,17 +644,21 @@ def defective_product_list(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         
-        product_id = data['product_id']
+        defective_id = data['product_id']
         quantity = int(data['quantity'])
         
-        product = Inventory.objects.get(product__id=product_id, branch=request.user.branch)
+        try:
+            d_product = DefectiveProduct.objects.get(id=defective_id, branch=request.user.branch)
+            product = Inventory.objects.get(product__id=d_product.product.id, branch=request.user.branch)
+        except:
+            return JsonResponse({'success': False, 'message':'Product doesnt exists'}, status=400)
+    
         product.quantity += quantity
         product.status = True if product.status == False else product.status
         product.save()
         
-        defective_product = DefectiveProduct.objects.get(product=product, branch=request.user.branch)
-        defective_product.quantity -= quantity
-        defective_product.save()
+        d_product.quantity -= quantity
+        d_product.save()
         
         ActivityLog.objects.create(
             branch = request.user.branch,
@@ -666,6 +670,7 @@ def defective_product_list(request):
             description = 'from defective products'
         )
         return JsonResponse({'success':True}, status=200)
+    
     quantity = defective_products.aggregate(Sum('quantity'))['quantity__sum'] or 0
     price = defective_products.aggregate(Sum('product__cost'))['product__cost__sum'] or 0
     
@@ -772,19 +777,19 @@ def add_product_category(request):
     return JsonResponse(list(categories), safe=False)       
 
 @login_required
-def reoder_list(request):
-    reorder_list = ReoderList.objects.filter()
-    
+def reorder_list(request):
+    reorder_list = ReorderList.objects.filter(branch=request.user.branch)
+        
     if request.method == 'GET':
         if 'download' in request.GET:
             response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-            response['Content-Disposition'] = f'attachment; filename={request.user.branch.name} stock.xlsx'
+            response['Content-Disposition'] = f'attachment; filename={request.user.branch.name} order.xlsx'
             workbook = openpyxl.Workbook()
             worksheet = workbook.active
 
             row_offset = 0
             
-            worksheet['A' + str(row_offset + 1)] = f'Re-order Products'
+            worksheet['A' + str(row_offset + 1)] = f'Order List'
             worksheet.merge_cells('A' + str(row_offset + 1) + ':D' + str(row_offset + 1))
             cell = worksheet['A' + str(row_offset + 1)]
             cell.alignment = Alignment(horizontal='center')
@@ -800,7 +805,7 @@ def reoder_list(request):
                 cell.font = Font(bold=True)
                 cell.alignment = Alignment(horizontal='center')
 
-            categories = reorder_list.all().values_list('product__product__category__name', flat=True).distinct()
+            categories = reorder_list.values_list('product__product__category__name', flat=True).distinct()
             for category in categories:
                 products_in_category = reorder_list.filter(product__product__category__name=category)
                 if products_in_category.exists():
@@ -818,32 +823,77 @@ def reoder_list(request):
 
             workbook.save(response)
             return response
-        return render(request, 'inventory/reorder_list.html', {'reorder_list':reorder_list})
+        return render(request, 'inventory/reorder_list.html', {})
+        
+@login_required
+def reorder_list_json(request):
+    order_list = ReorderList.objects.filter(branch=request.user.branch).values(
+        'id', 'product__product__name', 
+    )
+    return JsonResponse(list(order_list), safe=False)
+
+@login_required
+@transaction.atomic
+def clear_reorder_list(request):
+    if request.method == 'GET':
+        reorders = ReorderList.objects.filter(branch=request.user.branch)
+        
+        for item in reorders:
+            inventory_items = Inventory.objects.filter(id=item.product.id)
+            for product in inventory_items:
+                product.reorder = False
+                product.save()
+            
+        reorders.delete()
+        
+        messages.success(request, 'Reoder list success fully cleared')
+        return redirect('inventory:reorder_list')
 
     if request.method == 'POST':
         data = json.loads(request.body)
-        action = data['action']
         product_id = data['product_id']
     
-        product = ReoderList.objects.get(id=product_id)
-        inventory = Inventory.objects.get(product__id=product.product.product.id)
+        product = ReorderList.objects.get(id=product_id, branch=request.user.branch)
+     
+        inventory = Inventory.objects.get(id=product.product.id)
+    
+        product.delete()
         
-        if action == 'remove':
-            product.delete()
-            
-            inventory.reorder=False
-            inventory.save()
-            
-            return JsonResponse({'success':True}, status=200)
+        inventory.reorder=False
+        inventory.save()
         
-        elif action == 'clear':
-            reorder_list.delete()
-            
-            inventory.reorder=False
-            inventory.save()
-            
-            return JsonResponse({'success':True}, status=200)
-
+        return JsonResponse({'success':True}, status=200)
+    
+        
+@login_required
+@transaction.atomic
+def create_order_list(request):
+    if request.method == 'GET':
+        products_below_five = Inventory.objects.filter(branch=request.user.branch, quantity__lte = 5).values(
+            'id', 
+            'product__id', 
+            'product__name',
+            'product__description',
+            'quantity', 
+            'reorder',
+            'product__category__id',
+            'product__category__name'
+        )
+        return JsonResponse(list(products_below_five), safe=False)
+    
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        product_id = data['id']
+        
+        product = get_object_or_404(Inventory, id=product_id, branch=request.user.branch)
+        ReorderList.objects.create(product=product, branch=request.user.branch)
+        
+        product.reorder = True
+        product.save()
+        return JsonResponse({'success': True}, status=201)
+    return JsonResponse({'success': False, 'message':'Failed to add the product'}, status=400)
+        
+    
 
 @login_required
 def inventory_pdf(request):
@@ -877,8 +927,7 @@ def transfers_report(request):
     branch_id = request.GET.get('branch', '')
     product_id = request.GET.get('product', '')
     transfer_id = request.GET.get('transfer_id', '')
-    print(time_frame)
-
+    
     transfers = TransferItems.objects.filter().order_by('-date') 
     
     today = datetime.date.today()
@@ -891,9 +940,7 @@ def transfers_report(request):
     
     if product_id:
         transfers = transfers.filter(product__id=product_id)
-        print(transfers, product_id)
     if branch_id:
-        print(branch_id)
         transfers = transfers.filter(to_branch_id=branch_id)
     
     def filter_by_date_range(start_date, end_date):
@@ -908,10 +955,8 @@ def transfers_report(request):
         'this year': lambda: transfers.filter(date__year=today.year),
     }
     
-    print(time_frame, transfers)
     
     if time_frame in date_filters:
-        print(time_frame)
         transfers = date_filters[time_frame]()
         
     # print(transfers)
@@ -935,7 +980,7 @@ def transfers_report(request):
         )
     
     if transfer_id:
-        print(transfer_id)
+        
         return JsonResponse(list(transfers.filter(id=transfer_id).values(
                 'date',
                 'product__name', 

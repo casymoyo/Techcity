@@ -12,37 +12,29 @@
                 </div>
                 <div class="search d-flex align-items-center">
                     <div>
-                        <span class='px-2'>
-                            <a href='?download=true' class="btn btn-success btn-sm">
+                        <button type="button" class="btn btn-primary" id="createList">
+                            create order list
+                        </button>
+                    </div>
+                    <div class="mx-2">
+                        <a href="{% url 'inventory:clear_reorder_list' %}" type="button" class="btn btn-danger">
+                            clear list
+                        </a>
+                    </div>
+                    <div>
+                        <span>
+                            <a href='?download=true' class="btn btn-success">
                                 excel
                                 <i class='bx bx-download'></i>
                             </a>        
                         </span>
-                        {% comment %} <span>
-                            <button type="button" class="btn btn-danger btn-sm">
-                                <i class='bx bxl-pdf'></i>
-                            </button>        
-                        </span> {% endcomment %}
                     </div>
-                    <span class="px-1"></span>
-                    <form method="get">
-                        <div>
-                            <input
-                                id="search"
-                                name="q"
-                                type="search"
-                                value="{{search_query}}"
-                                class="form-control"
-                                placeholder="search by name"
-                            />
-                        </div>
-                    </form>
                 </div>
             </nav>
         </div>
         <div>
-        <div class="table-detail mt-2">
-            <!-- inventory table -->
+        {% include 'components/loader.html' %}
+        <div class="table-detail table-scroll hidden mt-2" id="reorderTable">
             <table class='table border rounded p-2'>
                 <thead class='bg-primary'>
                     <tr>
@@ -50,18 +42,18 @@
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="reorderData">
                     {% for product in reorder_list %}
                         <tr>
                             <td><small>{{ product.product.product.name }}</small></td>
-                            <td id='remove' data-id={{ product.id }}><small><i class='bx bx-trash'></i></small></td>
+                            <td id='remove' data-id={{ product.id }}><small><i class='bx bx-trash'></i>remove</small></td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>  
             
             <div class="modal fade" id="removeModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Remove product from list</h5>
@@ -70,41 +62,117 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="modal fade" id="clearModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Clear order list</h5>
-                            <button class='bt btn-secondary w-100' id='clear'>Yes</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header text-center">
-                            <h5 class="modal-title">Success</h5>
-                        </div>
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content text-center">
+                        <h5 class="p-3">Success</h5>
                     </div>
                 </div>
             </div>
 
+            <div class="modal fade" id="reorderModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content p-2 ">
+                        <h5 class="'fw-bold">Create Order List</h5>
+                        <div class="mt-2">
+                            <select class="form-select" id="id_category">
+                                <option value="">All products</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <table class="table table-striped mt-2"  id="addReorderTableList">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Quantity</th>
+                                    <th>Description</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orderList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
    </div> 
 <script>
     let product_id = '';
     let action = '';
+    let productData = []
 
     const removeModal = new bootstrap.Modal(document.getElementById('removeModal'));
-    const clearModal = new bootstrap.Modal(document.getElementById('clearModal'));
     const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+    const reorderModal = new bootstrap.Modal(document.getElementById('reorderModal'));
 
     const removeBtn = document.querySelector('#removeBtn')
-    const clearBtn = document.querySelector('#clear')
     const rmToggle = document.querySelectorAll('#remove')
+    const orderList = document.querySelector('#orderList')
+    const createList = document.querySelector('#createList')
+    const reorderData = document.querySelector('#reorderData')
+
+    const loader = document.querySelector('#loader');
+    const tableEl = document.querySelector('#reorderTable');
+
+    function loaderFunc(){
+        setTimeout(()=>{
+            loader.classList.add('hidden');
+            loader.classList.remove('d-flex')
+            tableEl.classList.remove('hidden')
+        }, 300)
+    }
+    loaderFunc()
+
+    function fetchData(){
+        fetch('{% url "inventory:create_order_list" %}', {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"), 
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data)
+            productData.push(data)
+            displayOrderData(data)
+        })
+            .catch((error) => {
+            console.error("Error:", error);
+        });
+    }
+    fetchData()
+
+    function fetchOrderData(){
+        fetch('{% url "inventory:reorder_list_json" %}', {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"), 
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            reorderData.innerHTML=''
+            data.forEach((data)=>{
+                reorderData.innerHTML += `
+                    <td>${data?.product__product__name}</td>
+                    <td><button onclick='deleteItem(this)' data-id=${data?.id} class='btn btn-sm btn-danger'><i class='bx bx-trash'></i>remove</button>
+                `
+            })
+        })
+            .catch((error) => {
+            console.error("Error:", error);
+        });
+    }
+    fetchOrderData()
+
+    createList.addEventListener('click', ()=>{
+        reorderModal.show()
+    })
 
     rmToggle.forEach((btn)=>{
         btn.addEventListener('click', ()=>{
@@ -113,20 +181,64 @@
         })
     
     })
-    removeBtn.addEventListener('click', ()=>{
-        action = 'remove';
-        deleteClear()
-    })
 
-    clearBtn.addEventListener('click', ()=>{
-        action = 'clear';
+    function deleteItem(el){
+        product_id = el.dataset.id
         deleteClear()
-    })
+    }
+
+    
+
+    function displayOrderData(data){
+        orderList.innerHTML = ''
+        data.forEach((data)=>{
+            console.log(data.reorder)
+            orderList.innerHTML += `
+               ${ data?.reorder ? `
+               `:`
+                <tr>
+                    <td>${data?.product__name}</td>
+                    <td>${data?.quantity}</td>
+                    <td>${data?.product__description}</td>
+                    <td>
+                        <button class='btn btn-primary btn-sm' data-id=${data.id} onclick='add(this)'>add product</button>
+                    </td>
+                </tr>
+               `}
+            `
+    })}
+
+    function add(el){
+        const productId = el.dataset.id
+        fetch('{% url "inventory:create_order_list" %}', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"), 
+            },
+            body: JSON.stringify({'id':productId}),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                fetchOrderData()
+                fetchData()
+                loaderFunc()
+                reorderModal.show()
+            } else {
+                alert(data.message)
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+    }
+
 
     function deleteClear(){
-        const data = {'product_id':product_id, 'action':action}
+        const data = {'product_id':product_id}
 
-        fetch('/inventory/reorder/list', {
+        fetch('{% url "inventory:clear_reorder_list" %}', {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -141,7 +253,7 @@
                 removeModal.hide()
                 successModal.show()
                 setTimeout(() => {
-                    window.location.href='{% url "inventory:reoder_list" %}';
+                    window.location.href='{% url "inventory:reorder_list" %}';
                 }, 2000);
             } else {
                 alert(data.message)

@@ -62,7 +62,7 @@
                 <input 
                     type="number" 
                     name="min_stock_level" 
-                    value="{{ product.min_stock_level }}" 
+                    value="{{ product.stock_level_threshold }}" 
                     class="numberinput form-control" 
                     required id="id_min_stock_level"
                 > 
@@ -77,9 +77,7 @@
                     rows="2" 
                     class="form-control" 
                     required id="id_description"
-                >
-                    {{ product.product.description }}
-                </textarea> 
+                >{{ product.product.description }}</textarea> 
             </div>
             <div class="d-flex justify-content-end">
                 <div class="">

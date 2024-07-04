@@ -52,7 +52,7 @@
                                 <td><small>{{ defective.product.cost }}</small></td>
                                 <td><small>{{ defective.reason }}</small></td>
                                 <td>
-                                    <span><button type="button" id='formBtn' data-id={{ defective.product.product.id }} data-q={{ defective.quantity }} class='btn btn-success btn-sm btn-primary' id='defectiveBtn'>re-stock</button></span>
+                                    <span><button type="button" id='formBtn' data-id={{ defective.id }} data-q={{ defective.quantity }} class='btn btn-success btn-sm btn-primary'>re-stock</button></span>
                                 </td>
                             </tr>
                         {% endif %}
@@ -197,23 +197,20 @@
     let product_quantity = ''
     let quantity = ''
 
-    const formBtn = document.querySelector('#formBtn');
-    const defectiveBtn = document.querySelector('#defectiveBtn');
+    const formBtn = document.querySelectorAll('#formBtn');
     const loaderModal = new bootstrap.Modal(document.querySelector('#loaderModal'));
     const defectiveFormModal = new bootstrap.Modal(document.querySelector('#dFormModal'));
     const addFormModal = new bootstrap.Modal(document.querySelector('#addFormModal'));
 
     new DataTable('#defectiveTable')
 
-    defectiveBtn.addEventListener('click', ()=>{
-        addFormModal.show()
-    })
-
-    formBtn.addEventListener('click', ()=>{
-        product_id = parseInt(formBtn.dataset.id); 
-        product_quantity = parseInt(formBtn.dataset.q);
-        
-        defectiveFormModal.show();
+    formBtn.forEach((btn)=>{
+        btn.addEventListener('click', ()=>{
+            product_id = parseInt(btn.dataset.id); 
+            product_quantity = parseInt(btn.dataset.q);
+            
+            defectiveFormModal.show();
+        })
     })
 
     // validation cant be more than the defective quantity
@@ -255,11 +252,11 @@
                 defectiveFormModal.hide()
                 loaderModal.show()
                 setTimeout(() => {
-                    window.location.href='{% url "inventory:over_less_list_stock" %}';
+                    window.location.href='{% url "inventory:defective_product_list" %}';
                 }, 2000);
             } else {
                 loaderModal.hide()
-                alert(error)
+                alert(data.message)
             }
         })
         .catch((error) => {

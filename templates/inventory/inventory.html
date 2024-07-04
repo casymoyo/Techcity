@@ -41,7 +41,7 @@
                         </a>
                     </div>
                     <div>
-                        <a href='{% url 'inventory:reoder_list' %}' class="btn btn-primary shadow btn-sm">
+                        <a href='{% url 'inventory:reorder_list' %}' class="btn btn-primary shadow btn-sm">
                             Reorder list
                         </a>
                     </div>
@@ -78,8 +78,7 @@
             {% include "inventory/components/inventory_table.html" %}
         </div>
    </div>  
-   <script>
-     new DataTable('#inventory')
-     
-   </script>
+<script>
+    new DataTable('#inventory')
+</script>
 {% endblock content %}
