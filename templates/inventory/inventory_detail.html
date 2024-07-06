@@ -61,7 +61,7 @@
                                     {% elif log.action == 'Decline'%}
                                         <span class='text-danger'>{{log.quantity}}</span>
                                         <i class='text-danger bx bxs-circle bx-rotate-90 bx-tada'></i>
-                                    {% elif log.action == 'Edit'%}
+                                    {% elif log.action == 'Edit' or log.action == 'deactivated' or log.action == 'activated'%}
                                         <span class='text-dark'>{{log.quantity}}</span>
                                     {% else %}
                                         <span class='text-danger'>{{log.quantity}}</span>

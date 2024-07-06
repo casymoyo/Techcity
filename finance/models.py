@@ -222,6 +222,7 @@ class Invoice(models.Model):
     note = models.TextField()
     cancelled = models.BooleanField(default=False)
     products_purchased = models.TextField()
+    invoice_return = models.BooleanField(default=False)
     
     def generate_invoice_number(branch):
         last_invoice = Invoice.objects.filter(branch__name=branch).order_by('-id').first()
@@ -273,7 +274,8 @@ class Payment(models.Model):
     payment_date = models.DateTimeField(auto_now_add=True)  
     payment_method = models.CharField(max_length=50, choices=[
         ('cash', 'Cash'),
-        ('credit_card', 'Credit Card'),
+        ('credit card', 'Credit Card'),
+        ('pay later', 'pay later'),
         ('Ecocash','Ecocash')
     ])
     user = models.ForeignKey('users.user', on_delete=models.PROTECT)

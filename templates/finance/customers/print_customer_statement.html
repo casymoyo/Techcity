@@ -1,6 +1,21 @@
-{% block account_statement %}
 {% load static i18n %}
 {% get_current_language as LANGUAGE_CODE %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/main.css'%}">
+    <link rel="stylesheet" href="{% static 'css/bootstrap/css/bootstrap.min.css'%}">
+    <link href='{% static "assets/boxicons/css/boxicons.css"%}' rel='stylesheet'>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock css %}
+
+<script src="{% static 'css/bootstrap/js/bootstrap.min.js'%}"></script>
+<script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'js/jquery.js'%}"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<title>
+    {% block title %}{{customer.name}} - account statement{% endblock title %}
+</title>
 <div class='account-statement'>
     <div class='content px-2'>
         <div class=''>
@@ -75,52 +90,6 @@
                 {% endfor %}
             </tbody>
         </table>
-
-        <div class="modal fade" id="mailModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-body email text-center">
-                        <divb class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </divb>
-                        <p class="mt-2">Sending email to {{ customer.name }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    <div class="print-hide">
-        <a href='{% url 'finance:print_account_statement' customer.id %}' type="button" class="btn btn-primary  d-grid w-100">
-            <i class='bx bx-printer' ></i>
-            Print
-        </a>
-        <div class="mt-1"></div>
-        <button type="button" id="mailBtn" class="btn btn-secondary d-grid w-100">
-            <i class='bx bx-mail-send' ></i>
-            email
-        </button>
     </div>
 </div>
-
-<script>
-    const customerId = {{customer.id}}
-    const emailBtn = document.querySelector('#mailBtn')
-
-    const mailLoader = new bootstrap.Modal(document.querySelector('#mailModal'))
-    
-    emailBtn.addEventListener('click', () => {
-        mailLoader.show()
-        $.ajax({
-            url: `/finance/customer/account/${customerId}/`,
-            type: 'GET',
-            data: {'email_bool': 'yes'}
-            }).done(function(response) {
-                const data = response
-                if(data.message){
-                    document.querySelector('.email').textContent=data.message
-                }
-            })
-        });
-
-</script>
-{% endblock %}
+<script>window.print()</script>

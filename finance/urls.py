@@ -36,6 +36,7 @@ urlpatterns = [
     path('customer/payments/json/', customer_account_payments_json, name='customer_payments_json'),
     path('customer/account/json/<int:customer_id>/', customer_account_json, name='customer_account_json'),
     path('customer/transactions/json/', customer_account_transactions_json, name='customer_transactions_json'),
+    path('print/customer/account/statement/<int:customer_id>/', print_account_statement, name='print_account_statement'),
     
     # qoutation
     path('qoutation/list/', qoutation_list, name='qoutation_list'),

@@ -7,6 +7,24 @@
   font-family: graphik;
   font-size: 0.9rem;
 }
+.techcity .account-statement {
+  font-family: lato-Regular;
+}
+@media print {
+  .techcity .account-statement header, .techcity .account-statement footer {
+    display: none;
+  }
+  .techcity .account-statement .print-hide {
+    display: none;
+  }
+  .techcity .account-statement body {
+    font-size: 12pt;
+  }
+  .techcity .account-statement a {
+    color: black;
+    text-decoration: underline;
+  }
+}
 .techcity .transfer-ibt {
   font-family: lato-Regular;
 }

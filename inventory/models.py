@@ -125,7 +125,7 @@ class ActivityLog(models.Model):
         ('delete', 'Delete'),
         ('edit', 'Edit'),
         ('transfer', 'Transfer'),
-        ('returns', 'Returns'),
+        ('returns', 'returns'),
         ('sale', 'Sale'), 
         ('declined', 'Declined'),
         ('write off', 'write off'),

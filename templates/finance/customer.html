@@ -117,6 +117,7 @@
                     <tr>
                         <th>Date</th>
                         <th>Invoice #</th>
+                        <th>Product (s)</th>
                         <th>Amount Paid</th>
                         <th>Invoice Amount</th>
                         <th>Amount Due</th>
@@ -183,7 +184,6 @@
         data: {'type': 'invoices', 'customer_id': {{customer.id}}},
         }).done(function(response) {
             const data = response
-            console.log(data)
             transactionsData.push(data)
             displayTransactionTable(data)
     })
@@ -229,7 +229,6 @@
         data: {'type': 'invoice_payments', 'customer_id': {{customer.id}}},
         }).done(function(response) {
             const data = response
-            console.log(data)
             paymentsData.push(data)
             displaypaymentsTable(data)
     })
@@ -251,6 +250,7 @@
             <tr>
                 <td><small>${new Date(data.payment_date).toDateString()}</small></td>
                 <td><small>#${data.invoice__invoice_number}</small></td>
+                <td><small>${data.invoice__products_purchased}</small></td>
                 <td><small>${data.invoice__currency__symbol} ${data.amount_paid}</small></td>
                 <td><small>${data.invoice__currency__symbol} ${data.invoice__amount}</small></td>
                 <td><small>${data.invoice__currency__symbol} ${data.invoice__amount_due}</small></td>

@@ -62,19 +62,30 @@ def invoice_remove_notification(sender, instance, **kwargs):
     except FinanceNotifications.DoesNotExist:
         logger.warning(f"No active FinanceNotification found for Invoice #{instance.id}.")
 
-def create_cashbook_entry(instance, description, debit, credit):
-    Cashbook.objects.create(
-        issue_date=instance.issue_date,
-        description=description,
-        debit=debit,
-        credit=credit,
-        amount=instance.amount,
-        currency=instance.currency
-    )
+def create_cashbook_entry(instance, debit, credit):
+    if instance.cancelled or instance.invoice_return:
+        Cashbook.objects.create(
+                issue_date=instance.issue_date,
+                description=f'Sales returns ({instance.instance.invoice_number})',
+                debit=credit,
+                credit=debit,
+                amount=instance.amount_paid,
+                currency=instance.currency
+            )
+    else:
+        if instance.amount_paid != 0:
+            Cashbook.objects.create(
+                issue_date=instance.issue_date,
+                description=f'Sale of {instance.products_purchased}({instance.invoice_number})' if instance.amount_paid == instance.amount else f' Sale update for {instance.products_purchased}({instance.invoice_number})',
+                debit=debit,
+                credit=credit,
+                amount=instance.amount_paid,
+                currency=instance.currency
+            )
 
 @receiver(post_save, sender=Invoice)
 def create_invoice_cashbook_entry(sender, instance, **kwargs):
-    create_cashbook_entry(instance, f'Sale of {instance.products_purchased}({instance.invoice_number})', debit=True, credit=False)
+    create_cashbook_entry(instance, debit=True, credit=False)
 
 @receiver(post_save, sender=Expense)
 def create_expense_cashbook_entry(sender, instance, **kwargs):
@@ -85,4 +96,3 @@ def create_expense_cashbook_entry(sender, instance, **kwargs):
 def create_cash_transfer_cashbook_entry(sender, instance, **kwargs):
     create_cashbook_entry(instance, f'Cash Transfer of {instance.amount} from {instance.from_branch.name}', debit=True, credit=False)
 
-#fffff

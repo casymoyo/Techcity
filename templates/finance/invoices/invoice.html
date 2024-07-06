@@ -27,9 +27,9 @@
                 </div>
             </nav>
         </div>
-
-        <div class='invoice-table mt-3 '>
-            <table class="table table-striped border table-hover rounded table-responsive table-sm p-2">
+        {% include 'components/loader.html' %}
+        <div class='invoice-table mt-3 table-scroll'>
+            <table class="table table-striped border table-hover rounded table-responsive table-sm p-2" id='invoiceTable' style='width:100%;'>
                 <thead class="bg-primary">
                     <tr class='fw-normal'>
                         <th scope="col">Date</th>
@@ -62,9 +62,13 @@
                                         </a>
                                     </span>  
                                     <span class='px-2'>
-                                        {% if request.user.role == 'admin' %}
-                                            <span style='cursor:pointer;' data-id={{ invoice.id }} id='id_update' class="text-dark">
+                                        {% if invoice.amount_due > 0 %}
+                                            <span style='cursor:pointer;' data-id={{ invoice.id }} data-amount={{ invoice.amount_due }} id='id_update' class="text-dark">
                                                 <i class='bx bx-right-arrow'></i>
+                                            </span>
+                                        {% else %}
+                                            <span style='cursor:pointer;'  class="text-dark hint--bottom" aria-label='Invoice fully paid'>
+                                                <i class='bx bx-rectangle'></i>
                                             </span>
                                         {% endif %}
                                     </span>
@@ -99,15 +103,15 @@
                                         </a>
                                     </span>  
                                     <span class='px-2'>
-                                        {% if request.user.role == 'admin' %}
-                                            <span style='cursor:pointer;' data-id={{ invoice.id }} id='id_update' class="text-dark">
+                                        {% if invoice.amount_due > 0 %}
+                                            <span style='cursor:pointer;' data-id={{ invoice.id }} data-amount={{ invoice.amount_due }} id='id_update' class="text-dark hint--bottom" aria-label='Update invoice'>
                                                 <i class='bx bx-right-arrow'></i>
                                             </span>
                                         {% endif %}
                                     </span>
                                     <span>
                                         {% if request.user.role == 'admin' %}
-                                            <span data-id={{invoice.id}} id='whatsappBtn'>
+                                            <span data-id={{ invoice.id }}  id='whatsappBtn'>
                                                 <i class='bx bxl-whatsapp'></i>
                                             </span>
                                         {% endif %}
@@ -264,21 +268,31 @@
 
     const loader = new bootstrap.Modal(document.getElementById('loaderModal'));
 
-    let invoiceId
-    let paymentMethod = ''
-    const error = document.querySelector('#error_message');
+    let invoiceId = '';
+    let invoiceAmountDue = '';
+    let paymentMethod = '';
+    const error = document.querySelector('#id_amount_error');
     const loaderModal = new bootstrap.Modal(document.getElementById('loaderModal'));
+    const tableEl = document.querySelector('#invoiceTable');
+    const loaderSpin = document.querySelector('#loader');
 
+    new DataTable('#invoiceTable');
+    
+    setTimeout(()=>{
+        loaderSpin.classList.add('hidden');
+        loaderSpin.classList.remove('d-flex')
+        tableEl.classList.remove('hidden')
+    }, 300)
     // payment methods
     document.querySelectorAll('.pm').forEach(button => {
         button.addEventListener('click', () => {
             console.log(button.dataset.name);
             if (button.dataset.name === 'cash') { 
-                paymentMethod = button.dataset.name
+                paymentMethod = button.dataset.name;
             } else if (button.dataset.name === 'ecocash'){
-                paymentMethod = button.dataset.name
+                paymentMethod = button.dataset.name;
             } else if (button.dataset.name === 'bank'){
-                paymentMethod = button.dataset.name
+                paymentMethod = button.dataset.name;
             }
             updatePayment();
         });
@@ -295,13 +309,15 @@
         }
 
         let customerName = '{{invoice.customer.name}}'
-        error.textContent = `Updating ${customerName}(s) invoice`
+        error.textContent = `Updating ${customerName}(s) invoice`;
 
-        if (paymentMethod == ''){
-            error.textContent = `Please choose payment method`
+        if (paymentMethod === ''){
+            error.textContent = `* Please choose payment method`;
         }
-        else if (amount_paid == '' || amount_paid < 0){
-            error.textContent = `Amount cannot be zero or negative `
+        else if (amount_paid === '' || amount_paid <= 0){
+            error.textContent = `* Amount cannot be zero or negative `;
+        }else if (amount_paid > invoiceAmountDue ){
+            error.textContent = `* Amount cannot be more than amount due ${invoiceAmountDue} `;
         }
         else{
             validation = true
@@ -339,12 +355,11 @@
         btn.addEventListener(
             'click', ()=>{
                 invoiceId= btn.dataset.id
+                invoiceAmountDue = btn.dataset.amount
                 updateModal.show()
-                console.log(invoiceId)
             }   
         )
     })
-
 
     deleteBtn.forEach((btn)=>{
         btn.addEventListener(
@@ -372,10 +387,9 @@
             window.location.reload()
         })
         .catch(error => {
-
+            alert(error)
         });
     }
-
 
     trEl.forEach((tr)=>{
         tr.addEventListener(
@@ -426,6 +440,5 @@
         }
         return cookieValue;
     }
-
 </script>
 {% endblock content %}

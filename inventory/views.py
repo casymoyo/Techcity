@@ -777,7 +777,7 @@ def delete_inventory(request):
     ActivityLog.objects.create(
             branch = request.user.branch,
             user=request.user,
-            action= 'Delete',
+            action= 'deactivated',
             inventory=inv,
             quantity=inv.quantity,
             total_quantity=inv.quantity

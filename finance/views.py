@@ -204,7 +204,7 @@ def create_expense_category(request):
 @login_required
 def invoice(request):
     form = InvoiceForm()
-    invoices = Invoice.objects.filter(branch=request.user.branch, status=True).order_by('-issue_date')
+    invoices = Invoice.objects.filter(branch=request.user.branch, status=True).order_by('-invoice_number')
     
     query_params = request.GET
     if query_params.get('q'):
@@ -514,6 +514,63 @@ def create_invoice(request):
 
     return render(request, 'finance/invoices/add_invoice.html')
 
+@login_required
+@transaction.atomic
+def invoice_returns(request, invoice_id):
+    invoice = get_object_or_404(Invoice, id=invoice_id)
+    account = get_object_or_404(CustomerAccount, customer=invoice.customer)
+    customer_account_balance = get_object_or_404(CustomerAccountBalances, account=account, currency=invoice.currency)
+
+    sale = get_object_or_404(Sale, transaction=invoice)
+    invoice_payment = get_object_or_404(Payment, invoice=invoice)
+    stock_transactions = invoice.stocktransaction_set.all()  
+    vat_transaction = get_object_or_404(VATTransaction, invoice=invoice)
+
+    if invoice.payment_status == Invoice.PaymentStatus.PARTIAL:
+        customer_account_balance.balance -= invoice.amount_due
+
+    account_types = {
+        'cash': Account.AccountType.CASH,
+        'bank': Account.AccountType.BANK,
+        'ecocash': Account.AccountType.ECOCASH,
+    }
+
+    account = get_object_or_404(
+        Account, 
+        name=f"{request.user.branch} {invoice.currency.name} {invoice_payment.payment_method.capitalize()} Account", 
+        type=account_types.get(invoice_payment.payment_method, None) 
+    )
+    account_balance = get_object_or_404(AccountBalance, account=account, currency=invoice.currency, branch=request.user.branch)
+    account_balance.balance -= invoice.amount_paid
+
+    for stock_transaction in stock_transactions:
+        product = Inventory.objects.get(product=stock_transaction.item, branch=request.user.branch)
+        product.quantity += stock_transaction.quantity
+        product.save()
+
+        ActivityLog.objects.create(
+            invoice=invoice,
+            product_transfer=None,
+            branch=request.user.branch,
+            user=request.user,
+            action='returns',
+            inventory=product,
+            quantity=stock_transaction.quantity,
+            total_quantity=product.quantity
+        )
+
+    InvoiceItem.objects.filter(invoice=invoice).delete() 
+    StockTransaction.objects.filter(invoice=invoice).delete()
+    
+    account_balance.save()
+    customer_account_balance.save()
+    sale.delete()
+    vat_transaction.delete()
+    invoice.invoice_return=True
+    invoice.save()
+
+    return JsonResponse({'message': f'Invoice {invoice.invoice_number} successfully deleted'})
+    
 
 @login_required
 @transaction.atomic
@@ -539,7 +596,7 @@ def delete_invoice(request, invoice_id):
     account = get_object_or_404(
         Account, 
         name=f"{request.user.branch} {invoice.currency.name} {invoice_payment.payment_method.capitalize()} Account", 
-        type=account_types.get(invoice_payment.payment_method, None)  # Handle case if payment_method is invalid
+        type=account_types.get(invoice_payment.payment_method, None)  
     )
     account_balance = get_object_or_404(AccountBalance, account=account, currency=invoice.currency, branch=request.user.branch)
     account_balance.balance -= invoice.amount_paid
@@ -694,6 +751,7 @@ def customer_account(request, customer_id):
         branch=request.user.branch, 
         status=True
     )
+    
     invoice_payments = Payment.objects.filter(
         invoice__branch=request.user.branch, 
         invoice__customer=customer
@@ -773,6 +831,7 @@ def customer_account_payments_json(request):
             invoice__branch=request.user.branch, 
             invoice__customer=customer
         ).order_by('-payment_date').values(
+            'invoice__products_purchased',
             'payment_date', 'invoice__invoice_number', 'invoice__currency__symbol',
             'invoice__amount_due', 'invoice__amount', 'user__username', 'amount_paid'
         )
@@ -787,7 +846,35 @@ def customer_account_json(request, customer_id):
         'currency__symbol', 'balance'
     )   
     return JsonResponse(list(account), safe=False)
+
+@login_required
+def print_account_statement(request, customer_id):
+    try:
+        customer = get_object_or_404(Customer, id=customer_id)
+        
+        account = CustomerAccountBalances.objects.filter(account__customer=customer)
+        
+        invoices = Invoice.objects.filter(
+            customer=customer, 
+            branch=request.user.branch, 
+            status=True
+        )
+    except:
+        messages.warning(request, 'Error in processing the request')
+        return redirect('finance:customer')
+
+    invoice_payments = Payment.objects.select_related('invoice', 'invoice__currency', 'user').filter(
+        invoice__branch=request.user.branch, 
+        invoice__customer=customer
+    ).order_by('-payment_date')
     
+    return render(request, 'finance/customers/print_customer_statement.html', {
+        'customer':customer,
+        'account':account,
+        'invoices':invoices, 
+        'invoice_payments':invoice_payments
+    })
+
 # currency views  
 @login_required  
 def currency(request):

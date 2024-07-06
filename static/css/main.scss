@@ -64,6 +64,21 @@
 }
 
 .techcity{
+    .account-statement{
+        font-family:lato-Regular;
+        @media print {
+            header, footer { 
+                display: none; 
+            }
+    
+            .print-hide {
+                display: none; 
+            }
+            
+            body { font-size: 12pt; }
+            a { color: black; text-decoration: underline; } 
+        }   
+    }
     .transfer-ibt{
         font-family:lato-Regular;
     }
