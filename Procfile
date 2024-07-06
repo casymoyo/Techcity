@@ -1,1 +1,1 @@
-web: celery -A techcity worker --loglevel=info & python manage.py migrate && gunicorn techcity.wsgi  --bind 0.0.0.0:$PORT
+web: gunicorn techcity.wsgi  
