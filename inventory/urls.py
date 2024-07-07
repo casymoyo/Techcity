@@ -22,6 +22,9 @@ urlpatterns = [
     # defective
     path('add/defective/product/', create_defective_product, name='create_defective_product'),
     
+    # services
+    path('create/service/', service, name='create_service'),
+    
     # re-oder
     path('reorder/list', reorder_list, name='reorder_list'),
     path('create/order/list/', create_order_list, name='create_order_list'),

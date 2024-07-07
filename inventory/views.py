@@ -15,7 +15,7 @@ from asgiref.sync import async_to_sync
 from finance.models import StockTransaction
 from channels.layers import get_channel_layer
 from . utils import calculate_inventory_totals
-from . forms import AddProductForm, addCategoryForm, addTransferForm, DefectiveForm, RestockForm, AddDefectiveForm
+from . forms import AddProductForm, addCategoryForm, addTransferForm, DefectiveForm, RestockForm, AddDefectiveForm, ServiceForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from channels.generic.websocket import  AsyncJsonWebsocketConsumer
@@ -30,7 +30,22 @@ def notifications_json(request):
     return JsonResponse(list(notifications), safe=False)
 
 @login_required
+def service(request):
+    form = ServiceForm()
+    if request.method == 'POST':
+        form = ServiceForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Service successfully created')
+            return redirect('inventory:inventory')
+        messages.warning(request, 'Invalid form data')
+    return redirect('inventory:inventory')
+    
+
+@login_required
 def product_list(request): 
+    """ for the pos """
+    
     queryset = Inventory.objects.filter(branch=request.user.branch, status=True)
     search_query = request.GET.get('q', '') 
     product_id = request.GET.get('product', '')
@@ -47,7 +62,13 @@ def product_list(request):
         queryset = queryset.filter(id=product_id)
 
     inventory_data = list(queryset.values(
-        'id', 'product__id', 'product__name', 'product__description', 'product__category__id', 'product__category__name',  'price', 'quantity'
+        'id', 
+        'product__id', 
+        'product__name', 
+        'product__description', 
+        'product__category__id', 
+        'product__category__name',  
+        'price', 'quantity'
     ))
     
     merged_data = [{
@@ -104,6 +125,7 @@ class AddProductView(LoginRequiredMixin, View):
                     message = 'Product successfully created'
                     log_action = 'stock in'
                 else:
+                    messages.warning(request, 'Invalid form data')
                     return redirect('inventory:inventory')
                 
             self.create_branch_inventory(product, log_action)
@@ -142,7 +164,6 @@ class AddProductView(LoginRequiredMixin, View):
         )
 
 class ProcessTransferCartView(LoginRequiredMixin, View):
-    # @login_required
     def post(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
@@ -171,7 +192,7 @@ class ProcessTransferCartView(LoginRequiredMixin, View):
         
         branch_inventory.quantity -= int(item['quantity'])
         branch_inventory.save()
-        self.activity_log('Transfer', branch_inventory,  item, transfer_item, )
+        self.activity_log('Transfer', branch_inventory,  item, transfer_item)
         
     def transfer_update_quantity(self, transfer_item, transfer):
         transfer = Transfer.objects.get(id=transfer.id)
@@ -215,9 +236,11 @@ def inventory(request):
 
 @login_required
 def inventory_index(request):
+    form = ServiceForm()
     q = request.GET.get('q', '')  
     category = request.GET.get('category', '')    
     
+    services = Service.objects.all().order_by('-name')
     inventory = Inventory.objects.filter(branch=request.user.branch, status=True).order_by('product__name')
     
     if category:
@@ -277,6 +300,8 @@ def inventory_index(request):
     totals = calculate_inventory_totals(all_branches_inventory.filter(status=True))
   
     return render(request, 'inventory/inventory.html', {
+        'form': form,
+        'services':services,
         'inventory': inventory,
         'search_query': q,
         'category':category,

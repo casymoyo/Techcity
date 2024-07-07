@@ -6,6 +6,7 @@ from io import BytesIO
 from xhtml2pdf import pisa 
 from django.utils import timezone
 from django.conf import settings 
+from celery import shared_task
 
 from finance.models import *
 from django.core.mail import send_mail
@@ -13,8 +14,9 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from utils.utils import send_mail_func
 
+@shared_task
 def all_invoices():
-    print(Invoice.objects.all())
+    print('all invoices')
 
 def generate_recurring_invoices():
     two_days_ago = datetime.now() - timedelta(days=2)
@@ -59,7 +61,7 @@ def send_invoice_email_task(invoice_id):
     #     'cassymyo@gmail.com',
     #     ['cassymyo@gmail.com'],
     # )
-    send_html_mail(
+    send_html(
         'Your Invoice',
         'Please find your invoice attached.',
         'cassymyo@gmail.com',

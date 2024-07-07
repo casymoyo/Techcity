@@ -21,6 +21,7 @@ class Product(models.Model):
         ('standard', 'Standard'),
         ('zero rated', 'Zero Rated')
     ]
+    
     batch_code = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -169,11 +170,19 @@ class ReorderList(models.Model):
     def __str__(self):
         return f'{self.product.product.name}'
 
-class service(models.Model):
+class Service(models.Model):
+    
+    tax_choices = [
+        ('exempted', 'Exempted'),
+        ('standard', 'Standard'),
+        ('zero rated', 'Zero Rated')
+    ]
+    
     name = models.CharField(max_length=255)
+    cost =  models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    tax_type = models.CharField(max_length=50, choices=tax_choices)
+    description = models.TextField()
     
-    
-
-
-
-    
+    def __str__(self):
+        return self.name

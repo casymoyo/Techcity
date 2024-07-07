@@ -1,5 +1,11 @@
 from django import forms
-from . models import Product, ProductCategory, Inventory, Transfer, DefectiveProduct
+from . models import (
+    Product,
+    ProductCategory, 
+    Inventory, Transfer, 
+    DefectiveProduct, 
+    Service
+)
 
 class AddProductForm(forms.ModelForm):
     class Meta:
@@ -37,3 +43,8 @@ class RestockForm(forms.ModelForm):
     class Meta:
         model = DefectiveProduct
         fields = ['quantity']
+        
+class ServiceForm(forms.ModelForm):
+    class Meta:
+        model = Service
+        fields = '__all__'
