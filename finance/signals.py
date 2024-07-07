@@ -45,7 +45,7 @@ def cash_transfer_notification(sender, instance, **kwargs):
 @receiver(post_save, sender=Expense)
 def expense_confirmation_notificatioin(sender, instance, **kwargs):
     if instance.status == False:
-        # send_email_notification.delay(instance.id)
+        send_email_notification.delay(instance.id)
         pass
         
         

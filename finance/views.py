@@ -205,7 +205,7 @@ def create_expense_category(request):
 def invoice(request):
     form = InvoiceForm()
     invoices = Invoice.objects.filter(branch=request.user.branch, status=True).order_by('-invoice_number')
-    
+
     query_params = request.GET
     if query_params.get('q'):
         search_query = query_params['q']

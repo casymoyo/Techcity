@@ -131,22 +131,22 @@ SESSION_AUTH = True
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME':  'techcity',
-    #     'USER': 'casy',
-    #     'PASSWORD': 'neverfail',
-    #     'HOST': 'localhost',
-    #     'PORT': '5432'
-    # }
     'default': {
-        'ENGINE':'django.db.backends.postgresql',
-        'NAME':'railway',
-        'USER':'postgres',
-        'PASSWORD':'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
-        'HOST':'monorail.proxy.rlwy.net',
-        'PORT':'39004'
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME':  'techcity',
+        'USER': 'casy',
+        'PASSWORD': 'neverfail',
+        'HOST': 'localhost',
+        'PORT': '5432'
     }
+    # 'default': {
+    #     'ENGINE':'django.db.backends.postgresql',
+    #     'NAME':'railway',
+    #     'USER':'postgres',
+    #     'PASSWORD':'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
+    #     'HOST':'monorail.proxy.rlwy.net',
+    #     'PORT':'39004'
+    # }
 }
 
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
@@ -246,12 +246,14 @@ LOGGING = {
 }
 
 # Celery Configs
-# CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672//'
-# CELERY_RESULT_BACKEND = 'django-db'
-# CELERY_ACCEPT_CONTENT = ['application/json']
-# CELERY_TASK_SERIALIZER = 'json'
-# CELERY_RESULT_SERIALIZER = 'json'
-# CELERY_TIMEZONE = 'Africa/Harare'
+# settings.py
+CELERY_BROKER_URL = 'redis://default:FrvkpRENzvubHiJrDiRoQmVmdBjaNwFC@roundhouse.proxy.rlwy.net:24949/0'
+CELERY_RESULT_BACKEND = 'redis://default:FrvkpRENzvubHiJrDiRoQmVmdBjaNwFC@roundhouse.proxy.rlwy.net:24949/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+
 
 CELERY_BEAT_SCHEDULE = {
     'send-invoice-reminders': {
