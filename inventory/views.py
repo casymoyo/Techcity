@@ -9,6 +9,7 @@ from django.db.models import Sum
 from django.db import transaction
 from django.contrib import messages
 from utils.utils import generate_pdf
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, HttpResponse
 from asgiref.sync import async_to_sync
 from finance.models import StockTransaction
@@ -73,7 +74,7 @@ def branches_inventory_json(request):
     )
     return JsonResponse(list(branches_inventory), safe=False)
         
-class AddProductView(View):
+class AddProductView(LoginRequiredMixin, View):
     form_class = AddProductForm()
     initial = {'key':'value'}
     template_name = 'inventory/add_product.html'
@@ -140,7 +141,7 @@ class AddProductView(View):
             total_quantity=inventory.quantity + inv.quantity if action == 'update' else inventory.quantity
         )
 
-class ProcessTransferCartView(View):
+class ProcessTransferCartView(LoginRequiredMixin, View):
     # @login_required
     def post(self, request, *args, **kwargs):
         try:

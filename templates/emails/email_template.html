@@ -1,0 +1,37 @@
+ {% load static %};
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ subject }}</title>
+    <style>
+        .email-body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+        }
+        .footer {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #ccc;
+        }
+        .footer p {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-body">
+        <p>{{ message }}</p>
+        <p>Sincerely,</p>
+        <p>{{ sender_name }}</p>
+        <!-- Footer section -->
+        <div class="footer">
+            <img src="https://techcity.s3.amazonaws.com/assets/logo.png" alt="Logo" width="100">
+            <p>Techcity</p>
+            <p>68 Speke, Avenue, Harare</p>
+            <p>Contact: <a href='tel:+263776079245'>+263776079245</a></p>
+        </div>
+    </div>
+</body>
+</html>

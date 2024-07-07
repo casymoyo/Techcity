@@ -16,7 +16,6 @@ from django.contrib import messages
 from utils.utils import generate_pdf
 from django.http import JsonResponse
 from utils.utils import generate_pdf
-from celery.result import AsyncResult
 from asgiref.sync import async_to_sync, sync_to_async
 from inventory.models import Inventory
 from channels.layers import get_channel_layer

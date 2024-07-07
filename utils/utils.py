@@ -1,6 +1,8 @@
 from django.http import HttpResponse
 from django.template.loader import get_template
 from xhtml2pdf import pisa
+import threading
+from django.core.mail import send_mail
 
 
 def generate_pdf(template_src, context_dict={}):
@@ -13,4 +15,30 @@ def generate_pdf(template_src, context_dict={}):
         return HttpResponse("Some errors were encountered <pre>" + html + "</pre>")
 
     return response
+
+def send_mail_func(subject, message, html_content, from_email, to_email):
+    
+    def send_email_thread(subject, html_content, from_email, to_email):
+        try:
+            send_mail(
+                subject,
+                message,
+                from_email,
+                to_email,
+                html_message=html_content,  
+                fail_silently=False,
+            )
+            print(f"Email sent successfully to {to_email}")
+        except Exception as e:
+            print(f"Failed to send email: {e}")
+
+    email_thread = threading.Thread(
+        target=send_email_thread,
+        args=(subject, html_content, from_email, to_email),
+    )
+    email_thread.start()
+
+
+
+
 

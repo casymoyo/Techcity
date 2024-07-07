@@ -4,7 +4,6 @@ Django settings for techcity project.
 import environ, os
 from pathlib import Path
 from dotenv import load_dotenv
-from celery.schedules import crontab
 env = environ.Env()
 load_dotenv()
 
@@ -41,10 +40,10 @@ THIRD_PARTY_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
     'phonenumber_field',
-    'django_celery_results',
-    'celery',
     'django_extensions',
-    'chartjs',
+    # 'chartjs',
+    # 'django_crontab',
+    # 'DjangoAsyncMail',
 ]
 
 LOCAL_APPS = [
@@ -55,7 +54,7 @@ LOCAL_APPS = [
     'finance',
     'pos',
     'settings',
-    'Analytics'
+    'Analytics',
 ]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -245,31 +244,33 @@ LOGGING = {
     "root": {"level": "INFO", "handlers": ["console"]},
 }
 
-# Celery Configs
-# settings.py
-CELERY_BROKER_URL = 'redis://default:FrvkpRENzvubHiJrDiRoQmVmdBjaNwFC@roundhouse.proxy.rlwy.net:24949/0'
-CELERY_RESULT_BACKEND = 'redis://default:FrvkpRENzvubHiJrDiRoQmVmdBjaNwFC@roundhouse.proxy.rlwy.net:24949/0'
+CRONJOBS = [
+    ('* * * * *', 'finance.tasks.all_invoices'), 
+    ('0 12 * * *', 'myapp.tasks.record_recurring_expense'),   
+]
+
+# celery
+# your_project/settings.py
+
+CELERY_BROKER_URL = 'redis://default:FrvkpRENzvubHiJrDiRoQmVmdBjaNwFC@roundhouse.proxy.rlwy.net:24949'
+CELERY_RESULT_BACKEND = 'redis://default:FrvkpRENzvubHiJrDiRoQmVmdBjaNwFC@roundhouse.proxy.rlwy.net:24949'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
-
 CELERY_BEAT_SCHEDULE = {
-    'send-invoice-reminders': {
-        'task': 'finance.tasks.check_and_send_invoice_reminders',
-        'schedule': crontab(minute=0, hour=0), 
+    'run-all-invoices-every-minute': {
+        'task': 'finance.tasks.all_invoices',
+        'schedule': 60.0, 
     },
+    # 'record-recurring-expense-every-minute': {
+    #     'task': 'myapp.tasks.record_recurring_expense',
+    #     'schedule': 60.0,  
+    # },
 }
 
-# Email configuration
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = env('EMAIL_HOST')
-# EMAIL_PORT = env('EMAIL_PORT')
-# EMAIL_HOST_USER = env('EMAIL_HOST_USER')
-# EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
-# EMAIL_USE_TLS = env('EMAIL_USE_TLS')
-# EMAIL_USE_SSL = env('EMAIL_USE_SSL')
+
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  
 EMAIL_HOST = 'mail.techcity.co.zw'  

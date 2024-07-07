@@ -12,14 +12,12 @@ urlpatterns = [
     path('company/', include('company.urls', namespace='company')),
     path('finance/', include('finance.urls', namespace='finance')),
     path('settings/', include('settings.urls', namespace='settings')),
-    path('analytics/', include('Analytics.urls', namespace='analytics')),
+    # path('analytics/', include('Analytics.urls', namespace='analytics')),
     path('inventory/', include('inventory.urls', namespace='inventory')),
     path('dashboard/', include('Dashboard.urls', namespace='dashboard')),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:
-    # This allows the error pages to be debugged during development, just visit
-    # these url in browser to see how these error pages look like.
     urlpatterns += [
         path(
             "400/",

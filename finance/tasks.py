@@ -1,9 +1,5 @@
-from celery import shared_task
+import threading
 from datetime import datetime, timedelta
-
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
-
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from io import BytesIO
@@ -12,66 +8,41 @@ from django.utils import timezone
 from django.conf import settings 
 
 from finance.models import *
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.conf import settings
+from utils.utils import send_mail_func
 
-@shared_task
-def add(x, y):
-    return x + y
+def all_invoices():
+    print(Invoice.objects.all())
 
-def generate_invoices():
-    # invoices = Invoice.filter(recuring=True)
-    # print(invoices)
-    print('invoices')
-    
+def generate_recurring_invoices():
+    two_days_ago = datetime.now() - timedelta(days=2)
+    invoices_due = Invoice.objects.filter(
+        recurring=True,  # Filter for recurring invoices
+        next_due_date__lte=two_days_ago  # Filter for invoices due 2 days ago or earlier
+    )
 
-# @shared_task
-# def generate_recurring_invoices():
-#     two_days_ago = datetime.now() - timedelta(days=2)
-#     invoices_due = Invoice.objects.filter(
-#         recurring=True,  # Filter for recurring invoices
-#         next_due_date__lte=two_days_ago  # Filter for invoices due 2 days ago or earlier
-#     )
+    for invoice in invoices_due:
+        # Create a new invoice (copy or generate based on your logic)
+        new_invoice = Invoice(
+            # Copy relevant fields from the original invoice
+            customer=invoice.customer,
+            items=invoice.items,
+            # ... other fields
+            issue_date=datetime.now(),
+            due_date=datetime.now() + timedelta(days=invoice.payment_terms),
+            next_due_date=datetime.now() + timedelta(days=invoice.recurrence_period), 
+        )
+        new_invoice.save()
 
-#     for invoice in invoices_due:
-#         # Create a new invoice (copy or generate based on your logic)
-#         new_invoice = Invoice(
-#             # Copy relevant fields from the original invoice
-#             customer=invoice.customer,
-#             items=invoice.items,
-#             # ... other fields
-#             issue_date=datetime.now(),
-#             due_date=datetime.now() + timedelta(days=invoice.payment_terms),
-#             next_due_date=datetime.now() + timedelta(days=invoice.recurrence_period),
-            
-#             channel_layer = get_channel_layer()
-#             async_to_sync(channel_layer.group_send)(
-#             'invoice_notifications',  # Group name
-#             {
-#                 'type': 'invoice_created',
-#                 'invoice': new_invoice.to_dict(),  # Serialize invoice data
-#             }
-#         )
-
-#         )
-#         new_invoice.save()
-
-#         # Update the next_due_date of the original invoice
-#         invoice.next_due_date += timedelta(days=invoice.recurrence_period)
-#         invoice.save()
+        # Update the next_due_date of the original invoice
+        invoice.next_due_date += timedelta(days=invoice.recurrence_period)
+        invoice.save()
 
 
-# # const webSocket = new WebSocket('ws://your-domain/ws/invoice-notifications/');
-
-# # webSocket.onmessage = function(event) {
-# #     const data = JSON.parse(event.data);
-# #     if (data.type === 'invoice_created') {
-# #         const invoice = data.invoice;
-# #         // Display a notification to the user (e.g., using a toast library)
-# #         alert("New Invoice Created: " + invoice.id); // Example alert
-# #     }
-# # };
 
 
-@shared_task
 def send_invoice_email_task(invoice_id):
     invoice = Invoice.objects.get(id=invoice_id)
     invoice_items = InvoiceItem.objects.filter(invoice=invoice)
@@ -82,31 +53,55 @@ def send_invoice_email_task(invoice_id):
 
     pisa.CreatePDF(html_string, dest=buffer) 
 
-    email = EmailMessage(
+    # email = EmailMessage(
+    #     'Your Invoice',
+    #     'Please find your invoice attached.',
+    #     'cassymyo@gmail.com',
+    #     ['cassymyo@gmail.com'],
+    # )
+    send_html_mail(
         'Your Invoice',
         'Please find your invoice attached.',
         'cassymyo@gmail.com',
         ['cassymyo@gmail.com'],
     )
     
-    buffer.seek(0)
-    email.attach(f'invoice_{invoice.invoice_number}.pdf', buffer.getvalue(), 'application/pdf')
+    # buffer.seek(0)
+    # email.attach(f'invoice_{invoice.invoice_number}.pdf', buffer.getvalue(), 'application/pdf')
 
-    # Send the email
-    email.send()
+    # # Send the email
+    # email.send()
     print('done')
 
-@shared_task
-def send_email_notification(notification_id):
-    notification = FinanceNotifications.objects.get(pk=notification_id)
-    subject = 'Cash Transfer Notification'
-    message = notification.notification
-    from_email = 'admin@techcity.co.zw'
-    to_email = 'cassymyo@gmail.com'
-    email = EmailMessage(subject, message, from_email, [to_email])
-    email.send()
 
-@shared_task
+
+def send_email_notification(notification_id):
+    try:
+        expense = Expense.objects.get(pk=notification_id)
+        
+        subject = 'Expense Confirmation Notification'
+        message = f'Please log on to confirm the expense: {expense.description}'
+        from_email = expense.user.email
+        to_email = ['cassymyo@gmail.com']  #to change
+        sender_name = expense.user.first_name
+
+        # Render the email template with context
+        html_content = render_to_string('emails/email_template.html', {
+            'subject': subject,
+            'message': message,
+            'sender_name': sender_name,
+        })
+
+        send_mail_func(subject, message, html_content, from_email, to_email)
+            
+    except Expense.DoesNotExist:
+        print(f"Expense with ID {notification_id} does not exist")
+
+    except Exception as e:
+        print(f"An error occurred while sending email: {e}")
+
+
+
 def send_expense_email_notification(expense_id):
     expense = Expense.objects.get(pk=expense_id)
     subject = 'Expense to be approved',
@@ -115,8 +110,7 @@ def send_expense_email_notification(expense_id):
     to_email = 'test@email.com'
     email = EmailMessage(subject, message, from_email, [to_email])
     email.send()
-    
-@shared_task
+
 def check_and_send_invoice_reminders():
     timezone.activate(settings.TIME_ZONE) 
     now = timezone.now()

@@ -168,6 +168,10 @@ class ReorderList(models.Model):
     
     def __str__(self):
         return f'{self.product.product.name}'
+
+class service(models.Model):
+    name = models.CharField(max_length=255)
+    
     
 
 

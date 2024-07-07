@@ -28,18 +28,18 @@ def low_stock_notification(sender, instance, **kwargs):
 @receiver(post_save, sender=Transfer)
 def stock_transfer_notification(sender, instance, **kwargs):
     StockNotifications.objects.create(
-            transfer = instance,
-            notification = f'Stock Transfer created yet to be received from {instance.transfer_to}',
-            status = True,
-            type = 'stock transfer' 
-        )
+        transfer = instance,
+        notification = f'Stock Transfer created yet to be received from {instance.transfer_to}',
+        status = True,
+        type = 'stock transfer' 
+    )
 
 @receiver(post_save, sender=TransferItems)
 def track_quantity(sender, instance, **kwargs):
-    print(instance.transfer.id)
     transfer = Transfer.objects.get(id=instance.transfer.id)
     transfer.total_quantity_track += instance.quantity
     transfer.save()
+    
     
 
        

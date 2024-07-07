@@ -101,7 +101,7 @@
 
                     <small class=" text-danger id_client_error"></small>
 
-                    <table class="table">
+                    <table class="table table-responsive table-sm">
                         <tr class="border head">
                             <th>Quanity</th>
                             <th>Product</th>
@@ -137,7 +137,7 @@
                             />
                         </div>
                     </div>
-                    <div class='totals border d-flex aling-items-center'>
+                    <div class='totals border d-flex aling-items-center table-responsive table-sm'>
                         <table class="table">
                             <tr>
                                 <td>Total Amount</td>
@@ -578,11 +578,11 @@ function updateCartDisplay() {
             <small class='bx bx-trash-alt text-danger' data-id=${item.id} onclick="removeItem(this);"></small>
             <small class='bx bx-chevron-up fw-bold text-success'></small>
             <small class='bx bx-chevron-down fw-bold text-danger'></small>
-            ${item.quantity}
+            <small>${item.quantity}</small>
         </td>
-        <td>${item.product_name}</td>
-        <td>${ currencyData[0][0].symbol + ' ' + parseFloat(item.price).toFixed(2)}</td>
-        <td>${currencyData[0][0].symbol + ' ' + (parseInt(item.quantity) * parseFloat(item.price)).toFixed(2)}</td>
+        <td><small>${item.product_name}</small></td>
+        <td><small>${ currencyData[0][0].symbol + ' ' + parseFloat(item.price).toFixed(2)}</small></td>
+        <td><small>${currencyData[0][0].symbol + ' ' + (parseInt(item.quantity) * parseFloat(item.price)).toFixed(2)}</small></td>
       `;
       cartItemsList.appendChild(row);
     });
