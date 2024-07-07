@@ -13,5 +13,5 @@ r = redis.Redis(host=host, port=port, password=password, db=0)
 print(r.ping())  # Should print True if the connection is successful
 
 from techcity.celery import app # Adjust import as per your project structure
-result = app.send_task('finance.tasks.add', args=[10, 20])
+result = app.send_task('techcity.tasks.add', args=[10, 20])
 print(result.get())  # Should print 30
