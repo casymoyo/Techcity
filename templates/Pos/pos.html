@@ -431,75 +431,73 @@ function cartButton(){
         cartBtn.disabled = false
     }
 }
-
 cartButton()
 
-function displayProducts(products){
-    if(menuName === 'tiles' || menuName === ''){
-        products.forEach(product => {
-            const productDiv = document.createElement('div');
-            productDiv.className = 'col-3';
-            productDiv.innerHTML = `
-            ${product.quantity <= 0 ? `
-            `: `
-                <div class="card" id='id_product_card' data-product=${product}>
-                    <div class="card-body d-flex flex-column align-items-center justify-content-center" id="id_add_to_cart" data-product=${product.inventory_id} onclick='fetchProductData(this)'>
-                        <div class="d-flex align-items-center mb-3">
-                            <i style="font-size:30px" class='bx bx-barcode'></i>
-                        </div>
-                        <p><small class="fw-bold">${product.product_name}</small></p>
-                        <p><small class="text-muted">${product.description}</small></p>
-                        <p><small class="text-muted">[${product.quantity}]</small></p>
-                        <p><small class="text-muted">USD${product.price}</small></p>
-                    </div>
-                </div>
-            `}
-            `;
-            productListContainer.appendChild(productDiv); 
-        });
-    }else if (menuName==='out of stock'){
-        products.forEach(product => {
-            const productDiv = document.createElement('div');
-            productDiv.className = 'col-3';
-            productDiv.innerHTML = `
-            ${product.quantity <= 0 ? `
-            <div class="card bg-danger" id='id_product_card' data-product=${product}>
-                    <div class="card-body d-flex flex-column align-items-center justify-content-center" id="id_add_to_cart" data-product=${product.inventory_id} onclick='fetchProductData(this)'>
-                        <div class="d-flex align-items-center mb-3">
-                            <i style="font-size:30px" class='bx bx-barcode'></i>
-                        </div>
-                        <p><small class="fw-bold">${product.product_name}</small></p>
-                        <p><small class="text-muted">${product.description}</small></p>
-                        <p><small class="text-muted">[${product.quantity}]</small></p>
-                        <p><small class="text-muted">USD${product.price}</small></p>
-                    </div>
-                </div>
-            `: ``}`;
-            productListContainer.appendChild(productDiv); 
-        });
-    }else {
-        const productList = document.createElement('ul');
+function displayProducts(products) {
+    productListContainer.innerHTML = '';
+
+    products.forEach(product => {
+        const productDiv = document.createElement('div');
+        productDiv.className = 'col-3';
         
-        products.forEach(product => {
-            productList.className = 'list-unstyled ';
+        if (menuName === 'tiles' || menuName === '') {
+            if (product.quantity > 0) {
+                productDiv.innerHTML = `
+                    <div class="card" id='id_product_card' data-product='${JSON.stringify(product)}'>
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center" id="id_add_to_cart" data-product='${product.inventory_id}' onclick='fetchProductData(this)'>
+                            <div class="d-flex align-items-center mb-3">
+                                <i style="font-size:30px" class='bx bx-barcode'></i>
+                            </div>
+                            <p><small class="fw-bold">${product.product_name}</small></p>
+                            <p><small class="text-muted">${product.description}</small></p>
+                            <p><small class="text-muted">[${product.quantity}]</small></p>
+                            <p><small class="text-muted">USD${product.price}</small></p>
+                        </div>
+                    </div>
+                `;
+            }
+        } else if (menuName === 'out of stock') {
+            if (product.quantity <= 0) {
+                productDiv.innerHTML = `
+                    <div class="card bg-danger" id='id_product_card' data-product='${JSON.stringify(product)}'>
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center" id="id_add_to_cart" data-product='${product.inventory_id}' onclick='fetchProductData(this)'>
+                            <div class="d-flex align-items-center mb-3">
+                                <i style="font-size:30px" class='bx bx-barcode'></i>
+                            </div>
+                            <p><small class="fw-bold">${product.product_name}</small></p>
+                            <p><small class="text-muted">${product.description}</small></p>
+                            <p><small class="text-muted">[${product.quantity}]</small></p>
+                            <p><small class="text-muted">USD${product.price}</small></p>
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            if (!document.querySelector('ul.product-list')) {
+                const productList = document.createElement('ul');
+                productList.className = 'list-unstyled product-list';
+                productListContainer.appendChild(productList);
+            }
+            
             const productListItem = document.createElement('li');
             productListItem.id = 'id_add_to_cart';
             productListItem.setAttribute('data-product', product.inventory_id);
             productListItem.setAttribute('onclick', 'fetchProductData(this)');
             productListItem.className = `product-list-item ${product.quantity <= 0 ? 'text-danger' : ''}`;
-            <!-- productListItem.style.backgroundColor = index % 2 === 0 ? 'lightgrey' : 'white'; -->
             productListItem.innerHTML = `
-                    <i class='bx bx-barcode'></i>
-                    <small class="px-1 fw-bold">${product.product_name}</small>
-                    <small class="text-muted">${product.description}</small>
-                    <small class="text-muted">USD${product.price}</small>
-                    <small class="text-muted">[${product.quantity}]</small>
-            `
-            productList.appendChild(productListItem);
-            });
-        productListContainer.appendChild(productList);
+                <i class='bx bx-barcode'></i>
+                <small class="px-1 fw-bold">${product.product_name}</small>
+                <small class="text-muted">${product.description}</small>
+                <small class="text-muted">USD${product.price}</small>
+                <small class="text-muted">[${product.quantity}]</small>
+            `;
+            document.querySelector('ul.product-list').appendChild(productListItem);
+            return;
         }
+        productListContainer.appendChild(productDiv); 
+    });
 }
+
 
 // Cart 
 async function fetchProductData (product){
