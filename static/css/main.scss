@@ -300,7 +300,20 @@
         }
         .products{
             .card{
-                height:200px !important;
+                height:100px !important;
+                background: #8BC34A;
+                p{
+                    margin-top: -20px !important;
+                }
+            }
+            li{
+                cursor: pointer;
+            }
+            li:hover{
+                background: lightgrey;;
+            }
+            li:nth-child(even) {
+                background: #8BC34A;
             }
         }
         .payment-modal{

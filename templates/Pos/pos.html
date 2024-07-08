@@ -48,7 +48,10 @@
                 <div class='mt-2 main-pos-area  px-2'>
                     <div class="d-flex align-content-center justify-content-between w-100">
                         <div class="d-flex align-items-center product-search">
-                            <div ><i class="bx bx-search"></i></div>
+                            <div class='list-toggle'>
+                                <button id="menu-type" class="btn border bx bx-menu"></button>
+                            </div>
+                            <div class="px-1" ><i class="bx bx-search"></i></div>
                             <div><input type="search" name="q" class="form-control"  id='id_search' placeholder="search..."/></div>
                         </div>
                         <div>
@@ -61,16 +64,7 @@
                         </div>
                     </div>
                     <div class="products mt-2">
-                        <div class="row" id="product-list">
-                            <!-- <div className='loader-parent'>
-                                <div class="loader">
-                                    <div class="inner one"></div>
-                                    <div class="inner two"></div>
-                                    <div class="inner three"></div>
-                                </div>
-                                <p className='text-muted'>Loading...</p>
-                            </div> -->
-                        </div>
+                        <div class="row" id="product-list"></div>
                     </div>
                 </div>
             </div>
@@ -109,7 +103,7 @@
                             <th>Subtotal</th>
                         </tr>
                     </table>
-                    <div class="table-items border bg-light">
+                    <div class="table-items border bg-light table-scroll">
                         <table class="table">
                             <tbody id="cart_items"></tbody>
                         </table>
@@ -272,6 +266,7 @@ let payable_amount = 0;
 let vat_amount = 0;
 let amount_paid = 0;
 let paymentMethod = 'cash'
+let menuName = ''
 
 let error = document.querySelector('#error_message')
 
@@ -283,6 +278,20 @@ const loaderModal = new bootstrap.Modal(document.getElementById('loaderModal'));
 const qouteModal = new bootstrap.Modal(document.getElementById('qouteModal'));
 
 const customerModal = new bootstrap.Modal(document.getElementById('customerModal'));
+const menuType = document.getElementById('menu-type');
+
+menuType.addEventListener('click', ()=>{
+    if(menuType.classList.contains('bx-list-ul')){
+        menuType.classList.remove('bx-list-ul');
+        menuType.classList.add('bx-menu');
+        menuName = 'tiles'
+    }else{
+        menuType.classList.add('bx-list-ul');
+        menuType.classList.remove('bx-menu');
+        menuName = 'list'
+    }
+    fetchData()
+})
 
 document.querySelector('#end').addEventListener(
     'click', ()=>{
@@ -360,9 +369,7 @@ closeModalBtn.forEach((btn)=>{
 //search filters and fetching data
 const productListContainer = document.getElementById('product-list');
 const categorySelect = document.getElementById('id_category');
-const search = document.getElementById('id_search')
-
-//const loader = document.getElementById('loader').style.display = 'block';
+const search = document.getElementById('id_search');
 
 search.addEventListener('input', ()=>{
     fetchData(search.value)
@@ -415,31 +422,61 @@ function cartButton(){
 cartButton()
 
 function displayProducts(products){
-
-    products.forEach(product => {
-       
-        const productDiv = document.createElement('div');
-        productDiv.className = 'col-3 mb-3';
-        const outOfStock = product.quantity <= 0 ? 'Out of Stock': ''
-        productDiv.innerHTML = `
-        <div class="card" id='id_product_card' data-product=${product}>
-            <div class="card-body d-flex flex-column align-items-center justify-content-center">
-            <div class="d-flex align-items-center">
-                <i style="font-size:40px" class='bx bx-barcode'></i>
-            </div>
-            <p class="px-1 fw-bold">${product.product_name}</p>
-            <small class="px-1 text-muted">${product.description}</small>
-            <p class="px-1 fw-bold">${outOfStock}</p>
-            </div>
-            <div class="mt-1">
-            <button id="id_add_to_cart" class="w-100 btn btn-light btn-sm" data-product=${product.inventory_id} onclick='fetchProductData(this)' >
-                <i class="bx bx-plus"></i> Add to cart
-            </button>
-            </div>
-        </div>
-        `;
-        productListContainer.appendChild(productDiv);
-    });
+    if(menuName === 'tiles' || menuName === ''){
+        products.forEach(product => {
+            const productDiv = document.createElement('div');
+            productDiv.className = 'col-3';
+            productDiv.innerHTML = `
+            ${product.quantity <= 0 ? `
+                <div class="card bg-danger" id='id_product_card' data-product=${product}>
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center" id="id_add_to_cart" data-product=${product.inventory_id} onclick='fetchProductData(this)'>
+                        <div class="d-flex align-items-center mb-3">
+                            <i style="font-size:30px" class='bx bx-barcode'></i>
+                        </div>
+                        <p><small class="fw-bold ">${product.product_name}</small></p>
+                        <p><small class="text-muted">${product.description}</small></p>
+                        <p><small class="text-muted">[${product.quantity}]</small></p>
+                        <p><small class="text-muted">USD${product.price}</small></p>
+                    </div>
+                </div>
+            `: `
+                <div class="card" id='id_product_card' data-product=${product}>
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center" id="id_add_to_cart" data-product=${product.inventory_id} onclick='fetchProductData(this)'>
+                        <div class="d-flex align-items-center mb-3">
+                            <i style="font-size:30px" class='bx bx-barcode'></i>
+                        </div>
+                        <p><small class="fw-bold">${product.product_name}</small></p>
+                        <p><small class="text-muted">${product.description}</small></p>
+                        <p><small class="text-muted">[${product.quantity}]</small></p>
+                        <p><small class="text-muted">USD${product.price}</small></p>
+                    </div>
+                </div>
+            `}
+            `;
+            productListContainer.appendChild(productDiv); 
+        });
+    }else {
+        const productList = document.createElement('ul');
+        
+        products.forEach(product => {
+            productList.className = 'list-unstyled ';
+            const productListItem = document.createElement('li');
+            productListItem.id = 'id_add_to_cart';
+            productListItem.setAttribute('data-product', product.inventory_id);
+            productListItem.setAttribute('onclick', 'fetchProductData(this)');
+            productListItem.className = `product-list-item ${product.quantity <= 0 ? 'text-danger' : ''}`;
+            <!-- productListItem.style.backgroundColor = index % 2 === 0 ? 'lightgrey' : 'white'; -->
+            productListItem.innerHTML = `
+                    <i class='bx bx-barcode'></i>
+                    <small class="px-1 fw-bold">${product.product_name}</small>
+                    <small class="text-muted">${product.description}</small>
+                    <small class="text-muted">USD${product.price}</small>
+                    <small class="text-muted">[${product.quantity}]</small>
+            `
+            productList.appendChild(productListItem);
+            });
+        productListContainer.appendChild(productList);
+        }
 }
 
 // Cart 

@@ -270,7 +270,20 @@
   overflow-y: auto;
 }
 .techcity .pos .products .card {
-  height: 200px !important;
+  height: 100px !important;
+  background: #8BC34A;
+}
+.techcity .pos .products .card p {
+  margin-top: -20px !important;
+}
+.techcity .pos .products li {
+  cursor: pointer;
+}
+.techcity .pos .products li:hover {
+  background: lightgrey;
+}
+.techcity .pos .products li:nth-child(even) {
+  background: #8BC34A;
 }
 .techcity .pos .payment-modal .payment-btn {
   position: fixed;
