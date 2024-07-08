@@ -25,6 +25,10 @@
     text-decoration: underline;
   }
 }
+.techcity .withdrawals td {
+  background-color: #0d6efd !important;
+  color: white;
+}
 .techcity .transfer-ibt {
   font-family: lato-Regular;
 }
@@ -269,6 +273,9 @@
   height: 80vh;
   overflow-y: auto;
 }
+.techcity .pos .products .col-3 {
+  height: 150px !important;
+}
 .techcity .pos .products .card {
   height: 150px !important;
   background: #8BC34A;
@@ -283,7 +290,7 @@
   background: lightgrey;
 }
 .techcity .pos .products li:nth-child(even) {
-  background: #8BC34A;
+  background: lightgrey;
 }
 .techcity .pos .payment-modal .payment-btn {
   position: fixed;

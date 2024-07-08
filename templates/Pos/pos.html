@@ -53,6 +53,9 @@
                             </div>
                             <div class="px-1" ><i class="bx bx-search"></i></div>
                             <div><input type="search" name="q" class="form-control"  id='id_search' placeholder="search..."/></div>
+                            <div class="">
+                                <button class="btn btn-light border" id="out_of_stock">Out of Stock</button>
+                            </div>
                         </div>
                         <div>
                             <select name='category' id="id_category" class="form-select">
@@ -279,6 +282,16 @@ const qouteModal = new bootstrap.Modal(document.getElementById('qouteModal'));
 
 const customerModal = new bootstrap.Modal(document.getElementById('customerModal'));
 const menuType = document.getElementById('menu-type');
+const ostBtn = document.getElementById('out_of_stock');
+
+ostBtn.addEventListener('click', ()=>{
+    if( menuName !== 'out of stock'){
+        menuName = 'out of stock';
+    }else{
+        menuName = '';
+    }
+    fetchData()
+});
 
 menuType.addEventListener('click', ()=>{
     if(menuType.classList.contains('bx-list-ul')){
@@ -290,8 +303,8 @@ menuType.addEventListener('click', ()=>{
         menuType.classList.remove('bx-menu');
         menuName = 'list'
     }
-    fetchData()
-})
+    fetchData();
+});
 
 document.querySelector('#end').addEventListener(
     'click', ()=>{
@@ -428,17 +441,6 @@ function displayProducts(products){
             productDiv.className = 'col-3';
             productDiv.innerHTML = `
             ${product.quantity <= 0 ? `
-                <div class="card bg-danger" id='id_product_card' data-product=${product}>
-                    <div class="card-body d-flex flex-column align-items-center justify-content-center" id="id_add_to_cart" data-product=${product.inventory_id} onclick='fetchProductData(this)'>
-                        <div class="d-flex align-items-center mb-3">
-                            <i style="font-size:30px" class='bx bx-barcode'></i>
-                        </div>
-                        <p><small class="fw-bold ">${product.product_name}</small></p>
-                        <p><small class="text-muted">${product.description}</small></p>
-                        <p><small class="text-muted">[${product.quantity}]</small></p>
-                        <p><small class="text-muted">USD${product.price}</small></p>
-                    </div>
-                </div>
             `: `
                 <div class="card" id='id_product_card' data-product=${product}>
                     <div class="card-body d-flex flex-column align-items-center justify-content-center" id="id_add_to_cart" data-product=${product.inventory_id} onclick='fetchProductData(this)'>
@@ -453,6 +455,26 @@ function displayProducts(products){
                 </div>
             `}
             `;
+            productListContainer.appendChild(productDiv); 
+        });
+    }else if (menuName==='out of stock'){
+        products.forEach(product => {
+            const productDiv = document.createElement('div');
+            productDiv.className = 'col-3';
+            productDiv.innerHTML = `
+            ${product.quantity <= 0 ? `
+            <div class="card bg-danger" id='id_product_card' data-product=${product}>
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center" id="id_add_to_cart" data-product=${product.inventory_id} onclick='fetchProductData(this)'>
+                        <div class="d-flex align-items-center mb-3">
+                            <i style="font-size:30px" class='bx bx-barcode'></i>
+                        </div>
+                        <p><small class="fw-bold">${product.product_name}</small></p>
+                        <p><small class="text-muted">${product.description}</small></p>
+                        <p><small class="text-muted">[${product.quantity}]</small></p>
+                        <p><small class="text-muted">USD${product.price}</small></p>
+                    </div>
+                </div>
+            `: ``}`;
             productListContainer.appendChild(productDiv); 
         });
     }else {

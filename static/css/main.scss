@@ -79,6 +79,12 @@
             a { color: black; text-decoration: underline; } 
         }   
     }
+    .withdrawals{
+        td{
+            background-color:#0d6efd !important;
+            color:white;
+        }
+    }
     .transfer-ibt{
         font-family:lato-Regular;
     }
@@ -299,6 +305,9 @@
             @include overflow(80vh);
         }
         .products{
+            .col-3{
+                height:150px !important;
+            }
             .card{
                 height:150px !important;
                 background: #8BC34A;
@@ -313,7 +322,7 @@
                 background: lightgrey;;
             }
             li:nth-child(even) {
-                background: #8BC34A;
+                background: lightgrey;
             }
         }
         .payment-modal{

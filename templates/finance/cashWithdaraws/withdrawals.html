@@ -43,10 +43,11 @@
             </div>
         </nav>
 
-        <table class="table border rounded p-2 mt-2">
+        <table class="table border rounded withdrawals p-2 mt-2" style='width=100%' id='withdrawals'>
             <thead class='bg-primary'>
                 <tr>
                     <th>Date</th>
+                    <th>Status</th>
                     <th>User</th>
                     <th>Amount</th>
                     <th>Reason</th>
@@ -58,13 +59,24 @@
                 {% for withdrawal in withdrawals %}
                     <tr>
                         {% if withdrawal.deleted %}
-                            <td><small class='text-decoration-line-through text-danger'>{{withdrawal.date}}</small></td>
+                            <td class='transfer-btn'><small class='text-decoration-line-through text-danger'>{{withdrawal.date}}</small></td>
                             <td><small class='text-decoration-line-through text-danger'>{{withdrawal.user}}</small></td>
                             <td><small class='text-decoration-line-through text-danger'>{{withdrawal.currency.symbol}} {{withdrawal.amount}}</small></td>
                             <td><small class='text-decoration-line-through text-danger'>{{withdrawal.reason}}</small></td>
                             <td><small class='text-decoration-line-through text-danger'>{{withdrawal.user.branch.name}}</small></td>
                         {% else %}
                             <td><small>{{withdrawal.date}}</small></td>
+                            {% if withdrawal.status %}
+                                <td><span class='hint--bottom' aria-label='All received'>
+                                        <i class='bx bxs-circle text-success fs-3' ></i>
+                                    </span>
+                                </td>
+                            {% else %}
+                                <td><span class='hint--bottom' aria-label='Not yet received'>
+                                        <i class='bx bxs-circle text-danger fs-3' ></i>
+                                    </span>
+                                </td>
+                            {% endif %}
                             <td><small>{{withdrawal.user}}</small></td>
                             <td><small>{{withdrawal.currency.symbol}} {{withdrawal.amount}}</small></td>
                             <td><small>{{withdrawal.reason}}</small></td>
@@ -216,8 +228,6 @@
         </div>
     </div>
 </div>
-
-<script src="{% static 'js/jquery.js'%}"></script>
 <script>
     let withdrawalId = '';
     let withdrawalData = [];
@@ -236,6 +246,8 @@
     const category = document.querySelector('#id_category');
     const categoryValue = document.querySelector('#id_category').value;
     const categoryModal = new bootstrap.Modal(document.querySelector('#categoryModal'));
+
+    {% comment %} new DataTable('#withdrawals') {% endcomment %}
 
     cashWithdrawBtn.addEventListener('click', ()=>{
         cashModal.show()

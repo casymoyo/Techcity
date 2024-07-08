@@ -19,10 +19,10 @@ def users(request):
             form.save()
             user=form.save(commit=False)
             user.password=make_password(form.cleaned_data['password'])
-            user.save()
+            user.save() 
             messages.success(request, 'User successfully added')
         else: 
-            messages.error(request, 'Error')
+            messages.error(request, 'Invalid form data')
             
     return render(request, 'auth/users.html', {'users':users, 'form':form})
     

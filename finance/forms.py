@@ -40,8 +40,8 @@ class TransferForm(forms.ModelForm):
 class CashWithdrawForm(forms.ModelForm):
     class Meta:
         model = CashWithdraw
-        fields = ['amount', 'currency', 'reason', 'user_code']
-   
+        fields = ['amount', 'currency', 'reason', 'password'] # make it to be a password field
+    password = forms.CharField(widget=forms.PasswordInput)
 
 class cashWithdrawExpenseForm(forms.ModelForm):
     class Meta:

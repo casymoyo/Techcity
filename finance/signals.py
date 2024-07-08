@@ -86,10 +86,10 @@ def create_cashbook_entry(instance, debit, credit):
 def create_invoice_cashbook_entry(sender, instance, **kwargs):
     create_cashbook_entry(instance, debit=True, credit=False)
 
-@receiver(post_save, sender=Expense)
-def create_expense_cashbook_entry(sender, instance, **kwargs):
-    if instance.status == True:
-        create_cashbook_entry(instance, instance.description, debit=False, credit=True)
+# @receiver(post_save, sender=Expense)
+# def create_expense_cashbook_entry(sender, instance, **kwargs):
+#     if instance.status == True:
+#         create_cashbook_entry(instance, instance.description, debit=False, credit=True)
 
 @receiver(post_save, sender=CashTransfers)
 def create_cash_transfer_cashbook_entry(sender, instance, **kwargs):

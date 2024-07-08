@@ -368,7 +368,7 @@ class QoutationItems(models.Model):
 
 class CashWithdraw(models.Model):
     user = models.ForeignKey('users.User', on_delete=models.CASCADE)
-    user_code = models.CharField(max_length=10)
+    password = models.CharField(max_length=10)
     amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     date = models.DateField(auto_now_add=True)
     time = models.TimeField(auto_now_add=True)

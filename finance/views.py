@@ -34,6 +34,7 @@ from django.core.mail import send_mail, EmailMessage
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from . forms import ExpenseForm, ExpenseCategoryForm, CurrencyForm, InvoiceForm, CustomerForm, TransferForm, CashWithdrawForm, cashWithdrawExpenseForm
+from django.contrib.auth import authenticate
 
 import logging
 
@@ -1684,15 +1685,14 @@ def cashWithdrawals(request):
         
         if form.is_valid():
              
-            user_code = form.cleaned_data['user_code']
+            password = form.cleaned_data['password']
             currency = form.cleaned_data['currency']
             amount = form.cleaned_data['amount']
             
-            # validations
-            try:
-                user = User.objects.get(code=user_code)
-            except User.DoesNotExist:
-                messages.warning(request, 'Incorrect user code')
+            user = authenticate(username=request.user.username, password=password)
+            
+            if user is None:
+                messages.warning(request, 'Incorrect password')
                 return redirect('finance:withdrawals')
             
             cw_obj = form.save(commit=False)
@@ -1705,12 +1705,14 @@ def cashWithdrawals(request):
                 account = Account.objects.get(name=account_name, type=Account.AccountType.CASH)
             except Account.DoesNotExist:
                 messages.error(request, f'{account_name} doesnt exists')
+                return redirect('finance:withdrawals')
 
             try:
                 account_balance = AccountBalance.objects.get(account=account,  branch=request.user.branch)
             except AccountBalance.DoesNotExist:
                 messages.error(request, f'Account Balances for account {account_name} doesnt exists')
-                
+                return redirect('finance:withdrawals')
+            
             account_balance.balance -= Decimal(amount)
             account_balance.save()
             messages.success(request, 'Cash Withdrawal Successfully saved')
@@ -1787,12 +1789,14 @@ def delete_withdrawal(request, withdrawal_id):
         account = Account.objects.get(name=account_name, type=Account.AccountType.CASH)
     except Account.DoesNotExist:
         messages.error(request, f'{account_name} doesnt exists')
-
+        return redirect('finance:withdrawals')
+    
     try:
         account_balance = AccountBalance.objects.get(account=account,  branch=request.user.branch)
     except AccountBalance.DoesNotExist:
         messages.error(request, f'Account Balances for account {account_name} doesnt exists')
-        
+        return redirect('finance:withdrawals')
+    
     account_balance.balance += Decimal(withdrawal.amount)
     account_balance.save()
     withdrawal.deleted=True
