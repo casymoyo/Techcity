@@ -11,9 +11,7 @@ from django.contrib import messages
 from utils.utils import generate_pdf
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, HttpResponse
-from asgiref.sync import async_to_sync
 from finance.models import StockTransaction
-from channels.layers import get_channel_layer
 from . utils import calculate_inventory_totals
 from . forms import AddProductForm, addCategoryForm, addTransferForm, DefectiveForm, RestockForm, AddDefectiveForm, ServiceForm
 from django.contrib.auth.decorators import login_required
@@ -45,7 +43,6 @@ def service(request):
 @login_required
 def product_list(request): 
     """ for the pos """
-    
     queryset = Inventory.objects.filter(branch=request.user.branch, status=True)
     search_query = request.GET.get('q', '') 
     product_id = request.GET.get('product', '')
@@ -68,7 +65,9 @@ def product_list(request):
         'product__description', 
         'product__category__id', 
         'product__category__name',  
-        'price', 'quantity'
+        'product__end_of_day',
+        'price', 
+        'quantity'
     ))
     
     merged_data = [{
@@ -78,6 +77,7 @@ def product_list(request):
         'description': item['product__description'],
         'category': item['product__category__id'],
         'category_name': item['product__category__name'],
+        'end_of_day':item['product__end_of_day'],
         'price': item['price'],
         'quantity': item['quantity'],
     } for item in inventory_data]
@@ -343,10 +343,17 @@ def edit_inventory(request, product_name):
         inv_product = Inventory.objects.get(product__name=product_name, branch=request.user.branch)
        
         if request.method == 'POST':
+            
             product = Product.objects.get(name=product_name)
             product.name=request.POST['name']
             product.batch_code=request.POST['batch_code']
             product.description=request.POST['description']
+            
+            end_of_day = request.POST.get('end_of_day')
+    
+            if end_of_day:
+                product.end_of_day = True
+                
             product.save()
             
             if inv_product.quantity < int(request.POST['quantity']):

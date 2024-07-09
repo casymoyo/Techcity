@@ -247,7 +247,7 @@
     </div>
 </div>
 
-<script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'assets/DataTables/datatables.min.js' %}"></script>
 <script type="text/javascript">
     const whatsappBtn = document.getElementById('whatsappBtn');
     const appModal = new bootstrap.Modal(document.getElementById('appModal'));
@@ -283,18 +283,15 @@
         loaderSpin.classList.remove('d-flex')
         tableEl.classList.remove('hidden')
     }, 300)
+
     // payment methods
     document.querySelectorAll('.pm').forEach(button => {
         button.addEventListener('click', () => {
-            console.log(button.dataset.name);
-            if (button.dataset.name === 'cash') { 
+            let name = button.dataset.name;
+            if(['ecocash', 'cash', 'bank'].includes(name)){
                 paymentMethod = button.dataset.name;
-            } else if (button.dataset.name === 'ecocash'){
-                paymentMethod = button.dataset.name;
-            } else if (button.dataset.name === 'bank'){
-                paymentMethod = button.dataset.name;
-            }
-            updatePayment();
+                updatePayment();
+            }        
         });
     });
 

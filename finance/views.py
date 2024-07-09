@@ -653,13 +653,16 @@ def customer(request):
     elif request.method == 'POST':
         data = json.loads(request.body)
         
-        customer = Customer.objects.create(
-            name=data['name'],
-            email=data['email'],
-            address=data['address'],
-            phone_number=data['phonenumber']
-        )
-        account = CustomerAccount.objects.create(customer=customer)
+        if Customer.objects.filter(phone_number=data['phonenumber']).exists():
+            return JsonResponse({'success': False, 'message': 'Customer exists'})
+        else:
+            customer = Customer.objects.create(
+                name=data['name'],
+                email=data['email'],
+                address=data['address'],
+                phone_number=data['phonenumber']
+            )
+            account = CustomerAccount.objects.create(customer=customer)
 
         balances_to_create = [
             CustomerAccountBalances(account=account, currency=currency, balance=0) 
@@ -1169,6 +1172,35 @@ def send_invoice_whatsapp(request, invoice_id):
 def end_of_day(request):
     today = timezone.now().date()
     
+    user_timezone_str = request.user.timezone if hasattr(request.user, 'timezone') else 'UTC'
+    user_timezone = pytz_timezone(user_timezone_str)  
+
+    # make a utility
+    def filter_by_date_range(start_date, end_date):
+        start_datetime = user_timezone.localize(
+            timezone.datetime.combine(start_date, timezone.datetime.min.time())
+        )
+        end_datetime = user_timezone.localize(
+            timezone.datetime.combine(end_date, timezone.datetime.max.time())
+        )
+        return Invoice.objects.filter(issue_date__range=[start_datetime, end_datetime])
+
+    now = timezone.now().astimezone(user_timezone)
+    today = now.date()
+
+    now = timezone.now() 
+    today = now.date()  
+    
+    invoices = filter_by_date_range(today, today)
+    withdrawals = CashWithdraw.objects.filter(user__branch=request.user.branch, date=today, status=False)
+    
+    total_cash_amounts = [
+        {
+            'total_invoices_amount' : invoices.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0,
+            'total_withdrawals_amount' : withdrawals.aggregate(Sum('amount'))['amount__sum'] or 0
+        }
+    ]
+
     sold_inventory = (
         StockTransaction.objects
         .filter(invoice__branch=request.user.branch, date=today, transaction_type=StockTransaction.TransactionType.SALE)
@@ -1195,7 +1227,7 @@ def end_of_day(request):
                     'physical_count': None
                 })
            
-        return JsonResponse({'inventory': inventory_data})
+        return JsonResponse({'inventory': inventory_data, 'total_cash_amounts':total_cash_amounts})
     
     elif request.method == 'POST':
         try:

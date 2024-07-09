@@ -7,6 +7,28 @@
   font-family: graphik;
   font-size: 0.9rem;
 }
+.techcity .account-statement {
+  font-family: lato-Regular;
+}
+@media print {
+  .techcity .account-statement header, .techcity .account-statement footer {
+    display: none;
+  }
+  .techcity .account-statement .print-hide {
+    display: none;
+  }
+  .techcity .account-statement body {
+    font-size: 12pt;
+  }
+  .techcity .account-statement a {
+    color: black;
+    text-decoration: underline;
+  }
+}
+.techcity .withdrawals td {
+  background-color: #0d6efd !important;
+  color: white;
+}
 .techcity .transfer-ibt {
   font-family: lato-Regular;
 }
@@ -251,8 +273,24 @@
   height: 80vh;
   overflow-y: auto;
 }
+.techcity .pos .products .col-3 {
+  height: 150px !important;
+}
 .techcity .pos .products .card {
-  height: 200px !important;
+  height: 150px !important;
+  background: #8BC34A;
+}
+.techcity .pos .products .card p {
+  margin-top: -20px !important;
+}
+.techcity .pos .products li {
+  cursor: pointer;
+}
+.techcity .pos .products li:hover {
+  background: lightgrey;
+}
+.techcity .pos .products li:nth-child(even) {
+  background: lightgrey;
 }
 .techcity .pos .payment-modal .payment-btn {
   position: fixed;

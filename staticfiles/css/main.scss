@@ -64,6 +64,27 @@
 }
 
 .techcity{
+    .account-statement{
+        font-family:lato-Regular;
+        @media print {
+            header, footer { 
+                display: none; 
+            }
+    
+            .print-hide {
+                display: none; 
+            }
+            
+            body { font-size: 12pt; }
+            a { color: black; text-decoration: underline; } 
+        }   
+    }
+    .withdrawals{
+        td{
+            background-color:#0d6efd !important;
+            color:white;
+        }
+    }
     .transfer-ibt{
         font-family:lato-Regular;
     }
@@ -284,8 +305,24 @@
             @include overflow(80vh);
         }
         .products{
+            .col-3{
+                height:150px !important;
+            }
             .card{
-                height:200px !important;
+                height:150px !important;
+                background: #8BC34A;
+                p{
+                    margin-top: -20px !important;
+                }
+            }
+            li{
+                cursor: pointer;
+            }
+            li:hover{
+                background: lightgrey;;
+            }
+            li:nth-child(even) {
+                background: lightgrey;
             }
         }
         .payment-modal{

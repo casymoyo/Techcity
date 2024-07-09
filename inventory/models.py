@@ -31,6 +31,7 @@ class Product(models.Model):
     tax_type = models.CharField(max_length=50, choices=tax_choices)
     min_stock_level = models.IntegerField(default=0, null=True)
     description = models.TextField()
+    end_of_day = models.BooleanField(default=False)
     
     def __str__(self):
         return self.name

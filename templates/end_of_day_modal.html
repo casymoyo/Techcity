@@ -6,7 +6,8 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h3 class="text-center fw-bold">End of Day Stock Take</h3>
+        <h3 class="text-center fw-bold">End of Day</h3>
+        <h5>Stock Take</h5>
 
         <table class="table table-bordered" id="stockTable">
             <thead>
@@ -23,11 +24,26 @@
             </tbody>
         </table>
 
+        <h5>Cash</h5>
+        <table class="table table-bordered" id="cash">
+            <thead>
+                <tr>
+                    <th>Invoices</th>
+                    <th>Withdrawals</th>
+                    <th>Deposits</th>
+                    <th>Cashed In</th>
+                    <th>Difference</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
         <div id="categorySummary"></div> 
 
         <button type="button" class="btn btn-secondary w-100" id="saveStockBtn">
             <i class="bx bx-save"></i>
-            Stock Take
+            Save
         </button>
     </div>
 
@@ -36,40 +52,64 @@ fetch('/finance/end_of_day/')
     .then(response => response.json())
     .then(data => {
         const inventoryData = data.inventory;
+        const cashData = data.total_cash_amounts;
+
+        const row = cash.insertRow();
+        row.insertCell().textContent = cashData[0].total_invoices_amount;
+        row.insertCell().textContent = cashData[0].total_withdrawals_amount;
+        row.insertCell().textContent = 0;
+        
+        const inputCell = row.insertCell();
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'form-control';
+
+        inputCell.appendChild(input);
+
+        const cashDiffCell = row.insertCell();
+        cashDiffCell.textContent = '';
+
+        input.addEventListener('input', () => {
+            const invoices = parseFloat(cashData[0].total_invoices_amount) || 0;
+            const withdrawals = parseFloat(cashData[0].total_withdrawals_amount) || 0;
+            const deposits = parseFloat(0) || 0;
+            const collected = parseFloat(input.value, 10) || 0;
+            const difference = collected - (invoices - withdrawals + deposits);
+
+            cashDiffCell.textContent = difference;
+            cashDiffCell.style.color = difference < 0 ? 'red' : 'green'; 
+        });
 
         inventoryData.forEach(item => {
-            // Create elements inside the loop for each item
             const row = stockTable.insertRow();
             row.insertCell().textContent = item.name;
             row.insertCell().textContent = item.initial_quantity;
             row.insertCell().textContent = item.quantity_sold;
             row.insertCell().textContent = item.remaining_quantity;
 
-            // Input field for physical count
             const inputCell = row.insertCell();
             const input = document.createElement('input');
             input.type = 'number';
             input.className = 'form-control';
             input.dataset.itemId = item.id; 
 
-            // Difference cell (initially empty)
             const diffCell = row.insertCell();
             diffCell.textContent = '';
 
             inputCell.appendChild(input);
 
-            // Add event listener to the input field (inside the loop)
             input.addEventListener('input', () => {
                 const physicalCount = parseInt(input.value, 10) || 0;
                 const remainingQuantity = parseInt(item.remaining_quantity, 10);
                 const difference = physicalCount - remainingQuantity;
 
                 diffCell.textContent = difference;
-                diffCell.style.color = difference < 0 ? 'red' : 'green';  // Conditional coloring
+                diffCell.style.color = difference < 0 ? 'red' : 'green'; 
             });
         });
 
-        // Save button event handler
+
+
         saveStockBtn.addEventListener('click', () => {
             const physicalCounts = [];
             stockTable.querySelectorAll('input').forEach(input => {
@@ -103,20 +143,21 @@ fetch('{% url "inventory:product_list" %}')
     .then(response => response.json())
     .then(data => {
         const inventoryData = data;
-        const categorySummary = document.getElementById('categorySummary'); // Get the container
+        const categorySummary = document.getElementById('categorySummary'); 
     
-        // Organize products by category (assuming your data structure supports this)
         const productsByCategory = {};
         inventoryData.forEach(item => {
-            const category = item.category_name; 
-            if (!productsByCategory[category]) {
-                productsByCategory[category] = { totalQuantity: 0, products: [] };
+            console.log(item.end_of_day)
+            if(item.end_of_day){
+                const category = item.category_name; 
+                if (!productsByCategory[category]) {
+                    productsByCategory[category] = { totalQuantity: 0, products: [] };
+                }
+                productsByCategory[category].totalQuantity += parseInt(item.quantity, 10);
+                productsByCategory[category].products.push(item);
             }
-            productsByCategory[category].totalQuantity += parseInt(item.quantity, 10);
-            productsByCategory[category].products.push(item);
         });
 
-        // Display category summary
         for (const category in productsByCategory) {
             const categoryContainer = document.createElement('div');
             categoryContainer.className = 'category-container';
