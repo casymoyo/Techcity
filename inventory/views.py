@@ -110,15 +110,9 @@ class AddProductView(LoginRequiredMixin, View):
             product_name = request.POST['name']
             
             try:
-                product = Product.objects.get(name=product_name)
-                
-                product.quantity = int(request.POST['quantity'])
-                product.price = Decimal(request.POST['price'])
-                product.cost = Decimal(request.POST['cost'])
-                product.save()
-
-                message = 'Product successfully updated'
-                log_action = 'Update'
+                product = Product.objects.get(name=product_name)                
+                messages.warning(request, 'Product exists ')
+                return redirect('inventory:add_product')
             except Product.DoesNotExist:
                 if form.is_valid():
                     product = form.save()
