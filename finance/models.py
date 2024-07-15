@@ -53,20 +53,31 @@ class CustomerAccount(models.Model):
         return f'{self.customer.name})'
     
 class CustomerAccountBalances(models.Model):
+    # Customer has two accounts i.e. USD and ZIG account
     account = models.ForeignKey(CustomerAccount, on_delete=models.CASCADE, related_name='balances')
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)  
     balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)   
-    payment_method = models.CharField(max_length=15, choices=[
-        ('cash', 'cash'),
-        ('bank', 'bank'),
-        ('ecocash', 'ecocash')
-    ])
 
     class Meta:
         unique_together = ('account', 'currency') 
 
     def __str__(self):
         return f'{self.account} - {self.currency}: {self.balance}'
+    
+class CustomerDeposits(models.Model):
+    customer_account = models.ForeignKey("finance.CustomerAccountBalances",
+                                         on_delete=models.CASCADE,
+                                         related_name="customer deposits")
+    balance = models.DecimalField(max_digits=15, decimal_places=2, default=0) 
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)  
+    payment_method = models.CharField(max_length=15, choices=[
+                                            ('cash', 'cash'),
+                                            ('bank', 'bank'),
+                                            ('ecocash', 'ecocash')
+                                        ]
+                                      , default="cash")
+    reason = models.CharField(max_length=255, null=False, blank=False)
+    
 
 
 class Transaction(models.Model):
