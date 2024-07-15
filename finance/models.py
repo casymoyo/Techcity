@@ -67,8 +67,8 @@ class CustomerAccountBalances(models.Model):
 class CustomerDeposits(models.Model):
     customer_account = models.ForeignKey("finance.CustomerAccountBalances",
                                          on_delete=models.CASCADE,
-                                         related_name="customer deposits")
-    balance = models.DecimalField(max_digits=15, decimal_places=2, default=0) 
+                                         related_name="customer_deposits")
+    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0) 
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)  
     payment_method = models.CharField(max_length=15, choices=[
                                             ('cash', 'cash'),
@@ -77,6 +77,7 @@ class CustomerDeposits(models.Model):
                                         ]
                                       , default="cash")
     reason = models.CharField(max_length=255, null=False, blank=False)
+    payment_reference = models.CharField(max_length=255, unique=True, editable=False)
     
 
 
