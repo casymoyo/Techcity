@@ -340,15 +340,19 @@ def create_invoice(request):
             }
 
             account_name = f"{request.user.branch} {currency.name} {invoice_data['payment_method'].capitalize()} Account"
-
+            logger.info(f"[Create Invoice]: {account_name}")
             account, _ = Account.objects.get_or_create(name=account_name, type=account_types[invoice_data['payment_method']])
             
+            # Todo debug line 
+            logger.info(f"[Create Invoice]: account {account}")
             account_balance, _ = AccountBalance.objects.get_or_create(
                 account=account,
                 currency=currency,
                 branch=request.user.branch,
                 defaults={'balance': 0}  
             )
+            logger.info(f"[Create Invoice]: {account_balance}")
+
             
             # accountts_receivable
             accounts_receivable, _ = ChartOfAccounts.objects.get_or_create(name="Accounts Receivable")
@@ -358,10 +362,14 @@ def create_invoice(request):
 
             # customer
             customer = Customer.objects.get(id=int(invoice_data['client_id'])) 
+            logger.info(f"[Create Invoice]: {customer}")
             
+            # customer account
+            customer_account = CustomerAccount.objects.get(customer=customer)
+
             # customer Account + Balances
             customer_account_balance, _ = CustomerAccountBalances.objects.get_or_create(
-                account__customer=customer,
+                account=customer_account,
                 currency=currency, 
                 defaults={'balance': 0}
             )
@@ -816,11 +824,34 @@ def customer_account_deposit(request, customer_id):
     """
         customer_id
         amount
+        currency
         payment_method
         reason
     """
     
     try:
+        # get payload
+        customer_id = request.POST.get('customer_id')
+        amount = request.POST.get('amount')
+        currency = request.POST.get('currency')
+        payment_method = request.POST.get('payment_method')
+        reason = request.POST.get('reason')
+        
+        # check if customer exits
+        customer = get_object_or_404(Customer, id=customer_id)  
+        customer_account_object = CustomerAccountBalances.objects.filter(
+            account_id=customer.id, 
+            currency=currency,
+            )
+        logger.info(f"Finance: customer account object {customer_account}")
+        # effect deposit
+        
+        
+        # effect customer account
+        
+        # return response
+        
+        
         pass
     except Exception as e:
         return JsonResponse(
