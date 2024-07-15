@@ -51,10 +51,16 @@ class CustomerAccount(models.Model):
     
     def __str__(self):
         return f'{self.customer.name})'
+    
 class CustomerAccountBalances(models.Model):
     account = models.ForeignKey(CustomerAccount, on_delete=models.CASCADE, related_name='balances')
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)  
-    balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)   
+    payment_method = models.CharField(max_length=15, choices=[
+        ('cash', 'cash'),
+        ('bank', 'bank'),
+        ('ecocash', 'ecocash')
+    ])
 
     class Meta:
         unique_together = ('account', 'currency') 
@@ -215,8 +221,8 @@ class Invoice(models.Model):
     branch = models.ForeignKey('company.branch', on_delete=models.CASCADE)
     status = models.BooleanField(default=True)
     user = models.ForeignKey('users.User', on_delete=models.PROTECT, null=True)
-    recurring = models.BooleanField(default=False)
-    recurrence_period = models.IntegerField(default=29)  # Default to 14 days (2 weeks)
+    reocurring = models.BooleanField(default=False)
+    recurrence_period = models.IntegerField(default=0)  
     next_due_date = models.DateField(null=True, blank=True) 
     subtotal =  models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     note = models.TextField()

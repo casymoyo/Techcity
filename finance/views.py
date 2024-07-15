@@ -317,6 +317,9 @@ def update_invoice(request, invoice_id):
         return JsonResponse({'success': False, 'message': 'Invalid request method.'}) 
 
 
+
+
+
 @login_required
 @transaction.atomic 
 def create_invoice(request):
@@ -406,7 +409,9 @@ def create_invoice(request):
             amount_due = invoice_total_amount - amount_paid
             
             with transaction.atomic():
-            
+                
+                recurrence_period = int(invoice_data['next_due_days']) if invoice_data['next_due_days'] else 0
+                
                 invoice = Invoice.objects.create(
                     invoice_number=Invoice.generate_invoice_number(request.user.branch.name),  
                     customer=customer,
@@ -424,7 +429,10 @@ def create_invoice(request):
                     currency=currency,
                     subtotal=invoice_data['subtotal'],
                     note=invoice_data['note'],
-                    products_purchased = ', '.join([f'{item['product_name']} x {item['quantity']}' for item in items_data])
+                    reocurring = invoice_data['recourring'],
+                    products_purchased = ', '.join([f'{item['product_name']} x {item['quantity']}' for item in items_data]),
+                    recurrence_period = recurrence_period ,
+                    next_due_date = datetime.datetime.now() + timedelta(days=recurrence_period )
                 )
                 
                 # #create transaction
@@ -803,6 +811,26 @@ def customer_account(request, customer_id):
 
 
 @login_required
+def customer_account_deposit(request, customer_id):
+    # payload
+    """
+        customer_id
+        amount
+        payment_method
+        reason
+    """
+    
+    try:
+        pass
+    except Exception as e:
+        return JsonResponse(
+            {
+                "message": f"{e.with_traceback}",
+            },
+            status=500
+        )
+
+@login_required
 def customer_account_transactions_json(request):
     customer_id = request.GET.get('customer_id')
     transaction_type = request.GET.get('type')
@@ -1116,7 +1144,7 @@ def send_invoice_email(request):
 @login_required
 def send_invoice_whatsapp(request, invoice_id):
     try:
-        # Retrieve Invoice and Generate PDF
+        
         invoice = Invoice.objects.get(pk=invoice_id)
         invoice_items = InvoiceItem.objects.filter(invoice=invoice)
         img = settings.STATIC_URL + "/assets/logo.png"
@@ -1125,7 +1153,7 @@ def send_invoice_whatsapp(request, invoice_id):
         pdf_buffer = BytesIO()
         pisa_status = pisa.CreatePDF(html_string, dest=pdf_buffer)
         if not pisa_status.err:
-            # Save PDF to S3 and get URL
+          
             s3 = boto3.client(
                 "s3",
                 aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
@@ -1142,7 +1170,6 @@ def send_invoice_whatsapp(request, invoice_id):
             )
             s3_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/invoices/{invoice_filename}"
 
-            # Send WhatsApp Message with Twilio
             account_sid = 'AC6890aa7c095ce1315c4a3a86f13bb403'
             auth_token = '897e02139a624574c5bd175aa7aaf628'
             client = Client(account_sid, auth_token)
@@ -1288,40 +1315,8 @@ def end_of_day(request):
             pdf_buffer = BytesIO()
             pisa_status = pisa.CreatePDF(html_string, dest=pdf_buffer)
             if not pisa_status.err:
-                # Save PDF to S3 and get URL
-                s3 = boto3.client(
-                    "s3",
-                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-                    region_name=settings.AWS_S3_REGION_NAME,
-                )
-                invoice_filename = f"{request.user.branch.name}_today_report_{today}.pdf"
-                s3.put_object(
-                    Bucket=settings.AWS_STORAGE_BUCKET_NAME,
-                    Key=f"daily_reports/{invoice_filename}",
-                    Body=pdf_buffer.getvalue(),
-                    ContentType="application/pdf",
-                    ACL="public-read",
-                )
-                s3_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/daily_reports/{invoice_filename}"
-
-                # Send WhatsApp Message with Twilio
-                
-                account_sid = 'AC6890aa7c095ce1315c4a3a86f13bb403'
-                auth_token = '897e02139a624574c5bd175aa7aaf628'
-                client = Client(account_sid, auth_token)
-                from_whatsapp_number = 'whatsapp:' + '+14155238886'
-                to_whatsapp_number = 'whatsapp:' + '+263778587612'
-
-                message = client.messages.create(
-                    from_=from_whatsapp_number,
-                    body="Today's report.",
-                    to=to_whatsapp_number,
-                    media_url=s3_url
-                )
-
-                logger.info(f"WhatsApp message SID: {message.sid}")
-                return JsonResponse({"success": True, "message_sid": message.sid})
+                filename = f"{request.user.branch.name}_today_report_{today}.pdf"
+                return JsonResponse({"success": True})
             else:
                 return JsonResponse({"success": False, "error": "Error generating PDF."})
         except json.JSONDecodeError:
@@ -1472,9 +1467,6 @@ def cash_transfer(request):
             account_balance.balance -= transfer.amount
             account_balance.save()
             transfer.save()  
-            
-
-            # CashTransferConsumer.send_message({'message':'New cash transfer made!'})
             
             messages.success(request, 'Money successfully transferred.')
             return redirect('finance:cash_transfer')  
