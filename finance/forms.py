@@ -1,5 +1,14 @@
 from django import forms
-from .models import Expense, ExpenseCategory, Customer, Currency, Invoice, CashTransfers, CashWithdraw
+from .models import (
+    Expense, 
+    ExpenseCategory, 
+    Customer, 
+    Currency, 
+    Invoice, 
+    CashTransfers, 
+    CashWithdraw, 
+    CustomerDeposits
+)
 
 class ExpenseForm(forms.ModelForm):
     class Meta:
@@ -40,10 +49,16 @@ class TransferForm(forms.ModelForm):
 class CashWithdrawForm(forms.ModelForm):
     class Meta:
         model = CashWithdraw
-        fields = ['amount', 'currency', 'reason', 'password'] # make it to be a password field
+        fields = ['amount', 'currency', 'reason', 'password'] 
     password = forms.CharField(widget=forms.PasswordInput)
 
 class cashWithdrawExpenseForm(forms.ModelForm):
     class Meta:
         model = Expense
         fields= ['currency', 'amount', 'category', 'description']     
+
+class customerDepositsForm(forms.ModelForm):
+    class Meta:
+        model = CustomerDeposits
+        exclude = ['cashier', 'customer_account', 'branch']
+   

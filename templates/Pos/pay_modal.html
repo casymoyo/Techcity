@@ -14,64 +14,56 @@
             <table class="table table-borderless">
                 <tbody id="order_details"></tbody>
             </table>
-
            <div>
-            <table id="oder_details_foot" class="table table-borderless">
-                <tr>
-                    <td class='px-5 fw-bold'>Subtotal</td>
-                    <td class="d-flex justify-content-end" id="id_subtotal"></td>
-                </tr>
-                <tr id='disc'>
-                    <td id="id_dcp"class='px-5 fw-bold'></td>
-                    <td class="d-flex justify-content-end" id="id_disc">
-                        <span class='disc_c'>0.00</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td class='px-5 fw-bold'>VAT</td>
-                    <td class="d-flex justify-content-end" id="id_vat">0.00</td>
-                </tr>
-                <tr id='d_charge'>
-                    <td class='px-5 fw-bold'>Delivery Charge</td>
-                    <td class="d-flex justify-content-end" id="id_delivery_charge">
-                        <span class='d_c'>0.00</span>
-                    </td>
-                </tr>
-                <tr id='int'>
-                    <td class='px-5 fw-bold'>Interest Amount</td>
-                    <td class="d-flex justify-content-end" id="id_interest_amount">
-                        <span class='inter'>0.00</span>
-                    </td>
-                </tr>
-                <tr id='prv'>
-                    <td class='px-5 fw-bold'>Previous Due</td>
-                    <td class="d-flex justify-content-end" id="previous_due">
-                        <span class='p_due'>0.00</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td class='px-5 fw-bold'>Paid Amount</td>
-                    <td class="d-flex justify-content-end" id="id_paid_amount">0.00</td>
-                </tr>
-                <tr>
-                    <td class='px-5 fw-bold'>Due Amount</td>
-                    <td class="d-flex justify-content-end fw-bold" id="id_due_amount">0.00</td>
-                </tr>
-                <tr>
-                    <td class='px-5 fw-bold'>Balance</td>
-                    <td class="d-flex justify-content-end" id="id_balance">0.00</td>
-                </tr>
-            </table>
+                <table id="oder_details_foot" class="table table-borderless">
+                    <tr>
+                        <td class='px-5 fw-bold'>Subtotal</td>
+                        <td class="d-flex justify-content-end" id="id_subtotal"></td>
+                    </tr>
+                    <tr id='disc'>
+                        <td id="id_dcp"class='px-5 fw-bold'></td>
+                        <td class="d-flex justify-content-end" id="id_disc">
+                            <span class='disc_c'>0.00</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class='px-5 fw-bold'>VAT</td>
+                        <td class="d-flex justify-content-end" id="id_vat">0.00</td>
+                    </tr>
+                    <tr id='d_charge'>
+                        <td class='px-5 fw-bold'>Delivery Charge</td>
+                        <td class="d-flex justify-content-end" id="id_delivery_charge">
+                            <span class='d_c'>0.00</span>
+                        </td>
+                    </tr>
+                    <tr id='int'>
+                        <td class='px-5 fw-bold'>Interest Amount</td>
+                        <td class="d-flex justify-content-end" id="id_interest_amount">
+                            <span class='inter'>0.00</span>
+                        </td>
+                    </tr>
+                    <tr id='prv'>
+                        <td class='px-5 fw-bold'>Previous Due</td>
+                        <td class="d-flex justify-content-end" id="previous_due">
+                            <span class='p_due'>0.00</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class='px-5 fw-bold'>Paid Amount</td>
+                        <td class="d-flex justify-content-end" id="id_paid_amount">0.00</td>
+                    </tr>
+                    <tr>
+                        <td class='px-5 fw-bold'>Due Amount</td>
+                        <td class="d-flex justify-content-end fw-bold" id="id_due_amount">0.00</td>
+                    </tr>
+                    <tr>
+                        <td class='px-5 fw-bold'>Balance</td>
+                        <td class="d-flex justify-content-end" id="id_balance">0.00</td>
+                    </tr>
+                </table>
            </div>
-            
-            {% comment %} <table>
-                <tr>
-                    <td class='fw-bold px-5'>Cur & Pre Due</td>
-                    <td class="d-flex justify-content-end" id="previous_due"></td>
-                </tr>
-            </table> {% endcomment %}
         </div>
-        <div class='col-6'>
+        <div class='col-6 border p-2'>
             <div class='payment-form mt-3'>
                 <div class='mb-2 d-flex align-items-center'>
                     <label for="id_amount_paid" class="px-2">Amount</label>
@@ -96,12 +88,22 @@
                         />
                     </div>
                 </div>
-                <div class='mb-5 d-flex align-items-center'>
+                <div class="mb-2 d-flex justify-content-between align-items-center">
+                    <div class="d-flex">
+                        <label for="reoccuring">Reoccuring</label>
+                        <input class="mx-2" type="checkbox" id="reoccuring" class="form-check"/>
+                    </div>
+                    <div class="hidden" id="next_due_date_p">
+                        <label class="mx-2" for="next_due_date">Next due days</label>
+                        <input type="number" id="next_due_date" class="form-control"/>
+                    </div>
+                </div>
+                <div class='d-flex align-items-center'>
                     <label for="id_note p-1" class="px-2">Note</label>
                     <textarea
                         title="note"
                         id='id_note'
-                        rows='1'
+                        rows='2'
                         name='note'
                         class='form-control'
                         placeholder=""
@@ -110,7 +112,7 @@
             </div>
             <small class'text-danger fw-bold' id='pay_error'></small>
         </div>
-        <div class="col-3">
+        <div class="col-3 border p-2">
             <div class='button-choose w-100'>
                 <div class="w-100 p-2">
                     <button type="button"  class='btn btn-light btn-lg w-100 pm' data-name='cash' id="id_cash_btn" onclick="processCart(this)">
@@ -150,6 +152,20 @@
     const interestV = document.querySelector('.inter')
     const deliveryV = document.querySelector('.d_c')
     const discountV = document.querySelector('.disc_c')
+
+    const reocurring = document.getElementById('reoccuring')
+    const nextDueDaysEl = document.getElementById('next_due_date_p')
+    const nextDueDays = document.getElementById('next_due_date')
+
+    reocurring.addEventListener('click', ()=>{
+        if(nextDueDaysEl.classList.contains('hidden')){
+            nextDueDaysEl.classList.remove('hidden');
+            nextDueDaysEl.classList.add('d-flex');
+        }else{
+            nextDueDaysEl.classList.add('hidden');
+            nextDueDaysEl.classList.remove('d-flex');
+        }
+    })
 
     if (previousV.textContent == '0.00'){
         document.querySelector('#prv').style.disply='none'

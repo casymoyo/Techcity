@@ -14,33 +14,39 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from utils.utils import send_mail_func
 
+    
 @shared_task
-def all_invoices():
-    print('all invoices')
-
 def generate_recurring_invoices():
-    two_days_ago = datetime.now() - timedelta(days=2)
+    recurring_invoices = []
+    next_seven_days = datetime.now() + timedelta(days=7)
     invoices_due = Invoice.objects.filter(
-        recurring=True,  # Filter for recurring invoices
-        next_due_date__lte=two_days_ago  # Filter for invoices due 2 days ago or earlier
+        reocurring=True,  
+        next_due_date__lte=next_seven_days
     )
 
     for invoice in invoices_due:
-        # Create a new invoice (copy or generate based on your logic)
         new_invoice = Invoice(
-            # Copy relevant fields from the original invoice
+            invoice_number=Invoice.generate_invoice_number(invoice.branch.name),
+            amount=invoice.amount,
+            amount_paid=0,
+            amount_due=invoice.amount_due,
             customer=invoice.customer,
-            items=invoice.items,
-            # ... other fields
+            branch=invoice.branch,
+            vat=invoice.vat,
+            payment_status='Partial',
+            currency=invoice.currency,
+            subtotal=invoice.subtotal,
+            note=invoice.note,
+            user=invoice.user,
+            products_purchased=invoice.products_purchased,
             issue_date=datetime.now(),
-            due_date=datetime.now() + timedelta(days=invoice.payment_terms),
+            due_date=datetime.now() + timedelta(days=2),
             next_due_date=datetime.now() + timedelta(days=invoice.recurrence_period), 
         )
         new_invoice.save()
-
-        # Update the next_due_date of the original invoice
-        invoice.next_due_date += timedelta(days=invoice.recurrence_period)
-        invoice.save()
+        
+        recurring_invoices.append(new_invoice)
+        print(recurring_invoices)
 
 
 

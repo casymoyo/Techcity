@@ -1,12 +1,19 @@
 {% extends "base.html" %}
 {% load custom_filters %}
+{% load crispy_forms_tags %}
 {% load static%}
 {% block title%} Customer {% endblock%}
 {% block content %}
 <div class="finance d-flex">
     <div class="main-content ">
-        <div class='px-2 py-2 bg-dark text-light align-items-center rounded'>
+        <div class='px-2 py-2 bg-dark d-flex justify-content-between text-light align-items-center rounded'>
             <div class='h5'>Customer Account</div>
+            <div>
+                <button class="btn btn-primary" id="id_add_deposit">
+                    <i class='bx bx-plus'></i>
+                    Deposit
+                </button>
+            </div>
         </div>
         <div class='row px-2 mt-3 mb-3'>
             <div class='col shadow rounded px-1'>
@@ -50,7 +57,7 @@
                     <div class='card-body'>
                         <h6>Account</h6>
                         {% for balance in account %}
-                        <h6 class='text-center text-light fw-bold text-muted'>{{balance.currency.symbol}} {{balance.balance}}</h6>
+                                <h6 class='text-center fw-bold {% if balance.balance < 0 %}text-danger{% endif %}'>{{balance.currency.symbol}} {{balance.balance}}</h6>
                         {% endfor %}
                     </div>
                 </div>
@@ -68,11 +75,14 @@
                 <ul class='navbar-nav items  mr-auto'>
                     <li class='nav-item active' data-name="transactions">Transactions</li>
                     <li class='nav-item px-2' data-name="payments">Account Payments</li>
+                    {% for currency in account %}
+                        <li class='nav-item px-2' data-name="{{ currency.currency.symbol }}">{{ currency.currency.name }} Deposit(s)</li>
+                    {% endfor %}
                 </ul>
             </nav>
         </div>
-        
-        <div class='transactions'>
+        <p class="text-danger" id="table_error"></p>
+        <div class='transactions' id="dTables">
             <div class="d-flex mb-3">
                 <input
                     type="search"
@@ -99,7 +109,7 @@
             </table>
         </div>
 
-        <div class='payments hidden'>
+        <div class='payments hidden' id="dTables">
             <div class="d-flex mb-3">
                 <input
                     type="search"
@@ -127,38 +137,129 @@
                 <tbody id="payments"></tbody>  
             </table>
         </div>
+
+        {% for currency in account %}
+            <div class="{{ currency.currency.symbol }} hidden" id="dTables">
+                <div class="d-flex mb-3">
+                    <input
+                        type="search"
+                        id="deposit_q"
+                        name="deposit_q"
+                        placeholder="search by payment reference"
+                        class="form-control"
+                    />
+                    <span>
+                        <button type="button" id="viewBtn" class="btn btn-dark btn-sm"><small>view statement</small></button>
+                    </span>
+                </div>
+                <table class="table border rounded table-hover table-responsive table-sm p-2">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Reference</th>
+                            <th>Amount</th>
+                            <th>Payment Method</th>
+                            <th>Reason</th>
+                            <th>Processed by</th>
+                        </tr>
+                    </thead>
+                    <tbody id="{{ currency.currency.symbol }}"></tbody>  
+                </table>
+            </div>
+        {% endfor %}
     </div>
 
-    <div class="modal fade" id="accountModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body">
-                    {% include 'finance/customers/account_statement.html' %}
+    <div>
+        <div class="modal fade" id="depositModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <h5 class="fw-bold">Add Deposit</h5>
+                        <form method="post">
+                            {{ form|crispy }}
+                            <p class="text-danger" id="deposit_error"></p>
+                            <div class="d-flex justify-content-end">
+                                <div class="">
+                                    <button type="reset" class="btn btn-danger btn-sm w-100">
+                                        <i class='bx bx-reset'></i>
+                                        Reset
+                                    </button>
+                                </div>
+                                <span class="px-1"></span>
+                                <div class="">
+                                    <button type="button" id="id_submit_btn" class="btn btn-secondary btn-sm w-100">
+                                        <i class='bx bx-save'></i>
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>                                                              
+    </div>
+
+    <div>
+        <div>
+            <div class="modal fade" id="accountModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            {% include 'finance/customers/account_statement.html' %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+    
+        <div class="modal fade" id="depositSuccessModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body text-center">
+                        <i class='bx bx-check-circle h5'></i>
+                        <h2>Deposit Successfully Saved</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 </div>
+<script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>
+<script>
+    let tableName = '';
+    let depositData= [];
+    let paymentsData= [];
+    let transactionsData= [];
 
-<script src="{% static 'js/jquery.js'%}"></script> 
-<script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script> 
-<script type="text/javascript">
-    let paymentsData= []
-    let transactionsData= []
+    const tableError = document.getElementById('table_error');
 
-    const trans = $('.transactions')
-    const payments = $('.payments')
-    const navButtons = document.querySelectorAll('.nav-item')
+    const trans = $('.transactions');
+    const payments = $('.payments');
+    const navButtons = document.querySelectorAll('.nav-item');
 
-    const transactionsTable = document.querySelector('#transaction_items')
-    const paymentsTable = document.querySelector('#payments')
+    const transactionsTable = document.querySelector('#transaction_items');
+    const paymentsTable = document.querySelector('#payments');
 
-    const viewBtn = document.querySelector('#viewBtn')
-    const accountModal = new bootstrap.Modal(document.querySelector('#accountModal'))
+    const viewBtn = document.querySelector('#viewBtn');
+    const accountModal = new bootstrap.Modal(document.getElementById('accountModal'));
+    const depositModal = new bootstrap.Modal(document.getElementById('depositModal'));
+    const depositSuccessModal = new bootstrap.Modal(document.getElementById('depositSuccessModal'));
+
+    const addDepositbtn = document.getElementById('id_add_deposit');
+    const depositError = document.getElementById('deposit_error');
+
+    const depositAmount = document.getElementById('id_amount');
+    const submitBtn = document.getElementById('id_submit_btn');
 
     viewBtn.addEventListener('click', ()=>{
         accountModal.show()
+    })
+
+    addDepositbtn.addEventListener('click', ()=>{
+        depositModal.show()
     })
 
     navButtons.forEach((btn)=>{
@@ -171,11 +272,23 @@
         )
     })
 
-    function show(name){
-        trans.addClass('hidden')
-        payments.addClass('hidden')
-        $(`.${name}`).removeClass('hidden'); 
+    function show(name) {
+        // Hide both transactions and payments sections initially
+        const tableEls = document.querySelectorAll('#dTables');
+        tableEls.forEach((t)=>{
+            t.classList.add('hidden');
+        })
+        try {
+            $(`.${name}`).removeClass('hidden');
+            tableName = name;
+        } catch (error) {
+            tableError.textContent = 'Failed to load the table: ' + error.message;
+            return;
+        }
+        
+        displayDepositTable(depositData);
     }
+    
 
     // transactions
     $.ajax({
@@ -255,10 +368,125 @@
                 <td><small>${data.invoice__currency__symbol} ${data.invoice__amount}</small></td>
                 <td><small>${data.invoice__currency__symbol} ${data.invoice__amount_due}</small></td>
                 <td><small>${data.user__username}</small></td>
+            </tr>
             `
         })
     }
+
+    // deposits
+    $.ajax({
+        url: '{% url "finance:deposits" %}',
+        type: 'GET',
+        data: {'customer_id': {{customer.id}}},
+        }).done(function(response) {
+            const data = response
+            console.log(data)
+            depositData.push(data)
+    })
+
+    // deposits search
+    document.querySelector('#deposit_q').addEventListener('input', ()=>{
+        let data = [];
+
+        const search_q = document.querySelector('#deposit_q').value
+        let filteredData = depositData[0].filter((data)=>{
+            return(data.payment_reference.includes(search_q))
+        })
+        //depositTable.innerHTML = '';
+        data.push(filteredData)
+        displayDepositTable(data);
+    })
+
     
+    function displayDepositTable(data){
+        const depositTable = document.getElementById(`${tableName}`);
+        depositTable.innerHTML = '';
+
+        data[0].forEach((data)=>{
+            if(data.currency__symbol === tableName && data.customer_account__account__customer_id === {{ customer.id }} ){
+                depositTable.innerHTML += `
+                <tr>
+                    <td><small>${new Date(data.date_created).toDateString()}</small></td>
+                    <td><small>${data.payment_reference}</small></td>
+                    <td><small>${data.amount}</small></td>
+                    <td><small>${data.payment_method}</small></td>
+                    <td><small>${data.reason}</small></td>
+                    <td><small>${data.cashier__username}</small></td>
+                </tr>
+            `
+            }
+        })
+    }
+
+    // deposit amount validation
+    depositAmount.addEventListener('input', () => {
+        const amount = parseFloat(depositAmount.value.trim());
+        if (isNaN(amount) || amount <= 0) {
+          depositError.textContent = 'Deposit amount must be a positive number and can not be zero.';
+          submitBtn.disabled = true;
+        } else {
+          depositError.textContent = '';
+          submitBtn.disabled = false;
+        }
+    });
+
+    submitBtn.addEventListener('click', ()=>{
+        submitDepositData()
+    })
+      
+    // post deposit data
+    async function submitDepositData() {
+        let customer_id = {{ customer.id }}
+        const data = {
+            'customer_id': {{ customer.id }},
+            'amount':parseFloat(document.getElementById('id_amount').value),
+            'currency':document.getElementById('id_currency').value,
+            'payment_method': document.getElementById('id_payment_method').value,
+            'reason': document.getElementById('id_reason').value,
+            'payment_reference': document.getElementById('id_payment_reference').value
+        }
+        
+        try {
+            const response = await fetch(`/finance/deposits/create-deposit/${customer_id}/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken"),
+                },
+                body: JSON.stringify(data),
+            });
+    
+            const rData = await response.json();
+
+            if(rData.success){
+                depositModal.hide()
+                depositSuccessModal.show()
+                setTimeout(()=>{
+                    window.location.reload()
+                }, 300)
+            }else{
+                depositError.textContent=rData.message;
+            }
+    
+        } catch (error) {
+            depositError.textContent=error;
+        }
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+          const cookies = document.cookie.split(";");
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + "=") {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      } 
 
 </script>
 {% endblock content %}

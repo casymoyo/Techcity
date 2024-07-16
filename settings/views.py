@@ -36,6 +36,7 @@ def settings(request):
 def save_email_config(request):
     if request.method == 'POST':
         env_file_path = Path(__file__).resolve().parent.parent / '.env'
+   
         email_settings_mapping = {
             'EMAIL_HOST': 'EMAIL_HOST',
             'EMAIL_PORT': 'EMAIL_PORT',

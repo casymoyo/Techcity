@@ -30,12 +30,14 @@
             </nav>
         </div>
         <div class='customer-table'>
-            <table class="table border table-hover rounded p-2 mt-3">
+            <table class="table border table-hover rounded p-2 mt-3 mt-2" id='customerTable' style='width:100%;'>
                 <thead class='bg-primary'>
                     <tr>
                         <th>Name</th>
                         <th>Cellphone</th>
                         <th>Email</th>
+                        <th>USD Account Balance(s)</th>
+                        <th>ZIG Account Balance(s)</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -43,43 +45,68 @@
                     {% for customer in customers %}
                         <tr>
                             <td>
-                                <a href="{% url 'finance:customer' customer.customer.id%}" class="text-dark d-flex align-items-center">
-                                    {% with name_parts=customer.customer.name|split_name %}
-                                        {% if name_parts.first_name and name_parts.last_name %}
-                                            <div class='initials'>
-                                                <span class='content'>{{ name_parts.first_name.0 }}{{ name_parts.last_name.0 }}</span>
-                                            </div>
-                                        {% else %}
-                                            <div class='initials'>
-                                                <span class='content'>{{ name_parts.first_name.0 }}</span>
-                                            </div>
-                                        {% endif %}
-                                    {% endwith %}
-                                    <span class='px-2'>{{customer.customer.name}}</span>
-                                </a>
+                                <small>
+                                    <a href="{% url 'finance:customer' customer.customer.id%}" class="text-dark d-flex align-items-center">
+                                        {% with name_parts=customer.customer.name|split_name %}
+                                            {% if name_parts.first_name and name_parts.last_name %}
+                                                <div class='initials'>
+                                                    <span class='content'>{{ name_parts.first_name.0 }}{{ name_parts.last_name.0 }}</span>
+                                                </div>
+                                            {% else %}
+                                                <div class='initials'>
+                                                    <span class='content'>{{ name_parts.first_name.0 }}</span>
+                                                </div>
+                                            {% endif %}
+                                        {% endwith %}
+                                        <span class='px-2'>{{customer.customer.name}}</span>
+                                    </a>
+                                </small>
                             </td>
                             <td>
                                 <div class='td-contents'>
-                                    <a href='https://wa.me/{{customer.customer.phone_number}}' class="text-dark">
-                                        <i class='bx bxl-whatsapp'></i>
-                                        {{customer.customer.phone_number}}
-                                    </a>
+                                    <small>
+                                        <a href='https://wa.me/{{customer.customer.phone_number}}' class="text-dark">
+                                            <i class='bx bxl-whatsapp'></i>
+                                            {{customer.customer.phone_number}}
+                                        </a>
+                                    </small>
                                 </div>
                             </td>
                             <td>
                                <div class='td-contents'>
-                                    <a href='mailto:{{customer.customer.email}}' class="text-dark">
-                                        <i class='bx bx-envelope'></i>
-                                        {{customer.customer.email}}
-                                    </a>
+                                    <small>
+                                        <a href='mailto:{{customer.customer.email}}' class="text-dark">
+                                            <i class='bx bx-envelope'></i>
+                                            {{customer.customer.email}}
+                                        </a>
+                                    </small>
                                </div>
+                            </td>
+                            <td>
+                                <small>
+                                    {% for balance in accounts %}
+                                        {% if balance.account.customer.id == customer.id and balance.currency.symbol == 'USD' %}
+                                            <span class='text-center {% if balance.balance < 0 %}text-danger{% endif %}'>{{balance.currency.symbol}} {{balance.balance}}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                </small>
+                            </td>
+                            <td>
+                                <small>
+                                    {% for balance in accounts %}
+                                        {% if balance.account.customer.id == customer.id and balance.currency.symbol == 'Z'%}
+                                            <span class='text-center {% if balance.balance < 0 %}text-danger{% endif %}'>{{balance.currency.symbol}} {{balance.balance}}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </small>
                             </td>
                             <td>
                                 <div class='td-contents'>                   
                                     <a href="{% url 'finance:update_customer' customer.customer.id %}" class='text-dark'>
                                         <i class='bx bx-edit'></i>
                                     </a>
-                                    <span disabled type='button' data-id="{{customer.customer.id}}" id="delete" onclick="productId(this)" class="btn text-dark">
+                                    <span disabled type='button' data-id="{{customer.customer.id}}"  onclick="productId(this)" class="btn text-dark">
                                         <i class='bx bx-trash'></i>
                                     </span>
                                 </div>
@@ -89,20 +116,6 @@
                 </tbody>  
             </table>
         </div>
-    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <p class="fs-4 fw-bold text-center">Confirm Product Deletion</p>
-                <div>
-                    <button class="btn btn-secondary w-100 yes">
-                        yes
-                    </button>
-                </div>
-                </div>
-            </div>
-        </div>
-    </div>
     <div class="modal fade" id="endOfDayModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -117,48 +130,8 @@
 <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>
 <script src="{% static 'js/jquery.js'%}"></script>
 <script>
-    let customer_id = ''
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'))
-    const deleteButtons = document.querySelectorAll('#delete')
+    new DataTable('#customerTable');
 
-    const productId=(element)=>{
-        console.log(element)
-        customer_id = element.dataset.id
-    }
-
-    deleteButtons.forEach((button)=>{
-        button.addEventListener(
-            'click', ()=>{
-               deleteModal.show()
-            }
-        )
-    })
-    
-    document.querySelector('.yes').addEventListener(
-        'click', ()=>{
-            deleteCustomer(customer_id)
-        }
-    )
-
-
-    async function deleteCustomer(customerId) {
-        const response = await fetch(`/finance/customer/delete/${customerId}/delete/`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            }
-        });
-
-        const data = await response.json();
-    
-        if (data.status === 'success') {
-            alert(data.message); 
-            window.location.reload()
-        } else {
-            alert(data.message); 
-        }
-    }
 
     function getCookie(name) {
         let cookieValue = null;

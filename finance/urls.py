@@ -66,6 +66,10 @@ urlpatterns = [
     path('add/to/expense/', cash_withdrawal_to_expense, name='add_to_expense'),
     path('withdrawals/json/', cash_withdrawal_to_expense, name='withdraws_json'),
     
+    # customer deposits
+    path('deposits/ ', customer_deposits, name="deposits"),
+    path('deposits/create-deposit/<int:customer_id>/', add_customer_deposit, name="create_customer_deposit"),
+    
     # end of day
     path('end_of_day/', end_of_day, name='end_of_day'),
     

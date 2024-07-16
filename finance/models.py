@@ -65,20 +65,23 @@ class CustomerAccountBalances(models.Model):
         return f'{self.account} - {self.currency}: {self.balance}'
     
 class CustomerDeposits(models.Model):
-    customer_account = models.ForeignKey("finance.CustomerAccountBalances",
-                                         on_delete=models.CASCADE,
-                                         related_name="customer_deposits")
+    customer_account = models.ForeignKey("finance.CustomerAccountBalances", on_delete=models.CASCADE, related_name="customer_deposits")
     amount = models.DecimalField(max_digits=15, decimal_places=2, default=0) 
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)  
     payment_method = models.CharField(max_length=15, choices=[
-                                            ('cash', 'cash'),
-                                            ('bank', 'bank'),
-                                            ('ecocash', 'ecocash')
-                                        ]
-                                      , default="cash")
+        ('cash', 'cash'),
+        ('bank', 'bank'),
+        ('ecocash', 'ecocash')
+    ]
+    , default="cash")
     reason = models.CharField(max_length=255, null=False, blank=False)
-    payment_reference = models.CharField(max_length=255, unique=True, editable=False)
+    payment_reference = models.CharField(max_length=255, unique=True, default="")
+    cashier = models.ForeignKey("users.User", on_delete=models.DO_NOTHING, related_name="cashier")
+    date_created = models.DateField(auto_now_add=True)
+    branch = models.ForeignKey('company.branch', on_delete=models.SET_NULL, null=True, blank=True)
     
+    def __str__(self) -> str:
+        return f'{self.customer_account.account}'
 
 
 class Transaction(models.Model):
@@ -308,6 +311,7 @@ class Cashbook(models.Model):
     credit = models.BooleanField(default=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
+    branch = models.ForeignKey('company.branch', on_delete=models.CASCADE)
     
     def __str__(self):
         return f'{self.date}: {self.balance}'

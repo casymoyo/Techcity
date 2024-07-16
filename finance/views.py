@@ -33,7 +33,17 @@ from django.template.loader import render_to_string
 from django.core.mail import send_mail, EmailMessage
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
-from . forms import ExpenseForm, ExpenseCategoryForm, CurrencyForm, InvoiceForm, CustomerForm, TransferForm, CashWithdrawForm, cashWithdrawExpenseForm
+from . forms import (
+    ExpenseForm, 
+    ExpenseCategoryForm, 
+    CurrencyForm, 
+    InvoiceForm, 
+    CustomerForm, 
+    TransferForm, 
+    CashWithdrawForm, 
+    cashWithdrawExpenseForm,
+    customerDepositsForm
+)
 from django.contrib.auth import authenticate
 
 import logging
@@ -317,9 +327,6 @@ def update_invoice(request, invoice_id):
         return JsonResponse({'success': False, 'message': 'Invalid request method.'}) 
 
 
-
-
-
 @login_required
 @transaction.atomic 
 def create_invoice(request):
@@ -515,7 +522,7 @@ def create_invoice(request):
                 
                 # updae account balance
                 if invoice.payment_status == 'Partial':
-                    customer_account_balance.balance += amount_due
+                    customer_account_balance.balance += -amount_due
                     customer_account_balance.save()
                     
                 # Update customer balance
@@ -696,6 +703,7 @@ def customer_list(request):
     search_query = request.GET.get('q', '')
     
     customers = CustomerAccount.objects.all()
+    accounts = CustomerAccountBalances.objects.all()
     
     if search_query:
         customers = CustomerAccount.objects.filter(Q(customer__name__icontains=search_query))
@@ -721,16 +729,18 @@ def customer_list(request):
         customer_accounts = CustomerAccountBalances.objects.all()
         for customer in customer_accounts:
             worksheet.append(
-                [customer.account.customer.name, 
-                 customer.account.customer.phone_number, 
-                 customer.account.customer.email, 
-                 customer.balance if customer.balance else 0,
-                ])  
+                [
+                    customer.account.customer.name, 
+                    customer.account.customer.phone_number, 
+                    customer.account.customer.email, 
+                    customer.balance if customer.balance else 0,
+                ]
+            )  
             
         workbook.save(response)
         return response
         
-    return render(request, 'finance/customers/customers.html', {'customers':customers, 'search_query':search_query})
+    return render(request, 'finance/customers/customers.html', {'customers':customers, 'search_query':search_query, 'accounts':accounts})
 
 @login_required
 def update_customer(request, customer_id):
@@ -761,6 +771,7 @@ def delete_customer(request, customer_id):
 
 @login_required
 def customer_account(request, customer_id):
+    form = customerDepositsForm()
     customer = get_object_or_404(Customer, id=customer_id)
 
     account = CustomerAccountBalances.objects.filter(account__customer=customer)
@@ -808,6 +819,7 @@ def customer_account(request, customer_id):
         return JsonResponse({'message': 'Email sent'})
 
     return render(request, 'finance/customer.html', {
+        'form':form,
         'account': account,
         'invoices': invoices,
         'customer': customer,
@@ -819,7 +831,8 @@ def customer_account(request, customer_id):
 
 
 @login_required
-def customer_account_deposit(request, customer_id):
+@transaction.atomic
+def add_customer_deposit(request, customer_id):
     # payload
     """
         customer_id
@@ -827,39 +840,136 @@ def customer_account_deposit(request, customer_id):
         currency
         payment_method
         reason
+        payment_reference
     """
     
-    try:
+    try: 
         # get payload
-        customer_id = request.POST.get('customer_id')
-        amount = request.POST.get('amount')
-        currency = request.POST.get('currency')
-        payment_method = request.POST.get('payment_method')
-        reason = request.POST.get('reason')
+        data = json.loads(request.body)
+        customer_id = data.get('customer_id')
+        amount = data.get('amount')
+        currency = data.get('currency')
+        payment_method = data.get('payment_method')
+        reason = data.get('reason')
+        payment_reference = data.get('payment_reference')        
+        
+        # payment_reference validation
+        if CustomerDeposits.objects.filter(payment_reference=payment_reference).exists():
+            return JsonResponse(
+                {
+                    'success':False,
+                    'message': f'Payment reference: {payment_reference} exists'
+                }
+            )   
+                                                   
+        # get currency
+        currency = Currency.objects.get(id=currency)
+        
+        # get account types
+        account_types = {
+            'cash': Account.AccountType.CASH,
+            'bank': Account.AccountType.BANK,
+            'ecocash': Account.AccountType.ECOCASH,
+        }
+        
+        account_name = f"{request.user.branch} {currency.name} {payment_method.capitalize()} Account"
+        
+        logger.info(f"[Account Name (create deposit)]: {account_name}")
+        
+        account, _ = Account.objects.get_or_create(name=account_name, type=account_types[payment_method])
+        
+        # get or create the account balances
+        account_balance, _ = AccountBalance.objects.get_or_create(
+            account=account,
+            currency=currency,
+            branch=request.user.branch,
+            defaults={'balance': 0}  
+        )
+        
+        account_balance.balance += Decimal(amount)
+        account_balance.save()
+        logger.info(f"[FINANCE]: deposit -> System {account}")
         
         # check if customer exits
         customer = get_object_or_404(Customer, id=customer_id)  
-        customer_account_object = CustomerAccountBalances.objects.filter(
-            account_id=customer.id, 
+        logger.info(f"[FINANCE]: deposit -> customer {customer}")
+        customer_account = CustomerAccount.objects.get(customer=customer)
+        
+        customer_account_bal_object, _ = CustomerAccountBalances.objects.get_or_create(
+                account=customer_account,
+                currency=currency, 
+                defaults={'balance': 0}
+        )  
+        logger.info(f"[FINANCE]: deposit -> customer account object {customer_account_bal_object}")
+        
+        # effect customer deposit
+        customer_deposit = CustomerDeposits.objects.create(
+            customer_account=customer_account_bal_object,
+            amount=amount,
             currency=currency,
-            )
-        logger.info(f"Finance: customer account object {customer_account}")
-        # effect deposit
+            payment_method=payment_method,
+            reason=reason,
+            payment_reference=payment_reference,
+            cashier=request.user,
+            branch=request.user.branch
+        )
+        logger.info(f"[FINANCE]: deposit -> customer deposit {customer_deposit}")
         
-        
-        # effect customer account
-        
+        logger.info(f"[FINANCE]: deposit -> amount before {customer_account_bal_object.balance}")
+        # effect customer account balances
+        customer_account_bal_object.balance += amount
+        logger.info(f"[FINANCE]: deposit -> amount after {customer_account_bal_object.balance}")
+        customer_account_bal_object.save()
         # return response
-        
-        
-        pass
+        return JsonResponse(
+            {
+                "success":True,
+                "message": f"Customer Deposit of {currency} {amount:2f} has been successfull",
+            },
+            status=200
+        )
     except Exception as e:
         return JsonResponse(
             {
-                "message": f"{e.with_traceback}",
-            },
-            status=500
+                "message": f"{e}",
+                'success':False
+            },status=500)
+
+
+@login_required
+def customer_deposits(request): 
+    customer_id = request.GET.get('customer_id')
+    
+    if customer_id: 
+        try:
+            customer_account = CustomerAccount.objects.get(id=customer_id)
+            # customer_account_balances = CustomerAccountBalances.objects.get(account=customer_account)
+        except Exception as e:
+            return JsonResponse(
+                {
+                    'success':False,
+                    'message':f'{e}'
+                }
+            )
+        # get deposits
+        deposits = CustomerDeposits.objects.filter(branch=request.user.branch).values(
+            'customer_account__account__customer_id',
+            'date_created',
+            'amount', 
+            'reason',
+            'currency__name', 
+            'currency__symbol', 
+            'payment_method',
+            'payment_reference',
+            'cashier__username', 
         )
+        logger.info(deposits)
+        return JsonResponse(list(deposits), safe=False)
+    else:
+        return JsonResponse({
+            'success':False,
+            'message':f'{customer_id} was not provided'
+        })
 
 @login_required
 def customer_account_transactions_json(request):

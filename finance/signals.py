@@ -6,7 +6,14 @@ from django.dispatch import receiver
 from inventory.middleware import _request
 from .tasks import send_email_notification
 from django.db.models.signals import post_save
-from .models import CashTransfers, FinanceNotifications, Expense, Invoice, Cashbook
+from .models import (
+    CashTransfers, 
+    FinanceNotifications, 
+    Expense, 
+    Invoice, 
+    Cashbook, 
+    CustomerDeposits
+)
 
 from django.core.mail import EmailMessage
 
@@ -69,7 +76,8 @@ def create_cashbook_entry(instance, debit, credit):
                 debit=credit,
                 credit=debit,
                 amount=instance.amount_paid,
-                currency=instance.currency
+                currency=instance.currency,
+                branch=instance.branch
             )
     else:
         if instance.amount_paid != 0:
@@ -79,7 +87,8 @@ def create_cashbook_entry(instance, debit, credit):
                 debit=debit,
                 credit=credit,
                 amount=instance.amount_paid,
-                currency=instance.currency
+                currency=instance.currency,
+                branch=instance.branch
             )
 
 @receiver(post_save, sender=Invoice)
@@ -94,4 +103,38 @@ def create_invoice_cashbook_entry(sender, instance, **kwargs):
 @receiver(post_save, sender=CashTransfers)
 def create_cash_transfer_cashbook_entry(sender, instance, **kwargs):
     create_cashbook_entry(instance, f'Cash Transfer of {instance.amount} from {instance.from_branch.name}', debit=True, credit=False)
+    # from branch credit
+    Cashbook.objects.create(
+        issue_date=instance.date_created,
+        description=f'Cash Transfer of {instance.amount} from {instance.from_branch.name}',
+        debit=True,
+        credit=False,
+        amount=instance.amount,
+        currency=instance.currency,
+        branch=instance.from_branch
+    )
+    
+    # to branch debit
+    Cashbook.objects.create(
+        issue_date=instance.date_created,
+        description=f'Cash Transfer of {instance.amount} from {instance.from_branch.name}',
+        debit=True,
+        credit=False,
+        amount=instance.amount,
+        currency=instance.currency,
+        branch=instance.to_branch
+    )
+    
+@receiver(post_save, sender=CustomerDeposits)
+def create_cash_deposit_cashbook_entry(sender, instance, **kwargs):
+    Cashbook.objects.create(
+        issue_date=instance.date_created,
+        description=f'{instance.payment_method.upper()} ({instance.customer_account.account.customer.name})',
+        debit=True,
+        credit=False,
+        amount=instance.amount,
+        currency=instance.currency,
+        branch=instance.branch
+    )
+    logger.info(f'[CASHBOOK DEBIT ENTRY] -> {instance.payment_method.upper()} ({instance.customer_account.account.customer.name})')
 

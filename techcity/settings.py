@@ -252,16 +252,20 @@ CRONJOBS = [
 # celery
 # your_project/settings.py
 
-CELERY_BROKER_URL = 'redis://default:FrvkpRENzvubHiJrDiRoQmVmdBjaNwFC@roundhouse.proxy.rlwy.net:24949'
-CELERY_RESULT_BACKEND = 'redis://default:FrvkpRENzvubHiJrDiRoQmVmdBjaNwFC@roundhouse.proxy.rlwy.net:24949'
+CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
 CELERY_BEAT_SCHEDULE = {
-    'run-all-invoices-every-minute': {
-        'task': 'finance.tasks.all_invoices',
+    # 'run-all-invoices-every-minute': {
+    #     'task': 'finance.tasks.all_invoices',
+    #     'schedule': 60.0, 
+    # },
+    'run-all-invoices-recurring': {
+        'task': 'finance.tasks.generate_recurring_invoices',
         'schedule': 60.0, 
     },
     # 'record-recurring-expense-every-minute': {

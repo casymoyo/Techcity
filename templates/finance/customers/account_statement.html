@@ -44,7 +44,7 @@
             <div class="bg-light p-2">
                 Balances:
                 {% for balance in account %}
-                    <small class='fw-bold'>| {{ balance.currency.symbol }} {{ balance.balance }} | </small>
+                    <small class='fw-bold {% if balance.balance < 0 %}text-danger{% endif %}'>| {{ balance.currency.symbol }} {{ balance.balance }} | </small>
                 {% endfor %}
             </div>
     </div>
@@ -103,15 +103,15 @@
 </div>
 
 <script>
-    const customerId = {{customer.id}}
-    const emailBtn = document.querySelector('#mailBtn')
+    {% comment %} const customer_id = {{customer.id}} {% endcomment %}
+    const mailBtn = document.querySelector('#mailBtn')
 
-    const mailLoader = new bootstrap.Modal(document.querySelector('#mailModal'))
+    const emailLoader = new bootstrap.Modal(document.querySelector('#mailModal'))
     
-    emailBtn.addEventListener('click', () => {
-        mailLoader.show()
+    mailBtn.addEventListener('click', () => {
+        emailLoader.show()
         $.ajax({
-            url: `/finance/customer/account/${customerId}/`,
+            url: `/finance/customer/account/${customerID}/`,
             type: 'GET',
             data: {'email_bool': 'yes'}
             }).done(function(response) {

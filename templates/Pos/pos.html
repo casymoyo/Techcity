@@ -741,8 +741,19 @@ async function processCart(el) {
             payable: payable_amount,
             vat_amount: vat_amount,
             payment_method: paymentMethod,
+            next_due_days : document.getElementById('next_due_date').value,
+            recourring:document.getElementById('reoccuring').checked,
         }
     ];
+
+    if (data[0].recourring) {
+        const next_due_date = document.getElementById('next_due_date').value;
+        if (next_due_date === undefined || next_due_date === null || next_due_date.trim() === "") {
+            document.querySelector('#pay_error').textContent = '* Please enter recurring days';
+            document.querySelector('#next_due_date').focus();
+            return;
+        }
+    }
 
     if (el.dataset.name === 'pay_later' && data[0].days <= 0) {
         document.querySelector('#pay_error').textContent = '* Please enter the credit days';
