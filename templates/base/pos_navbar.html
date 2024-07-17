@@ -29,7 +29,7 @@
                     <select  id='currency' class='bg-dark text-light shadow form-select'>
                         <option value=''>Currency</option>
                         {% for currency in currencies %}
-                            <option value='{{currency.id}}'>{{currency.name}}</option>
+                            <option value='{{currency.id}}' selected>{{currency.name}}</option>
                         {% endfor %}
                     </select>
                 </li>

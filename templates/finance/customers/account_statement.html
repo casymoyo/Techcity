@@ -9,11 +9,11 @@
                 <div class="mt-2 w-100">
                     <small class='d-flex align-items-center'>
                         <i class='bx bx-building'></i>
-                        <span>{{request.user.branch.address }}</span>
+                        <span>{{branch.address }}</span>
                     </small>
                     <small class='d-flex align-items-center'>
                         <i class='bx bx-phone'></i> 
-                        <span>{{ request.user.branch.phonenumber }}</span>
+                        <span>{{ re.branch.phonenumber }}</span>
                     </small>
                     <small class='d-flex align-items-center'>
                         <i class='bx bx-envelope'></i>
@@ -55,21 +55,21 @@
                     <th>Date</th>
                     <th>Invoice #</th>
                     <th>Product(s)</th>
-                    <th>Amount Paid</th>
                     <th>Invoice Amount</th>
-                    <th>Amount Due</th>
+                    <th>Amount Paid</th>
+                    <th>Current Due Amount</th>
                     <th>Processed by</th>
                 </tr>
             </thead>
             <tbody>
-                {% for payment in invoice_payments%}
+                {% for payment in invoice_payments %}
                     <tr>
                         <td><small>{{ payment.payment_date }}</small></td>
                         <td><small>{{ payment.invoice.invoice_number }}</small></td>
                         <td><small>{{ payment.invoice.products_purchased }}</small></td>
-                        <td><small>{{ payment.invoice.currency.symbol }} {{ payment.amount_paid }}</small></td>
                         <td><small>{{ payment.invoice.currency.symbol }} {{ payment.invoice.amount }}</small></td>
-                        <td><small>{{ payment.invoice.currency.symbol }} {{ payment.invoice.amount_due }}</small></td>
+                        <td><small>{{ payment.invoice.currency.symbol }} {{ payment.amount_paid }}</small></td>
+                        <td><small>{{ payment.invoice.currency.symbol }} {{ payment.amount_due }}</small></td>
                         <td><small>{{ payment.user.username }}</small></td>
                     </tr>
                 {% endfor %}
@@ -103,7 +103,7 @@
 </div>
 
 <script>
-    {% comment %} const customer_id = {{customer.id}} {% endcomment %}
+   const c_id = {{customer.id}}
     const mailBtn = document.querySelector('#mailBtn')
 
     const emailLoader = new bootstrap.Modal(document.querySelector('#mailModal'))
@@ -111,7 +111,7 @@
     mailBtn.addEventListener('click', () => {
         emailLoader.show()
         $.ajax({
-            url: `/finance/customer/account/${customerID}/`,
+            url: `/finance/customer/account/${c_id}/`,
             type: 'GET',
             data: {'email_bool': 'yes'}
             }).done(function(response) {

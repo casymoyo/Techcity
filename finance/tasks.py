@@ -9,10 +9,14 @@ from django.conf import settings
 from celery import shared_task
 
 from finance.models import *
+from users.models import User
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 from utils.utils import send_mail_func
+
+import logging
+logger = logging.getLogger(__name__)
 
     
 @shared_task
@@ -46,8 +50,72 @@ def generate_recurring_invoices():
         new_invoice.save()
         
         recurring_invoices.append(new_invoice)
-        print(recurring_invoices)
+       
 
+def send_account_statement_email(customer_id, branch_id, user_id):
+    # Validate inputs
+    if not customer_id or not branch_id or not user_id:
+        logger.error("Invalid customer_id or branch_id provided.")
+        return
+    
+    def send_email():
+        try:
+            invoice_payments = Payment.objects.filter(
+                invoice__branch_id=branch_id, 
+                invoice__customer_id=customer_id
+            ).order_by('-payment_date')
+
+            if not invoice_payments.exists():
+                logger.warning(f"No invoice payments found for customer_id: {customer_id} and branch_id: {branch_id}")
+                return
+        
+            try:
+                customer = Customer.objects.get(id=customer_id)
+                account = CustomerAccountBalances.objects.filter(account__customer=customer)
+            except Customer.DoesNotExist:
+                logger.error(f"Customer with id {customer_id} does not exist.")
+                return
+            
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                logger.error(f"Customer with id {user_id} does not exist.")
+                return
+            
+            email_body = render_to_string('emails/email_template.html', {
+                "customer": customer,
+                'message': f'Hi, {customer.name}. Please find your attached account statement.',
+                'sender_name':user.first_name
+            })
+            
+            html_string = render_to_string('emails/account_statement.html', {
+                "invoice_payments": invoice_payments,
+                'customer':customer,
+                'account':account,
+                'date': datetime.now()
+            })
+
+            email = EmailMessage(
+                subject='Your Account Statement',
+                body=email_body,
+                from_email='admin@techcity.co.zw', 
+                to=['cassymyo@gmail.com'],
+            )
+            email.content_subtype = "html"
+
+            with BytesIO() as buffer:
+                pisa.CreatePDF(html_string, dest=buffer)
+                buffer.seek(0)
+                email.attach(f'account statement({customer.name}).pdf', buffer.getvalue(), 'application/pdf')
+                email.send()
+                logger.info(f"Account statement email sent to {customer.email}")
+
+        except Exception as e:
+            logger.error(f"Error sending account statement email: {e}", exc_info=True)
+
+    # Start the email sending function in a new thread
+    email_thread = threading.Thread(target=send_email)
+    email_thread.start()
 
 
 
@@ -90,7 +158,7 @@ def send_email_notification(notification_id):
         subject = 'Expense Confirmation Notification'
         message = f'Please log on to confirm the expense: {expense.description}'
         from_email = expense.user.email
-        to_email = ['cassymyo@gmail.com']  #to change
+        to_email = ['admin@techcity .co.zw'] 
         sender_name = expense.user.first_name
 
         # Render the email template with context

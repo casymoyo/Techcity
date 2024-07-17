@@ -1,0 +1,86 @@
+{% block account_statement %}
+{% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+    <link rel="stylesheet" href="{% static 'css/main.css'%}">
+    <link rel="stylesheet" href="{% static 'css/bootstrap/css/bootstrap.css'%}">
+    <link rel="stylesheet" href="{% static 'assets/hint.css/hint.min.css'%}">
+    <link rel="stylesheet" href="{% static 'assets/DataTables/datatables.min.css'%}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href='{% static "assets/boxicons/css/boxicons.css"%}' rel='stylesheet'>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+
+    <script src="{% static 'js/jquery.js'%}"></script>
+    <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'assets/DataTables/datatables.min.js' %}"></script>
+    
+    <style>
+        td, h2, img{
+            text-align: center;
+        }
+        table{
+            border: 0.5px solid #D3D3D3;
+        }
+        td, th{
+            padding-top: 0.5rem;
+        }
+    </style>
+<div class='account-statement'>
+    <div class='content px-2'>
+        <span>{{ date }}</span>
+        <div class=''>
+            <div class='details'>
+                <img src="https://techcity.s3.amazonaws.com/assets/logo.png" alt="Logo" width="100">
+                <div class="mt-2 w-100">
+                    <small class='d-flex align-items-center'>
+                        <i class='bx bx-building'></i>
+                        <span>{{request.user.branch.address }}</span>
+                    </small>
+                    <small class='d-flex align-items-center'>
+                        <i class='bx bx-phone'></i> 
+                        <span>{{ request.user.branch.phonenumber }}</span>
+                    </small>
+                    <small class='d-flex align-items-center'>
+                        <i class='bx bx-envelope'></i>
+                        <span>{{ request.user.branch.email }}</span>
+                     </small>
+                </div>
+            </div> 
+            <div class="mt-3 mb-3"><h2 class="text-center">Acccount Statement for {{ customer.name | upper }}</h2></div>
+            <div class="bg-light p-2">
+                Balances:
+                {% for balance in account %}
+                    <span class='fw-bold {% if balance.balance < 0 %}text-danger{% endif %}'>| {{ balance.currency.symbol }} {{ balance.balance }} | </span>
+                {% endfor %}
+            </div>
+    </div>
+    <div class="mt-3">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Invoice #</th>
+                    <th>Product(s)</th>
+                    <th>Invoice Amount</th>
+                    <th>Amount Paid</th>
+                    <th>Current Due Amount</th>
+                    <th>Processed by</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in invoice_payments %}
+                    <tr>
+                        <td><small>{{ payment.payment_date }}</small></td>
+                        <td><small>{{ payment.invoice.invoice_number }}</small></td>
+                        <td><small>{{ payment.invoice.products_purchased }}</small></td>
+                        <td><small>{{ payment.invoice.currency.symbol }} {{ payment.invoice.amount }}</small></td>
+                        <td><small>{{ payment.invoice.currency.symbol }} {{ payment.amount_paid }}</small></td>
+                        <td><small>{{ payment.invoice.currency.symbol }} {{ payment.amount_due }}</small></td>
+                        <td><small>{{ payment.user.username }}</small></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+</div>
+{% endblock %}

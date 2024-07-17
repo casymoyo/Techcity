@@ -98,9 +98,9 @@
                         <th>Date</th>
                         <th>Invoice #</th>
                         <th>Product(s)</th>
+                        <th>Invoice Amount</th>
                         <th>Amount Paid</th>
                         <th>Amount Due</th>
-                        <th>Amount</th>
                         <th>Processed by</th>
                         <th>Action</th>
                     </tr>
@@ -128,9 +128,9 @@
                         <th>Date</th>
                         <th>Invoice #</th>
                         <th>Product (s)</th>
-                        <th>Amount Paid</th>
                         <th>Invoice Amount</th>
-                        <th>Amount Due</th>
+                        <th>Amount Paid</th>
+                        <th>Currenct Due Amount</th>
                         <th>Processed by</th>
                     </tr>
                 </thead>
@@ -148,9 +148,6 @@
                         placeholder="search by payment reference"
                         class="form-control"
                     />
-                    <span>
-                        <button type="button" id="viewBtn" class="btn btn-dark btn-sm"><small>view statement</small></button>
-                    </span>
                 </div>
                 <table class="table border rounded table-hover table-responsive table-sm p-2">
                     <thead>
@@ -254,6 +251,7 @@
     const depositAmount = document.getElementById('id_amount');
     const submitBtn = document.getElementById('id_submit_btn');
 
+
     viewBtn.addEventListener('click', ()=>{
         accountModal.show()
     })
@@ -319,9 +317,9 @@
                 <td><small>${new Date(data.issue_date).toDateString()}<small></td>
                 <td><small>#${data.invoice_number}</small></td>
                 <td><small>${data.products_purchased}</small></td>
+                <td><small>${data.amount}</small></td>
                 <td><small>${data.amount_paid}</small></td>
                 <td><small>${data.amount_due}</small></td>
-                <td><small>${data.amount}</small></td>
                 <td><small>${data.user__username}</small></td>
                 <td>
                     <span>
@@ -358,16 +356,18 @@
 
     // payment display
     function displaypaymentsTable(data){
-        data.forEach((data)=>{
+        console.log('displaying tables')
+        paymentsTable.innerHTML='';
+        data.forEach((d)=>{
             paymentsTable.innerHTML += `
             <tr>
-                <td><small>${new Date(data.payment_date).toDateString()}</small></td>
-                <td><small>#${data.invoice__invoice_number}</small></td>
-                <td><small>${data.invoice__products_purchased}</small></td>
-                <td><small>${data.invoice__currency__symbol} ${data.amount_paid}</small></td>
-                <td><small>${data.invoice__currency__symbol} ${data.invoice__amount}</small></td>
-                <td><small>${data.invoice__currency__symbol} ${data.invoice__amount_due}</small></td>
-                <td><small>${data.user__username}</small></td>
+                <td><small>${new Date(d.payment_date).toDateString()}</small></td>
+                <td><small>#${d.invoice__invoice_number}</small></td>
+                <td><small>${d.invoice__products_purchased}</small></td>
+                <td><small>${d.invoice__currency__symbol} ${d.invoice__amount}</small></td>
+                <td><small>${d.invoice__currency__symbol} ${d.amount_paid}</small></td>
+                <td><small>${d.invoice__currency__symbol} ${d.amount_due}</small></td>
+                <td><small>${d.user__username}</small></td>
             </tr>
             `
         })

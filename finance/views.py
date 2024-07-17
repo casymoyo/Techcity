@@ -20,7 +20,7 @@ from asgiref.sync import async_to_sync, sync_to_async
 from inventory.models import Inventory
 from channels.layers import get_channel_layer
 import json, datetime, os, boto3, openpyxl 
-from .tasks import send_invoice_email_task
+from .tasks import send_invoice_email_task, send_account_statement_email
 from pytz import timezone as pytz_timezone 
 from openpyxl.styles import Alignment, Font
 from . utils import calculate_expenses_totals
@@ -295,10 +295,15 @@ def update_invoice(request, invoice_id):
             invoice.amount_due -= amount_paid
 
         invoice.amount_paid += amount_paid
+        
+        # get the latest payment for the invoice
+        latest_payment = Payment.objects.filter(invoice=invoice).order_by('-payment_date').first()
+        amount_due = latest_payment.amount_due - amount_paid 
 
         payment = Payment.objects.create(
             invoice=invoice,
             amount_paid=amount_paid,
+            amount_due=amount_due, 
             payment_method=data['payment_method'],
             user=request.user
         )
@@ -315,7 +320,10 @@ def update_invoice(request, invoice_id):
         )
 
         account_balance.balance += amount_paid
-        customer_account_balance.balance -= amount_paid
+        if customer_account_balance.balance < 0:
+            customer_account_balance.balance += amount_paid
+        else:
+            customer_account_balance.balance -= amount_paid
 
         account_balance.save()
         customer_account_balance.save()
@@ -347,11 +355,9 @@ def create_invoice(request):
             }
 
             account_name = f"{request.user.branch} {currency.name} {invoice_data['payment_method'].capitalize()} Account"
-            logger.info(f"[Create Invoice]: {account_name}")
+            
             account, _ = Account.objects.get_or_create(name=account_name, type=account_types[invoice_data['payment_method']])
             
-            # Todo debug line 
-            logger.info(f"[Create Invoice]: account {account}")
             account_balance, _ = AccountBalance.objects.get_or_create(
                 account=account,
                 currency=currency,
@@ -369,7 +375,6 @@ def create_invoice(request):
 
             # customer
             customer = Customer.objects.get(id=int(invoice_data['client_id'])) 
-            logger.info(f"[Create Invoice]: {customer}")
             
             # customer account
             customer_account = CustomerAccount.objects.get(customer=customer)
@@ -421,7 +426,7 @@ def create_invoice(request):
                 due_invoice.save()
 
             # calculate amount due
-            amount_due = invoice_total_amount - amount_paid
+            amount_due = invoice_total_amount - amount_paid  
             
             with transaction.atomic():
                 
@@ -503,8 +508,7 @@ def create_invoice(request):
                     vat_type=VATTransaction.VATType.OUTPUT,
                     vat_rate=VATRate.objects.get(status=True).rate,
                     tax_amount=invoice_data['vat_amount']
-                )
-                
+                )                                                          
                 # Create Sale object
                 sale = Sale.objects.create(
                     date=timezone.now(),
@@ -517,6 +521,7 @@ def create_invoice(request):
                     invoice=invoice,
                     amount_paid=amount_paid,
                     payment_method=invoice_data['payment_method'],
+                    amount_due=invoice_total_amount - amount_paid,
                     user=request.user
                 )
                 
@@ -539,7 +544,7 @@ def create_invoice(request):
 
 @login_required
 @transaction.atomic
-def invoice_returns(request, invoice_id):
+def invoice_returns(request, invoice_id): # dont forget the payments
     invoice = get_object_or_404(Invoice, id=invoice_id)
     account = get_object_or_404(CustomerAccount, customer=invoice.customer)
     customer_account_balance = get_object_or_404(CustomerAccountBalances, account=account, currency=invoice.currency)
@@ -676,6 +681,10 @@ def customer(request):
     elif request.method == 'POST':
         data = json.loads(request.body)
         
+        validation_errors = validate_customer_data(data)
+        if validation_errors:
+            return JsonResponse({'success': False, 'message': 'Validation errors occurred:', 'errors': validation_errors})
+    
         if Customer.objects.filter(phone_number=data['phonenumber']).exists():
             return JsonResponse({'success': False, 'message': 'Customer exists'})
         else:
@@ -698,17 +707,50 @@ def customer(request):
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
+def validate_customer_data(data):
+    errors = {}
+    if 'name' not in data or len(data['name']) < 2:
+        errors['name'] = 'Name is required and must be at least 2 characters long.'
+
+    if 'email' not in data or not validate_email(data['email']):
+        errors['email'] = 'A valid email address is required.'
+
+    if 'address' not in data:
+        errors['address'] = 'Address is required.'
+
+    if 'phonenumber' not in data:
+        errors['phonenumber'] = 'Phone number is required.'
+
+    return errors
+
+def validate_email(email):
+    import re
+    email_regex = r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$"
+    return bool(re.match(email_regex, email))
+
 @login_required
 def customer_list(request):
     search_query = request.GET.get('q', '')
     
-    customers = CustomerAccount.objects.all()
+    customers = CustomerAccountBalances.objects.all()
     accounts = CustomerAccountBalances.objects.all()
     
     if search_query:
         customers = CustomerAccount.objects.filter(Q(customer__name__icontains=search_query))
+        
+    if 'receivable' in request.GET:
+        customers = CustomerAccountBalances.objects.filter(balance__lt= 0).distinct()
+        
+
+        negative_balances_per_account = CustomerAccountBalances.objects.filter(balance__lt=0) \
+                                                                .values('account') \
+                                                                .annotate(total_negative_balance=Sum('balance'))
+        print(negative_balances_per_account)
+
+                    
     
-    if 'download' in request.GET:  
+    if 'download' in request.GET: 
+        customers = Customer.objects.all() 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename=customers.xlsx'
 
@@ -797,25 +839,7 @@ def customer_account(request, customer_id):
     invoices = invoices.filter(filters)
 
     if request.GET.get('email_bool'):
-        html_string = render_to_string('finance/customers/email_temp.html', {
-            "invoice_payments": invoice_payments, 
-            "customer": customer, 
-            'request': request
-        })
-
-        email = EmailMessage(
-            'Your Account Statement',
-            'Please find your invoice attached.',
-            'your_email@example.com', 
-            [customer.email],
-        )
-
-        with BytesIO() as buffer:
-            pisa.CreatePDF(html_string, dest=buffer)
-            buffer.seek(0)
-            email.attach(f'account statement({customer.name}).pdf', buffer.getvalue(), 'application/pdf')
-
-        email.send() 
+        send_account_statement_email(customer.id, request.user.branch.id, request.user.id)
         return JsonResponse({'message': 'Email sent'})
 
     return render(request, 'finance/customer.html', {
@@ -963,7 +987,6 @@ def customer_deposits(request):
             'payment_reference',
             'cashier__username', 
         )
-        logger.info(deposits)
         return JsonResponse(list(deposits), safe=False)
     else:
         return JsonResponse({
@@ -1005,7 +1028,7 @@ def customer_account_payments_json(request):
         ).order_by('-payment_date').values(
             'invoice__products_purchased',
             'payment_date', 'invoice__invoice_number', 'invoice__currency__symbol',
-            'invoice__amount_due', 'invoice__amount', 'user__username', 'amount_paid'
+            'invoice__amount_due', 'invoice__amount', 'user__username', 'amount_paid', 'amount_due'
         )
         return JsonResponse(list(invoice_payments), safe=False)
     else:
@@ -1176,7 +1199,6 @@ def expenses_report(request):
 def invoice_preview(request, invoice_id):
     invoice = Invoice.objects.get(id=invoice_id)
     invoice_items = InvoiceItem.objects.filter(invoice=invoice)
-    account = CustomerAccount.objects.get(customer__id = invoice.customer.id)
     return render(request, 'Pos/printable_receipt.html', {'invoice_id':invoice_id, 'invoice':invoice, 'invoice_items':invoice_items})
 
 
