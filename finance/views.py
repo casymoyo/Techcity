@@ -402,6 +402,7 @@ def create_invoice(request):
                         invoice=due_invoice,
                         amount_paid=due_invoice.amount_due,
                         payment_method=invoice_data['payment_method'],
+                        amount_due= 0,
                         user=request.user
                     )
                     
