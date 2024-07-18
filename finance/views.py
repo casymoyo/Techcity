@@ -42,7 +42,8 @@ from . forms import (
     TransferForm, 
     CashWithdrawForm, 
     cashWithdrawExpenseForm,
-    customerDepositsForm
+    customerDepositsForm,
+    customerDepositsRefundForm
 )
 from django.contrib.auth import authenticate
 
@@ -390,41 +391,41 @@ def create_invoice(request):
             invoice_total_amount = Decimal(invoice_data['payable'])
             
             # check for due invoices 
-            if Invoice.objects.filter(customer=customer, payment_status='Partial', branch=request.user.branch, currency=currency).exists():
-                due_invoice = Invoice.objects.filter(customer=customer, payment_status='Partial', branch=request.user.branch).last()
-                if amount_paid > due_invoice.amount_due:
-                    due_invoice.amount_paid += due_invoice.amount_due
-                    amount_paid -= due_invoice.amount_due
-                    due_invoice.payment_status= due_invoice.PaymentStatus.PAID
+            # if Invoice.objects.filter(customer=customer, payment_status='Partial', branch=request.user.branch, currency=currency).exists():
+            #     due_invoice = Invoice.objects.filter(customer=customer, payment_status='Partial', branch=request.user.branch).last()
+            #     if amount_paid > due_invoice.amount_due:
+            #         due_invoice.amount_paid += due_invoice.amount_due
+            #         amount_paid -= due_invoice.amount_due
+            #         due_invoice.payment_status= due_invoice.PaymentStatus.PAID
                     
-                    # refactor
-                    Payment.objects.create(
-                        invoice=due_invoice,
-                        amount_paid=due_invoice.amount_due,
-                        payment_method=invoice_data['payment_method'],
-                        amount_due= 0,
-                        user=request.user
-                    )
+            #         # refactor
+            #         Payment.objects.create(
+            #             invoice=due_invoice,
+            #             amount_paid=due_invoice.amount_due,
+            #             payment_method=invoice_data['payment_method'],
+            #             amount_due= 0,
+            #             user=request.user
+            #         )
                     
-                    customer_account_balance.balance -= due_invoice.amount_due
-                    due_invoice.amount_due = 0
+            #         customer_account_balance.balance -= due_invoice.amount_due
+            #         due_invoice.amount_due = 0
                     
-                else:
-                    due_invoice.amount_due -= amount_paid
-                    due_invoice.amount_paid += amount_paid
+            #     else:
+            #         due_invoice.amount_due -= amount_paid
+            #         due_invoice.amount_paid += amount_paid
                     
-                    Payment.objects.create(
-                        invoice=due_invoice,
-                        amount_paid=amount_paid,
-                        payment_method=invoice_data['payment_method'],
-                        user=request.user
-                    )
+            #         Payment.objects.create(
+            #             invoice=due_invoice,
+            #             amount_paid=amount_paid,
+            #             payment_method=invoice_data['payment_method'],
+            #             user=request.user
+            #         )
         
-                    customer_account_balance.balance -= amount_paid
-                    amount_paid = 0
+            #         customer_account_balance.balance -= amount_paid
+            #         amount_paid = 0
                 
-                customer_account_balance.save()
-                due_invoice.save()
+            #     customer_account_balance.save()
+            #     due_invoice.save()
 
             # calculate amount due
             amount_due = invoice_total_amount - amount_paid  
@@ -494,14 +495,14 @@ def create_invoice(request):
                     
                     # stock log  
                     ActivityLog.objects.create(
-                            branch=request.user.branch,
-                            inventory=item,
-                            user=request.user,
-                            quantity=item_data['quantity'],
-                            total_quantity = item.quantity,
-                            action='Sale',
-                            invoice=invoice
-                        )
+                        branch=request.user.branch,
+                        inventory=item,
+                        user=request.user,
+                        quantity=item_data['quantity'],
+                        total_quantity = item.quantity,
+                        action='Sale',
+                        invoice=invoice
+                    )
                     
                 # # Create VATTransaction
                 VATTransaction.objects.create(
@@ -693,7 +694,8 @@ def customer(request):
                 name=data['name'],
                 email=data['email'],
                 address=data['address'],
-                phone_number=data['phonenumber']
+                phone_number=data['phonenumber'],
+                branch=request.user.branch
             )
             account = CustomerAccount.objects.create(customer=customer)
 
@@ -733,23 +735,31 @@ def validate_email(email):
 def customer_list(request):
     search_query = request.GET.get('q', '')
     
-    customers = CustomerAccountBalances.objects.all()
+    customers = Customer.objects.filter(branch=request.user.branch)
     accounts = CustomerAccountBalances.objects.all()
+    
+    total_balances_per_currency = CustomerAccountBalances.objects.values('currency__name').annotate(
+        total_balance=Sum('balance')
+    )
     
     if search_query:
         customers = CustomerAccount.objects.filter(Q(customer__name__icontains=search_query))
         
     if 'receivable' in request.GET:
-        customers = CustomerAccountBalances.objects.filter(balance__lt= 0).distinct()
+        negative_balances_per_currency = CustomerAccountBalances.objects.filter(balance__lt=0) \
+            .values('currency') \
+            .annotate(total_balance=Sum('balance'))
+
+        customers = Customer.objects.filter(
+            id__in=negative_balances_per_currency.values('account__customer_id'),
+        ).distinct()
         
+        total_balances_per_currency = negative_balances_per_currency.values('currency__name').annotate(
+            total_balance=Sum('balance')
+        )
+        
+        logger.info(f'Customers:{total_balances_per_currency.values}')
 
-        negative_balances_per_account = CustomerAccountBalances.objects.filter(balance__lt=0) \
-                                                                .values('account') \
-                                                                .annotate(total_negative_balance=Sum('balance'))
-        print(negative_balances_per_account)
-
-                    
-    
     if 'download' in request.GET: 
         customers = Customer.objects.all() 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -783,7 +793,11 @@ def customer_list(request):
         workbook.save(response)
         return response
         
-    return render(request, 'finance/customers/customers.html', {'customers':customers, 'search_query':search_query, 'accounts':accounts})
+    return render(request, 'finance/customers/customers.html', {
+        'customers':customers, 
+        'accounts':accounts,
+        'total_balances_per_currency':total_balances_per_currency,
+    })
 
 @login_required
 def update_customer(request, customer_id):
@@ -815,6 +829,7 @@ def delete_customer(request, customer_id):
 @login_required
 def customer_account(request, customer_id):
     form = customerDepositsForm()
+    refund_form = customerDepositsRefundForm()
     customer = get_object_or_404(Customer, id=customer_id)
 
     account = CustomerAccountBalances.objects.filter(account__customer=customer)
@@ -848,6 +863,7 @@ def customer_account(request, customer_id):
         'account': account,
         'invoices': invoices,
         'customer': customer,
+        'refund_form':refund_form,
         'invoice_count': invoices.count(),
         'invoice_payments': invoice_payments,
         'paid': invoices.filter(payment_status='Paid').count(),  
@@ -899,7 +915,6 @@ def add_customer_deposit(request, customer_id):
         
         account_name = f"{request.user.branch} {currency.name} {payment_method.capitalize()} Account"
         
-        logger.info(f"[Account Name (create deposit)]: {account_name}")
         
         account, _ = Account.objects.get_or_create(name=account_name, type=account_types[payment_method])
         
@@ -938,14 +953,22 @@ def add_customer_deposit(request, customer_id):
             cashier=request.user,
             branch=request.user.branch
         )
-        logger.info(f"[FINANCE]: deposit -> customer deposit {customer_deposit}")
         
-        logger.info(f"[FINANCE]: deposit -> amount before {customer_account_bal_object.balance}")
         # effect customer account balances
         customer_account_bal_object.balance += amount
-        logger.info(f"[FINANCE]: deposit -> amount after {customer_account_bal_object.balance}")
+        
         customer_account_bal_object.save()
-        # return response
+        
+        Cashbook.objects.create(
+            issue_date=customer_deposit.date_created,
+            description=f'{customer_deposit.payment_method.upper()} deposit ({customer_deposit.customer_account.account.customer.name})',
+            debit=True,
+            credit=False,
+            amount=customer_deposit.amount,
+            currency=customer_deposit.currency,
+            branch=customer_deposit.branch
+        )
+
         return JsonResponse(
             {
                 "success":True,
@@ -961,22 +984,150 @@ def add_customer_deposit(request, customer_id):
             },status=500)
 
 
+@login_required    
+def deposits_list(request):
+    deposits = CustomerDeposits.objects.filter(branch=request.user.branch).order_by('-date_created')
+    return render(request, 'finance/deposits.html', {
+        'deposits':deposits,
+        'total_deposits': deposits.aggregate(Sum('amount'))['amount__sum'] or 0,
+    })
+
+@login_required
+@transaction.atomic
+def refund_customer_deposit(request, deposit_id):
+    try:
+        deposit = CustomerDeposits.objects.get(id=deposit_id)
+    except CustomerDeposits.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Deposit not found'}, status=404)
+    
+    try:
+        data = json.loads(request.body)
+        amount = Decimal(data.get('amount', 0))
+        if amount <= 0:
+            return JsonResponse({'success': False, 'message': 'Invalid amount'}, status=400)
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return JsonResponse({'success': False, 'message': 'Invalid input data'}, status=400)
+
+    account_types = {
+        'cash': Account.AccountType.CASH,
+        'bank': Account.AccountType.BANK,
+        'ecocash': Account.AccountType.ECOCASH,
+    }
+
+    account_name = f"{request.user.branch} {deposit.currency.name} {deposit.payment_method.capitalize()} Account"
+
+    try:
+        account = Account.objects.get(name=account_name, type=account_types[deposit.payment_method])
+        account_balance = AccountBalance.objects.get(
+            account=account,
+            currency=deposit.currency,
+            branch=request.user.branch,
+        )
+    except (Account.DoesNotExist, AccountBalance.DoesNotExist) as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+    
+    if amount > deposit.amount:
+        return JsonResponse({'success': False, 'message': 'Refund amount exceeds deposit amount'}, status=400)
+    
+    account_balance.balance -= amount
+    diff_amount = deposit.amount - amount
+
+    if diff_amount == 0:
+        deposit.delete()
+    else:
+        deposit.amount = diff_amount
+        deposit.save()
+
+    Cashbook.objects.create(
+        issue_date=datetime.date.today(),
+        description=f'{deposit.payment_method.upper()} deposit refund ({deposit.customer_account.account.customer.name})',
+        debit=False,
+        credit=True,
+        amount=amount,
+        currency=deposit.currency,
+        branch=deposit.branch
+    )
+
+    account_balance.save()
+
+    return JsonResponse({'success': True}, status=200)
+
+        
+@login_required
+@transaction.atomic
+def edit_customer_deposit(request, deposit_id):
+    try:
+        deposit = CustomerDeposits.objects.get(id=deposit_id)
+    except CustomerDeposits.DoesNotExist:
+        messages.warning(request, 'Deposit not found')
+        return redirect('finance:customer_account', deposit.customer_account.account.customer.id)
+    
+    if request.method == 'POST':
+        form = customerDepositsForm(request.POST)
+        if not form.is_valid():
+            messages.warning(request, 'Invalid form submission')
+            return redirect('finance:edit_customer_deposit', deposit_id)
+
+        amount = Decimal(request.POST.get('amount'))
+        if amount <= 0:
+            messages.warning(request, 'Amount cannot be zero or negative')
+            return redirect('finance:edit_customer_deposit', deposit_id)
+
+        account_types = {
+            'cash': Account.AccountType.CASH,
+            'bank': Account.AccountType.BANK,
+            'ecocash': Account.AccountType.ECOCASH,
+        }
+
+        account_name = f"{request.user.branch} {deposit.currency.name} {deposit.payment_method.capitalize()} Account"
+        
+        try:
+            account = Account.objects.get(name=account_name, type=account_types[deposit.payment_method])
+            account_balance = AccountBalance.objects.get(
+                account=account,
+                currency=deposit.currency,
+                branch=request.user.branch,
+            )
+        except (Account.DoesNotExist, AccountBalance.DoesNotExist) as e:
+            messages.warning(request, str(e))
+            return redirect('finance:edit_customer_deposit', deposit_id)
+        
+        adj_amount = amount - deposit.amount
+
+        if adj_amount != 0:
+            if adj_amount > 0:
+                account_balance.balance += adj_amount
+                debit, credit = True, False
+            else:
+                account_balance.balance += adj_amount 
+                debit, credit = False, True
+
+            Cashbook.objects.create(
+                issue_date=datetime.date.today(),
+                description=f'{deposit.payment_method.upper()} deposit adjustment ({deposit.customer_account.account.customer.name})',
+                debit=debit,
+                credit=credit,
+                amount=abs(adj_amount),
+                currency=deposit.currency,
+                branch=deposit.branch
+            )
+
+            account_balance.save()
+            deposit.amount = amount
+            deposit.save()
+            messages.success(request, 'Customer deposit successfully updated')
+            return redirect('finance:customer', deposit.customer_account.account.customer.id)
+    else:
+        form = customerDepositsForm(instance=deposit)
+
+    return render(request, 'finance/customers/edit_deposit.html', {'form': form})
+    
+
 @login_required
 def customer_deposits(request): 
     customer_id = request.GET.get('customer_id')
     
     if customer_id: 
-        try:
-            customer_account = CustomerAccount.objects.get(id=customer_id)
-            # customer_account_balances = CustomerAccountBalances.objects.get(account=customer_account)
-        except Exception as e:
-            return JsonResponse(
-                {
-                    'success':False,
-                    'message':f'{e}'
-                }
-            )
-        # get deposits
         deposits = CustomerDeposits.objects.filter(branch=request.user.branch).values(
             'customer_account__account__customer_id',
             'date_created',
@@ -987,7 +1138,8 @@ def customer_deposits(request):
             'payment_method',
             'payment_reference',
             'cashier__username', 
-        )
+            'id'
+        ).order_by('-date_created')
         return JsonResponse(list(deposits), safe=False)
     else:
         return JsonResponse({
@@ -1008,8 +1160,14 @@ def customer_account_transactions_json(request):
             branch=request.user.branch, 
             status=True
         ).order_by('-issue_date').values(
-            'issue_date', 'invoice_number', 'products_purchased', 
-            'amount_paid', 'amount_due', 'amount', 'user__username'
+            'issue_date',
+            'invoice_number',
+            'products_purchased', 
+            'amount_paid', 
+            'amount_due', 
+            'amount', 
+            'user__username',
+            'payment_status'
         )
         return JsonResponse(list(invoices), safe=False)
     else:
@@ -1028,8 +1186,15 @@ def customer_account_payments_json(request):
             invoice__customer=customer
         ).order_by('-payment_date').values(
             'invoice__products_purchased',
-            'payment_date', 'invoice__invoice_number', 'invoice__currency__symbol',
-            'invoice__amount_due', 'invoice__amount', 'user__username', 'amount_paid', 'amount_due'
+            'payment_date',
+            'invoice__invoice_number',
+            'invoice__currency__symbol', 
+            'invoice__payment_status',
+            'invoice__amount_due',
+            'invoice__amount', 
+            'user__username', 
+            'amount_paid', 
+            'amount_due'
         )
         return JsonResponse(list(invoice_payments), safe=False)
     else:
@@ -1374,7 +1539,7 @@ def end_of_day(request):
         end_datetime = user_timezone.localize(
             timezone.datetime.combine(end_date, timezone.datetime.max.time())
         )
-        return Invoice.objects.filter(issue_date__range=[start_datetime, end_datetime])
+        return Invoice.objects.filter(branch=request.user.branch, issue_date__range=[start_datetime, end_datetime])
 
     now = timezone.now().astimezone(user_timezone)
     today = now.date()
@@ -1450,8 +1615,8 @@ def end_of_day(request):
             # Invoice data
             invoices = Invoice.objects.filter(branch=request.user.branch, issue_date__range=(today_min, today_max))
             partial_invoices = invoices.filter(payment_status=Invoice.PaymentStatus.PARTIAL)
-            paid_invoices = invoices.filter(payment_status=Invoice.PaymentStatus.PAID)
-            
+            paid_invoices = invoices.filter(payment_status=Invoice.PaymentStatus.PAID, branch=request.user.branch)
+           
             # Expenses
             expenses = Expense.objects.filter(branch=request.user.branch, date=today)
             confirmed_expenses = expenses.filter(status=True)
@@ -1501,20 +1666,16 @@ def invoice_payment_track(request):
         )
     return JsonResponse(list(payments), safe=False)
 
-
-
 @login_required
 def day_report(request, inventory_data):
     today_min = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
     today_max = timezone.now().replace(hour=23, minute=59, second=59, microsecond=999999)
-    
     
     # invoice data
     invoices = Invoice.objects.filter(branch=request.user.branch, issue_date__range=(today_min, today_max))
     
     partial_invoices = invoices.filter(payment_status=Invoice.PaymentStatus.PARTIAL)
     paid_invoices = invoices.filter(payment_status=Invoice.PaymentStatus.PAID)
-    
     
     # expenses
     expenses = Expense.objects.filter(branch=request.user.branch, date=datetime.date.today())

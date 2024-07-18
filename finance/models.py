@@ -42,6 +42,7 @@ class Customer(models.Model):
     address = models.CharField(max_length=100)
     id_number = models.CharField(max_length=100)
     date = models.DateField(auto_now_add=True)
+    branch = models.ForeignKey('company.branch', on_delete=models.PROTECT)              
     
     def __str__(self):
         return self.name
@@ -75,7 +76,7 @@ class CustomerDeposits(models.Model):
     ]
     , default="cash")
     reason = models.CharField(max_length=255, null=False, blank=False)
-    payment_reference = models.CharField(max_length=255, unique=True, default="")
+    payment_reference = models.CharField(max_length=255, default="")
     cashier = models.ForeignKey("users.User", on_delete=models.DO_NOTHING, related_name="cashier")
     date_created = models.DateField(auto_now_add=True)
     branch = models.ForeignKey('company.branch', on_delete=models.SET_NULL, null=True, blank=True)

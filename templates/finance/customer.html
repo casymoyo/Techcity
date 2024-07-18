@@ -130,7 +130,7 @@
                         <th>Product (s)</th>
                         <th>Invoice Amount</th>
                         <th>Amount Paid</th>
-                        <th>Currenct Due Amount</th>
+                        <th>Balance</th>
                         <th>Processed by</th>
                     </tr>
                 </thead>
@@ -158,6 +158,7 @@
                             <th>Payment Method</th>
                             <th>Reason</th>
                             <th>Processed by</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="{{ currency.currency.symbol }}"></tbody>  
@@ -222,6 +223,44 @@
         </div>
 
     </div>
+    <div>
+        <div class="modal fade" id="refundModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <h5 class="fw-bold">Enter Deposit Refund Amount</h5>
+                        <form>
+                            {% csrf_token %}
+                                <div id="div_id_amount" class="mb-3"> 
+                                    <label for="id_amount" class="form-label requiredField">
+                                        Amount
+                                        <span class="asteriskField">*</span>
+                                        <span id="id_variance" class="mx-2"></span>
+                                    </label> 
+                                    <input type="number" name="amount" value="0" step="0.01" class="numberinput form-control" required="" id="id_refund_amount"> 
+                                </div>   
+                                <small class="text-danger" id="id_refund_error"></small>
+                                <div class="d-flex justify-content-end">
+                                    <div class="">
+                                        <button type="reset" class="btn btn-danger btn-sm w-100">
+                                            <i class='bx bx-reset'></i>
+                                            Reset
+                                        </button>
+                                    </div>
+                                    <span class="px-1"></span>
+                                    <div class="">
+                                        <button type="button" id="id_refund_submit_btn" class="btn btn-secondary btn-sm w-100">
+                                            <i class='bx bx-save'></i>
+                                            Save
+                                        </button>
+                                    </div>
+                                </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div>
 <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>
@@ -244,6 +283,7 @@
     const accountModal = new bootstrap.Modal(document.getElementById('accountModal'));
     const depositModal = new bootstrap.Modal(document.getElementById('depositModal'));
     const depositSuccessModal = new bootstrap.Modal(document.getElementById('depositSuccessModal'));
+    const refundModal = new bootstrap.Modal(document.getElementById('refundModal'));
 
     const addDepositbtn = document.getElementById('id_add_deposit');
     const depositError = document.getElementById('deposit_error');
@@ -314,13 +354,13 @@
         data.forEach((data)=>{
             transactionsTable.innerHTML += `
             <tr>
-                <td><small>${new Date(data.issue_date).toDateString()}<small></td>
-                <td><small>#${data.invoice_number}</small></td>
-                <td><small>${data.products_purchased}</small></td>
-                <td><small>${data.amount}</small></td>
-                <td><small>${data.amount_paid}</small></td>
-                <td><small>${data.amount_due}</small></td>
-                <td><small>${data.user__username}</small></td>
+                <td><small class='${data.payment_status === 'Partial'? "text-danger" : ''}'>${new Date(data.issue_date).toDateString()}<small></td>
+                <td><small class='${data.payment_status === 'Partial'? "text-danger" : ''}'>#${data.invoice_number}</small></td>
+                <td><small class='${data.payment_status === 'Partial'? "text-danger" : ''}'>${data.products_purchased}</small></td>
+                <td><small class='${data.payment_status === 'Partial'? "text-danger" : ''}'>${data.amount}</small></td>
+                <td><small class='${data.payment_status === 'Partial'? "text-danger" : ''}'>${data.amount_paid}</small></td>
+                <td><small class='${data.payment_status === 'Partial'? "text-danger" : ''}'>${data.amount_due}</small></td>
+                <td><small class='${data.payment_status === 'Partial'? "text-danger" : ''}'  >${data.user__username}</small></td>
                 <td>
                     <span>
                         <a href="/finance/invoice/preview/${data.id}/" class="text-dark">
@@ -356,34 +396,39 @@
 
     // payment display
     function displaypaymentsTable(data){
-        console.log('displaying tables')
+        console.log(data)
         paymentsTable.innerHTML='';
         data.forEach((d)=>{
             paymentsTable.innerHTML += `
+            
             <tr>
-                <td><small>${new Date(d.payment_date).toDateString()}</small></td>
-                <td><small>#${d.invoice__invoice_number}</small></td>
-                <td><small>${d.invoice__products_purchased}</small></td>
-                <td><small>${d.invoice__currency__symbol} ${d.invoice__amount}</small></td>
-                <td><small>${d.invoice__currency__symbol} ${d.amount_paid}</small></td>
-                <td><small>${d.invoice__currency__symbol} ${d.amount_due}</small></td>
-                <td><small>${d.user__username}</small></td>
+                <td><small class='${d.invoice__payment_status === 'Partial'? "text-danger" : ''}'>${new Date(d.payment_date).toDateString()}</small></td>
+                <td><small class='${d.invoice__payment_status === 'Partial'? "text-danger" : ''}'>#${d.invoice__invoice_number}</small></td>
+                <td><small class='${d.invoice__payment_status === 'Partial'? "text-danger" : ''}'>${d.invoice__products_purchased}</small></td>
+                <td><small class='${d.invoice__payment_status === 'Partial'? "text-danger" : ''}'>${d.invoice__currency__symbol} ${d.invoice__amount}</small></td>
+                <td><small class='${d.invoice__payment_status === 'Partial'? "text-danger" : ''}'>${d.invoice__currency__symbol} ${d.amount_paid}</small></td>
+                <td><small class='${d.invoice__payment_status === 'Partial'? "text-danger" : ''}'>${d.invoice__currency__symbol} ${d.amount_due}</small></td>
+                <td><small class='${d.invoice__payment_status === 'Partial'? "text-danger" : ''}'>${d.user__username}</small></td>
             </tr>
             `
         })
     }
 
     // deposits
-    $.ajax({
-        url: '{% url "finance:deposits" %}',
-        type: 'GET',
-        data: {'customer_id': {{customer.id}}},
-        }).done(function(response) {
-            const data = response
-            console.log(data)
-            depositData.push(data)
-    })
+    function getDepositsData(){
+        $.ajax({
+            url: '{% url "finance:deposits" %}',
+            type: 'GET',
+            data: {'customer_id': {{customer.id}}},
+            }).done(function(response) {
+                const data = response
+                console.log(data)
+                depositData.push(data)
+        })
+    }
+    getDepositsData()
 
+    
     // deposits search
     document.querySelector('#deposit_q').addEventListener('input', ()=>{
         let data = [];
@@ -412,11 +457,62 @@
                     <td><small>${data.payment_method}</small></td>
                     <td><small>${data.reason}</small></td>
                     <td><small>${data.cashier__username}</small></td>
+                    <td>
+                        <small><a class='bx bx-edit btn' href='/finance/customer/edit/deposit/${data .id}/'></a></small>
+                        <small><button class='btn btn-secondary btn-sm' data-id=${data.id} onclick='toggleRefundModal(this)'>refund</button></small>
+                    </td>
                 </tr>
             `
             }
         })
     }
+
+    let refundId = '';
+    const refundSubmitBtn = document.getElementById('id_refund_submit_btn');
+    const refundError = document.getElementById('id_refund_error');
+
+    refundSubmitBtn.addEventListener('click', ()=>{
+        submitRefundData()
+    })
+    
+    function toggleRefundModal(el){
+        refundModal.show()
+        refundId =  el.dataset.id;
+    }
+
+    async function submitRefundData() {
+        const data = {
+            'amount':parseFloat(document.getElementById('id_refund_amount').value),
+        }
+        
+        try {
+            const response = await fetch(`/finance/customer/refund/deposit/${refundId}/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken"),
+                },
+                body: JSON.stringify(data),
+            });
+    
+            const rData = await response.json();
+
+            if(rData.success){
+                refundModal.hide()
+                depositSuccessModal.show()
+                setTimeout(()=>{
+                    depositSuccessModal.hide()
+                    getDepositsData()
+                }, 200)
+            }else{
+                refundError.textContent=rData.message;
+            }
+    
+        } catch (error) {
+            refundError.textContent=error;
+        }
+    }
+
 
     // deposit amount validation
     depositAmount.addEventListener('input', () => {

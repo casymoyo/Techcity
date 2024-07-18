@@ -4,8 +4,9 @@ Django settings for techcity project.
 import environ, os
 from pathlib import Path
 from dotenv import load_dotenv
-env = environ.Env()
+env = environ.Env()   
 load_dotenv()
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -147,6 +148,14 @@ DATABASES = {
         'PORT':'39004'
     }
 }
+
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
 
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 # https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-DEFAULT_AUTO_FIELD

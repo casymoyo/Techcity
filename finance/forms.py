@@ -27,7 +27,7 @@ class ExpenseCategoryForm(forms.ModelForm):
 class CustomerForm(forms.ModelForm):
     class Meta:
         model = Customer
-        fields = '__all__'
+        exclude = ['branch']
 
 class CurrencyForm(forms.ModelForm):
     class Meta:
@@ -61,4 +61,9 @@ class customerDepositsForm(forms.ModelForm):
     class Meta:
         model = CustomerDeposits
         exclude = ['cashier', 'customer_account', 'branch']
+
+class customerDepositsRefundForm(forms.ModelForm):
+    class Meta:
+        model = CustomerDeposits
+        fields = ['amount',]
    

@@ -1,8 +1,19 @@
 import json
+from decimal import Decimal
 from django.urls import reverse
+from .forms import customerDepositsForm
 from django.test import TestCase, Client
-from .models import Customer, CustomerAccount, CustomerAccountBalances, Currency
-
+from django.contrib.auth.models import User
+from .models import (
+    Customer, 
+    CustomerAccount, 
+    CustomerAccountBalances, 
+    Currency,
+    CustomerDeposits,
+    Cashbook,
+    Account,
+    AccountBalance
+)
 
 class CustomerViewTests(TestCase):
 
@@ -86,3 +97,111 @@ class CustomerViewTests(TestCase):
         response_data = json.loads(response.content)
         self.assertEqual(response_data['success'], False)
         self.assertEqual(response_data['message'], 'Customer with this email already exists')
+
+
+class EditCustomerDepositTests(TestCase):
+    def setUp(self):
+        # Create test user, account, and deposit objects
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='12345')
+        self.client.login(username='testuser', password='12345')
+        
+        self.account = Account.objects.create(
+            name='Test Branch USD Cash Account',
+            type=Account.AccountType.CASH
+        )
+        
+        self.account_balance = AccountBalance.objects.create(
+            account=self.account,
+            currency='USD',
+            branch='Test Branch',
+            balance=Decimal('1000.00')
+        )
+        
+        self.customer_deposit = CustomerDeposits.objects.create(
+            customer_account=self.account,
+            amount=Decimal('100.00'),
+            currency='USD',
+            payment_method='cash',
+            branch='Test Branch',
+            cashier=self.user,
+            payment_reference = '123',
+            reason = 'purchase screen'
+        )
+
+        self.url = reverse('finance:edit_customer_deposit', args=[self.customer_deposit.id])
+
+    def test_edit_deposit_get(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'finance/customers/edit_deposit.html')
+        self.assertIsInstance(response.context['form'], customerDepositsForm)
+
+    def test_edit_deposit_successful_post(self):
+        data = {
+            'amount': '150.00',
+            'currency': 'USD',
+            'payment_method': 'cash'
+        }
+        response = self.client.post(self.url, data)
+        self.customer_deposit.refresh_from_db()
+        self.account_balance.refresh_from_db()
+        cashbook_entry = Cashbook.objects.filter(
+            description__contains=f'{self.customer_deposit.payment_method.upper()} deposit adjustment',
+            debit=True,
+            amount=Decimal('50.00')
+        ).exists()
+        self.assertTrue(cashbook_entry)
+        self.assertEqual(self.customer_deposit.amount, Decimal('150.00'))
+        self.assertEqual(self.account_balance.balance, Decimal('1050.00'))
+        self.assertRedirects(response, reverse('finance:customer', args=[self.customer_deposit.customer_account.account.customer.id]))
+
+    def test_edit_deposit_invalid_amount(self):
+        data = {
+            'amount': '0.00',
+            'currency': 'USD',
+            'payment_method': 'cash'
+        }
+        response = self.client.post(self.url, data)
+        self.customer_deposit.refresh_from_db()
+        self.account_balance.refresh_from_db()
+        self.assertEqual(self.customer_deposit.amount, Decimal('100.00'))
+        self.assertEqual(self.account_balance.balance, Decimal('1000.00'))
+        self.assertRedirects(response, self.url)
+        self.assertContains(response, 'Amount cannot be zero or negative')
+
+    def test_edit_deposit_account_not_found(self):
+        self.customer_deposit.payment_method = 'bank'
+        self.customer_deposit.save()
+        data = {
+            'amount': '150.00',
+            'currency': 'USD',
+            'payment_method': 'bank'
+        }
+        response = self.client.post(self.url, data)
+        self.customer_deposit.refresh_from_db()
+        self.account_balance.refresh_from_db()
+        self.assertEqual(self.customer_deposit.amount, Decimal('100.00'))
+        self.assertEqual(self.account_balance.balance, Decimal('1000.00'))
+        self.assertRedirects(response, self.url)
+        self.assertContains(response, 'Account matching query does not exist.')
+
+    def test_edit_deposit_negative_adjustment(self):
+        data = {
+            'amount': '50.00',
+            'currency': 'USD',
+            'payment_method': 'cash'
+        }
+        response = self.client.post(self.url, data)
+        self.customer_deposit.refresh_from_db()
+        self.account_balance.refresh_from_db()
+        cashbook_entry = Cashbook.objects.filter(
+            description__contains=f'{self.customer_deposit.payment_method.upper()} deposit adjustment',
+            credit=True,
+            amount=Decimal('50.00')
+        ).exists()
+        self.assertTrue(cashbook_entry)
+        self.assertEqual(self.customer_deposit.amount, Decimal('50.00'))
+        self.assertEqual(self.account_balance.balance, Decimal('950.00'))
+        self.assertRedirects(response, reverse('finance:customer', args=[self.customer_deposit.customer_account.account.customer.id]))
+

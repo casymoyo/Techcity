@@ -45,19 +45,11 @@
                     <span class=' text-dark caret'></span>
                 </li>
                 
-                <li class="menu-link dropdown mb-4">
-                    <a href="{% url 'finance:finance' %}" class='dropdown-toggle'>
+                <li class="menu-link mb-4">
+                    <a href="{% url 'finance:finance' %}">
                         <i class='bx bx-credit-card-front'></i>
                         <span class='px-2'>Finance</span>
                     </a>
-                    <ul class="dropdown-menu shadow w-50 bg-light">
-                        <li class="dropdown-link">
-                            <a href="{% url 'finance:currency' %}" class="px-3 fs-6">Currency</a>
-                        </li>
-                        <li class="dropdown-link">
-                            <a href="{% url 'finance:expense_list' %}" class="px-3 fs-6">Expenses</a>
-                        </li>
-                    </ul>
                 </li>
                 <li class="menu-link mb-4">
                     <a href="{% url 'finance:customer_list' %}">

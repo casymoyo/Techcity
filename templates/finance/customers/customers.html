@@ -6,12 +6,12 @@
 <div class="customer">
     <div class="px-2 main-content ">
         <div class="customer-navbar">
-            <nav class="d-flex justify-content-between align-items-center p-2 text-light bg-dark shadow">
+            <nav class="d-flex justify-content-between rounded align-items-center p-2 text-light bg-dark shadow">
                 <div class="mt-2">
                     <h5 class='fw-bold'>Customers</h5>
                 </div>
                 <div class='d-flex'>
-                    <button class="btn btn-primary" id='id_add_client'>
+                    <button class=" btn btn-primary" id='id_add_client'>
                         <i class="bx bx-plus"></i>
                         Customer
                     </button>
@@ -23,6 +23,14 @@
                 </div>
             </nav>
         </div>
+
+        <div class="balances mt-2 mb-2 bg-warning p-2 rounded d-flex align-items-center">
+            <h5 class="fw-bold mt-1">Total Customer Balances -> |
+                {% for totals in total_balances_per_currency %}
+                  {{ totals.currency__name}}: {{ totals.total_balance}} |
+                {% endfor %}
+            </h5>
+        </div>
         <div class=''>
             <table class="table border table-hover rounded p-2 mt-3 mt-2" id='customerTable' style='width:100%;'>
                 <thead class='bg-primary'>
@@ -32,7 +40,6 @@
                         <th>Email</th>
                         <th>USD Account Balance(s)</th>
                         <th>ZIG Account Balance(s)</th>
-                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -40,8 +47,8 @@
                         <tr>
                             <td>
                                 <small>
-                                    <a href="{% url 'finance:customer' customer.account.customer.id%}" class="text-dark d-flex align-items-center">
-                                        {% with name_parts=customer.account.customer.name|split_name %}
+                                    <a href="{% url 'finance:customer' customer.id%}" class="text-dark d-flex align-items-center">
+                                        {% with name_parts=customer.name|split_name %}
                                             {% if name_parts.first_name and name_parts.last_name %}
                                                 <div class='initials'>
                                                     <span class='content'>{{ name_parts.first_name.0 }}{{ name_parts.last_name.0 }}</span>
@@ -52,7 +59,7 @@
                                                 </div>
                                             {% endif %}
                                         {% endwith %}
-                                        <span class='px-2'>{{customer.account.customer.name}}</span>
+                                        <span class='px-2'>{{customer.name}}</span>
                                     </a>
                                 </small>
                             </td>
@@ -61,7 +68,7 @@
                                     <small>
                                         <a href='https://wa.me/{{customer.account.customer.phone_number}}' class="text-dark">
                                             <i class='bx bxl-whatsapp'></i>
-                                            {{customer.account.customer.phone_number}}
+                                            {{customer.phone_number}}
                                         </a>
                                     </small>
                                 </div>
@@ -71,7 +78,7 @@
                                     <small>
                                         <a href='mailto:{{customer.account.customer.email}}' class="text-dark">
                                             <i class='bx bx-envelope'></i>
-                                            {{customer.account.customer.email}}
+                                            {{customer.email}}
                                         </a>
                                     </small>
                                </div>
@@ -79,31 +86,20 @@
                             <td>
                                 <small>
                                     {% for balance in accounts %}
-                                        {% if balance.account.customer.id == customer.account.customer.id and balance.currency.symbol == 'USD' %}
+                                        {% if balance.account.customer.id == customer.id and balance.currency.symbol == 'USD' %}
                                             <span class='text-center {% if balance.balance < 0 %}text-danger{% endif %}'>{{balance.currency.symbol}} {{balance.balance}}</span>
                                         {% endif %}
                                     {% endfor %}
-                                    
                                 </small>
                             </td>
                             <td>
                                 <small>
                                     {% for balance in accounts %}
-                                        {% if balance.account.customer.id == customer.account.customer.id and balance.currency.symbol == 'Z'%}
+                                        {% if balance.account.customer.id == customer.id and balance.currency.symbol == 'Z'%}
                                             <span class='text-center {% if balance.balance < 0 %}text-danger{% endif %}'>{{balance.currency.symbol}} {{balance.balance}}</span>
                                         {% endif %}
                                     {% endfor %}
                                 </small>
-                            </td>
-                            <td>
-                                <div class='td-contents'>                   
-                                    <a href="{% url 'finance:update_customer' customer.account.customer.id %}" class='text-dark'>
-                                        <i class='bx bx-edit'></i>
-                                    </a>
-                                    <span disabled type='button' data-id="{{customer.account.customer.id}}"  onclick="productId(this)" class="btn text-dark">
-                                        <i class='bx bx-trash'></i>
-                                    </span>
-                                </div>
                             </td>
                         </tr>
                     {% endfor %}
@@ -187,8 +183,6 @@
             console.error("Error:", error);
         });
     }
-
-
 
     function getCookie(name) {
         let cookieValue = null;

@@ -34,9 +34,14 @@ urlpatterns = [
     path('customers/update/<int:customer_id>/', update_customer, name='update_customer'),
     path('customer/delete/<int:customer_id>/delete/', delete_customer, name='customer_delete'),
     path('customer/payments/json/', customer_account_payments_json, name='customer_payments_json'),
+    path('customer/edit/deposit/<int:deposit_id>/', edit_customer_deposit, name='edit_customer_deposit'),
     path('customer/account/json/<int:customer_id>/', customer_account_json, name='customer_account_json'),
     path('customer/transactions/json/', customer_account_transactions_json, name='customer_transactions_json'),
+    path('customer/refund/deposit/<int:deposit_id>/', refund_customer_deposit, name='refund_customer_deposit'),
     path('print/customer/account/statement/<int:customer_id>/', print_account_statement, name='print_account_statement'),
+    
+    #deposits
+    path('deposits/', deposits_list, name='deposits_list'),
     
     # qoutation
     path('qoutation/list/', qoutation_list, name='qoutation_list'),
@@ -50,7 +55,6 @@ urlpatterns = [
     path('transfer/cash/receive/<int:transfer_id>/', receive_money_transfer, name='receive_money_transfer'),
     
     # notifications
-    
     path('finance/notifications/', finance_notifications_json, name='finance_notifications_json'),
 
     #currency
