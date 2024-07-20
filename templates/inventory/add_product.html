@@ -193,9 +193,8 @@
                   if (response.error) {
                     document.querySelector('#id_error').textContent=response.error
                   } else {
-                   fetchCategories()
-                   modal.classList.add('hidden')
-                    overlay.classList.add('hidden')
+                    fetchCategories()
+                    categoryModal.Hide()
                   }
                 })
                 .catch((error) => {
@@ -212,7 +211,7 @@
                 }
                 const data = await response.json();
                 updateCategory(data);
-                categoryModal.hide()
+                console.log(data)
             } catch (error) {
                 console.error('Error fetching categories:', error);
             } finally {

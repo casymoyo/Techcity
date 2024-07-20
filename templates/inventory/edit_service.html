@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static%}
+{% load crispy_forms_tags %}
+{% block title%} Edit Service {% endblock%}
+{% block content %}
+   <div class="inventory">
+        <div class='rounded d-flex py-3 px-2 align-items-center bg-dark text-light shadow rounded'>
+            <h5>Edit >>> Service {{ service.name }}</h5>
+        </div>
+        <div class='edit_service mt-2'>
+            <form method="post">
+                {% csrf_token %}
+                <span id="id_variance" class="text-success"></span>
+                {{form | crispy}}
+                <div class="d-flex justify-content-end">
+                    <div class="">
+                        <button type="reset" class="btn btn-danger btn-sm w-100">
+                            <i class='bx bx-reset'></i>
+                            Reset
+                        </button>
+                    </div>
+                    <span class="px-1"></span>
+                    <div class="">
+                        <button type="submit" id="id_submit" class="btn btn-secondary btn-sm w-100">
+                            <i class='bx bx-save'></i>
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>         
+   </div> 
+{% endblock content %}

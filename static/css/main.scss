@@ -1,3 +1,4 @@
+
 @mixin links{
     .menu-link{
         cursor: pointer;
@@ -58,6 +59,21 @@
 }
 
 .techcity{
+    .text-defective{
+        color: #000 !important;
+    }
+    .text-received{
+        color: #8BC34A !important;
+    }
+    .btn-primary{
+        background: #00c0ef !important;
+    }
+    .receive_inv{
+        td{
+            background-color:#198754 !important;
+            color:white;
+        }
+    }
     .account-statement{
         font-family:lato-Regular;
         @media print {
@@ -83,7 +99,7 @@
         font-family:lato-Regular;
     }
     .transfer-btn{
-        background-color:#0d6efd !important;
+        background-color:#00c0ef !important;
         color:white;
     }
     .hover-dark{
@@ -244,6 +260,7 @@
                 color:white;
             }
         }
+    
         .card{
             border:none;
         }

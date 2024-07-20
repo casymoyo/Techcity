@@ -2,6 +2,7 @@ import json, datetime, openpyxl
 from datetime import timedelta
 from openpyxl.styles import Alignment, Font, PatternFill
 from . models import *
+from . tasks import send_transfer_email
 from decimal import Decimal
 from django.views import View
 from django.db.models import Q
@@ -19,6 +20,10 @@ from django.contrib.contenttypes.models import ContentType
 from channels.generic.websocket import  AsyncJsonWebsocketConsumer
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from permissions.permissions import admin_required, sales_required, accountant_required
+
+
+import logging
+logger = logging.getLogger(__name__)
 
 @login_required
 def notifications_json(request):
@@ -161,22 +166,42 @@ class ProcessTransferCartView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
-                cart_data = json.loads(request.body)
-                transfer=Transfer.objects.get(id=cart_data['transfer_id'])
+                logger.info('processing')
+                data = json.loads(request.body)
+                cart_data = data['cart']
+                branch_name = data['branch_to']
+                logger.info(f'branch name: {branch_name}')
                 
-                for item in cart_data['cart']:
+                try:
+                    branch_to =  Branch.objects.get(name=branch_name)
+                except Exception as e:
+                    return JsonResponse({'success':False, 'message': f'here {e}'})
+                
+                transfer = Transfer(
+                    transfer_to = branch_to,
+                    branch = request.user.branch,
+                    user = request.user,
+                    transfer_ref = Transfer.generate_transfer_ref(request.user.branch.name, branch_to.name)
+                )
+                
+                logger.info(f'transfer: {transfer}')
+                for item in cart_data:
+                    logger.info(item.price)
                     transfer_item = TransferItems(
                         transfer=transfer,
                         product= Product.objects.get(name=item['product']),
-                        price=item['price'],
+                        price=item.price,
                         quantity=item['quantity'],
                         from_branch= Branch.objects.get(name=item['from_branch']),
-                        to_branch= Branch.objects.get(name=item['to_branch']),
+                        to_branch= transfer.transfer_to,
                     )            
                     transfer_item.save()
                     self.deduct_inventory(item, transfer_item)
                     self.transfer_update_quantity(transfer_item, transfer)  
-
+                    
+                # send email for transfer alert
+                transaction.on_commit(lambda: send_transfer_email(request.user.email, transfer.id, transfer.transfer_to.id))
+                
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
@@ -224,6 +249,7 @@ def transfer_details(request, transfer_id):
 def inventory(request):
     product_name = request.GET.get('name', '')
     if product_name:
+        logger.info(f'{list(Inventory.objects.filter(product__name=product_name, branch=request.user.branch).values())}')
         return JsonResponse(list(Inventory.objects.filter(product__name=product_name, branch=request.user.branch).values()), safe=False)
     return JsonResponse({'error':'product doesnt exists'})
 
@@ -302,7 +328,29 @@ def inventory_index(request):
         'total_price': totals[1],
         'total_cost':totals[0],
     })
- 
+
+@login_required
+def edit_service(request, service_id):
+    service = get_object_or_404(Service, id=service_id)
+    if request.method == 'GET':
+        form = ServiceForm(instance=service)
+        return render(request, 'inventory/edit_service.html', {'form': form, 'service': service})
+    
+    elif request.method == 'POST':
+        form = ServiceForm(request.POST, instance=service)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'{service.name} successfully edited')
+            return redirect('inventory:inventory')
+        else:
+            messages.warning(request, 'Please correct the errors below')
+    
+    else:
+        messages.warning(request, 'Invalid request')
+        return redirect('inventory:inventory')
+    
+    return render(request, 'inventory/edit_service.html', {'form': form, 'service': service})
+        
 @login_required   
 def inventory_index_json(request):
     inventory = Inventory.objects.filter(branch=request.user.branch, status=True).values(
@@ -334,53 +382,43 @@ def activate_inventory(request, product_id):
 @admin_required
 @login_required
 def edit_inventory(request, product_name):
-        inv_product = Inventory.objects.get(product__name=product_name, branch=request.user.branch)
-       
-        if request.method == 'POST':
+    inv_product = Inventory.objects.get(product__name=product_name, branch=request.user.branch)
+
+    if request.method == 'POST':
+        
+        product = Product.objects.get(name=product_name)
+        product.name=request.POST['name']
+        product.batch_code=request.POST['batch_code']
+        product.description=request.POST['description']
+        
+        end_of_day = request.POST.get('end_of_day')
+
+        if end_of_day:
+            product.end_of_day = True
             
-            product = Product.objects.get(name=product_name)
-            product.name=request.POST['name']
-            product.batch_code=request.POST['batch_code']
-            product.description=request.POST['description']
+        product.save()
+        
+        quantity = int(request.POST['quantity'])
+        
+        inv_product.quantity += quantity
             
-            end_of_day = request.POST.get('end_of_day')
-    
-            if end_of_day:
-                product.end_of_day = True
-                
-            product.save()
-            
-            if inv_product.quantity < int(request.POST['quantity']):
-                quantity = int(request.POST['quantity']) - inv_product.quantity
-                inv_product.quantity += quantity
-                action = 'Stock in'
-                
-            elif inv_product.quantity > int(request.POST['quantity']):
-                quantity =  int(request.POST['quantity']) 
-                inv_product.quantity += int(request.POST['quantity']) 
-                action = 'Update'
-            
-            else:
-                quantity = inv_product.quantity 
-                action = 'Edit'
-                
-            inv_product.price = Decimal(request.POST['price'])
-            inv_product.cost = Decimal(request.POST['cost'])
-            inv_product.min_stock_level = request.POST['min_stock_level']
-            inv_product.save()
-            
-            ActivityLog.objects.create(
-                branch = request.user.branch,
-                user=request.user,
-                action= action,
-                inventory=inv_product,
-                quantity=quantity,
-                total_quantity=inv_product.quantity,
-            )
-            
-            messages.success(request, f'{product.name} update succesfully')
-            return redirect('inventory:inventory')
-        return render(request, 'inventory/inventory_form.html', {'product':inv_product, 'title':f'Edit >>> {inv_product.product.name}'})
+        inv_product.price = Decimal(request.POST['price'])
+        inv_product.cost = Decimal(request.POST['cost'])
+        inv_product.min_stock_level = request.POST['min_stock_level']
+        inv_product.save()
+        
+        ActivityLog.objects.create(
+            branch = request.user.branch,
+            user=request.user,
+            action= 'Stock in' if quantity > 0 else 'Update',
+            inventory=inv_product,
+            quantity=quantity,
+            total_quantity=inv_product.quantity,
+        )
+        
+        messages.success(request, f'{product.name} update succesfully')
+        return redirect('inventory:inventory')
+    return render(request, 'inventory/inventory_form.html', {'product':inv_product, 'title':f'Edit >>> {inv_product.product.name}'})
 
 @login_required
 def inventory_detail(request, id):
@@ -604,8 +642,8 @@ def over_less_list_stock(request):
         reason = data['reason']
         status = data['status']
         branch_loss = data['branch_loss']
-        
-        # if quantity
+        quantity= data['quantity']
+  
         branch_transfer = get_object_or_404(transfers, id=transfer_id)
         transfer = get_object_or_404(Transfer, id=branch_transfer.transfer.id)
         product = Inventory.objects.get(product=branch_transfer.product, branch=request.user.branch)
@@ -617,15 +655,15 @@ def over_less_list_stock(request):
                 
                 description='write_off'
                 
-                activity_log('Stock in', product, branch_transfer )
-                
+                activity_log('Stock in', product, branch_transfer)
+                logger.info(f'quantity {quantity}')
                 DefectiveProduct.objects.create(
                     product = product,
                     branch = request.user.branch,
-                    quantity = branch_transfer.over_less_quantity,
+                    quantity = quantity,
                     reason = reason,
                     status = status,
-                    branch_loss = get_object_or_404(Branch, id=branch_loss)
+                    branch_loss = get_object_or_404(Branch, id=branch_loss),
                 )
                 
                 product.quantity -= branch_transfer.over_less_quantity 
@@ -678,13 +716,12 @@ def over_less_list_stock(request):
                 branch_transfer.over_less = False
                 branch_transfer.over_less_description = description
                 branch_transfer.save()
-                
-                messages.success(request, f'{product.product.name} transfered back to {branch_transfer.to_branch.name} sucessfully') 
-                
+                 
                 return JsonResponse({'success':True}, status=200)
             
-        messages.error(request, f'Product quantity cant be zero.')
-        return redirect('inventory:over_less_list_stock')
+            return JsonResponse({'success':False, 'messsage':'Invalid form'}, status=400)
+            
+        return JsonResponse({'success':False, 'messsage':'Invalid form'}, status=400)
                   
     return render(request, 'inventory/over_less_transfers.html', {'over_less_transfers':transfers, 'form':form})
 
@@ -782,14 +819,9 @@ def create_defective_product(request):
         
 
 @login_required
-def add_inventory_transfer(request, transfer_ref):
-    try:
-        transfer=Transfer.objects.get(transfer_ref=transfer_ref)
-    except Transfer.DoesNotExist:
-        transfer.delete()
-        messages.error(request, f'Transfer Does not Exist')
-        return redirect('inventory:transfers')
-    return render(request, 'inventory/add_transfer.html', {'transfer':transfer})
+def add_inventory_transfer(request):
+    form = addTransferForm()
+    return render(request, 'inventory/add_transfer.html', {'fornm':form})
 
 @login_required
 @admin_required
@@ -985,9 +1017,6 @@ def transfers_report(request):
     transfers = TransferItems.objects.filter().order_by('-date') 
     
     today = datetime.date.today()
-    
-    if choice == 'All':
-        pass
     
     if choice in ['All', '', 'Over/Less']:
         transfers = transfers

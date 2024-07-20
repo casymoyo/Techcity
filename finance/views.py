@@ -738,7 +738,7 @@ def customer_list(request):
     customers = Customer.objects.filter(branch=request.user.branch)
     accounts = CustomerAccountBalances.objects.all()
     
-    total_balances_per_currency = CustomerAccountBalances.objects.values('currency__name').annotate(
+    total_balances_per_currency = CustomerAccountBalances.objects.filter(account__customer__branch=request.user.branch).values('currency__name').annotate(
         total_balance=Sum('balance')
     )
     
@@ -746,7 +746,7 @@ def customer_list(request):
         customers = CustomerAccount.objects.filter(Q(customer__name__icontains=search_query))
         
     if 'receivable' in request.GET:
-        negative_balances_per_currency = CustomerAccountBalances.objects.filter(balance__lt=0) \
+        negative_balances_per_currency = CustomerAccountBalances.objects.filter(account__customer__branch=request.user.branch, balance__lt=0) \
             .values('currency') \
             .annotate(total_balance=Sum('balance'))
 

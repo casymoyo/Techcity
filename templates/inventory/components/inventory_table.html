@@ -71,21 +71,21 @@
                             <td><small>{{ service.price }}</small></td>
                             <td>
                                 <small>
-                                    <span>
+                                    {% comment %} <span>
                                         <a href="{% url 'inventory:inventory_detail' service.id %}" class='text-dark'>
                                             <i class='bx bx-show'></i>
                                         </a>
-                                    </span>
+                                    </span> {% endcomment %}
                                     <span class='px-2'>
-                                        <a href="{% url 'inventory:edit_inventory' service.id %}" class="text-dark">
+                                        <a href="{% url 'inventory:edit_service' service.id %}" class="text-dark">
                                             <i class='bx bx-edit-alt'></i>
                                         </a>
                                     </span>
-                                    <span>
+                                    {% comment %} <span>
                                         <span id='delete' data-id="{{ service.id }}" onclick="productId(this)" class="text-dark">
                                             <i class='bx bx-trash-alt'></i>
                                         </span>
-                                    </span>
+                                    </span> {% endcomment %}
                                 </small>
                                 </td>
                         </tr>

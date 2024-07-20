@@ -5,9 +5,24 @@
 {% block content %}
    <div class="inventory">
         <div class='add-transfer'>
-            <div class='add-transfer-nav shadow p-2 bg-dark text-light rounded'>
+            <div class='add-transfer-nav shadow p-2 bg-dark text-light d-flex justify-content-between align-items-center rounded'>
                 <div>
                     <h5 class='fw-bold px-2 mt-2'>Add Transfer</h5>
+                </div>
+                <div class="d-flex align-items-center">
+                  <div id="div_id_transfer_to" class="d-flex align-items-center"> 
+                      <label for="id_transfer_to" class="form-label requiredField mx-2">
+                          Destination
+                      </label> 
+                      <select name="transfer_to" class="select form-select" required id="id_to"> 
+                          <option value="" selected>---------</option> 
+                          {% for branch in branches %}
+                              {% if branch.name != request.user.branch.name %}
+                                  <option value="{{branch.id}}">{{branch.name}}</option>
+                              {% endif %}
+                          {% endfor %}
+                      </select> 
+                  </div> 
                 </div>
             </div>
             <div class='mt-2  px-2 border'>
@@ -49,37 +64,25 @@
                             class="numberinput form-control" 
                             required id="id_quantity"
                         > 
+                        <div id="div_id_description" class="mb-3"> 
+                            <label for="id_description" class="form-label requiredField">
+                                Description<span class="asteriskField">*</span> 
+                            </label> 
+                            <textarea 
+                                name="description" 
+                                cols="20" 
+                                rows="2" 
+                                class="textarea form-control" 
+                                required id="id_description"
+                            ></textarea> 
+                        </div>
                         <p id="quantity_error" class="fs-6 text-danger"></p>
                     </div> 
-
-                    <div id="div_id_from" class="mb-1">
-                        <label for="id_from" class="form-label requiredField">
-                           Source
-                       </label> 
-                       <select 
-                           type="text" 
-                           name="name" 
-                           maxlength="255" 
-                           class="textinput form-control" 
-                           required 
-                           id="id_from"
-                           disabled
-                       >
-                        <option selected>{{ request.user.branch.name }}</option>
-                       </select>
-                   </div>
-                    <div class="mb-2">
-                        <label for="id_to" class="form-label requiredField">
-                            Destination
-                        </label> 
-                        <select class="select form-select" id='id_to' disabled>
-                            <option value={{ transfer.transfer_to.name  }}>{{ transfer.transfer_to.name }}</option>t
-                        </select>
-                    </div>
+                    <p class='text-dangr' id='error'></p>
                     <div class='d-flex justify-content-end mb-2'>
                         <button type='button' class='btn btn-secondary btn-sm' id="id_submit" onclick="addItem();">
                           <i class='bx bx-save' ></i>
-                          save
+                            save
                         </button>
                     </div>
                 </form>
@@ -114,7 +117,8 @@
             <div class='d-flex justify-content-end'>
                 <button class="btn btn-primary btn-sm flex" id="confirm-button" onclick="processCart()">Confirm</button>
             <div>
-        </div>       
+        </div> 
+              
    </div>  
 
    <script src="{% static 'js/productValidation.js'%}"></script>
@@ -123,13 +127,15 @@
     let prodData = [];
     let searchValue = '';
     let prodQauntity = '';
+   
+
+    const errorEl = document.getElementById('error');
 
     $(document).ready(function() {
       $('#id_product').select2(
           {placeholder: 'Select Product'}
       )
       .on('change', function (e){
-           searchValue = $(this).val()
            const pElement = document.getElementById('id_product')
            const pSelectedOption = pElement.options[pElement.selectedIndex] 
             let product = pSelectedOption.textContent;
@@ -151,7 +157,7 @@
     document.querySelector('#id_quantity').addEventListener(
       'input', ()=>{
         const quantity = $('#id_quantity').val()
-        console.log(prodData[0][0].quantity)
+        {% comment %} console.log(prodData[0][0].quantity) {% endcomment %}
         if (quantity > prodData[0][0].quantity){
           document.querySelector('#quantity_error').innerHTML='*Quantity cant be more than source quantity'
         }else{
@@ -181,13 +187,14 @@
         cartItemsList.innerHTML = ""; 
       
         let total = 0;
+        {% comment %} let branch = {{ request.user.branch.name }} {% endcomment %}
         cart.forEach((item) => {
           const row = document.createElement("tr");
           row.innerHTML = `
             <td>${item.product}</td>
             <td>${item.price}</td>
             <td>${item.quantity}</td>
-            <td>${item.from_branch}</td>
+            <td>{{ request.user.branch.name }}</td>
             <td>${item.to_branch}</td>
             <td>
                 <button class="btn btn-sm btn-danger" data-id=${item.id} onclick="removeItem(this);">
@@ -213,14 +220,15 @@
         const toSelectedOption = toElement.options[toElement.selectedIndex]
         const toBranchId =  toSelectedOption.textContent
         
-
-        const fromElement = document.getElementById('id_from')
-        const fromSelectedOption = fromElement.options[fromElement.selectedIndex]
-        const fromBranchId =  fromSelectedOption.textContent
-      
-
+        const description = document.getElementById('id_description').value
         const existingItem = cart.find((item) => item.product === product)
-        console.log(fromBranchId)
+        
+        console.log(toBranchId)
+       // Validation checks
+        if (!product || !quantity || !price  || toBranchId === '---------') {
+            errorEl.textContent='Please fill in all the fields: Product, Quantity, Destination Branch and Price.';
+            return;
+        }
     
       if (existingItem) {
         existingItem.quantity += quantity;
@@ -228,10 +236,11 @@
         const newTransfer = {
           id:generateUniqueId(),
           product:product, 
-          from_branch: fromBranchId,
+          {% comment %} from_branch: {{ request.user.branch.name }}, {% endcomment %}
           to_branch:toBranchId,
           quantity: quantity,
-          price:price
+          price:price,
+          description:description 
         };
         cart.push(newTransfer);
       }
@@ -246,13 +255,25 @@
     }
     
     function processCart() {
+      const toElement = document.getElementById('id_to');
+      const toSelectedOption = toElement.options[toElement.selectedIndex];
+      const toBranchId =  toSelectedOption.textContent;
+
+      
+      const data = {
+        'cart':cart, 
+        'branch_to': toBranchId
+      }
+
+      console.log(data)
+      
       fetch("/inventory/process-transfer-cart/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-CSRFToken": getCookie("csrftoken"), 
         },
-        body: JSON.stringify({'cart':cart, 'transfer_id':{{ transfer.id }}}),
+        body: JSON.stringify(data),
       })
       .then(response => response.json())
       .then(data=>{

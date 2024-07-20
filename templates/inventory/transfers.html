@@ -11,10 +11,10 @@
                 </div>
                 <div class="search d-flex align-items-center">
                     <div> 
-                        <button type="button" id="addTbtn" class="btn btn-primary">
+                        <a href={% url 'inventory:add_transfer' %} type="button" class="btn btn-primary">
                             <i class='bx bx-plus'></i>
                             Transfer
-                        </button>
+                        </a>
                     </div>
                     <div class='px-2'>
                         <a href='{% url 'inventory:receive_inventory' %}'  class="btn btn-success shadow">
@@ -59,6 +59,9 @@
                     <div class='fw-bold'>Transfer(s) List</div>
                     <div class="px-2"></div>
                     <div class="btn btn-primary btn-sm" type='button' id='id_expand'>Expand</div>
+                </div>
+                <div>
+                    <h5 class='fw-bold text-danger'>Transfers Out</h5>
                 </div>
                 <div>
                     <button type="button" class='pdf-gen btn btn-secondary btn-sm'>
@@ -182,7 +185,21 @@
                         <h5 class="fw-bold">Add Transfer</h5>
                         <form method="post">
                             {% csrf_token %}
-                            {{ form | crispy }}
+                            <div id="div_id_transfer_to" class="mb-3"> 
+                            <label for="id_transfer_to" class="form-label requiredField">Transfer to<span class="asteriskField">*</span> </label> 
+                                <select name="transfer_to" class="select form-select" required id="id_transfer_to"> 
+                                    <option value="" selected>---------</option> 
+                                    {% for branch in branches %}
+                                        {% if branch.name != request.user.branch.name %}
+                                            <option value="{{branch.id}}">{{branch.name}}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select> 
+                            </div> 
+                            <div id="div_id_description" class="mb-3"> 
+                                <label for="id_description" class="form-label requiredField">Description<span class="asteriskField">*</span> </label> 
+                                <input type="text" name="description" maxlength="266" class="textinput form-control" required id="id_description"> 
+                            </div>
                             <div class="d-flex justify-content-end">
                                 <div class="">
                                     <button type="reset" class="btn btn-danger btn-sm w-100">
@@ -209,7 +226,7 @@
             const transferModal = new bootstrap.Modal(document.querySelector('#transferModal'));
             const transferReportModal = new bootstrap.Modal(document.querySelector('#transferReportModal'));
 
-            const addTranferBtn = document.querySelector('#addTbtn');
+            //const addTranferBtn = document.querySelector('#addTbtn');
             const addTransfer = new bootstrap.Modal(document.querySelector('#addTransfer'));
 
             const transfersTable = document.querySelector('#transfersTable');
@@ -279,9 +296,9 @@
                 })
             })
 
-            addTranferBtn.addEventListener('click', ()=>{
+            {% comment %} addTranferBtn.addEventListener('click', ()=>{
                 addTransfer.show()
-            })
+            }) {% endcomment %}
 
 
             document.querySelector('.pdf-gen').addEventListener(

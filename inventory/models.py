@@ -97,6 +97,7 @@ class TransferItems(models.Model):
     description = models.CharField(max_length=255, null=True, blank=True)
     over_less_description = models.CharField(max_length=255, null=True, blank=True)
     received_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True)
+    description = models.TextField()
 
     def __str__(self):
         return f'{self.product.name} to {self.to_branch}'
@@ -171,6 +172,14 @@ class ReorderList(models.Model):
     def __str__(self):
         return f'{self.product.product.name}'
 
+class ServiceCategory(models.Model):
+    """Model for service categories."""
+
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
 class Service(models.Model):
     
     tax_choices = [
@@ -183,6 +192,7 @@ class Service(models.Model):
     cost =  models.DecimalField(max_digits=10, decimal_places=2)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     tax_type = models.CharField(max_length=50, choices=tax_choices)
+    category = models.ForeignKey(ProductCategory, on_delete=models.SET_NULL, null=True)
     description = models.TextField()
     
     def __str__(self):

@@ -33,7 +33,8 @@
            </div>
             <div id="div_id_cost" class="mb-3"> 
                 <label for="id_cost" class="form-label requiredField">
-                    Cost<span class="asteriskField">*</span> 
+                    Cost
+                    <span class="asteriskField">*</span> 
                 </label>
                 <input type="number" name="cost" value={{product.cost}} step="0.01" class="numberinput form-control" required id="id_cost"> 
                 <p id="cost_error" class="fs-6 text-danger"></p>
@@ -51,7 +52,7 @@
                     Quantity
                     <span class="asteriskField">*</span> 
                 </label> 
-                <input type="number" name="quantity" value={{product.quantity}} min="0" class="numberinput form-control" required id="id_quantity"> 
+                <input type="number" name="quantity" value={{product.quantity}} class="numberinput form-control" required id="id_quantit"> 
                 <p id="quantity_error" class="fs-6 text-danger"></p>
             </div>
             <div id="div_id_min_stock_level" class="mb-3"> 

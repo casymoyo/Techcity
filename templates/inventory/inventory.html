@@ -101,7 +101,55 @@
                     <div class="modal-body">
                         <form action="{% url 'inventory:create_service' %}" method="post">
                             {% csrf_token %}
-                            {{ form | crispy }}
+                            <div id="div_id_name" class="mb-3"> 
+                                <label for="id_name" class="form-label requiredField">
+                                    Name
+                                    <span class="asteriskField">*</span> 
+                                </label>
+                                <input type="text" name="name" maxlength="255" class="textinput form-control" required id="id_name"> 
+                            </div>
+                            <div id="div_id_cost" class="mb-3"> 
+                                <label for="id_cost" class="form-label requiredField">
+                                    Cost
+                                    <span class="asteriskField">*</span> 
+                                </label> 
+                                <input type="number" name="cost" step="0.01" class="numberinput form-control" required id="id_cost"> 
+                            </div> 
+                            <div id="div_id_price" class="mb-3"> 
+                                <label for="id_price" class="form-label requiredField">
+                                    Price<span class="asteriskField">*</span>
+                                </label>
+                                <input type="number" name="price" step="0.01" class="numberinput form-control" required id="id_price"> 
+                            </div> 
+                            <div id="div_id_tax_type" class="mb-3"> 
+                                <label for="id_tax_type" class="form-label requiredField">
+                                    Tax type<span class="asteriskField">*</span> 
+                                </label>
+                                <select name="tax_type" class="select form-select" required id="id_tax_type">
+                                    <option value="" selected>---------</option>
+                                    <option value="exempted">Exempted</option> 
+                                    <option value="standard">Standard</option> 
+                                    <option value="zero rated">Zero Rated</option>
+                                </select>
+                            </div>
+                            <div id="div_id_category" class="mb-3"> 
+                                <label for="id_category" class="form-label requiredField">
+                                    Category<span class="asteriskField">*</span> 
+                                </label> 
+                                <div class='d-flex align-items-center'>
+                                    <select name="category" class="select form-select" required id="id_service_category"> 
+                                        <option value="">---------</option> 
+                                    </select> 
+                                    <button class='btn small' type="button" id='id_add_category'>
+                                        <i class='bx bx-plus'></i>
+                                    </button>
+                                </div>
+                            </div> 
+                            <div id="div_id_description" class="mb-3">
+                            <label for="id_description" class="form-label requiredField">
+                                Description<span class="asteriskField">*</span> </label>
+                                <textarea name="description" cols="40" rows="10" class="textarea form-control" required id="id_description"></textarea> 
+                            </div>
                             <div class="d-flex justify-content-end">
                                 <div class="">
                                     <button type="reset" class="btn btn-danger btn-sm w-100">
@@ -122,6 +170,15 @@
                 </div>
             </div>
         </div>
+        <div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        {% include 'inventory/components/category_modal.html'%}
+                    </div>
+                </div>
+            </div>
+        </div>
 
    </div>  
 <script>
@@ -134,5 +191,84 @@
     serviceFormButton.addEventListener('click', ()=>{
         serviceFormModal.show();
     })
-</script>
+
+    const categoryModal = new bootstrap.Modal(document.querySelector('#categoryModal'))
+
+    document.querySelector('#id_add_category').addEventListener(
+        'click', ()=>{
+            categoryModal.show()
+            serviceFormModal.hide();
+        }
+    )
+    
+    function categorySubmit(){
+        
+        const data = {name:$('#id_category_name').val()}
+
+        category.focus()
+
+        fetch("{% url 'inventory:add_product_category' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"), 
+            },
+            body: JSON.stringify(data),
+            })
+            .then((response) => {
+                if (response.error) {
+                document.querySelector('#id_error').textContent=response.error
+                } else {
+                fetchCategories()
+                categoryModal.hide()
+                serviceFormModal.show();
+                }
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
+    }
+
+    async function fetchCategories(){
+        try {
+            const response = await fetch('{% url "inventory:add_product_category" %}');
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok.');
+            }
+            const data = await response.json();
+            updateCategory(data);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        } finally {
+
+            //loader.style.display = 'none';
+        }
+    }
+
+    fetchCategories()
+
+    function updateCategory(data){
+        const catElement = document.querySelector('#id_service_category')
+        catElement.textContent = ''
+        data.forEach((category)=>{
+            catElement.innerHTML += `<option value=${category.id}>${category.name}</option>`
+        })
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            const cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + "=") {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+            }
+        }
+        return cookieValue;
+    }  
+   </script>
 {% endblock content %}

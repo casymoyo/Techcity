@@ -12,6 +12,19 @@
   font-family: graphik;
   font-size: 0.9rem;
 }
+.techcity .text-defective {
+  color: #000 !important;
+}
+.techcity .text-received {
+  color: #8BC34A !important;
+}
+.techcity .btn-primary {
+  background: #00c0ef !important;
+}
+.techcity .receive_inv td {
+  background-color: #198754 !important;
+  color: white;
+}
 .techcity .account-statement {
   font-family: lato-Regular;
 }
@@ -38,7 +51,7 @@
   font-family: lato-Regular;
 }
 .techcity .transfer-btn {
-  background-color: #0d6efd !important;
+  background-color: #00c0ef !important;
   color: white;
 }
 .techcity .hover-dark {

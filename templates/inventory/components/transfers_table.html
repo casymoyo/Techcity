@@ -23,12 +23,12 @@
                         <small>
                             {% if transfer.defective_status %}
                                 <span class='hint--bottom' aria-label='Defective'>
-                                    <i class='bx bxs-circle fs-3' style='color:#6610f2;' ></i>
+                                    <i class='bx bxs-circle fs-3 text-defective' ></i>
                                 </span>
                             {% else %}
                                 {% if transfer.quantity == 0 %}
                                     <span class='hint--bottom' aria-label='All received'>
-                                        <i class='bx bxs-circle text-success fs-3' ></i>
+                                        <i class='bx bxs-circle text-received fs-3'></i>
                                     </span>
                                 {% elif transfer.total_quantity_track < transfer.quantity   and transfer.quantity > 0 %}
                                     <span class='hint--bottom' aria-label='Partial'>
@@ -70,7 +70,7 @@
                                                     {% else %}
                                                         <small>Not yet received</small>
                                                     {% endif %}
-                                                    )
+                                                )
                                             </span>
                                         </small>
                                     </td>

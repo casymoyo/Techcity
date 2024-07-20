@@ -54,7 +54,7 @@
                                 {% else %}
                                     <td>
                                         <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="accept" class='btn btn-success btn-sm btn-primary'>return</button></small>
-                                        <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="write_off" class='btn btn-success btn-sm btn-danger'>write off</button></small>
+                                        <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="write_off" data-quantity={{ transfer.over_less_quantity }} class='btn btn-success btn-sm btn-danger'>write off</button></small>
                                         <small><button type="button" id='formBtn' data-id={{ transfer.id }} data-action="back" class='btn btn-success btn-sm btn-dark'>resend</button></small>
                                     </td>
                                 {% endif %}
@@ -68,9 +68,11 @@
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-body">
+                        <h5 class='fw-bold'>Add Defective Product</h5>
                         <form method="post">
                             {% csrf_token %}
                             {{ form|crispy }}
+                            <p id='error' class='text-danger'></p>
                             <div class="d-flex justify-content-end">
                                 <div class="">
                                     <button type="reset" class="btn btn-danger btn-sm w-100">
@@ -80,7 +82,7 @@
                                 </div>
                                 <span class="px-1"></span>
                                 <div class="">
-                                    <button type="button" onclick="sendDefectiveData();" class="btn btn-secondary btn-sm w-100">
+                                    <button type="button" id='id_submit' onclick="sendDefectiveData();" class="btn btn-secondary btn-sm w-100">
                                         <i class='bx bx-save'></i>
                                         save
                                     </button>
@@ -105,6 +107,7 @@
 <script>
     let action = '';
     let transfer_id = '';
+    let o_l_quantity = ''
     let data = [];
 
     new DataTable('#over_less_transfers')
@@ -115,6 +118,8 @@
 
     const loader = document.querySelector('#loader');
     const tableEl = document.querySelector('#over_less_transfers');
+    const errorEl = document.getElementById('error')
+    const submitButton = document.getElementById('id_submit')
 
     setTimeout(()=>{
         loader.classList.add('hidden');
@@ -126,6 +131,7 @@
         btn.addEventListener('click', ()=>{
             action = btn.dataset.action;
             transfer_id = btn.dataset.id; 
+            o_l_quantity = parseInt(btn.dataset.quantity);
 
             if (action === 'write_off'){
                 defectiveFormModal.show({});
@@ -133,10 +139,35 @@
         })
     })
 
-    // validate description length
-    document.querySelector('#id_reason').addEventListener('input', ()=>{
+    document.querySelector('#id_quantity').addEventListener(
+        'input', ()=>{
+            const quantity = parseInt(document.querySelector('#id_quantity')?.value);
 
-    })
+            if (quantity<=0){
+                errorEl.innerHTML='Quantity cant be zero';
+                submitButton.disabled = true;
+            }else if(quantity > o_l_quantity){
+                errorEl.innerHTML='Quantity cannot be more than over/less quanity';
+                submitButton.disabled = true;
+            }else{
+                errorEl.innerHTML='';
+                submitButton.disabled = false;
+            }
+        }
+    )
+
+    // validated description length
+    document.querySelector('#id_reason').addEventListener('input', () => {
+        const reason = document.querySelector('#id_reason').value;
+        if (reason.length < 30) {
+            errorEl.textContent="Reason must be at least 30 characters long.";
+            submitButton.disabled = true;
+        } else {
+            errorEl.textContent='';
+            submitButton.disabled = false;
+        }
+    });
+
 
     function sendDefectiveData(){
         const data = {
@@ -145,13 +176,14 @@
             'status': document.querySelector('#id_status').value,
             'reason': document.querySelector('#id_reason').value,
             'branch_loss': document.querySelector('#id_branch_loss').value,
+            'quantity': parseInt(document.querySelector('#id_quantity')?.value)
         };
-        console.log(data)
+        
         fetch(`{% url 'inventory:over_less_list_stock' %}`, {
             method: "POST",
             headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken"), 
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"), 
             },
             body: JSON.stringify(data),
         })
@@ -159,18 +191,18 @@
         .then(data => {
             if (data.success) {
                 defectiveFormModal.hide()
-                loaderModal.show()
+                loaderModal.show();
                 setTimeout(() => {
                     window.location.href='{% url "inventory:over_less_list_stock" %}';
                 }, 2000);
             } else {
-                loaderModal.hide()
-                alert(error)
+                loaderModal.hide();
+                errorEl.textContent=data.message;
             }
         })
         .catch((error) => {
             console.error("Error:", error);
-            alert(error)
+            errorEl.textContent=data.message;
         });
     }
 

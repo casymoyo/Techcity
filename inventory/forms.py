@@ -31,7 +31,7 @@ class addTransferForm(forms.ModelForm):
 class DefectiveForm(forms.ModelForm):
     class Meta:
         model = DefectiveProduct
-        fields = ['id','reason', 'status', 'branch_loss']
+        fields = ['id', 'quantity', 'reason', 'status', 'branch_loss']
 
 class AddDefectiveForm(forms.ModelForm):
     class Meta:
