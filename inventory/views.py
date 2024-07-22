@@ -617,7 +617,7 @@ def over_less_list_stock(request):
     form = DefectiveForm()
     search_query = request.GET.get('search_query', '')
     
-    transfers =  TransferItems.objects.filter(from_branch=request.user.branch)
+    transfers =  TransferItems.objects.filter(to_branch=request.user.branch)
 
     if search_query:
         transfers = transfers.filter(
@@ -1094,4 +1094,43 @@ def transfers_report(request):
             'transfers':transfers
         },
     )
+
+
+@login_required
+def reorder_from_notifications(request):
+    if request.method == 'GET':
+        notifications = StockNotifications.objects.filter(inventory__branch=request.user.branch, inventory__reorder=False).values(
+            'quantity',
+            'inventory__product__name', 
+            'inventory__id', 
+            'inventory__quantity' 
+        )
+        return JsonResponse(list(notifications), safe=False)
     
+    if request.method == 'POST':
+        # payload
+        """
+            inventory_id
+        """
+        
+        data = json.loads(request.body)
+        
+        inventory_id = data['inventory_id']
+        action_type = data['action_type']
+        
+        try:
+            inventory = Inventory.objects.get(id=inventory_id)
+        except Exception as e:
+            return JsonResponse({'success':False, 'message':f'{e}'}, status=400)
+        
+        if action_type == 'add':
+            inventory.reorder=True
+            inventory.save()
+            ReorderList.objects.create(product=inventory, branch=request.user.branch)
+            
+        elif action_type == 'remove':
+            pass
+    
+        return JsonResponse({'success':True}, status=200)
+    
+    return JsonResponse({'success':False, 'message': 'Invalid request'}, status=400)

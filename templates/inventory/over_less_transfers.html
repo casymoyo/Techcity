@@ -24,6 +24,7 @@
                 <thead class='bg-primary'>
                     <tr>
                         <th>Date</th>
+                        <th>Reference</th>
                         <th>Name</th>
                         <th>Quantity</th>
                         <th>Source</th>
@@ -38,6 +39,7 @@
                         {% if transfer.over_less_quantity != 0 %}
                             <tr>
                                 <td><small>{{ transfer.date }}</small></td>
+                                <td><small>{{ transfer.transfer.transfer_ref }}</td>
                                 <td><small>{{ transfer.product.name }}</small></td>
                                 <td><small>{{ transfer.over_less_quantity }}</small></td>
                                 <td><small>{{ transfer.from_branch }}</small></td>
@@ -98,7 +100,7 @@
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-body text-center">
-                        <<h5>Success</h5>
+                        <h5 class='fw-bold'>Success</h5>
                     </div>
                 </div>
             </div>

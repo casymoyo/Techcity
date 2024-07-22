@@ -98,6 +98,7 @@ TEMPLATES = [
                 "inventory.context_processors.product_category_list",     
                 "inventory.context_processors.stock_notification_count",
                 "inventory.context_processors.transfers",
+                "inventory.context_processors.stock_notifications",
                 
                 #finance
                 "finance.context_processors.client_list",
@@ -115,16 +116,6 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 WSGI_APPLICATION = "techcity.wsgi.application"
 ASGI_APPLICATION = 'techcity.wsgi.application'
 AUTH_USER_MODEL = 'users.User'
-
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_rabbitmq.core.RabbitmqChannelLayer',
-#         'CONFIG': {
-#             'host': 'amqp://guest:guest/127.0.0.1:5672/',  
-#         },
-#     },
-# }
-
 
 SESSION_AUTH = True
 # Database
@@ -253,14 +244,7 @@ LOGGING = {
     "root": {"level": "INFO", "handlers": ["console"]},
 }
 
-CRONJOBS = [
-    ('* * * * *', 'finance.tasks.all_invoices'), 
-    ('0 12 * * *', 'myapp.tasks.record_recurring_expense'),   
-]
-
 # celery
-# your_project/settings.py
-
 CELERY_BROKER_URL = 'redis://localhost:6379'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379'
 CELERY_ACCEPT_CONTENT = ['json']
@@ -269,18 +253,10 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
 CELERY_BEAT_SCHEDULE = {
-    # 'run-all-invoices-every-minute': {
-    #     'task': 'finance.tasks.all_invoices',
-    #     'schedule': 60.0, 
-    # },
     'run-all-invoices-recurring': {
         'task': 'finance.tasks.generate_recurring_invoices',
         'schedule': 60.0, 
     },
-    # 'record-recurring-expense-every-minute': {
-    #     'task': 'myapp.tasks.record_recurring_expense',
-    #     'schedule': 60.0,  
-    # },
 }
 
 
@@ -308,3 +284,14 @@ AWS_S3_OBJECT_PARAMETERS = {
 
 AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+"""System APPs Settings"""
+
+# Inventory
+LOW_STOCK_THRESHHOLD =  6
+INVENTORY_EMAIL_NOTIFICATIONS_STATUS = True
+
+# system email 
+SYSTEM_EMAIL = 'system@techcity.co.zw'
+
+

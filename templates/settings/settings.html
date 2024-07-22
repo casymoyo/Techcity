@@ -16,14 +16,14 @@
             <div class="mt-3 border rounded p-2">
                 <nav class='recent-nav navbar navbar-expand-lg navbar-light bg-dark text-light px-2'>
                     <ul class='navbar-nav items  mr-auto'>
+                        <li class='nav-item px-2' data-name="notifications">Email Notifications</li>
                         <li class='nav-item active' data-name="company">Company</li>
                         <li class='nav-item px-2' data-name="printer">Printer</li>
                         <li class='nav-item' data-name="cron">Cron Jobs</li>
-                        <li class='nav-item px-2' data-name="email">Email Server</li>
                     </ul>
                 </nav>
                 <div class='content'>
-                    <div class='company border p-2'>
+                    <div class='company hidden border p-2'>
                         <h6 class='fw-bold'>Company settings</h6>
                     </div>
                     <div class='cron hidden border p-2'>
@@ -96,6 +96,19 @@
                             </div>
                         </div>
                     </div>
+                    <div class='notifications border p-2'>
+                        <h6 class='fw-bold'>Notifications settings</h6>
+                        <table>
+                            <tbody>
+                                <td>Invenoty Email Notification</td>
+                                <td>
+                                    <i id="toggle-icon" class='bx bxs-toggle-left fs-1' data-status="{{ email_status|yesno:'true,false' }}" onclick="toggleEmailStatus()">
+                                        <i class='bx bxs-toggle-left fs-1'></i>    
+                                    </i>
+                                </td>                                
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         {% endblock nav %}
@@ -158,35 +171,60 @@
     const printer = $('.printer')
     const email = $('.email')
     const cron = $('.cron')
+    const notifications = $('.notifications')
 
     const loaderModal = new bootstrap.Modal(document.getElementById('loaderModal'))
     const errorModal = new bootstrap.Modal(document.getElementById('errorModal'))
     const successModal = new bootstrap.Modal(document.getElementById('successModal'))
 
-const printerDropdown = document.getElementById('printerSelect');
+    const printerDropdown = document.getElementById('printerSelect');
     const scanButton = document.getElementById('scanButton');
     const selectPrinterBtn = document.getElementById('selectPrinterBtn');
 
 
+    function toggleEmailStatus() {
+        const icon = document.getElementById('toggle-icon');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+
+        fetch("{% url 'settings:email_notification_status' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                icon.setAttribute('data-status', newStatus);
+                icon.className = newStatus ? 'bx bxs-toggle-right fs-1' : 'bx bxs-toggle-left fs-1';
+            } else {
+                alert('Failed to update status');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
     scanButton.addEventListener('click', fetchPrinters);
-    // Function to fetch printer data from Django backend
     async function fetchPrinters() {
         loaderModal.show()
-    try {
-        const response = await fetch('{% url "settings:scan_for_printers" %}');
-        const data = await response.json();
+        try {
+            const response = await fetch('{% url "settings:scan_for_printers" %}');
+            const data = await response.json();
 
-        if (data.printers) {
-            loaderModal.hide()
-            
-            populateDropdown(data.printers);
-            console.log(data)
-        } else {
-        handleError(data.error);
+            if (data.printers) {
+                loaderModal.hide()
+                
+                populateDropdown(data.printers);
+                console.log(data)
+            } else {
+            handleError(data.error);
+            }
+        } catch (error) {
+            handleError("Error fetching printer data");
         }
-    } catch (error) {
-        handleError("Error fetching printer data");
-    }
     }
 
     // Function to populate the dropdown menu
@@ -247,6 +285,7 @@ const printerDropdown = document.getElementById('printerSelect');
         printer.addClass('hidden'); 
         email.addClass('hidden');
         cron.addClass('hidden');
+        notifications.addClass('hidden');
 
         $(`.${name}`).removeClass('hidden'); 
     }

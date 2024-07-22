@@ -2,7 +2,7 @@
 const submitButton = document.querySelector('#id_submit')
 //price validation
 document.querySelector('#id_price').addEventListener(
-    'change', ()=>{
+    'input', ()=>{
         const cost = Number(document.querySelector('#id_cost')?.value)
         const price = Number(document.querySelector('#id_price')?.value)
         const errorElement = document.querySelector('#price_error')
@@ -21,7 +21,7 @@ document.querySelector('#id_price').addEventListener(
 )
 // cost validation
 document.querySelector('#id_cost')?.addEventListener(
-    'change', ()=>{
+    'input', ()=>{
         const cost = Number(document.querySelector('#id_cost')?.value)
         const errorElement = document.querySelector('#cost_error')
         
@@ -36,7 +36,7 @@ document.querySelector('#id_cost')?.addEventListener(
 )
 // quantity validation
 document.querySelector('#id_quantity').addEventListener(
-    'change', ()=>{
+    'input', ()=>{
         const quantity = Number(document.querySelector('#id_quantity')?.value)
         const errorElement = document.querySelector('#quantity_error')
 

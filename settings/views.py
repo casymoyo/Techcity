@@ -1,13 +1,17 @@
 import json
 import environ
-import asyncio
+import asyncio, settings
 from pathlib import Path
 from bleak import BleakScanner
 from django.shortcuts import render
 from django.http import JsonResponse
 from .forms import EmailSettingsForm
+from techcity.settings import INVENTORY_EMAIL_NOTIFICATIONS_STATUS
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+
+import logging
+logger = logging.getLogger(__name__)
 
 @login_required
 def settings(request):
@@ -25,10 +29,38 @@ def settings(request):
         key, *value = line.strip().split('=')
         if key == 'PRINTER_ADDRESS':
             printer_data = value[0]  
-    
-    print(printer_data)
 
-    return render(request, 'settings/settings.html', {'printer':printer_data, 'email_form':email_form})
+    return render(request, 'settings/settings.html', {
+        'printer':printer_data, 
+        'email_form':email_form,
+        'email_status':INVENTORY_EMAIL_NOTIFICATIONS_STATUS
+    })
+    
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+
+
+@require_http_methods(["GET", "POST"])
+@login_required
+def email_notification_status(request):
+    if request.method == 'GET':
+        return JsonResponse({'status': settings.INVENTORY_EMAIL_NOTIFICATIONS_STATUS})
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            status = data.get('status')
+            if status is None:
+                return JsonResponse({'success': False, 'error': 'Status not provided'}, status=400)
+            settings.INVENTORY_EMAIL_NOTIFICATIONS_STATUS = status
+            logger.info(f'{settings.INVENTORY_EMAIL_NOTIFICATIONS_STATUS}')
+            return JsonResponse({'success': True}, status=200)
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+
+    return JsonResponse({'success': False}, status=400)
+
+    
 
 
 @csrf_exempt

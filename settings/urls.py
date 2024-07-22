@@ -12,5 +12,6 @@ urlpatterns = [
     
     # email
     path('email/config/save/',  save_email_config, name='save_email_config'),
+    path('email/notification/status/', email_notification_status, name='email_notification_status'),
     
 ]

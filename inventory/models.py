@@ -147,6 +147,9 @@ class ActivityLog(models.Model):
     description = models.CharField(max_length=255, null=True)
     invoice = models.ForeignKey('finance.invoice', null=True, blank=True, on_delete=models.SET_NULL)
     product_transfer = models.ForeignKey(TransferItems, null=True, blank=True, on_delete=models.SET_NULL)
+    
+    class Meta:
+        get_latest_by = 'timestamp'
 
     def __str__(self):
         return f"{self.user} ({self.timestamp})"
@@ -161,9 +164,10 @@ class StockNotifications(models.Model):
         ('stock take', 'stock take'),
         ('stock transfer', 'stock transfer')
     ])
+    quantity = models.IntegerField(blank=True, null=True, default=0)
     
     def __str__(self):
-        return f'{self.inventory.product.name}: {self.notification}'
+        return f'{self.inventory}: {self.notification}'
     
 class ReorderList(models.Model):
     product = models.ForeignKey(Inventory, on_delete=models.CASCADE)

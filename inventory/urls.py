@@ -31,6 +31,7 @@ urlpatterns = [
     path('create/order/list/', create_order_list, name='create_order_list'),
     path('reorder/list/json', reorder_list_json, name='reorder_list_json'),
     path('clear/reorder/list/', clear_reorder_list, name='clear_reorder_list'),
+    path('reorder/from/notifications/', reorder_from_notifications, name='reorder_from_notifications'),
     
     # transfers
     path('transfers', inventory_transfers, name='transfers'),

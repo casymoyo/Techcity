@@ -64,10 +64,17 @@
                             <div class="">
                                 <p class='fw-bold'>Notifications</p>
                             </div>
-                            <div class="mt-4">
-                                <ul class='list-unstyled' id="notis"></ul>
-                                <ul class='list-unstyled' id="finance_notifications"></ul>
-                            </div>
+                            <table class="table" id="notificationTable">
+                                <thead>
+                                    <tr>
+                                        <th>Product name</th>
+                                        <th>Current Stock</th>
+                                        <th>Most Recent Stock</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -103,7 +110,81 @@
         const branchButton = document.querySelector('#branchButton')
 
         const tableWrapper = document.querySelector('#detailTable_wrapper')
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchNotifications();
+        });
+        
         document.querySelector('.col-12')?.classList.add('w-100') 
+
+        function fetchNotifications() {
+            fetch('{% url "inventory:reorder_from_notifications" %}')
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data)
+                    const tableBody = document.querySelector('#notificationTable tbody');
+                    tableBody.innerHTML = ''; 
+                    data.forEach(notification => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${notification.inventory__product__name}</td>
+                            <td>${notification.inventory__quantity}</td>
+                            <td>${notification.quantity}</td>
+                            <td>
+                                <button class="btn bx bx-list-plus" data-id="${notification.inventory__id}" onclick="addToOrderList(this);"></button>
+                                <button class="btn bx bx-x text-danger" data-id="${notification.inventory__id}" onclick="dontAddToOrderList(this);"></button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error fetching notifications:', error));
+        }
+
+        function addToOrderList(button) {
+            const inventoryId = button.getAttribute('data-id');
+            fetch('{% url "inventory:reorder_from_notifications" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ inventory_id: inventoryId, action_type:'add' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Added to order list successfully!');
+                    fetchNotifications(); 
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Error adding to order list:', error));
+        }
+
+        function dontAddToOrderList(button) {
+            const inventoryId = button.getAttribute('data-id');
+            fetch('{% url "inventory:reorder_from_notifications" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ inventory_id: inventoryId, action_type:'remove' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Added to order list successfully!');
+                    fetchNotifications(); 
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Error adding to order list:', error));
+            
+        }
 
         branchButton.addEventListener('click', ()=>{
             branchModal.show()
@@ -114,19 +195,10 @@
         })
 
         $.ajax({
-            url: '{% url "inventory:notifications_json" %}',
-            type: 'GET',
-            }).done(function(response) {
-                const data = response;
-                displayInventoryNotifications(data)
-            })
-
-        $.ajax({
             url: '{% url "finance:finance_notifications_json" %}',
             type: 'GET',
             }).done(function(response) {
                 const data = response;
-                console.log(data)
                 displayFinanceNotifications(data)
             })
         
@@ -157,23 +229,22 @@
                 ul.appendChild(li);
                 });
             });
-            }
-              
-        function displayInventoryNotifications(data){
-            const ul = document.querySelector('#notis');
-
-            data.forEach((data)=>{
-                const li = document.createElement('li');
-
-                if (data.notification_type === 'stock transfer'){
-                    li.innerHTML = `<small><a href='/inventory/inventory-detail/${ data.notification }</a></small>`
-                }else{
-                    li.innerHTML = `<small><a href='/inventory/inventory-detail/${data.inventory__id}/'>` + data.notification + `</a></small>`
-                }
-                
-                ul.appendChild(li);
-            })
         }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+              const cookies = document.cookie.split(";");
+              for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === name + "=") {
+                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                  break;
+                }
+              }
+            }
+            return cookieValue;
+          }  
     </script>
 </body>
 </html>

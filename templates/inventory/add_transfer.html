@@ -120,16 +120,18 @@
         </div> 
               
    </div>  
-
-   <script src="{% static 'js/productValidation.js'%}"></script>
+<script src="{% static 'js/productValidation.js'%}"></script>
 <script>
     let cart = [];
     let prodData = [];
     let searchValue = '';
-    let prodQauntity = '';
+    let prodQauntity = 0;
+    let prodPrice = 0;
+    let prodCost  = 0;
    
 
     const errorEl = document.getElementById('error');
+    const prodEl = document.querySelector('#id_price')
 
     $(document).ready(function() {
       $('#id_product').select2(
@@ -144,8 +146,13 @@
            fetch(`/inventory/inventory/?name=${product}`)
           .then(response => response.json())
           .then(data=>{
-            document.querySelector('#id_price').value=Number(data[0]?.price)
+            prodEl.value=Number(data[0]?.price)
+            prodPrice=Number(data[0]?.price)
+            prodCost=Number(data[0]?.cost)  
+            prodData = []
+            console.log(prodData)
             prodData.push(data)
+            console.log(prodData)
           })
           .catch(error => console.error('Error:', error))
       })
@@ -157,9 +164,21 @@
     document.querySelector('#id_quantity').addEventListener(
       'input', ()=>{
         const quantity = $('#id_quantity').val()
-        {% comment %} console.log(prodData[0][0].quantity) {% endcomment %}
+        console.log(prodData[0][0].quantity)
         if (quantity > prodData[0][0].quantity){
           document.querySelector('#quantity_error').innerHTML='*Quantity cant be more than source quantity'
+        }else{
+          document.querySelector('#quantity_error').innerHTML=''
+        }
+      }
+    )
+
+    document.querySelector('#id_price').addEventListener(
+      'input', ()=>{
+        const price = $('#id_price').val()
+        console.log(price, prodCost, prodData)
+        if (price < prodCost){
+          document.querySelector('#quantity_error').innerHTML=`Selling price cannot be less than cost price ${prodCost}`
         }else{
           document.querySelector('#quantity_error').innerHTML=''
         }
@@ -282,14 +301,15 @@
             cart = []; 
             updateCartDisplay();
             setTimeout(()=>{
-              window.location.reload()
+              window.location.href='{% url "inventory:transfers" %}'
             }, 1000)
           } else {
-            alert(data.error)
+            errorEl.textContent=data.error;
           } 
         })
         .catch((error) => {
           console.error("Error:", error);
+          errorEl.textContent=data.error;
         });
     }
     
