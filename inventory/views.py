@@ -168,9 +168,7 @@ class ProcessTransferCartView(LoginRequiredMixin, View):
             with transaction.atomic():
                 logger.info('processing')
                 data = json.loads(request.body)
-                cart_data = data['cart']
                 branch_name = data['branch_to']
-                logger.info(f'branch name: {branch_name}')
                 
                 try:
                     branch_to =  Branch.objects.get(name=branch_name)
@@ -184,41 +182,46 @@ class ProcessTransferCartView(LoginRequiredMixin, View):
                     transfer_ref = Transfer.generate_transfer_ref(request.user.branch.name, branch_to.name)
                 )
                 
-                logger.info(f'transfer: {transfer}')
-                for item in cart_data:
-                    logger.info(item.price)
+                logger.info(f'transfer: {data['cart']}')
+                for item in data['cart']:
+                    logger.info(type(item))
                     transfer_item = TransferItems(
                         transfer=transfer,
                         product= Product.objects.get(name=item['product']),
-                        price=item.price,
+                        price=item['price'],
                         quantity=item['quantity'],
-                        from_branch= Branch.objects.get(name=item['from_branch']),
+                        from_branch= request.user.branch,
                         to_branch= transfer.transfer_to,
-                    )            
+                    )   
+                    transfer.save()         
                     transfer_item.save()
-                    self.deduct_inventory(item, transfer_item)
+                    logger.info(f'transfer {transfer}')
+                    logger.info(f'transfer item: {transfer_item}')
+                    
+                    self.deduct_inventory(transfer_item)
                     self.transfer_update_quantity(transfer_item, transfer)  
                     
                 # send email for transfer alert
-                transaction.on_commit(lambda: send_transfer_email(request.user.email, transfer.id, transfer.transfer_to.id))
+                # transaction.on_commit(lambda: send_transfer_email(request.user.email, transfer.id, transfer.transfer_to.id))
                 
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
 
-    def deduct_inventory(self, item, transfer_item):
-        branch_inventory = Inventory.objects.get(product__name=item['product'], branch__name=item['from_branch'])
+    def deduct_inventory(self, transfer_item):
+        logger.info(f'from branch -> {transfer_item.from_branch}')
+        branch_inventory = Inventory.objects.get(product__name=transfer_item.product, branch__name=transfer_item.from_branch)
         
-        branch_inventory.quantity -= int(item['quantity'])
+        branch_inventory.quantity -= int(transfer_item.quantity)
         branch_inventory.save()
-        self.activity_log('Transfer', branch_inventory,  item, transfer_item)
+        self.activity_log('Transfer', branch_inventory, transfer_item)
         
     def transfer_update_quantity(self, transfer_item, transfer):
         transfer = Transfer.objects.get(id=transfer.id)
         transfer.quantity += transfer_item.quantity
         transfer.save()
        
-    def activity_log(self,  action, inventory, item, transfer_item,):
+    def activity_log(self,  action, inventory, transfer_item,):
         ActivityLog.objects.create(
             invoice = None,
             product_transfer = transfer_item,
@@ -226,7 +229,7 @@ class ProcessTransferCartView(LoginRequiredMixin, View):
             user=self.request.user,
             action= action,
             inventory=inventory,
-            quantity=item['quantity'],
+            quantity=transfer_item.quantity,
             total_quantity=inventory.quantity
         )
 

@@ -20,8 +20,9 @@
 }
 .techcity .btn-primary {
   background: #00c0ef !important;
+  border-color: #00c0ef !important;
 }
-.techcity .receive_inv td {
+.techcity .r eceive_inv td {
   background-color: #198754 !important;
   color: white;
 }
