@@ -7,6 +7,7 @@ env/
 *.swp
 application.log
 .idea/
+.vscode/
 test.png
 *.lock
 *.log

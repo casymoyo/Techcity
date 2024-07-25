@@ -4,6 +4,8 @@ Django settings for techcity project.
 import environ, os
 from pathlib import Path
 from dotenv import load_dotenv
+from decouple import config
+
 env = environ.Env()   
 load_dotenv()
 import sys
@@ -17,7 +19,7 @@ env = environ.Env(
 
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-SECRET_KEY = "django-insecure-rb&d1ur&gv!uedx9&nym9zthkk(32-kdvh1x_b0+c+&^hny!o9"
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DJANGO_DEBUG", True)
@@ -122,22 +124,22 @@ SESSION_AUTH = True
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME':  'techcity',
-    #     'USER': 'casy',
-    #     'PASSWORD': 'neverfail',
-    #     'HOST': 'localhost',
-    #     'PORT': '5432'
-    # }
     'default': {
-        'ENGINE':'django.db.backends.postgresql',
-        'NAME':'railway',
-        'USER':'postgres',
-        'PASSWORD':'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
-        'HOST':'monorail.proxy.rlwy.net',
-        'PORT':'39004'
+        'ENGINE': config('DB_ENGINE'),
+        'NAME':  config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT')
     }
+    # 'default': {
+    #     'ENGINE':'django.db.backends.postgresql',
+    #     'NAME':'railway',
+    #     'USER':'postgres',
+    #     'PASSWORD':'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
+    #     'HOST':'monorail.proxy.rlwy.net',
+    #     'PORT':'39004'
+    # }
 }
 
 if 'test' in sys.argv:
