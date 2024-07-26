@@ -2,6 +2,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.views import View
 from django.shortcuts import render, redirect
+from loguru import logger
 
 from company.models import Branch
 from .models import User
@@ -49,11 +50,19 @@ def login_view(request):
 
 def user_edit(request, user_id):
     user = User.objects.get(id=user_id)
+
+    # render form with user data
+    if request.method == 'GET':
+        return render(request, 'users/user_edit.html', {'user': user})
     pass
 
 
 def user_detail(request, user_id):
     user = User.objects.get(id=user_id)
+    logger.info(f'User details: {user.first_name + " " + user.email}')
+    # render user details
+    if request.method == 'GET':
+        return render(request, 'users/user_detail.html', {'user': user})
     pass
 
 

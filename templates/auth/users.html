@@ -49,11 +49,11 @@
                 <td><small>{{ user.email }}</small></td>
                 <td>{{ user.role }}</td>  
                 <td>
-                    <a href="{% url 'users:user_detail' user.id %}" class="btn btn-light btn-sm">
+                    <a data-toggle="tooltip" data-placement="top" title="view user profile" href="{% url 'users:user_detail' user.id %}" class="btn btn-light btn-sm ">
                         <i class="bx bx-show"></i>
                     </a>
                     {% if user != request.user %}
-                    <a href="{% url 'users:user_edit' user.id %}" class="btn btn-light btn-sm">
+                    <a data-toggle="tooltip" data-placement="top" title="edit user profile"  href="{% url 'users:user_edit' user.id %}" class="btn btn-light btn-sm">
                         <i class="bx bx-edit"></i>
                     </a>
                     {% endif %}
@@ -113,7 +113,7 @@
     addBtn.addEventListener('click', ()=>{
         addModal.show()
     })
-    
+
     // load branch based on selected company
      $('#id_company').change(function() {
         var url = "{% url 'users:ajax_load_branches' %}";
@@ -132,6 +132,6 @@
             }
         });
     });
-       
+
 </script>
 {% endblock content %}
