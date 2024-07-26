@@ -31,9 +31,9 @@
                     <p class="fw-normal">User Code: {{user.code}}</p>
                 </div>
                 <div>
-                    <a href="{% url 'users:user_edit' user.id %}" class="btn btn-light btn-sm">
+                    <a id="editUser" class="btn btn-light btn-sm" data-user-id="{{ user.id }}">
                         <i class="bx bx-edit"></i>
-                        Edit
+                        Edit Details
                     </a>
                 </div>
             </div>
@@ -42,7 +42,7 @@
     </div>
     {# ********************************* modal ********************************* #}
     
-    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content w-100 p-4">
             <h6 class="fw-bold">Add User</h6>
@@ -68,30 +68,33 @@
             </div>
         </div>
       </div>
-    
-      <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            </div>
-        </div>
-      </div>
-    
-      <div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            </div>
-        </div>
-      </div>
 </div>
 
 <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>  
-<script>
-    const addBtn = document.getElementById('addUser')
-    const addModal = new bootstrap.Modal(document.getElementById('addUserModal'));
+<script> 
+    // load user data
+    const editUserBtn = document.getElementById('editUser');
+    const editUserBtns = document.querySelectorAll('.editUserBtn');
+    const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    
+    editUserBtn.addEventListener('click', function() {
+        const userId = this.getAttribute('data-user-id');
+        const url = "{% url 'users:ajax_get_user_data' 0 %}".replace('0', userId);
 
-    addBtn.addEventListener('click', ()=>{
-        addModal.show()
-    })
+        $.ajax({
+            url: url,
+            success: function(data) {
+                $('#editUserModal input[name="first_name"]').val(data.first_name);
+                $('#editUserModal input[name="last_name"]').val(data.last_name);
+                $('#editUserModal input[name="email"]').val(data.email);
+                $('#editUserModal input[name="phonenumber"]').val(data.phonenumber);
+                $('#editUserModal select[name="company"]').val(data.company);
+                $('#editUserModal select[name="branch"]').val(data.branch);
+                $('#editUserModal select[name="role"]').val(data.role);
+                editModal.show();
+            }
+        });
+    });
 
     // load branch based on selected company
      $('#id_company').change(function() {

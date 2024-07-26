@@ -86,6 +86,7 @@
 
 <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>  
 <script>
+        
     // load branch based on selected company
      $('#id_company').change(function() {
         var url = "{% url 'users:ajax_load_branches' %}";

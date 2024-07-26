@@ -51,18 +51,20 @@ def login_view(request):
 
 def user_edit(request, user_id):
     user = User.objects.get(id=user_id)
-
+    form = UserDetailsForm()
     # render form with user data
     if request.method == 'GET':
-        return render(request, 'users/user_edit.html', {'user': user})
+        return render(request, 'users/user_edit.html', {'user': user, 'form': form})
 
 
 def user_detail(request, user_id):
     user = User.objects.get(id=user_id)
+    form = UserDetailsForm()
+
     logger.info(f'User details: {user.first_name + " " + user.email}')
     # render user details
     if request.method == 'GET':
-        return render(request, 'users/user_detail.html', {'user': user})
+        return render(request, 'users/user_detail.html', {'user': user, 'form': form})
 
 
 def register(request):
