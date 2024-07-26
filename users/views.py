@@ -1,6 +1,9 @@
 from django.db.models import Q
+from django.http import JsonResponse
 from django.views import View
-from django.shortcuts import render,redirect
+from django.shortcuts import render, redirect
+
+from company.models import Branch
 from .models import User
 from .forms import UserRegistrationForm
 from django.contrib import messages
@@ -12,23 +15,23 @@ def users(request):
     search_query = request.GET.get('q', '')
     users = User.objects.filter(Q(username__icontains=search_query) | Q(email__icontains=search_query))
     form = UserRegistrationForm()
-    
-    if request.method =='POST':
+
+    if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             form.save()
-            user=form.save(commit=False)
-            user.password=make_password(form.cleaned_data['password'])
-            user.save() 
+            user = form.save(commit=False)
+            user.password = make_password(form.cleaned_data['password'])
+            user.save()
             messages.success(request, 'User successfully added')
-        else: 
+        else:
             messages.error(request, 'Invalid form data')
-            
-    return render(request, 'auth/users.html', {'users':users, 'form':form})
-    
+
+    return render(request, 'auth/users.html', {'users': users, 'form': form})
+
 
 def login_view(request):
-    if request.method =='POST':
+    if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
         user = authenticate(
@@ -39,12 +42,15 @@ def login_view(request):
         if user is not None:
             login(request, user)
             return redirect('pos:pos')
-        else: messages.error(request, 'Invalid username or password')
+        else:
+            messages.error(request, 'Invalid username or password')
     return render(request, 'auth/login.html')
+
 
 def user_edit(request, user_id):
     user = User.objects.get(id=user_id)
     pass
+
 
 def user_detail(request, user_id):
     user = User.objects.get(id=user_id)
@@ -53,19 +59,29 @@ def user_detail(request, user_id):
 
 def register(request):
     form = UserRegistrationForm()
-    if request.method =='POST':
+    if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             form.save()
-            user=form.save(commit=False)
-            user.password=make_password(form.cleaned_data['password'])
+            user = form.save(commit=False)
+            user.password = make_password(form.cleaned_data['password'])
             user.save()
             messages.success(request, 'User successfully added')
-        else: 
+        else:
             messages.error(request, 'Error')
     return render(request, 'auth/register.html', {
-        'form':form
+        'form': form
     })
+
+
+def load_branches(request):
+    """
+    we use this view to load branches using js
+    """
+    company_id = request.GET.get('company_id')
+    branches = Branch.objects.filter(company_id=company_id).order_by('name')
+    return JsonResponse(list(branches.values('id', 'name')), safe=False)
+
 
 def logout_view(request):
     logout(request)

@@ -113,5 +113,25 @@
     addBtn.addEventListener('click', ()=>{
         addModal.show()
     })
+    
+    // load branch based on selected company
+     $('#id_company').change(function() {
+        var url = "{% url 'users:ajax_load_branches' %}";
+        var companyId = $(this).val();
+
+        $.ajax({
+            url: url,
+            data: {
+                'company_id': companyId
+            },
+            success: function(data) {
+                $('#id_branch').html('');
+                $.each(data, function(key, value) {
+                    $('#id_branch').append('<option value="' + value.id + '">' + value.name + '</option>');
+                });
+            }
+        });
+    });
+       
 </script>
 {% endblock content %}

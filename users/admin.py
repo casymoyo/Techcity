@@ -6,7 +6,6 @@ from django.contrib.auth.forms import ReadOnlyPasswordHashField, UserCreationFor
 from users.models import User
 
 
-# Define the custom change form
 class CustomUserChangeForm(forms.ModelForm):
     password = ReadOnlyPasswordHashField()
 
@@ -31,7 +30,6 @@ class CustomUserChangeForm(forms.ModelForm):
         return self.initial["password"]
 
 
-# Define the custom admin
 class CustomUserAdmin(DefaultUserAdmin):
     form = CustomUserChangeForm
     add_form = UserCreationForm
@@ -62,5 +60,4 @@ class CustomUserAdmin(DefaultUserAdmin):
     filter_horizontal = ('groups',)
 
 
-# Register the custom admin
 admin.site.register(User, CustomUserAdmin)
