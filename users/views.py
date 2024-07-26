@@ -6,7 +6,7 @@ from loguru import logger
 
 from company.models import Branch
 from .models import User
-from .forms import UserRegistrationForm
+from .forms import UserRegistrationForm, UserDetailsForm
 from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.hashers import make_password
@@ -16,6 +16,7 @@ def users(request):
     search_query = request.GET.get('q', '')
     users = User.objects.filter(Q(username__icontains=search_query) | Q(email__icontains=search_query))
     form = UserRegistrationForm()
+    user_details_form = UserDetailsForm()
 
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
@@ -28,7 +29,7 @@ def users(request):
         else:
             messages.error(request, 'Invalid form data')
 
-    return render(request, 'auth/users.html', {'users': users, 'form': form})
+    return render(request, 'auth/users.html', {'users': users, 'form': form, 'user_details_form': user_details_form})
 
 
 def login_view(request):
@@ -54,7 +55,6 @@ def user_edit(request, user_id):
     # render form with user data
     if request.method == 'GET':
         return render(request, 'users/user_edit.html', {'user': user})
-    pass
 
 
 def user_detail(request, user_id):
@@ -63,7 +63,6 @@ def user_detail(request, user_id):
     # render user details
     if request.method == 'GET':
         return render(request, 'users/user_detail.html', {'user': user})
-    pass
 
 
 def register(request):
@@ -90,6 +89,21 @@ def load_branches(request):
     company_id = request.GET.get('company_id')
     branches = Branch.objects.filter(company_id=company_id).order_by('name')
     return JsonResponse(list(branches.values('id', 'name')), safe=False)
+
+
+def get_user_data(request, user_id):
+    user = User.objects.get(id=user_id)
+    user_data = {
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'email': user.email,
+        'phonenumber': user.phonenumber,
+        'company': user.company,
+        'branch': user.branch,
+        'role': user.role,
+    }
+    logger.info(f'User data: {user_data}')
+    return JsonResponse(user_data)
 
 
 def logout_view(request):
