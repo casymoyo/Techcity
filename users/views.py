@@ -1,3 +1,5 @@
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db.models import Q
 from django.http import JsonResponse
 from django.views import View
@@ -5,10 +7,11 @@ from django.shortcuts import render, redirect
 from loguru import logger
 
 from company.models import Branch
+from utils.authenticate import authenticate_user
 from .models import User
 from .forms import UserRegistrationForm, UserDetailsForm
 from django.contrib import messages
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout
 from django.contrib.auth.hashers import make_password
 
 
@@ -34,22 +37,32 @@ def users(request):
 
 def login_view(request):
     if request.method == 'POST':
-        username = request.POST['username']
+        email_address = request.POST['email_address']
         password = request.POST['password']
-        user = authenticate(
-            request,
-            username=username,
-            password=password
-        )
+
+        # Validate email
+        try:
+            validate_email(email_address)
+        except ValidationError:
+            messages.error(request, 'Invalid email format')
+            return render(request, 'auth/login.html')
+
+        # todo allow authentication to verified email addresses
+        user = authenticate_user(email=email_address,password=password)
+        logger.info(f'User: {user}')
         if user is not None:
-            login(request, user)
-            return redirect('pos:pos')
+            if user.is_active:
+                login(request, user)
+                return redirect('pos:pos')
+            else:
+                messages.error(request, 'Your account is not active, contact admin')
         else:
             messages.error(request, 'Invalid username or password')
-    return render(request, 'auth/login.html')
+    return render(request, 'auth/login.html',)
 
 
 def user_edit(request, user_id):
+    # todo remove this function view
     user = User.objects.get(id=user_id)
     form = UserDetailsForm()
     # render form with user data

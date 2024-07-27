@@ -67,7 +67,7 @@ class User(AbstractUser):
         ('sales', 'Salesperson'),
         ('accountant', 'Accountant')
     )
-
+    email = models.EmailField(unique=True)
     profile_image = models.ImageField(upload_to='Profile_images', blank=True, null=True)
     company = models.ForeignKey('company.Company', on_delete=models.CASCADE, null=True)
     branch = models.ForeignKey('company.Branch', on_delete=models.CASCADE, null=True)
