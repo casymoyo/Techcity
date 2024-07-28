@@ -9,7 +9,7 @@ from loguru import logger
 from company.models import Branch
 from utils.authenticate import authenticate_user
 from .models import User
-from .forms import UserRegistrationForm, UserDetailsForm
+from .forms import UserRegistrationForm, UserDetailsForm, UserDetailsForm2
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.hashers import make_password
@@ -19,7 +19,7 @@ def users(request):
     search_query = request.GET.get('q', '')
     users = User.objects.filter(Q(username__icontains=search_query) | Q(email__icontains=search_query)).order_by('first_name', 'last_name')
     form = UserRegistrationForm()
-    user_details_form = UserDetailsForm()
+    user_details_form = UserDetailsForm2()
 
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
@@ -111,6 +111,7 @@ def load_branches(request):
     """
     company_id = request.GET.get('company_id')
     branches = Branch.objects.filter(company_id=company_id).order_by('name')
+    logger.info(f'Branches: {branches.values("id", "name")}')
     return JsonResponse(list(branches.values('id', 'name')), safe=False)
 
 
@@ -120,9 +121,10 @@ def get_user_data(request, user_id):
         'first_name': user.first_name,
         'last_name': user.last_name,
         'email': user.email,
+        'username': user.username,
         'phonenumber': user.phonenumber,
-        'company': user.company.id,
-        'branch': user.branch.id,
+        'company': user.company.id if user.company else None,
+        'branch': user.branch.id if user.branch else None,
         'role': user.role,
     }
     logger.info(f'User data: {user_data}')

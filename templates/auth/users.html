@@ -90,13 +90,14 @@
         </div>
       </div>
     
-      <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content w-100 p-4">
                 <h6 class="fw-bold">Edit User</h6>
                 <form method="post" id="editUserForm">
                     {% csrf_token %}
                     {{user_details_form|crispy}}
+                    {# buttons #}
                     <div class="d-flex justify-content-end">
                         <div class="">
                             <button type="reset" class="btn btn-danger btn-sm">
@@ -116,13 +117,7 @@
             </div>
         </div>
       </div>
-    
-      <div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            </div>
-        </div>
-      </div>
+
 </div>
 
 <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>  
@@ -153,6 +148,7 @@
                 success: function(data) {
                     $('#editUserModal input[name="first_name"]').val(data.first_name);
                     $('#editUserModal input[name="last_name"]').val(data.last_name);
+                    $('#editUserModal input[name="username"]').val(data.username);
                     $('#editUserModal input[name="email"]').val(data.email);
                     $('#editUserModal input[name="phonenumber"]').val(data.phonenumber);
                     $('#editUserModal select[name="company"]').val(data.company);
@@ -164,7 +160,7 @@
         });
     });
 
-    // load branch based on selected company
+    // load branch based on selected company on add user form
      $('#id_company').change(function() {
         var url = "{% url 'users:ajax_load_branches' %}";
         var companyId = $(this).val();
@@ -182,6 +178,24 @@
             }
         });
     });
-
+     
+     //load branch based on selected company on edit user form 
+    $('#id_edit_company').change(function() {
+        var url = "{% url 'users:ajax_load_branches' %}";
+        var companyId = $(this).val();
+        
+        $.ajax({
+            url: url,
+            data: {
+                'company_id': companyId
+            },
+            success: function(data) {
+                $('#id_edit_branch').html('');
+                $.each(data, function(key, value) {
+                    $('#id_edit_branch').append('<option value="' + value.id + '">' + value.name + '</option>');
+                });
+            }
+        });
+    });
 </script>
 {% endblock content %}
