@@ -17,7 +17,7 @@ from django.contrib.auth.hashers import make_password
 
 def users(request):
     search_query = request.GET.get('q', '')
-    users = User.objects.filter(Q(username__icontains=search_query) | Q(email__icontains=search_query))
+    users = User.objects.filter(Q(username__icontains=search_query) | Q(email__icontains=search_query)).order_by('first_name', 'last_name')
     form = UserRegistrationForm()
     user_details_form = UserDetailsForm()
 
@@ -121,8 +121,8 @@ def get_user_data(request, user_id):
         'last_name': user.last_name,
         'email': user.email,
         'phonenumber': user.phonenumber,
-        'company': user.company,
-        'branch': user.branch,
+        'company': user.company.id,
+        'branch': user.branch.id,
         'role': user.role,
     }
     logger.info(f'User data: {user_data}')
