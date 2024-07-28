@@ -78,6 +78,14 @@ def user_detail(request, user_id):
     # render user details
     if request.method == 'GET':
         return render(request, 'users/user_detail.html', {'user': user, 'form': form})
+    if request.method == 'POST':
+        form = UserDetailsForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'User details updated successfully')
+        else:
+            messages.error(request, 'Invalid form data')
+        return render(request, 'users/user_detail.html', {'user': user, 'form': form})
 
 
 def register(request):
