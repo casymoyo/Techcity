@@ -1246,7 +1246,7 @@ def currency_json(request):
     currency_id = request.GET.get('id', '')
     currency = Currency.objects.filter(id=currency_id).values()
     return JsonResponse(list(currency), safe=False)
- # Import your Currency model
+
 
 @login_required
 def add_currency(request):
@@ -1282,13 +1282,6 @@ def update_currency(request, currency_id):
         form = CurrencyForm(instance=currency) 
 
     return render(request, 'finance/currency/currency_add.html', {'form': form})
-
-@login_required
-def delete_currency(request, currency_id):
-    from django.http import JsonResponse, HttpResponseBadRequest
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404
-
 
 @login_required
 def delete_currency(request, currency_id):
@@ -1372,6 +1365,7 @@ def invoice_preview(request, invoice_id):
 def invoice_preview_json(request, invoice_id):
     try:
         invoice = Invoice.objects.get(id=invoice_id)
+
     except Invoice.DoesNotExist:
         return JsonResponse({"error": "Invoice not found"}, status=404) 
      
@@ -1391,6 +1385,7 @@ def invoice_preview_json(request, invoice_id):
     invoice_dict['customer_name'] = invoice.customer.name
     invoice_dict['customer_email'] = invoice.customer.email 
     invoice_dict['currency_symbol'] = invoice.currency.symbol
+    invoice_dict['amount_paid'] = invoice.amount_paid
     
     if invoice.branch:
         invoice_dict['branch_name'] = invoice.branch.name

@@ -5,12 +5,16 @@
    <div class="inventory">
         <div class="inventory-navbar">
             <nav class="d-flex justify-content-between align-items-center bg-dark text-light rounded p-2">
-                <div class="d-flex">
+                <div class="d-flex  align-items-center">
                     <div>
                         <h5 class='mt-1 fw-bold'>Product Re-order List</h5>
                     </div>
                 </div>
                 <div class="search d-flex align-items-center">
+                    <div class="reorder-basket btn mx-1">
+                        <i class='bx bx-basket text-light fs-5'></i>
+                        <small class='badge text-danger' style='position:relative; top:-10px; left:-7px;' id="reorder_quantity">1</small>
+                    </div>
                     <div>
                         <button type="button" class="btn btn-primary" id="createList">
                             create order list
@@ -37,18 +41,30 @@
         <div class="table-detail table-scroll hidden mt-2" id="reorderTable">
             <table class='table border rounded p-2'>
                 <thead class='bg-primary'>
-                    <tr>
+                        <th>Date</th>
                         <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Quantity To Be Ordered</th>
+                        <th>Cost</th>
                         <th>Action</th>
-                    </tr>
+                    
                 </thead>
                 <tbody id="reorderData">
                     {% for product in reorder_list %}
                         <tr>
                             <td><small>{{ product.product.product.name }}</small></td>
+                            <td><small>{{ product.product.quantity }}</small></td>
+                            <td><small>{{ product.quantity }}</small></td>
+                            <td><small>{{ product.cost }}</small></td>
                             <td id='remove' data-id={{ product.id }}><small><i class='bx bx-trash'></i>remove</small></td>
                         </tr>
                     {% endfor %}
+                    <tfoot>
+                        <td class=''>Total</td>
+                        <td class=''></td>
+                        <td class=''></td>
+                        <td class='fw-bold'></td>
+                    </tfoot>
                 </tbody>
             </table>  
             
@@ -98,6 +114,7 @@
                 </div>
             </div>
         </div>
+        
    </div> 
 <script>
     let product_id = '';
@@ -158,8 +175,13 @@
         .then(data => {
             reorderData.innerHTML=''
             data.forEach((data)=>{
+                console.log(data.quantity)
                 reorderData.innerHTML += `
+                    <td>${data.date}</td>
                     <td>${data?.product__product__name}</td>
+                    <td>${data?.product__quantity}</td>
+                    <td><input id='order_quantity' data-id=${data?.id} value=${data.quantity ? data.quantity : 0} oninput='addQuantity(this)' class='form-control'/></td>
+                    <td><input id='order_cost' class='form-control'/></td>
                     <td><button onclick='deleteItem(this)' data-id=${data?.id} class='btn btn-sm btn-danger'><i class='bx bx-trash'></i>remove</button>
                 `
             })
@@ -169,6 +191,31 @@
         });
     }
     fetchOrderData()
+
+    function addQuantity(input){
+        const inputValue = input.value
+        const reorderId = parseInt(input.dataset.id)
+
+        if(inputValue){
+            fetch('{% url "inventory:add_reoder_quantity" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ quantity:inputValue,  reorder_id:reorderId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    fetchOrderData(); 
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Error adding to order list:', error));
+        }
+    }
 
     createList.addEventListener('click', ()=>{
         reorderModal.show()

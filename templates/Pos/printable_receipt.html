@@ -91,19 +91,18 @@
             <small><i class='bx bx-enevelope'></i> {{ request.user.branch.email }} </small>
         </p>
 
-        <p>Receipt Number: <small id="receiptNumber"></small></p>
+        <p>Invoice Number: <small id="receiptNumber"></small></p>
 
         <table>
-            <thead>
+            <thead class='border'>
                 <tr>
                     <th class="quantity">Q.</th>
                     <th class="description">Description</th>
                     <th class="price">Amount</th>
                 </tr>
             </thead>
-            <tbody id="receiptTable">
-                </tbody>
-            <tfoot>
+            <tbody id="receiptTable" class='border'></tbody>
+            <tfoot class='border bg-light mt-2'>
                 <tr>
                     <td></td>
                     <td class='fw-bold text-right'>Sub Total</td>
@@ -124,10 +123,32 @@
                     <td class='fw-bold' style="display:block;">Delivery Charge</td>
                     <td id="deliveryChargeAmount"></td>
                 </tr> 
+                <tr id='prv'>
+                    <td></td>
+                    <td class='fw-bold'>Previous Due</td>
+                    <td class="" id="rprevious_due"></td>
+                </tr>
                 <tr>
                     <td></td>
-                    <td class='fw-bold'>Total</td>
-                    <td id="totalAmount"></td>
+                    <td class='fw-bold'>Current Due</td>
+                    <td class="" id="rid_due_amount">0.00</td>
+                </tr>
+                <tr id='prv'>
+                    <td></td>
+                    <td class='fw-bold'>Total Balance</td>
+                    <td class="" id="tb_due">
+                        <span class='p_due fw-bold' id='rtotal_balance_due'>25.00</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class='fw-bold'>Amount Paid</td>
+                    <td class="" id="rid_paid_amount">0.00</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class='fw-bold'>Due Amount</td>
+                    <td class="fw-bold" id="rid_balance" class='border'>0.00</td>
                 </tr>
             </tfoot>
         </table>
@@ -221,7 +242,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')  // Include CSRF protection
+                    'X-CSRFToken': getCookie('csrftoken') 
                 }
             })
             .then(response => response.json())

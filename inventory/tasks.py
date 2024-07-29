@@ -34,7 +34,7 @@ def send_low_stock_email(notification_id):
         subject = 'Low stock notification'
         message = f'''Hi, please take note {product} have reached low stock threshold level of {threshold} and the currenct product quantity is {quantity}. {branch} branch'''
         from_email = SYSTEM_EMAIL
-        to_email = ['admin@techcity.co.zw', 'cassymyo@gmail.com', 'blessingmawere@gmail.com'] 
+        to_email = ['admin@techcity.co.zw', 'cassymyo@gmail.com'] #'pcpasels@gmail.com'
         sender_name = 'Admin'
         
         html_content = render_to_string('emails/email_template.html', {

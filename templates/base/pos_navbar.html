@@ -29,7 +29,11 @@
                     <select  id='currency' class='bg-dark text-light shadow form-select'>
                         <option value=''>Currency</option>
                         {% for currency in currencies %}
-                            <option value='{{currency.id}}' selected>{{currency.name}}</option>
+                            {% if currency.default %}
+                                <option value='{{currency.id}}' selected>{{currency.name}}</option>
+                            {% else %}
+                                <option value='{{currency.id}}'>{{currency.name}}</option>
+                            {% endif %}
                         {% endfor %}
                     </select>
                 </li>
