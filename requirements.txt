@@ -110,3 +110,4 @@ whitenoise==6.6.0
 xhtml2pdf==0.2.15
 yarl==1.9.4
 zopfli==0.2.3
+python-decouple==3.8
