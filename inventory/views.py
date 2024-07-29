@@ -14,7 +14,17 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, HttpResponse
 from finance.models import StockTransaction
 from . utils import calculate_inventory_totals
-from . forms import AddProductForm, addCategoryForm, addTransferForm, DefectiveForm, RestockForm, AddDefectiveForm, ServiceForm
+from . forms import (
+    AddProductForm, 
+    addCategoryForm, 
+    addTransferForm, 
+    DefectiveForm,
+    RestockForm, 
+    AddDefectiveForm, 
+    ServiceForm, 
+    AddSupplierForm,
+    CreateOrderForm
+)
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from channels.generic.websocket import  AsyncJsonWebsocketConsumer
@@ -357,7 +367,7 @@ def edit_service(request, service_id):
 @login_required   
 def inventory_index_json(request):
     inventory = Inventory.objects.filter(branch=request.user.branch, status=True).values(
-        'id', 'product__name', 'product__id', 'price', 'cost', 'quantity', 'reorder'
+        'id', 'product__name', 'product__quantity', 'product__id', 'price', 'cost', 'quantity', 'reorder'
     ).order_by('product__name')
     return JsonResponse(list(inventory), safe=False)
 
@@ -408,12 +418,13 @@ def edit_inventory(request, product_name):
         inv_product.price = Decimal(request.POST['price'])
         inv_product.cost = Decimal(request.POST['cost'])
         inv_product.min_stock_level = request.POST['min_stock_level']
+        logger.info(f'msl -> {inv_product.min_stock_level}')
         inv_product.save()
         
         ActivityLog.objects.create(
             branch = request.user.branch,
             user=request.user,
-            action= 'Stock in' if quantity > 0 else 'Update',
+            action= 'Stock in' if quantity > 0 else 'removed',
             inventory=inv_product,
             quantity=quantity,
             total_quantity=inv_product.quantity,
@@ -535,7 +546,7 @@ def receive_inventory(request):
                 messages.error(request, 'Quantity received cannot be more than quanity transfered') 
                 return redirect('inventory:receive_inventory')
                 
-            if request.POST['received'] == 'true':
+            if request.POST['received'] == 'true':                                                       
                 if int(request.POST['quantity']) != int(branch_transfer.quantity):
                     branch_transfer.over_less_quantity =  branch_transfer.quantity - int(request.POST['quantity']) 
                     branch_transfer.over_less = True
@@ -739,7 +750,7 @@ def defective_product_list(request):
         data = json.loads(request.body)
         
         defective_id = data['product_id']
-        quantity = int(data['quantity'])
+        quantity = data['quantity']
         
         try:
             d_product = DefectiveProduct.objects.get(id=defective_id, branch=request.user.branch)
@@ -917,7 +928,10 @@ def reorder_list(request):
 @login_required
 def reorder_list_json(request):
     order_list = ReorderList.objects.filter(branch=request.user.branch).values(
-        'id', 'product__product__name', 
+        'id', 
+        'product__product__name',  
+        'product__quantity',
+        'quantity'
     )
     return JsonResponse(list(order_list), safe=False)
 
@@ -1044,8 +1058,7 @@ def transfers_report(request):
     
     if time_frame in date_filters:
         transfers = date_filters[time_frame]()
-        
-    # print(transfers)
+         
     if view:
         return JsonResponse(list(transfers.values(
                 'date',
@@ -1099,7 +1112,7 @@ def transfers_report(request):
 @login_required
 def reorder_from_notifications(request):
     if request.method == 'GET':
-        notifications = StockNotifications.objects.filter(inventory__branch=request.user.branch, inventory__reorder=False).values(
+        notifications = StockNotifications.objects.filter(inventory__branch=request.user.branch, inventory__reorder=False, inventory__alert_notification=False).values(
             'quantity',
             'inventory__product__name', 
             'inventory__id', 
@@ -1120,17 +1133,229 @@ def reorder_from_notifications(request):
         
         try:
             inventory = Inventory.objects.get(id=inventory_id)
+            stock_notis = StockNotifications.objects.get(inventory=inventory)
         except Exception as e:
             return JsonResponse({'success':False, 'message':f'{e}'}, status=400)
         
         if action_type == 'add':
             inventory.reorder=True
             inventory.save()
-            ReorderList.objects.create(product=inventory, branch=request.user.branch)
+            ReorderList.objects.create(
+                quantity=0,
+                product=inventory, 
+                branch=request.user.branch
+            )
             
         elif action_type == 'remove':
-            pass
+            inventory.alert_notification=True
+            inventory.save()
     
         return JsonResponse({'success':True}, status=200)
     
     return JsonResponse({'success':False, 'message': 'Invalid request'}, status=400)
+
+@login_required
+def add_reorder_quantity(request):
+    """
+    Handles adding a quantity to a reorder item.
+
+    Payload:
+    - reorder_id: ID of the reorder item
+    - quantity: Quantity to add
+    """
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
+
+    reorder_id = data.get('reorder_id')
+    reorder_quantity = data.get('quantity')
+
+    if not reorder_id:
+        return JsonResponse({'success': False, 'message': 'Reorder ID is required'}, status=400)
+
+    if not reorder_quantity:
+        return JsonResponse({'success': False, 'message': 'Reorder quantity is required'}, status=400)
+
+    try:
+        reorder_quantity = int(reorder_quantity)
+    except ValueError:
+        return JsonResponse({'success': False, 'message': 'Invalid reorder quantity'}, status=400)
+
+    try:
+        reorder = ReorderList.objects.get(id=reorder_id)
+        reorder.quantity = reorder_quantity
+        reorder.save()
+        logger.info(reorder.quantity)
+        return JsonResponse({'success': True, 'message': 'Reorder quantity updated successfully'}, status=200)
+    except ReorderList.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Reorder item not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({'success': False, 'message': 'An error occurred'}, status=500)
+
+@login_required
+def suppliers(request):
+    form = AddSupplierForm()
+    suppliers = Supplier.objects.all()
+    return render(request, 'inventory/suppliers.html', 
+        {
+            'suppliers':suppliers,
+            'form':form
+        }
+    )
+
+@login_required
+def create_supplier(request):
+    #payload
+    """
+        name 
+        contact
+        email
+        phone 
+        address
+    """
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        
+        name = data['name']
+        contact = data['contact']
+        email = data['email']
+        phone = data['phone']
+        address = data['address']
+        
+        if not name or not contact or not email or not phone or not address:
+            return JsonResponse({'success': False, 'message':'Fill in all the form data'}, status=400)
+        
+        if Supplier.objects.filter(email=email).exists():
+            return JsonResponse({'success': False, 'message':f'Supplier{name} already exists'}, status=400)
+        
+        supplier = Supplier(
+            name = name,
+            contact = contact,
+            email = email,
+            phone = phone,
+            address = address
+        )
+        supplier.save()
+        logger.info(f'Supplier successfully created {supplier.name}')
+        return JsonResponse({'success': True}, status=200)
+        
+@login_required
+def edit_supplier(request, supplier_id):
+    # payload
+    """
+        supplier_id
+    """
+    
+    if request.method == 'POST':
+        data = json.loads(request.post)
+        supplier_id = data['supplier_id']
+        
+        if supplier_id:
+            try:
+                supplier = Supplier.objects.get(id=supplier_id)
+            except Exception as e:
+                return JsonResponse({'success': False, 'message':f'{supplier_id} does not exists'}, status=400)
+                
+        form = AddSupplierForm(request.post, instance=supplier)
+        
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True}, status=400)
+    return JsonResponse({'success': True})
+
+@login_required
+def purchase_orders(request):
+    form = CreateOrderForm()
+    orders = PurchaseOrder.objects.filter(branch = request.user.branch)
+    return render(request, 'inventory/suppliers/purchase_orders.html', 
+        {
+            'form':form,
+            'orders':orders
+        }
+    )
+    
+
+@login_required
+def create_purchase_order(request):
+
+    try:
+        data = json.loads(request.body)
+        purchase_order_data = data.get('purchase_order', {})
+        purchase_order_items_data = data.get('items', [])
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
+
+    supplier_id = purchase_order_data.get('supplier_id')
+    delivery_date = purchase_order_data.get('delivery_date')
+    status = purchase_order_data.get('status')
+    notes = purchase_order_data.get('notes')
+
+    if not all([supplier_id, delivery_date, status]):
+        return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
+
+    try:
+        supplier = Supplier.objects.get(id=supplier_id)
+    except Supplier.DoesNotExist:
+        return JsonResponse({'success': False, 'message': f'Supplier with ID {supplier_id} not found'}, status=404)
+
+    try:
+        with transaction.atomic():
+            purchase_order = PurchaseOrder(
+                order_number=PurchaseOrder.generate_order_number(),
+                supplier=supplier,
+                delivery_date=delivery_date,
+                status=status,
+                notes=notes
+            )
+            purchase_order.save()
+
+            for item_data in purchase_order_items_data:
+                product_id = item_data.get('product')
+                quantity = item_data.get('quantity')
+                unit_cost = item_data.get('unit_cost')
+
+                if not all([product_id, quantity, unit_cost]):
+                    transaction.set_rollback(True)
+                    return JsonResponse({'success': False, 'message': 'Missing fields in item data'}, status=400)
+
+                try:
+                    product = Product.objects.get(id=product_id)
+                except Product.DoesNotExist:
+                    transaction.set_rollback(True)
+                    return JsonResponse({'success': False, 'message': f'Product with ID {product_id} not found'}, status=404)
+
+                PurchaseOrderItem.objects.create(
+                    purchase_order=purchase_order,
+                    product=product,
+                    quantity=quantity,
+                    unit_cost=unit_cost
+                )
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+    return JsonResponse({'success': True, 'message': 'Purchase order created successfully'})
+
+@login_required
+def delete_purchase_order(request, purchase_order_id):
+    if request.method != "DELETE":
+        return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+
+    try:
+        purchase_order = PurchaseOrder.objects.get(id=purchase_order_id)
+    except PurchaseOrder.DoesNotExist:
+        return JsonResponse({'success': False, 'message': f'Purchase order with ID {purchase_order_id} not found'}, status=404)
+
+    try:
+        purchase_order.delete()
+        return JsonResponse({'success': True, 'message': 'Purchase order deleted successfully'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+    
+
+        
+                    
+        

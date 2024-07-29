@@ -246,7 +246,17 @@
             <div class="modal-content">
                 <div class="modal-body text-center">
                     <i class='bx bx-check-circle h1'></i>
-                    <h2>Qoutation Successfully Created</h2>
+                    <h4>Qoutation Successfully Created</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="chooseCustomerModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <h4>Choose Customer first</h4>
                 </div>
             </div>
         </div>
@@ -265,6 +275,8 @@ let currencyData = [];
 const customersData = [];
 let customerBalanceData = [];
 
+let bal = 0;
+let previousDue = 0
 let discount_amount = 0;
 let delivery_amount = 0;
 let payable_amount = 0;
@@ -273,6 +285,8 @@ let amount_paid = 0;
 let paymentMethod = 'cash'
 let menuName = '';
 let clientName = '';
+let initialCurrencyValue = '';
+let addedToCartProduct = []
 
 let error = document.querySelector('#error_message')
 
@@ -282,6 +296,7 @@ const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
 const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
 const loaderModal = new bootstrap.Modal(document.getElementById('loaderModal'));
 const qouteModal = new bootstrap.Modal(document.getElementById('qouteModal'));
+const chooseCustomerModal= new bootstrap.Modal(document.getElementById('chooseCustomerModal'))
 
 const customerModal = new bootstrap.Modal(document.getElementById('customerModal'));
 const menuType = document.getElementById('menu-type');
@@ -290,6 +305,23 @@ const ostBtn = document.getElementById('out_of_stock');
 const tableEl = document.querySelector('#invoiceTable');
 const loaderSpin = document.querySelector('#loader');
 
+
+document.addEventListener("DOMContentLoaded", function() {
+    const currencySelect = document.getElementById("currency");
+    initialCurrencyValue = currencySelect.value; 
+    const data = {id:initialCurrencyValue}
+    $.ajax({
+        url: '{% url "finance:currency_json" %}',
+        type: 'GET',
+        data: data,
+        }).done(function(response) {
+            const data = response
+            console.log(data)
+            currencyData = []
+            currencyData.push(data)
+    })
+});
+  
 setTimeout(()=>{
     loaderSpin.classList.add('hidden');
     loaderSpin.classList.remove('d-flex')
@@ -371,17 +403,13 @@ closebtn.addEventListener('click', ()=>{
 
 document.querySelector('#id_pay').addEventListener(
     'click', ()=>{
-        
         if(clientName){
             updateCartDisplay();
             updateOrderDisplay() 
             modal.classList.remove("hidden");
             overlay.classList.remove("hidden");
         }else{
-            errorModal.classList.remove('hidden')
-            overlay.classList.remove('hidden')
-            error.textContent=''
-            error.textContent='Wasirira Mutengi'
+            chooseCustomerModal.show()
         }
     }
 )
@@ -525,7 +553,8 @@ function displayProducts(products) {
 
 // Cart 
 async function fetchProductData (product){
-    if  ($('#currency').val()){
+    console.log(initialCurrencyValue)
+    if(initialCurrencyValue){
         const id = product.dataset.product
 
         let url = `/inventory/product/list/?product=${id}`;
@@ -537,7 +566,10 @@ async function fetchProductData (product){
                 throw new Error('Network response was not ok.');
             }
             const product = await response.json();
-            addItem(product)
+
+            addItem(product);
+            addedToCartProduct = [];
+            addedToCartProduct.push(product);
             
         } catch (error) {
             console.error('Error fetching products:', error);
@@ -584,7 +616,7 @@ function totals(){
     let discount = $('#id_discount').val()
     let delivery = parseFloat($('#id_dc_input').val())
     
-    let payable = totalAmount + vatAmount + delivery;
+    let payable = totalAmount - vatAmount + delivery;
     
     // validate for not a number
     if (delivery >= 0){
@@ -656,10 +688,10 @@ function updateCartDisplay() {
       const row = document.createElement("tr");
       row.innerHTML = `
         <td>
-            <small class='bx bx-trash-alt text-danger' data-id=${item.id} onclick="removeItem(this);"></small>
-            <small class='bx bx-chevron-up fw-bold text-success'></small>
-            <small class='bx bx-chevron-down fw-bold text-danger'></small>
-            <small>${item.quantity}</small>
+            <small class='d-flex align-items-center'>
+                <small class='bx bx-trash-alt text-danger' data-id=${item.id} onclick="removeItem(this);"></small>
+                <small><input class='form-control mx-2' type='number' data-id=${item.inventory_id} value='${item.quantity}' oninput='addOrDreceaseQuantity(this);' style='width:4rem;'/></small>
+            </small>
         </td>
         <td><small>${item.product_name}</small></td>
         <td><small>${ currencyData[0][0].symbol + ' ' + parseFloat(item.price).toFixed(2)}</small></td>
@@ -668,6 +700,24 @@ function updateCartDisplay() {
       cartItemsList.appendChild(row);
     });
   }
+
+  function addOrDreceaseQuantity(sm) {
+    const item_id = parseInt(sm.dataset.id);
+    const updatedQuantity = parseInt(sm.value);
+
+    if (!updatedQuantity) return;
+
+    const existingItem = cart.find(item => item.inventory_id === item_id);
+
+    if (existingItem) {
+        existingItem.quantity = updatedQuantity;
+        updateCartDisplay();
+        updateOrderDisplay();
+        cartButton();
+        totals();
+    }
+}
+
 
 function updateOrderDisplay() {
     const orderDetails = document.getElementById("order_details");
@@ -686,14 +736,34 @@ function updateOrderDisplay() {
 
 // update tfoot
 function updateTfoot(vat, totalAmount, discountAmount, discount, delivery, payable){
-    document.querySelector('#id_subtotal').textContent = `${ currencyData[0][0].symbol + ' ' + calculateTotalAmount(cart)}`
-    document.querySelector('#id_vat').textContent = `${ currencyData[0][0].symbol + ' ' + vat.toFixed(2)}`
+    let totalDueAmount = 0;
+    const symbol = currencyData[0][0].symbol;
+    
+    if(bal>0){
+        totalDueAmount = parseFloat(bal.toFixed(2)) + parseFloat(payable.toFixed(2)); 
+    }else{
+        totalDueAmount = parseFloat(bal.toFixed(2)) - parseFloat(payable.toFixed(2)); 
+    }
+
+    const totalBalanceDue = totalDueAmount - parseFloat(amount_paid.toFixed(2));
+
+    document.querySelector('#id_subtotal').textContent = `${ symbol + ' ' + calculateTotalAmount(cart) }`
+    document.querySelector('#id_vat').textContent = `${ symbol + ' ' + vat.toFixed(2) }`
     document.querySelector('#id_dcp').textContent = `Discount`
-    document.querySelector('#id_disc').textContent = `${ currencyData[0][0].symbol + ' ' + '<span class="disc_c">' + discountAmount.toFixed(2) + '</span>'}`
-    document.querySelector('#id_delivery_charge').textContent = `${ currencyData[0][0].symbol + ' ' + '<span class="d_c">' + delivery.toFixed(2) + "</span>"}`
-    document.querySelector('#id_interest_amount').textContent = `${ currencyData[0][0].symbol + ' ' +  '<span class="inter">' + 0.00 + "</span>"}`
-    document.querySelector('#id_due_amount').textContent = `${ currencyData[0][0].symbol + ' ' + payable.toFixed(2)}`
-    document.querySelector('#id_balance').textContent = `${ currencyData[0][0].symbol + ' ' + (payable.toFixed(2) - amount_paid.toFixed(2))}` // payable + due amount - paid amount
+    document.querySelector('#id_disc').textContent = `${ symbol + ' ' + '<span class="disc_c">' + discountAmount.toFixed(2) + '</span>' }`
+    document.querySelector('#id_delivery_charge').textContent = `${ symbol + ' ' + '<span class="d_c">' + delivery.toFixed(2) + "</span>" }`
+    document.querySelector('#id_interest_amount').textContent = `${ symbol + ' ' +  '<span class="inter">' + 0.00 + "</span>"} `
+    document.querySelector('#id_due_amount').textContent = `${ symbol + ' ' + payable.toFixed(2) }`
+    document.querySelector('#id_balance').textContent = `${ symbol + ' ' + totalBalanceDue.toFixed(2) }`, 
+    document.querySelector('#total_balance_due').textContent = `${symbol + ' ' + totalDueAmount.toFixed(2) }`
+
+    updateReceiptFooter(symbol, totalBalanceDue, totalDueAmount, payable)
+}
+
+function updateReceiptFooter(symbol, totalBalanceDue, totalDueAmount, payable){
+    document.querySelector('#rid_due_amount').textContent = `${ symbol + ' ' + payable.toFixed(2) }`
+    document.querySelector('#rid_balance').textContent = `${ symbol + ' ' + totalBalanceDue.toFixed(2) }`, 
+    document.querySelector('#rtotal_balance_due').textContent = `${symbol + ' ' + totalDueAmount.toFixed(2) }`
 }
 
 // pay amount event
@@ -830,7 +900,8 @@ async function displayReceipt(invoiceId) {
             discount_amount: discountAmount,
             vat: vatAmount,
             subtotal: subTotal,
-            currency_symbol: currencySymbol
+            currency_symbol: currencySymbol,
+            amount_paid: amountPaid
         } = invoice;
 
         document.querySelector('#receiptNumber').textContent = invoiceNumber;
@@ -848,10 +919,12 @@ async function displayReceipt(invoiceId) {
 
         // Update total amounts in the footer
         document.querySelector('#subTotalAmount').textContent = `${currencySymbol} ${subTotal}`;
-        document.querySelector('#totalAmount').textContent = `${currencySymbol} ${invoiceTotal}`;
+        //document.querySelector('#totalAmount').textContent = `${currencySymbol} ${invoiceTotal}`;
         document.querySelector('#deliveryChargeAmount').textContent = `${currencySymbol} ${deliveryCharge}`;
         document.querySelector('#discountAmount').textContent = `${currencySymbol} ${discountAmount}`;
         document.querySelector('#vatAmount').textContent = `${currencySymbol} ${vatAmount}`;
+        document.querySelector('#rid_paid_amount').textContent = `${currencySymbol} ${amount_paid}`;
+        document.querySelector('#rprevious_due').textContent = `${currencySymbol} ${previousDue}`;
 
         modal.classList.add("hidden");
         overlay.classList.add("hidden");
@@ -963,7 +1036,14 @@ async function fetchCustomerAccount(customerId) {
         const previousDueEl = document.querySelector('#previous_due');
         const balance = data.find(item => item.currency__symbol === currencyData[0][0]?.symbol);
 
-        previousDueEl.textContent = balance ? `${balance.currency__symbol} ${balance.balance}` : "0.00";
+        if (balance.balance < 0) {
+            bal = Math.abs(balance.balance); 
+        } else {
+            bal = -Math.abs(balance.balance); 
+        }
+
+        previousDue = bal;
+        previousDueEl.textContent = balance ? `${balance.currency__symbol} ${bal}` : "0.00";
 
         data.forEach((balance) => {
             const balanceItem = document.createElement('small');
@@ -972,6 +1052,7 @@ async function fetchCustomerAccount(customerId) {
             balanceItem.textContent = `${balance.currency__symbol} ${balance.balance}`;
             balanceEl.appendChild(balanceItem);
         });
+        totals();
     } catch (error) {
         console.error('Error:', error);
     }

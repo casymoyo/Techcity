@@ -12,6 +12,14 @@
   font-family: graphik;
   font-size: 0.9rem;
 }
+.techcity .reorder-basket {
+  position: relative;
+  bottom: 0;
+  padding: 1rem;
+}
+.techcity .detailTable td {
+  height: 10px !important;
+}
 .techcity .text-defective {
   color: #000 !important;
 }

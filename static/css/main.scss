@@ -59,6 +59,16 @@
 }
 
 .techcity{
+    .reorder-basket{
+        position: relative;
+        bottom: 0;
+        padding: 1rem;
+    }
+    .detailTable{
+        td{
+            height: 10px !important;
+        }
+    }
     .text-defective{
         color: #000 !important;
     }

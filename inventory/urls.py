@@ -32,6 +32,12 @@ urlpatterns = [
     path('reorder/list/json', reorder_list_json, name='reorder_list_json'),
     path('clear/reorder/list/', clear_reorder_list, name='clear_reorder_list'),
     path('reorder/from/notifications/', reorder_from_notifications, name='reorder_from_notifications'),
+    path('add/reoder/quantity', add_reorder_quantity, name='add_reoder_quantity'),
+    
+    # purchase_order
+    path('purchase_orders/list/', purchase_orders, name='purchase_orders'),
+    path('purchase_order/create/', create_purchase_order, name='create_purchase_order'),
+    path('purchase_order/delete/<int:purchase_order_id>/', delete_purchase_order, name='delete_purchase_order'),
     
     # transfers
     path('transfers', inventory_transfers, name='transfers'),

@@ -29,6 +29,7 @@
         </div>
         {% include 'components/loader.html' %}
         <div class='invoice-table mt-3 table-scroll'>
+            <div class='invoice-table mt-3 table-scroll'>
             <table class="table table-striped border table-hover rounded table-responsive table-sm p-2" id='invoiceTable' style='width:100%;'>
                 <thead class="bg-primary">
                     <tr class='fw-normal'>
@@ -46,88 +47,49 @@
                 <tbody>
                     {% for invoice in invoices %}
                         <tr style='color: #6c757d; cursor:pointer'>
-                            {% if invoice.payment_status == 'Paid'%}
-                                <td scope="row"><small>{{invoice.issue_date}}</small></td>
-                                <td><small>#{{invoice.invoice_number}}</small></td>
-                                <td><small><a href="{% url 'finance:customer' invoice.customer.id%}">{{invoice.customer.name}}</a></small></td>
-                                <td><small>{{invoice.products_purchased}}</small></td>
-                                <td id="tr" data-invoiceID={{invoice.id}} ><small>{{invoice.currency.symbol}} {{invoice.amount_paid}}</small></td>
-                                <td><small>{{invoice.currency.symbol}} {{invoice.amount_due}}</small></td>
-                                <td><small>{{invoice.currency.symbol}} {{invoice.amount}}</small></td>
-                                <td><small>{{invoice.user.username}}</small></td>
-                                <td>
-                                    <span>
-                                        <a href="{% url 'finance:invoice_preview' invoice.id %}" class='text-dark'>
-                                            <i class='bx bx-show'></i>
-                                        </a>
-                                    </span>  
-                                    <span class='px-2'>
-                                        {% if invoice.amount_due > 0 %}
-                                            <span style='cursor:pointer;' data-id={{ invoice.id }} data-amount={{ invoice.amount_due }} id='id_update' class="text-dark">
-                                                <i class='bx bx-right-arrow'></i>
-                                            </span>
-                                        {% else %}
-                                            <span style='cursor:pointer;'  class="text-dark hint--bottom" aria-label='Invoice fully paid'>
-                                                <i class='bx bx-rectangle'></i>
-                                            </span>
-                                        {% endif %}
-                                    </span>
-                                    <span>
-                                        {% if request.user.role == 'admin' %}
-                                            <span data-id={{invoice.id}} id='whatsappBtn'>
-                                                <i class='bx bxl-whatsapp'></i>
-                                            </span>
-                                        {% endif %}
-                                    </span>
-                                    <span class='px-2'>
-                                        {% if request.user.role == 'admin' %}
-                                            <span id='id_delete' data-id={{invoice.id}}>
-                                                <i class='bx bx-trash'></i>
-                                            </span>
-                                        {% endif %}
-                                    </span>  
-                                </td>
-                            {% else %}
-                                <td scope="row" class='text-danger' ><small>{{invoice.issue_date}}</small></td>
-                                <td class='text-danger'><small>#{{invoice.invoice_number}}</small></td>
-                                <td><small><a href="{% url 'finance:customer' invoice.customer.id%}">{{invoice.customer.name}}</a></small></td>
-                                <td><small>{{invoice.products_purchased}}</small></td>
-                                <td id="tr" data-invoiceID={{invoice.id}} class='text-danger'><small>{{invoice.currency.symbol}} {{invoice.amount_paid}}</small></td>
-                                <td class='text-danger'><small>{{invoice.currency.symbol}} {{invoice.amount_due}}</small></td>
-                                <td class='text-danger'><small>{{invoice.currency.symbol}} {{invoice.amount}}</small></td>
-                                <td class='text-danger'><small>{{invoice.user.username}}</small></td>
-                                <td>
-                                    <span>
-                                        <a href="{% url 'finance:invoice_preview' invoice.id %}" class='text-dark'>
-                                            <i class='bx bx-show'></i>
-                                        </a>
-                                    </span>  
-                                    <span class='px-2'>
-                                        {% if invoice.amount_due > 0 %}
-                                            <span style='cursor:pointer;' data-id={{ invoice.id }} data-amount={{ invoice.amount_due }} id='id_update' class="text-dark hint--bottom" aria-label='Update invoice'>
-                                                <i class='bx bx-right-arrow'></i>
-                                            </span>
-                                        {% endif %}
-                                    </span>
-                                    <span>
-                                        {% if request.user.role == 'admin' %}
-                                            <span data-id={{ invoice.id }}  id='whatsappBtn'>
-                                                <i class='bx bxl-whatsapp'></i>
-                                            </span>
-                                        {% endif %}
-                                    </span>
-                                    <span class='px-2'>
-                                        {% if request.user.role == 'admin' %}
-                                            <span id='id_delete' data-id={{invoice.id}}>
-                                                <i class='bx bx-trash'></i>
-                                            </span>
-                                        {% endif %}
-                                    </span>  
-                                </td>
-                            {% endif %}
+                            <td scope="row" {% if invoice.payment_status != 'Paid' %}class='text-danger'{% endif %}><small>{{ invoice.issue_date }}</small></td>
+                            <td {% if invoice.payment_status != 'Paid' %}class='text-danger'{% endif %}><small>#{{ invoice.invoice_number }}</small></td>
+                            <td><small><a href="{% url 'finance:customer' invoice.customer.id %}">{{ invoice.customer.name }}</a></small></td>
+                            <td><small>{{ invoice.products_purchased }}</small></td>
+                            <td id="tr" data-invoiceID={{ invoice.id }} {% if invoice.payment_status != 'Paid' %}class='text-danger'{% endif %}><small>{{ invoice.currency.symbol }} {{ invoice.amount_paid }}</small></td>
+                            <td {% if invoice.payment_status != 'Paid' %}class='text-danger'{% endif %}><small>{{ invoice.currency.symbol }} {{ invoice.amount_due }}</small></td>
+                            <td {% if invoice.payment_status != 'Paid' %}class='text-danger'{% endif %}><small>{{ invoice.currency.symbol }} {{ invoice.amount }}</small></td>
+                            <td {% if invoice.payment_status != 'Paid' %}class='text-danger'{% endif %}><small>{{ invoice.user.username }}</small></td>
+                            <td>
+                                <span>
+                                    <a href="{% url 'finance:invoice_preview' invoice.id %}" class='text-dark'>
+                                        <i class='bx bx-show'></i>
+                                    </a>
+                                </span>
+                                <span class='px-2'>
+                                    {% if invoice.amount_due > 0 %}
+                                        <span style='cursor:pointer;' data-id={{ invoice.id }} data-amount={{ invoice.amount_due }} id='id_update' class="text-dark">
+                                            <i class='bx bx-right-arrow'></i>
+                                        </span>
+                                    {% else %}
+                                        <span style='cursor:pointer;' class="text-dark hint--bottom" aria-label='Invoice fully paid'>
+                                            <i class='bx bx-rectangle'></i>
+                                        </span>
+                                    {% endif %}
+                                </span>
+                                <span>
+                                    {% if request.user.role == 'admin' %}
+                                        <span data-id={{ invoice.id }} id='whatsappBtn'>
+                                            <i class='bx bxl-whatsapp'></i>
+                                        </span>
+                                    {% endif %}
+                                </span>
+                                <span class='px-2'>
+                                    {% if request.user.role == 'admin' %}
+                                        <span id='id_delete' data-id={{ invoice.id }}>
+                                            <i class='bx bx-trash'></i>
+                                        </span>
+                                    {% endif %}
+                                </span>
+                            </td>
                         </tr>
                     {% endfor %}
-                </tbody>  
+                </tbody>
             </table>
         </div>
 

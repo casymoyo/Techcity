@@ -29,8 +29,8 @@
                         <tr>
                             <th>Date</th>
                             <th>By (user)</th>
-                            <th>Type</th>
                             <th>Refence</th>
+                            <th>Type</th>
                             <th>Trans Qnty</th>
                             <th>Qnty At Hand</th>
                         </tr>
@@ -40,17 +40,17 @@
                             <tr>
                                 <td><small>{{ log.timestamp }}</small></td>
                                 <td><small><span>{{ log.user }}</span></small></td>
-                                <td>
-                                    <small>
-                                        {{ log.action }} 
-                                        {% if log.description %}({{ log.description }}){% endif %}
-                                    </small>
-                                </td>
                                 {% if log.invoice.invoice_number %}
                                     <td data-id="{{log.invoice.id}}" id="invoice" style="cursor:pointer;"><small>{{log.invoice.invoice_number}}</small></td>
                                 {% else %}
                                     <td data-id="{{ log.product_transfer.id }}" id="transfer" style="cursor:pointer;"><small>{{log.product_transfer.transfer.transfer_ref}}</small></td>
                                 {% endif %}
+                                <td>
+                                    <small style='width:20px !important;'>
+                                        {{ log.action }} 
+                                        {% if log.description %}({{ log.description }}){% endif %}
+                                    </small>
+                                </td>
                                 <td><small>
                                     {% if log.action == 'stock in' or log.action == 'Update' or log.action == 'sale cancelled' or log.action == 'Stock in' %}
                                         <span class='text-success'>{{log.quantity}}</span>

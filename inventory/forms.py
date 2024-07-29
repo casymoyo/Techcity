@@ -4,7 +4,9 @@ from . models import (
     ProductCategory, 
     Inventory, Transfer, 
     DefectiveProduct, 
-    Service
+    Service, 
+    Supplier, 
+    PurchaseOrder
 )
 
 class AddProductForm(forms.ModelForm):
@@ -48,3 +50,14 @@ class ServiceForm(forms.ModelForm):
     class Meta:
         model = Service
         fields = '__all__'
+
+class AddSupplierForm(forms.ModelForm):   
+    class Meta :
+        model = Supplier
+        fields = '__all__'
+
+class CreateOrderForm(forms.ModelForm):
+    class Meta:
+        model =  PurchaseOrder
+        exclude = ['order_number', 'branch']
+        

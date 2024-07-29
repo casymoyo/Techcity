@@ -28,7 +28,7 @@ def transfers(request):
 
 def stock_notifications(request):
     if request.user.id != None:
-        notifications = StockNotifications.objects.filter(inventory__branch=request.user.branch, inventory__reorder=False)
+        notifications = StockNotifications.objects.filter(inventory__branch=request.user.branch, inventory__reorder=False, inventory__alert_notification=False)
         return (
             {
                 'inv_notifications_count':notifications.count(),

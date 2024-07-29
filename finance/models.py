@@ -12,6 +12,7 @@ class Currency(models.Model):
     name = models.CharField(max_length=50)  
     symbol = models.CharField(max_length=5)  
     exchange_rate = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    default = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.name}"

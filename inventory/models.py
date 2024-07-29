@@ -1,8 +1,8 @@
-import random, string
+import random, string, uuid
 from django.db import models
 from company.models import Branch
 from django.db.models import Sum
-
+from django.utils import timezone
 
 class ProductCategory(models.Model):
     """Model for product categories."""
@@ -36,6 +36,65 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+class Supplier(models.Model):
+    """Model to represent suppliers."""
+    name = models.CharField(max_length=255)
+    contact = models.CharField(max_length=255)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    address = models.TextField()
+
+    def __str__(self):
+        return self.name
+
+class PurchaseOrder(models.Model):
+    """Model for purchase orders."""
+
+    status_choices = [
+        ('pending', 'Pending'),
+        ('ordered', 'Ordered'),
+        ('received', 'Received'),
+        ('canceled', 'Canceled')
+    ]
+
+    order_number = models.CharField(max_length=100, unique=True)
+    supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True)
+    order_date = models.DateTimeField(default=timezone.now)
+    delivery_date = models.DateTimeField(null=True, blank=True)
+    total_cost = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    status = models.CharField(max_length=50, choices=status_choices, default='pending')
+    notes = models.TextField(null=True, blank=True)
+    
+    def generate_order_number(self):
+        return f'PO-{uuid.uuid4().hex[:10].upper()}'
+
+    def save(self, *args, **kwargs):
+        if not self.order_number:
+            self.order_number = self.generate_order_number()
+        super(PurchaseOrder, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return f"PO {self.order_number} - {self.supplier}"
+
+class PurchaseOrderItem(models.Model):
+    """Model for items in a purchase order."""
+
+    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    quantity = models.IntegerField()
+    unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.product.name} x {self.quantity}"
+
+    def save(self, *args, **kwargs):
+        # Calculate the total cost for the purchase order item
+        self.total_cost = self.quantity * self.unit_cost
+        super().save(*args, **kwargs)
+        # Update the total cost of the purchase order
+        self.purchase_order.update_total_cost()
+
+
 class Inventory(models.Model):
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
@@ -45,6 +104,11 @@ class Inventory(models.Model):
     status = models.BooleanField(default=True)
     stock_level_threshold = models.IntegerField(default=5)
     reorder = models.BooleanField(default=False)
+    alert_notification = models.BooleanField(default=False, null=True, blank=True)
+    
+    def update_stock(self, added_quantity):
+        self.quantity += added_quantity
+        self.save()
     
     def __str__(self):
         return f'{self.branch.name} : ({self.product.name}) quantity ({self.quantity})'
@@ -134,7 +198,8 @@ class ActivityLog(models.Model):
         ('write off', 'write off'),
         ('defective', 'defective'),
         ('activated', 'activated'),
-        ('deactivated', 'deactivated')
+        ('deactivated', 'deactivated'),
+        ('removed', 'removed')
     ]
     
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
@@ -170,15 +235,18 @@ class StockNotifications(models.Model):
         return f'{self.inventory}: {self.notification}'
     
 class ReorderList(models.Model):
+    date = models.DateField(auto_now_add=True)
     product = models.ForeignKey(Inventory, on_delete=models.CASCADE)
-    branch = branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+    branch =  models.ForeignKey(Branch, on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+    cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, default=0 )
     
     def __str__(self):
         return f'{self.product.product.name}'
 
 class ServiceCategory(models.Model):
     """Model for service categories."""
-
+   
     name = models.CharField(max_length=255)
 
     def __str__(self):

@@ -45,21 +45,28 @@
                     <tr id='prv'>
                         <td class='px-5 fw-bold'>Previous Due</td>
                         <td class="d-flex justify-content-end" id="previous_due">
-                            <span class='p_due'>0.00</span>
+                            <span class='p_due'>25.00</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class='px-5 fw-bold'>Paid Amount</td>
+                        <td class='px-5 fw-bold'>Current Due</td>
+                        <td class="d-flex justify-content-end" id="id_due_amount">0.00</td>
+                    </tr>
+                    <tr id='prv'>
+                        <td class='px-5 fw-bold'>Total Balance</td>
+                        <td class="d-flex justify-content-end" id="tb_due">
+                            <span class='p_due' id='total_balance_due'>25.00</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class='px-5 fw-bold'>Amount Paid</td>
                         <td class="d-flex justify-content-end" id="id_paid_amount">0.00</td>
                     </tr>
                     <tr>
                         <td class='px-5 fw-bold'>Due Amount</td>
-                        <td class="d-flex justify-content-end fw-bold" id="id_due_amount">0.00</td>
+                        <td class="d-flex justify-content-end fw-bold" id="id_balance">0.00</td>
                     </tr>
-                    <tr>
-                        <td class='px-5 fw-bold'>Balance</td>
-                        <td class="d-flex justify-content-end" id="id_balance">0.00</td>
-                    </tr>
+                    
                 </table>
            </div>
         </div>
@@ -148,40 +155,32 @@
     </div>
 </div>
 <script>
-    const previousV = document.querySelector('.p_due')
-    const interestV = document.querySelector('.inter')
-    const deliveryV = document.querySelector('.d_c')
-    const discountV = document.querySelector('.disc_c')
+    const previousV = document.querySelector('.p_due');
+    const interestV = document.querySelector('.inter');
+    const deliveryV = document.querySelector('.d_c');
+    const discountV = document.querySelector('.disc_c');
 
-    const reocurring = document.getElementById('reoccuring')
-    const nextDueDaysEl = document.getElementById('next_due_date_p')
-    const nextDueDays = document.getElementById('next_due_date')
+    const reocurring = document.getElementById('reoccuring');
+    const nextDueDaysEl = document.getElementById('next_due_date_p');
+    const nextDueDays = document.getElementById('next_due_date');
 
-    reocurring.addEventListener('click', ()=>{
-        if(nextDueDaysEl.classList.contains('hidden')){
-            nextDueDaysEl.classList.remove('hidden');
-            nextDueDaysEl.classList.add('d-flex');
-        }else{
-            nextDueDaysEl.classList.add('hidden');
-            nextDueDaysEl.classList.remove('d-flex');
+    reocurring.addEventListener('click', () => {
+        nextDueDaysEl.classList.toggle('hidden');
+        nextDueDaysEl.classList.toggle('d-flex');
+    });
+
+    function hideIfZero(element, selector) {
+        if (element.textContent.trim() === '0.00') {
+            const el = document.querySelector(selector);
+            el.style.display = 'none';
+            el.classList.add('hidden');
         }
-    })
+    }
 
-    if (previousV.textContent == '0.00'){
-        document.querySelector('#prv').style.disply='none'
-        document.querySelector('#prv').classList.add('hidden')
-    }
-    if (deliveryV.textContent == '0.00'){
-        document.querySelector('#d_charge').style.disply='none'
-        document.querySelector('#d_charge').classList.add('hidden')
-    }
-    if (interestV.textContent == '0.00'){
-        document.querySelector('#int').style.disply='none'
-        document.querySelector('#int').classList.add('hidden')
-    }
-    if (discountV.textContent == '0.00'){
-        document.querySelector('#disc').style.disply='none'
-        document.querySelector('#disc').classList.add('hidden')
-    }
+    hideIfZero(previousV, '#prv');
+    hideIfZero(interestV, '#int');
+    hideIfZero(deliveryV, '#d_charge');
+    hideIfZero(discountV, '#disc');
 </script>
+
 {% endblock content %}
