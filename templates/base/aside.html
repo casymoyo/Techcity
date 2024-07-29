@@ -3,84 +3,178 @@
     <aside class="d-flex flex-column">
         <div class=" menu mt-5 px-4 d-flex justify-content-cente align-items-center">
             <ul class="menu list-unstyled">
+                
+                {# salesperson dashboard links (Dashboard, sell, customers) #}
+                {% if request.user.role == 'salesperson' %}
+                    <li class="menu-link mb-4">
+                            <a href="{% url 'dashboard:dashboard'%}">
+                                <i class='bx bxs-dashboard' ></i>
+                                <span class='px-2'>Dashboard</span>
+                            </a>
+                    </li>
+            
                     <li class="menu-link mb-4">
                         <a href="{% url 'pos:pos'%}">
                             <i class='bx bx-check-circle' ></i>
                             <span class='px-2'>Sell</span>
                         </a>
                     </li>
+                    
+                    <li class="menu-link mb-4">
+                        <a href="{% url 'finance:customer_list' %}">
+                            <i class='bx bx-universal-access'></i>
+                            <span class='px-2'>Customers</span>
+                        </a>
+                    </li>
+                    
+                {% endif %}
+            
+                {# accountant dashboard links (Dashboard, transfers, transactions, finance, customers, analytics, branches) #}
+                {% if request.user.role == 'accountant' %}
+                    <li class="menu-link mb-4">
+                        <a href="{% url 'dashboard:dashboard'%}">
+                            <i class='bx bxs-dashboard' ></i>
+                            <span class='px-2'>Dashboard</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-link mb-4">
+                        <a href='{% url 'inventory:transfers' %}'>
+                            <i class='bx bx-transfer-alt' ></i>
+                            <span class='px-2'>Transfers</span>
+                           
+                            {% if transfers_count > 0 %}
+                                <span class='badge circle-rounded bg-danger'>
+                                    <small>{{transfers_count}}</small>
+                                </span>
+                            {% endif %}
+                        </a>
+                    </li>
+                
+                    <li class="menu-link mb-4">
+                        <a href="{% url 'finance:invoice' %}">
+                            <i class='bx bx-dollar'></i>
+                            <span class='px-2'>Transactions</span>
+                        </a>
+                        <span class=' text-dark
+                        caret'></span>
+                    </li>
+            
+                    <li class="menu-link mb-4">
+                        <a href="{% url 'finance:finance' %}">
+                            <i class='bx bx-credit-card-front'></i>
+                            <span class='px-2'>Finance</span>
+                        </a>
+                    </li>
+            
+                    <li class="menu-link mb-4">
+                        <a href="{% url 'finance:customer_list' %}">
+                            <i class='bx bx-universal-access'></i>
+                            <span class='px-2'>Customers</span>
+                        </a>
+                    </li>
+            
+                    <li class="menu-link mb-4">
+                        <a href="">
+                            <i class='bx bx-analyse'></i>
+                            <span class='px-2'>Anaytics</span>
+                        </a>
+                    </li>
+            
+                    <li class="menu-link mb-4">
+                        <a href="{% url 'company:branch_list' %}">
+                            <i class='bx bx-building'></i>
+                            <span class='px-2'>Branches</span>
+                        </a>
+                    </li>
+                    
+                {% endif %}
+                
+                {# admin dashboard links (Dashboard, sell, products, transfers, transactions, finance, customers, analytics, branches, users, settings) #}
                 {% if request.user.role == 'admin' %}
-                        <li class="menu-link mb-4">
-                            <a href="{% url 'dashboard:dashboard'%}">
-                                <i class='bx bxs-dashboard' ></i>
-                                <span class='px-2'>Dashboard</span>
-                            </a>
-                        </li>
+                    <li class="menu-link mb-4">
+                        <a href="{% url 'dashboard:dashboard'%}">
+                            <i class='bx bxs-dashboard' ></i>
+                            <span class='px-2'>Dashboard</span>
+                        </a>
+                    </li>
+                        
+                    <li class="menu-link mb-4">
+                        <a href="{% url 'pos:pos'%}">
+                            <i class='bx bx-check-circle' ></i>
+                            <span class='px-2'>Sell</span>
+                        </a>
+                    </li>
                 
-                <li class="menu-link mb-4">
-                    <a href="{% url 'inventory:inventory' %}">
-                        <i class='bx bx-cabinet'></i>
-                        <span class='px-2'>Products</span>
-                    </a>
-                </li>
+                    <li class="menu-link mb-4">
+                        <a href="{% url 'inventory:inventory' %}">
+                            <i class='bx bx-cabinet'></i>
+                            <span class='px-2'>Products</span>
+                        </a>
+                    </li>
 
-                <li class="menu-link mb-4">
-                    <a href='{% url 'inventory:transfers' %}'>
-                        <i class='bx bx-transfer-alt' ></i>
-                        <span class='px-2'>Transfers</span>
-                       
-                        {% if transfers_count > 0 %}
-                            <span class='badge circle-rounded bg-danger'>
-                                <small>{{transfers_count}}</small>
-                            </span>
-                        {% endif %}
-                    </a>
-                </li>
+                    <li class="menu-link mb-4">
+                        <a href='{% url 'inventory:transfers' %}'>
+                            <i class='bx bx-transfer-alt' ></i>
+                            <span class='px-2'>Transfers</span>
+                           
+                            {% if transfers_count > 0 %}
+                                <span class='badge circle-rounded bg-danger'>
+                                    <small>{{transfers_count}}</small>
+                                </span>
+                            {% endif %}
+                        </a>
+                    </li>
                 
-                <li class="menu-link mb-4">
-                    <a href="{% url 'finance:invoice' %}">
-                        <i class='bx bx-dollar'></i>
-                        <span class='px-2'>Transactions</span>
-                    </a>
-                    <span class=' text-dark caret'></span>
-                </li>
-                
-                <li class="menu-link mb-4">
-                    <a href="{% url 'finance:finance' %}">
-                        <i class='bx bx-credit-card-front'></i>
-                        <span class='px-2'>Finance</span>
-                    </a>
-                </li>
-                <li class="menu-link mb-4">
-                    <a href="{% url 'finance:customer_list' %}">
-                        <i class='bx bx-universal-access'></i>
-                        <span class='px-2'>Customers</span>
-                    </a>
-                </li>
-                <li class="menu-link mb-4">
-                    <a href="">
-                        <i class='bx bx-analyse'></i>
-                        <span class='px-2'>Anaytics</span>
-                    </a>
-                </li>
-                <li class="menu-link mb-4">
-                    <a href="{% url 'company:branch_list' %}">
-                        <i class='bx bx-building'></i>
-                        <span class='px-2'>Branches</span>
-                    </a>
-                </li>
-                <li class="menu-link mb-4">
-                    <a href="{% url 'users:users' %}">
-                        <i class='bx bx-user'></i>
-                        <span class='px-2'>Users</span>
-                    </a>
-                </li>
-                <li class="menu-link mb-4">
-                    <a href="{% url 'settings:settings' %}">
-                        <i class='bx bx-cog' ></i>
-                        <span class='px-2'>Settings</span>
-                    </a>
-                </li>
+                    <li class="menu-link mb-4">
+                        <a href="{% url 'finance:invoice' %}">
+                            <i class='bx bx-dollar'></i>
+                            <span class='px-2'>Transactions</span>
+                        </a>
+                        <span class=' text-dark caret'></span>
+                    </li>
+                    
+                    <li class="menu-link mb-4">
+                        <a href="{% url 'finance:finance' %}">
+                            <i class='bx bx-credit-card-front'></i>
+                            <span class='px-2'>Finance</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-link mb-4">
+                        <a href="{% url 'finance:customer_list' %}">
+                            <i class='bx bx-universal-access'></i>
+                            <span class='px-2'>Customers</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-link mb-4">
+                        <a href="">
+                            <i class='bx bx-analyse'></i>
+                            <span class='px-2'>Anaytics</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-link mb-4">
+                        <a href="{% url 'company:branch_list' %}">
+                            <i class='bx bx-building'></i>
+                            <span class='px-2'>Branches</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-link mb-4">
+                        <a href="{% url 'users:users' %}">
+                            <i class='bx bx-user'></i>
+                            <span class='px-2'>Users</span>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-link mb-4">
+                        <a href="{% url 'settings:settings' %}">
+                            <i class='bx bx-cog' ></i>
+                            <span class='px-2'>Settings</span>
+                        </a>
+                    </li>
                 {% endif %}
             </ul>
         </div>

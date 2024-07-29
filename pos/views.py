@@ -6,8 +6,12 @@ from finance.models import Invoice
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 
+from permissions.permissions import allowed_users
+
+
 @login_required
 @transaction.atomic
+@allowed_users(['admin', 'salesperson'])
 def pos(request):
     form = CashWithdrawForm()
     invoice_count = Invoice.objects.filter(issue_date=timezone.now(), branch=request.user.branch ).count()
