@@ -17,7 +17,8 @@ from django.contrib.auth.hashers import make_password
 
 def users(request):
     search_query = request.GET.get('q', '')
-    users = User.objects.filter(Q(username__icontains=search_query) | Q(email__icontains=search_query)).order_by('first_name', 'last_name')
+    users = User.objects.filter(Q(username__icontains=search_query) | Q(email__icontains=search_query)).order_by(
+        'first_name', 'last_name')
     form = UserRegistrationForm()
     user_details_form = UserDetailsForm2()
 
@@ -48,7 +49,7 @@ def login_view(request):
             return render(request, 'auth/login.html')
 
         # todo allow authentication to verified email addresses
-        user = authenticate_user(email=email_address,password=password)
+        user = authenticate_user(email=email_address, password=password)
         logger.info(f'User: {user}')
         if user is not None:
             if user.is_active:
@@ -58,16 +59,23 @@ def login_view(request):
                 messages.error(request, 'Your account is not active, contact admin')
         else:
             messages.error(request, 'Invalid username or password')
-    return render(request, 'auth/login.html',)
+    return render(request, 'auth/login.html', )
 
 
 def user_edit(request, user_id):
-    # todo remove this function view
     user = User.objects.get(id=user_id)
-    form = UserDetailsForm()
-    # render form with user data
-    if request.method == 'GET':
-        return render(request, 'users/user_edit.html', {'user': user, 'form': form})
+    logger.info(f'User details: {user.first_name + " " + user.email}')
+    if request.method == 'POST':
+        form = UserDetailsForm2(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'User details updated successfully')
+            return redirect('users:user_detail', user_id=user.id)
+        else:
+            messages.error(request, 'Invalid form data')
+    else:
+        form = UserDetailsForm2(instance=user)
+    return render(request, 'auth/users.html', {'user': user, 'form': form})
 
 
 def user_detail(request, user_id):

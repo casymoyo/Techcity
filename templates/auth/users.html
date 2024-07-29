@@ -94,10 +94,10 @@
         <div class="modal-dialog">
             <div class="modal-content w-100 p-4">
                 <h6 class="fw-bold">Edit User</h6>
-                <form method="post" id="editUserForm">
+                <form method="post" id="editUserForm" action="{% url 'users:user_edit' 0 %}">
                     {% csrf_token %}
-                    {{user_details_form|crispy}}
-                    {# buttons #}
+                    <input type="hidden" name="user_id" id="editUserId">
+                    {{ user_details_form|crispy }}
                     <div class="d-flex justify-content-end">
                         <div class="">
                             <button type="reset" class="btn btn-danger btn-sm">
@@ -141,25 +141,27 @@
     editUserBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             const userId = this.getAttribute('data-user-id');
-            const url = "{% url 'users:ajax_get_user_data' 0 %}".replace('0', userId);
-
+            const url = "{% url 'users:user_edit' 0 %}".replace('0', userId);
+    
             $.ajax({
-                url: url,
+                url: "{% url 'users:ajax_get_user_data' 0 %}".replace('0', userId),
                 success: function(data) {
+                    $('#editUserForm').attr('action', url);
+                    $('#editUserId').val(userId);
                     $('#editUserModal input[name="first_name"]').val(data.first_name);
                     $('#editUserModal input[name="last_name"]').val(data.last_name);
                     $('#editUserModal input[name="username"]').val(data.username);
                     $('#editUserModal input[name="email"]').val(data.email);
                     $('#editUserModal input[name="phonenumber"]').val(data.phonenumber);
-                    $('#editUserModal select[name="company"]').val(data.company);
-                    $('#editUserModal select[name="branch"]').val(data.branch);
+                    $('#editUserModal select[name="edit_company"]').val(data.company);
+                    $('#editUserModal select[name="edit_branch"]').val(data.branch);
                     $('#editUserModal select[name="role"]').val(data.role);
                     editModal.show();
                 }
             });
         });
     });
-
+    
     // load branch based on selected company on add user form
      $('#id_company').change(function() {
         var url = "{% url 'users:ajax_load_branches' %}";
