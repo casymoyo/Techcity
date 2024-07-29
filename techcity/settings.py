@@ -131,15 +131,7 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),
         'PORT': config('DB_PORT')
-    }
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME':  'techcity',
-        'USER': 'casy',
-        'PASSWORD': 'neverfail',
-        'HOST': 'localhost',
-        'PORT': '5432'
-    }
+    },
     # 'default': {
     #     'ENGINE':'django.db.backends.postgresql',
     #     'NAME':'railway',
