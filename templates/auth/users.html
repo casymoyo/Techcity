@@ -49,11 +49,11 @@
                 <td><small>{{ user.email }}</small></td>
                 <td>{{ user.role }}</td>  
                 <td>
-                    <a href="{% url 'users:user_detail' user.id %}" class="btn btn-light btn-sm">
+                    <a data-toggle="tooltip" data-placement="top" title="view user profile" href="{% url 'users:user_detail' user.id %}" class="btn btn-light btn-sm ">
                         <i class="bx bx-show"></i>
                     </a>
                     {% if user != request.user %}
-                    <a href="{% url 'users:user_edit' user.id %}" class="btn btn-light btn-sm">
+                    <a data-toggle="tooltip" data-placement="top" title="edit user profile" class="btn btn-light btn-sm editUserBtn" id="editUser" data-user-id="{{ user.id }}">
                         <i class="bx bx-edit"></i>
                     </a>
                     {% endif %}
@@ -90,28 +90,114 @@
         </div>
       </div>
     
-      <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-          <div class="modal-content">
+            <div class="modal-content w-100 p-4">
+                <h6 class="fw-bold">Edit User</h6>
+                <form method="post" id="editUserForm" action="{% url 'users:user_edit' 0 %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_id" id="editUserId">
+                    {{ user_details_form|crispy }}
+                    <div class="d-flex justify-content-end">
+                        <div class="">
+                            <button type="reset" class="btn btn-danger btn-sm">
+                                <i class="bx bx-reset"></i>
+                                Reset
+                            </button>
+                        </div>
+                        <span class="px-2"></span>
+                        <div class="">
+                            <button type="submit" class="btn btn-secondary btn-sm">
+                                <i class="bx bx-save"></i>
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
       </div>
-    
-      <div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            </div>
-        </div>
-      </div>
+
 </div>
 
 <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>  
 <script>
-    const addBtn = document.getElementById('addUser')
+    const addBtn = document.getElementById('addUser');
     const addModal = new bootstrap.Modal(document.getElementById('addUserModal'));
 
+    const editUserBtn = document.getElementById('editUser');
+    const editUserBtns = document.querySelectorAll('.editUserBtn');
+    const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    
+    
     addBtn.addEventListener('click', ()=>{
         addModal.show()
     })
+    
+    editUserBtn.addEventListener('click', ()=>{
+        editModal.show()
+    })
+    
+    editUserBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const userId = this.getAttribute('data-user-id');
+            const url = "{% url 'users:user_edit' 0 %}".replace('0', userId);
+    
+            $.ajax({
+                url: "{% url 'users:ajax_get_user_data' 0 %}".replace('0', userId),
+                success: function(data) {
+                    $('#editUserForm').attr('action', url);
+                    $('#editUserId').val(userId);
+                    $('#editUserModal input[name="first_name"]').val(data.first_name);
+                    $('#editUserModal input[name="last_name"]').val(data.last_name);
+                    $('#editUserModal input[name="username"]').val(data.username);
+                    $('#editUserModal input[name="email"]').val(data.email);
+                    $('#editUserModal input[name="phonenumber"]').val(data.phonenumber);
+                    $('#editUserModal select[name="edit_company"]').val(data.company);
+                    $('#editUserModal select[name="edit_branch"]').val(data.branch);
+                    $('#editUserModal select[name="role"]').val(data.role);
+                    editModal.show();
+                }
+            });
+        });
+    });
+    
+    // load branch based on selected company on add user form
+     $('#id_company').change(function() {
+        var url = "{% url 'users:ajax_load_branches' %}";
+        var companyId = $(this).val();
+         
+        $.ajax({
+            url: url,
+            data: {
+                'company_id': companyId
+            },
+            success: function(data) {
+                $('#id_branch').html('');
+                $.each(data, function(key, value) {
+                    $('#id_branch').append('<option value="' + value.id + '">' + value.name + '</option>');
+                });
+            }
+        });
+    });
+     
+     //load branch based on selected company on edit user form 
+    $('#id_edit_company').change(function() {
+        var url = "{% url 'users:ajax_load_branches' %}";
+        var companyId = $(this).val();
+        
+        $.ajax({
+            url: url,
+            data: {
+                'company_id': companyId
+            },
+            success: function(data) {
+                $('#id_edit_branch').html('');
+                $.each(data, function(key, value) {
+                    $('#id_edit_branch').append('<option value="' + value.id + '">' + value.name + '</option>');
+                });
+            }
+        });
+    });
 </script>
 {% endblock content %}

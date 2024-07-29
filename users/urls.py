@@ -1,13 +1,17 @@
 from django.urls import path
-from . views import *
+from .views import *
 
-app_name='users'
+app_name = 'users'
 
 urlpatterns = [
-    path('users/', users ,name='users'),
+    path('users/', users, name='users'),
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
     path('register/', register, name='register'),
     path('user/edit/<int:user_id>/', user_edit, name='user_edit'),
-    path('user/detail/<int:user_id>/', user_detail, name='user_detail' )
+    path('user/detail/<int:user_id>/', user_detail, name='user_detail'),
+    path('ajax/load-branches/', load_branches, name='ajax_load_branches'),
+    path('ajax/get-user-data/<int:user_id>/', get_user_data, name='ajax_get_user_data'),
+
+
 ]
