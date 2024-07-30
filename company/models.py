@@ -25,11 +25,12 @@ class Company(models.Model):
     description = models.TextField(blank=True)  
     address = models.CharField(max_length=255, blank=True)  
     domain = models.CharField(max_length=255, blank=True)  
-    logo = models.ImageField(upload_to='store_logos/', blank=True)  
+    logo = models.ImageField(upload_to=f'{name}/logo/', blank=True)  
     email = models.EmailField(blank=True)  
     phone_number = models.CharField(max_length=20, blank=True)  
     is_active = models.BooleanField(default=True)  
 
+    
     def __str__(self) -> str:
         return self.name
 
