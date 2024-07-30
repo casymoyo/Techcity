@@ -1,5 +1,5 @@
+from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
-from users.models import User
 
 
 class CheckUsersMiddleware:
@@ -8,6 +8,7 @@ class CheckUsersMiddleware:
 
     def __call__(self, request):
         if request.user.is_authenticated:
+            User = get_user_model()
             if not User.objects.exists() and request.path != '/company/register-company/':
                 return redirect('company:register-company')
         return self.get_response(request)
