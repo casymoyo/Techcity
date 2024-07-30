@@ -63,16 +63,19 @@ class CustomUserManager(BaseUserManager):
 
 class User(AbstractUser):
     USER_ROLES = (
+        ('owner', 'Owner'),
         ('admin', 'Admin'),
         ('sales', 'Salesperson'),
         ('accountant', 'Accountant')
     )
     email = models.EmailField(unique=True)
     profile_image = models.ImageField(upload_to='Profile_images', blank=True, null=True)
-    company = models.ForeignKey('company.Company', on_delete=models.CASCADE, null=True)
-    branch = models.ForeignKey('company.Branch', on_delete=models.CASCADE, null=True)
+    company = models.ForeignKey('company.Company', on_delete=models.CASCADE, null=True, blank=True)
+    branch = models.ForeignKey('company.Branch', on_delete=models.CASCADE, null=True, blank=True)
+    # todo remove user code and groups
     code = models.CharField(max_length=50, null=True, blank=True)
     groups = models.ManyToManyField(Group)
+
     phonenumber = models.CharField(max_length=13)
     role = models.CharField(choices=USER_ROLES, max_length=50)
 
@@ -85,6 +88,7 @@ class User(AbstractUser):
                 return code
 
     def save(self, *args, **kwargs):
+        # todo remove self.code and signals
         if not self.code:
             self.code = self.code_generator()
         super().save(*args, **kwargs)
