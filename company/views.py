@@ -21,8 +21,9 @@ def register_company_view(request):
         'user_data': {}
     }
     """
-    payload = request.data
     if request.method == 'POST':
+        payload = request.data
+
         # validate json data
         is_valid, message = validate_company_registration_payload(payload)
         if not is_valid:
