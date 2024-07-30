@@ -1,5 +1,6 @@
 from django.contrib.auth.hashers import make_password
 from django.db.transaction import atomic
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from users.models import User
@@ -60,10 +61,9 @@ def register_company_view(request):
                 user.save()
 
             # return message
-            messages.success(request, 'Company registration successful!')
-            return redirect('users:login')
+            return JsonResponse({"success": True, "message": "Company registration successful"}, status=200)
         except Exception as e:
-            messages.success(request, 'Error creating company')
+            return JsonResponse({"success": False, "message": f"Failed: {e}"}, status=500)
     return render(request, 'registration/registration.html')
 
 
