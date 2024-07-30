@@ -7,6 +7,10 @@ This module defines the core data models for our Company management application:
 from django.db import models
 
 
+def company_logo_path(instance, filename):
+    return f"{instance.name}/logos/{filename}"
+
+
 class Company(models.Model):
     """
     Represents a physical or online store within the system. Companies can contain multiple branches.
@@ -26,13 +30,19 @@ class Company(models.Model):
     description = models.TextField(blank=True)
     address = models.CharField(max_length=255, blank=True)
     domain = models.CharField(max_length=255, blank=True)
-    logo = models.ImageField(upload_to='store_logos/', blank=True)
+    logo = models.ImageField(upload_to=company_logo_path, blank=True)
     email = models.EmailField(blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
     is_active = models.BooleanField(default=True)
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args, **kwargs):
+        # change logo name before saving and folder location
+        if self.logo:
+            self.logo.name = f"{self.name}_logo.png"
+        super(Company, self).save(*args, **kwargs)
 
 
 class Branch(models.Model):
