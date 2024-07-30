@@ -8,6 +8,6 @@ class CheckUsersMiddleware:
 
     def __call__(self, request):
         if request.user.is_authenticated:
-            if not User.objects.exists() and request.path != '/company/register/':
+            if not User.objects.exists() and request.path != '/company/register-company/':
                 return redirect('company:register-company')
         return self.get_response(request)

@@ -56,6 +56,7 @@ def register_company_view(request):
 
             # return message
             messages.success(request, 'Company registration successful!')
+            return redirect('users:login')
         except Exception as e:
             messages.success(request, 'Error creating company')
     return render(request, 'registration/registration.html')
