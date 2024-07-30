@@ -11,7 +11,7 @@ from .forms import BranchForm
 
 
 def registration(request):
-    return render(request, 'company/registration.html')
+    return render(request, 'registration/registration.html')
 
 
 def register_company_view(request):
