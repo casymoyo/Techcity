@@ -1,7 +1,9 @@
 from django.contrib.auth.hashers import make_password
+from django.db.transaction import atomic
 from django.shortcuts import render, redirect, get_object_or_404
 
 from users.models import User
+from utils.validate_json import validate_company_registration_payload
 from .models import Branch, Company
 from permissions import permissions
 from django.contrib import messages
@@ -17,37 +19,40 @@ def register_company_view(request):
     """
     payload = request.data
     if request.method == 'POST':
+        # validate json data
+        is_valid, message = validate_company_registration_payload(payload)
+        if not is_valid:
+            messages.error(request, message)
+            return render(request, 'registration/registration.html')
+
         try:
-            # with atomic
-            # validate json data
-            # under try block
+            with atomic():
+                # create company
+                company_data = payload.data['company_data']
+                company = Company(
+                    name=company_data['name'],
+                    description=company_data['description'],
+                    address=company_data['address'],
+                    domain=company_data['domain'],
+                    logo=company_data['logo'],
+                    email=company_data['email'],
+                    phone_number=company_data['phone_number'],
+                ).save()
 
-            # create company
-            company_data = payload.data['company_data']
-            company = Company(
-                name=company_data['name'],
-                description=company_data['description'],
-                address=company_data['address'],
-                domain=company_data['domain'],
-                logo=company_data['logo'],
-                email=company_data['email'],
-                phone_number=company_data['phone_number'],
-            ).save()
+                user_role = User.USER_ROLES[0][0]  # owner
 
-            user_role = 'owner'
-
-            # create user (user is owner)
-            user_data = payload.data['user_data']
-            user = User()
-            user.first_name = user_data['first_name']
-            user.last_name = user_data['last_name']
-            user.username = user_data['user_name']
-            user.email = user_data['email']
-            user.company = company.name
-            user.phonenumber = user_data['phonenumber']
-            user.role = user_role
-            user.password = make_password(user_data['password'])
-            user.save()
+                # create user (user is owner)
+                user_data = payload.data['user_data']
+                user = User()
+                user.first_name = user_data['first_name']
+                user.last_name = user_data['last_name']
+                user.username = user_data['user_name']
+                user.email = user_data['email']
+                user.company = company.name
+                user.phonenumber = user_data['phonenumber']
+                user.role = user_role
+                user.password = make_password(user_data['password'])
+                user.save()
 
             # return message
             messages.success(request, 'Company registration successful!')
