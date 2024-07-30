@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 from django.apps import apps
 
 
-
 env = environ.Env()   
 load_dotenv()
 import sys
