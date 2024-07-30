@@ -2,16 +2,22 @@ from django.contrib.auth.hashers import make_password
 from django.db.transaction import atomic
 from django.shortcuts import render, redirect, get_object_or_404
 
+from django.http import JsonResponse
 from users.models import User
 from utils.validate_json import validate_company_registration_payload
 from .models import Branch, Company
 from permissions import permissions
 from django.contrib import messages
 from .forms import BranchForm
+from django.contrib.auth import get_user_model
 
 
 def registration(request):
+    User = get_user_model()
     return render(request, 'registration/registration.html')
+    # if not User.objects.exists():
+    #     return render(request, 'registration/registration.html')
+    # return redirect('users:login')
 
 
 def register_company_view(request):
@@ -21,13 +27,13 @@ def register_company_view(request):
         'user_data': {}
     }
     """
-    payload = request.data
+    payload = request.body
     if request.method == 'POST':
         # validate json data
         is_valid, message = validate_company_registration_payload(payload)
         if not is_valid:
             messages.error(request, message)
-            return render(request, 'registration/registration.html')
+            return JsonResponse({'success':False, 'message':'Invalid form input'}, status=400)
 
         try:
             with atomic():
@@ -59,11 +65,9 @@ def register_company_view(request):
                 user.save()
 
             # return message
-            messages.success(request, 'Company registration successful!')
-            return redirect('users:login')
+            return JsonResponse({'success':True, 'message':'Company registration successful!'}, status=200)
         except Exception as e:
-            messages.success(request, 'Error creating company')
-    return render(request, 'registration/registration.html')
+            return JsonResponse({'success':False, 'message':f'{e}'}, status=400)
 
 
 def branch_list(request):
