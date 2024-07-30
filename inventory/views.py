@@ -1210,6 +1210,14 @@ def suppliers(request):
     )
 
 @login_required
+def supplier_list_json(request):
+    products = Product.objects.all().values(
+        'id',
+        'name'
+    )
+    return JsonResponse(list(products), safe=False)
+
+@login_required
 def create_supplier(request):
     #payload
     """
@@ -1370,7 +1378,16 @@ def delete_purchase_order(request, purchase_order_id):
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
-    
+
+@login_required
+def product_list_json(request):
+    products = Product.objects.all().values(
+        'id',
+        'name'
+    )
+    return JsonResponse(list(products), safe=False)
+
+
 
         
                     
