@@ -1284,9 +1284,13 @@ def purchase_orders(request):
 def create_purchase_order(request):
     
     if request.method == 'GET':
+        supplier_form = AddSupplierForm()
+        product_form = AddProductForm()
         suppliers = Supplier.objects.all()
         return render(request, 'inventory/create_purchase_order.html',
             {
+                'product_form':product_form,
+                'supplier_form':supplier_form,
                 'suppliers':suppliers
             }
         )
