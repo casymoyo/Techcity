@@ -30,7 +30,7 @@
                 <div class="d-flex">
                     {% if request.user.role == 'admin' %}
                         <div>
-                            <a href='{% url 'inventory:add_product' %}' class="btn btn-primary shadow btn-sm">
+                            <a href='{% url 'inventory:create_purchase_order' %}' class="btn btn-primary shadow btn-sm">
                                 <i class='bx bx-plus'></i> 
                                 Product
                             </a>

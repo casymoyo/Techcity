@@ -29,7 +29,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from channels.generic.websocket import  AsyncJsonWebsocketConsumer
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
-from permissions.permissions import admin_required, sales_required, accountant_required
+from permissions.permissions import (
+    admin_required,
+    # sales_required, 
+    # accountant_required
+)
 
 
 import logging
@@ -1276,67 +1280,75 @@ def purchase_orders(request):
         }
     )
     
-
 @login_required
 def create_purchase_order(request):
+    
+    if request.method == 'GET':
+        suppliers = Supplier.objects.all()
+        return render(request, 'inventory/create_purchase_order.html',
+            {
+                'suppliers':suppliers
+            }
+        )
 
-    try:
-        data = json.loads(request.body)
-        purchase_order_data = data.get('purchase_order', {})
-        purchase_order_items_data = data.get('items', [])
-    except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            purchase_order_data = data.get('purchase_order', {})
+            purchase_order_items_data = data.get('items', [])
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
 
-    supplier_id = purchase_order_data.get('supplier_id')
-    delivery_date = purchase_order_data.get('delivery_date')
-    status = purchase_order_data.get('status')
-    notes = purchase_order_data.get('notes')
+        supplier_id = purchase_order_data.get('supplier_id')
+        delivery_date = purchase_order_data.get('delivery_date')
+        status = purchase_order_data.get('status')
+        notes = purchase_order_data.get('notes')
 
-    if not all([supplier_id, delivery_date, status]):
-        return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
+        if not all([supplier_id, delivery_date, status]):
+            return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
 
-    try:
-        supplier = Supplier.objects.get(id=supplier_id)
-    except Supplier.DoesNotExist:
-        return JsonResponse({'success': False, 'message': f'Supplier with ID {supplier_id} not found'}, status=404)
+        try:
+            supplier = Supplier.objects.get(id=supplier_id)
+        except Supplier.DoesNotExist:
+            return JsonResponse({'success': False, 'message': f'Supplier with ID {supplier_id} not found'}, status=404)
 
-    try:
-        with transaction.atomic():
-            purchase_order = PurchaseOrder(
-                order_number=PurchaseOrder.generate_order_number(),
-                supplier=supplier,
-                delivery_date=delivery_date,
-                status=status,
-                notes=notes
-            )
-            purchase_order.save()
-
-            for item_data in purchase_order_items_data:
-                product_id = item_data.get('product')
-                quantity = item_data.get('quantity')
-                unit_cost = item_data.get('unit_cost')
-
-                if not all([product_id, quantity, unit_cost]):
-                    transaction.set_rollback(True)
-                    return JsonResponse({'success': False, 'message': 'Missing fields in item data'}, status=400)
-
-                try:
-                    product = Product.objects.get(id=product_id)
-                except Product.DoesNotExist:
-                    transaction.set_rollback(True)
-                    return JsonResponse({'success': False, 'message': f'Product with ID {product_id} not found'}, status=404)
-
-                PurchaseOrderItem.objects.create(
-                    purchase_order=purchase_order,
-                    product=product,
-                    quantity=quantity,
-                    unit_cost=unit_cost
+        try:
+            with transaction.atomic():
+                purchase_order = PurchaseOrder(
+                    order_number=PurchaseOrder.generate_order_number(),
+                    supplier=supplier,
+                    delivery_date=delivery_date,
+                    status=status,
+                    notes=notes
                 )
+                purchase_order.save()
 
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+                for item_data in purchase_order_items_data:
+                    product_id = item_data.get('product')
+                    quantity = item_data.get('quantity')
+                    unit_cost = item_data.get('unit_cost')
 
-    return JsonResponse({'success': True, 'message': 'Purchase order created successfully'})
+                    if not all([product_id, quantity, unit_cost]):
+                        transaction.set_rollback(True)
+                        return JsonResponse({'success': False, 'message': 'Missing fields in item data'}, status=400)
+
+                    try:
+                        product = Product.objects.get(id=product_id)
+                    except Product.DoesNotExist:
+                        transaction.set_rollback(True)
+                        return JsonResponse({'success': False, 'message': f'Product with ID {product_id} not found'}, status=404)
+
+                    PurchaseOrderItem.objects.create(
+                        purchase_order=purchase_order,
+                        product=product,
+                        quantity=quantity,
+                        unit_cost=unit_cost
+                    )
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+        return JsonResponse({'success': True, 'message': 'Purchase order created successfully'})
 
 @login_required
 def delete_purchase_order(request, purchase_order_id):
