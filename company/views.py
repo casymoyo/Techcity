@@ -9,6 +9,8 @@ from permissions import permissions
 from django.contrib import messages
 from .forms import BranchForm
 
+def registration(request):
+    return render(request, 'company/registration.html')
 
 def register_company_view(request):
     """
