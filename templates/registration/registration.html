@@ -56,10 +56,9 @@
 <body>
     <div class="Registration d-flex justify-content-center align-items-center" style="height: 100vh;">
         <div class="w-75">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
             <div id="company_info" class="border rounded p-4">
-                
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
                     <div class="d-flex justify-content-between">
                         <h5>Enter Company Details</h5>
                         <div class="custom-file">
@@ -106,14 +105,12 @@
                         <button type="button" class="btn btn-primary">next</button>
                     </div>
 
-                </form>
-                </form>
+                
 
             </div>
 
             <div id="user_info" class="border rounded p-4" style="display: none;">
                 <h5>Owner Information</h5>
-                <form>
                     <div class="mb-3">
                         <label for="first_name" class="form-label">First Name:</label>
                         <input type="text" id="first_name" name="first_name" class="form-control">   
@@ -146,93 +143,109 @@
             </div>
     </div>
     <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>    
-    <script>
+    <script>          
         document.addEventListener('DOMContentLoaded', function() {
-            const companyForm = document.getElementById('company_info');
-            const userForm = document.getElementById('user_info');
-            const nextButton = companyForm.querySelector('button[type="button"]');
-            const backButton = userForm.querySelector('button[type="button"]');
-            const saveButton = userForm.querySelector('#id_save');
-
-            const fileInput = document.getElementById('id_company_logo');
-            const fileNameDisplay = document.getElementById('file-name');
-
-            const passwordInput = document.getElementById('password1');
-            const confirmPasswordInput = document.getElementById('password2');
-
-            const errorEl = document.getElementById('c_error');
-
-            confirmPasswordInput.addEventListener('input', () => {
-                validatePasswords();
-            });
-
-            function validatePasswords() {
-                const password = passwordInput.value;
-                const confirmPassword = confirmPasswordInput.value;
-
-                if (password !== confirmPassword) {
-                    console.error('Passwords do not match');
-                    errorEl.textContent='Passwords don not match'
-                }else{
-                    errorEl.textContent=''
-                }
-        
+        const companyForm = document.getElementById('company_info');
+        const userForm = document.getElementById('user_info');
+        const nextButton = companyForm.querySelector('button[type="button"]');
+        const backButton = userForm.querySelector('button[type="button"]');
+        const saveButton = userForm.querySelector('#id_save');
+    
+        const fileInput = document.getElementById('id_company_logo');
+        const fileNameDisplay = document.getElementById('file-name');
+    
+        const passwordInput = document.getElementById('password1');
+        const confirmPasswordInput = document.getElementById('password2');
+    
+        const errorEl = document.getElementById('c_error');
+    
+        confirmPasswordInput.addEventListener('input', () => {
+            validatePasswords();
+        });
+    
+        function validatePasswords() {
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+    
+            if (password !== confirmPassword) {
+                console.error('Passwords do not match');
+                errorEl.textContent = 'Passwords do not match';
+            } else {
+                errorEl.textContent = '';
             }
-
-            fileInput.addEventListener('change', (event) => {
-                const filePath = event.target.value;
-                const fileName = filePath.split('\\').pop() || filePath.split('/').pop();
-                fileNameDisplay.textContent = fileName;
-            });
-
-        
-            nextButton.addEventListener('click', () => {
-                companyForm.style.display = 'none';
-                userForm.style.display = 'block';
-            });
-        
-            backButton.addEventListener('click', () => {
-                companyForm.style.display = 'block';
-                userForm.style.display = 'none';
-            });
-        
-            saveButton.addEventListener('click', () => {
-                saveButton.addEventListener('click', () => {
-                    const companyData = {
-                        name: document.getElementById('name').value,
-                        address: document.getElementById('address').value,
-                        domain: document.getElementById('domain').value,
-                        email: document.getElementById('email').value,
-                        phone_number: document.getElementById('phone_number').value,
-                        description: document.getElementById('description').value,
-                        logo: document.getElementById('id_company_logo').files[0]
-                    };
-                
-                    const userData = {
-                        first_name: document.getElementById('first_name').value,
-                        last_name: document.getElementById('last_name').value,
-                        username: document.getElementById('username').value,
-                        password: document.getElementById('password1').value,
-                        confirm_password: document.getElementById('password2').value
-                    };
-
-                    console.log(companyData, userData)
-                
-                    fetch("{% url 'company:register-company' %}", {
-                        method: 'POST',
-                        body: {'company_data':companyData, 'user_data':userData}
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log(data)
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
-                });
-                
+        }
+    
+        fileInput.addEventListener('change', (event) => {
+            const filePath = event.target.value;
+            const fileName = filePath.split('\\').pop() || filePath.split('/').pop();
+            fileNameDisplay.textContent = fileName;
+        });
+    
+        nextButton.addEventListener('click', () => {
+            companyForm.style.display = 'none';
+            userForm.style.display = 'block';
+        });
+    
+        backButton.addEventListener('click', () => {
+            companyForm.style.display = 'block';
+            userForm.style.display = 'none';
+        });
+    
+        saveButton.addEventListener('click', () => {
+            const companyData = {
+                name: document.getElementById('name').value,
+                address: document.getElementById('address').value,
+                domain: document.getElementById('domain').value,
+                email: document.getElementById('email').value,
+                phone_number: document.getElementById('phone_number').value,
+                description: document.getElementById('description').value,
+                logo: document.getElementById('id_company_logo').files[0]
+            };
+    
+            const userData = {
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                username: document.getElementById('username').value,
+                password: document.getElementById('password1').value,
+                confirm_password: document.getElementById('password2').value
+            };
+    
+            const csrftoken = getCookie('csrftoken');
+    
+            fetch("{% url 'company:register_company' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                },
+                body: JSON.stringify({'company_data': companyData, 'user_data': userData})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data['status'] === 'success') {
+                    window.location.href = "{% url 'users:login' %}";
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
             });
         });
+    
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
         
     </script>
 </body>

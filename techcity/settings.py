@@ -6,16 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from decouple import config
 from django.apps import apps
-from django.core.exceptions import AppRegistryNotReady
 
-from utils.middlewares.check_users import CheckUsersMiddleware
-
-
-try:
-    from utils.middlewares.check_users import CheckUsersMiddleware
-except AppRegistryNotReady:
-    # Handle the case where apps aren't ready yet
-    pass
 
 env = environ.Env()   
 load_dotenv()
@@ -90,7 +81,6 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     # custom middlewares
     'inventory.middleware.RequestMiddleware',
-    'utils.middlewares.check_users.CheckUsersMiddleware'
 ]
 
 ROOT_URLCONF = "techcity.urls"
