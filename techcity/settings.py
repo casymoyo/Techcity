@@ -6,6 +6,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from decouple import config
 
+from utils.middlewares.check_users import CheckUsersMiddleware
+
 env = environ.Env()   
 load_dotenv()
 import sys
@@ -77,7 +79,10 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # "asgiref.sync.AsyncToSyncMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware',
+
+    # custom middlewares
     'inventory.middleware.RequestMiddleware',
+    'utils.middlewares.check_users.CheckUsersMiddleware'
 ]
 
 ROOT_URLCONF = "techcity.urls"
