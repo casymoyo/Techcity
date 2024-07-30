@@ -53,6 +53,8 @@ def register_company_view(request):
             messages.success(request, 'Company registration successful!')
         except Exception as e:
             messages.success(request, 'Error creating company')
+    return render(request, 'registration/registration.html')
+
 
 def branch_list(request):
     branches = Branch.objects.all()

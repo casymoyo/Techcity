@@ -6,6 +6,7 @@ This module defines the core data models for our Company management application:
 """
 from django.db import models
 
+
 class Company(models.Model):
     """
     Represents a physical or online store within the system. Companies can contain multiple branches.
@@ -22,16 +23,17 @@ class Company(models.Model):
         is_active (bool): Flag to indicate if the store is currently active. 
     """
     name = models.CharField(max_length=255)
-    description = models.TextField(blank=True)  
-    address = models.CharField(max_length=255, blank=True)  
-    domain = models.CharField(max_length=255, blank=True)  
-    logo = models.ImageField(upload_to='store_logos/', blank=True)  
-    email = models.EmailField(blank=True)  
-    phone_number = models.CharField(max_length=20, blank=True)  
-    is_active = models.BooleanField(default=True)  
+    description = models.TextField(blank=True)
+    address = models.CharField(max_length=255, blank=True)
+    domain = models.CharField(max_length=255, blank=True)
+    logo = models.ImageField(upload_to='store_logos/', blank=True)
+    email = models.EmailField(blank=True)
+    phone_number = models.CharField(max_length=20, blank=True)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self) -> str:
         return self.name
+
 
 class Branch(models.Model):
     """
@@ -43,13 +45,11 @@ class Branch(models.Model):
         description (str): Optional textual description of the branch.
         address (str): Optional physical address of the branch. 
     """
-
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
-    address = models.CharField(max_length=255, blank=True)  
+    address = models.CharField(max_length=255, blank=True)
     phonenumber = models.CharField(max_length=20, blank=True)
     email = models.EmailField(max_length=255, blank=True)
-    
+
     def __str__(self) -> str:
         return self.name
-    
