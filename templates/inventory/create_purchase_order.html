@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+{% load static%}
+{% load crispy_forms_tags %}
+{% block title%} Create Purchase Order {% endblock%}
+{% block content %}
+   <div class="inventory">
+        <div class='add-purchase-order'>
+            <div class='purchase-order-nav shadow p-2 bg-dark text-light d-flex justify-content-between align-items-center rounded'>
+                <div>
+                    <h5 class='fw-bold px-2 mt-2'>Create Purchase order</h5>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-9">
+                    <div class="d-flex flex-column">
+                        <p id="cart-title">Purchase order Items</p>
+                        <table class="table border rounder p-2" id="cart-table">
+                            <thead>
+                                <th>Product</th>
+                                <th>Unit Price</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                                <th>Action</th>
+                            </thead>
+                            <tbody id="cart-items"></tbody>
+                            <tfoot>
+
+                            </tfoot>
+                        </table>
+                        <button class="btn btn-danger btn-sm flex" id="confirm-button" onclick="processCart()">Cancell</button>
+                        <button class="btn btn-primary btn-sm flex  mt-1" id="confirm-button" onclick="processCart()">Confirm</button>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class='mt-2 shadow'>
+                        <form class='d-flex flex-column mt-2 w-100 mt-2 w-100 px-2' method='post'>
+                            {% csrf_token %}
+                            <div class="mb-1">
+                                <label for="id_product" class="form-label requiredField">
+                                    Product
+                                </label> 
+                                <select class="select form-select" id='id_product'>
+                                    <option value="">-----</option>
+                                    {% for product in inventory %}
+                                        <option value={{product.product.name}}>{{product.product.name}} [{{ product.quantity }}]</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-1">
+                                <label for="id_product" class="form-label requiredField">
+                                    Supplier
+                                </label> 
+                                <select class="select form-select" id='id_supplier'>
+                                    <option value="">-----</option>
+                                    {% for supplier in suppliers %}
+                                        <option value={{supplier.id}}>{{supplier.name}}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div id="div_id_price" class="mb-1">
+                                <label for="id_price" class="form-label requiredField">
+                                    Unit price
+                                </label> 
+                                <input 
+                                    type="number" 
+                                    name="price" step="0.01" 
+                                    class="numberinput form-control" 
+                                    required 
+                                    id="id_price"
+                                >
+                                <p id="price_error" class="fs-6 text-danger"></p>
+                            </div> 
+                            <div id="div_id_quantity" class="mb-1"> 
+                                <label for="id_quantity" class="form-label requiredField">
+                                    Quantity
+                                </label> 
+                                <input 
+                                    type="number" 
+                                    name="quantity"
+                                    value="" 
+                                    min="0" 
+                                    class="numberinput form-control" 
+                                    required id="id_quantity"
+                                > 
+                                <p id="quantity_error" class="fs-6 text-danger"></p>
+                            </div> 
+                            <p class='text-dangr' id='error'></p>
+                            <div class='d-flex justify-content-end mb-2'>
+                                <button type='button' class='btn btn-secondary btn-sm w-100' id="id_submit" onclick="addItem();">
+                                  <i class='bx bx-save' ></i>
+                                    save
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+          <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                  <div class="modal-body text-center" id='payment_content'>
+                    <i class='bx bx-check-circle h1'></i>
+                    <h5>Product(s) Transfered Successfully</h5>
+                  </div>
+              </div>
+          </div>
+      </div>
+        <div id="cart-display" class="mt-3 px-2">
+            <p id="cart-title">Purchase order Items</p>
+            <table class="table border rounder p-2" id="cart-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Unit Price</th>
+                  <th>Quantity</th>
+                  <th>Total</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="cart-items">
+              </tbody>
+            </table>
+            <div class='d-flex justify-content-end'>
+                <button class="btn btn-primary btn-sm flex" id="confirm-button" onclick="processCart()">Confirm</button>
+            <div>
+        </div> 
+              
+   </div>  
+<script src="{% static 'js/productValidation.js'%}"></script>
+<script>
+    let cart = [];
+    let prodData = [];
+    let searchValue = '';
+    let prodQauntity = 0;
+    let prodPrice = 0;
+    let prodCost  = 0;
+   
+
+    const errorEl = document.getElementById('error');
+    const prodEl = document.querySelector('#id_price')
+
+    $(document).ready(function() {
+      $('#id_product').select2(
+          {placeholder: 'Select Product'}
+      )
+      .on('change', function (e){
+           const pElement = document.getElementById('id_product')
+           const pSelectedOption = pElement.options[pElement.selectedIndex] 
+            let product = pSelectedOption.textContent;
+            product = product.split(' [')[0]
+            console.log(product)
+           fetch(`/inventory/inventory/?name=${product}`)
+          .then(response => response.json())
+          .then(data=>{
+            prodEl.value=Number(data[0]?.price)
+            prodPrice=Number(data[0]?.price)
+            prodCost=Number(data[0]?.cost)  
+            prodData = []
+            console.log(prodData)
+            prodData.push(data)
+            console.log(prodData)
+          })
+          .catch(error => console.error('Error:', error))
+      })
+     
+  })
+
+    const successModal = new bootstrap.Modal(document.querySelector('#successModal'))
+
+    document.querySelector('#id_quantity').addEventListener(
+      'input', ()=>{
+        const quantity = $('#id_quantity').val()
+        console.log(prodData[0][0].quantity)
+        if (quantity > prodData[0][0].quantity){
+          document.querySelector('#quantity_error').innerHTML='*Quantity cant be more than source quantity'
+        }else{
+          document.querySelector('#quantity_error').innerHTML=''
+        }
+      }
+    )
+
+    document.querySelector('#id_price').addEventListener(
+      'input', ()=>{
+        const price = $('#id_price').val()
+        console.log(price, prodCost, prodData)
+        if (price < prodCost){
+          document.querySelector('#quantity_error').innerHTML=`Selling price cannot be less than cost price ${prodCost}`
+        }else{
+          document.querySelector('#quantity_error').innerHTML=''
+        }
+      }
+    )
+    
+
+    function isCartEmpty(){
+        if (cart.length === 0){
+            document.getElementById('cart-display').style.display='none'
+            {% comment %} console.log(cart.length) {% endcomment %}
+        }else{
+            document.getElementById('cart-display').style.display='block'
+        }
+    }
+    isCartEmpty()
+
+    function generateUniqueId() {
+        return Math.floor(Math.random() * 1000000000).toString(36);
+      }
+    
+    function updateCartDisplay() {
+        isCartEmpty()
+        const cartItemsList = document.getElementById("cart-items");
+        cartItemsList.innerHTML = ""; 
+      
+        let total = 0;
+        {% comment %} let branch = {{ request.user.branch.name }} {% endcomment %}
+        cart.forEach((item) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${item.product}</td>
+            <td>${item.price}</td>
+            <td>${item.quantity}</td>
+            <td>{{ request.user.branch.name }}</td>
+            <td>${item.to_branch}</td>
+            <td>
+                <button class="btn btn-sm btn-danger" data-id=${item.id} onclick="removeItem(this);">
+                  <i class='bx bx-trash-alt'></i>
+                </button>
+            </td>
+          `;
+          cartItemsList.appendChild(row);
+        });
+      }
+      
+
+    function addItem() {
+        const pElement = document.getElementById('id_product')
+        const pSelectedOption = pElement.options[pElement.selectedIndex] 
+        let product = pSelectedOption.textContent;
+        product = product.split(' [')[0]
+
+        const price = Number(document.getElementById('id_price').value)
+        const quantity =  Number(document.getElementById('id_quantity').value)
+
+        const toElement = document.getElementById('id_to')
+        const toSelectedOption = toElement.options[toElement.selectedIndex]
+        const toBranchId =  toSelectedOption.textContent
+        
+        const description = document.getElementById('id_description').value
+        const existingItem = cart.find((item) => item.product === product)
+        
+        console.log(toBranchId)
+       // Validation checks
+        if (!product || !quantity || !price  || toBranchId === '---------') {
+            errorEl.textContent='Please fill in all the fields: Product, Quantity, Destination Branch and Price.';
+            return;
+        }
+    
+      if (existingItem) {
+        existingItem.quantity += quantity;
+      } else {
+        const newTransfer = {
+          id:generateUniqueId(),
+          product:product, 
+          {% comment %} from_branch: {{ request.user.branch.name }}, {% endcomment %}
+          to_branch:toBranchId,
+          quantity: quantity,
+          price:price,
+          description:description 
+        };
+        cart.push(newTransfer);
+      }
+    
+      updateCartDisplay(); 
+    }
+    
+    const removeItem = (el) => {
+        const id = el.dataset.id
+        cart = cart.filter((item) => item.id !== id);
+        updateCartDisplay();
+    }
+    
+    function processCart() {
+      const toElement = document.getElementById('id_to');
+      const toSelectedOption = toElement.options[toElement.selectedIndex];
+      const toBranchId =  toSelectedOption.textContent;
+
+      
+      const data = {
+        'cart':cart, 
+        'branch_to': toBranchId
+      }
+
+      console.log(data)
+      
+      fetch("/inventory/process-transfer-cart/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"), 
+        },
+        body: JSON.stringify(data),
+      })
+      .then(response => response.json())
+      .then(data=>{
+          if (data.success) {
+            successModal.show()
+            cart = []; 
+            updateCartDisplay();
+            setTimeout(()=>{
+              window.location.href='{% url "inventory:transfers" %}'
+            }, 1000)
+          } else {
+            errorEl.textContent=data.error;
+          } 
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          errorEl.textContent=data.error;
+        });
+    }
+    
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === name + "=") {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }    
+</script>
+        
+{% endblock content %}

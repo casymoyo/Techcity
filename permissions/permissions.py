@@ -13,7 +13,7 @@ def admin_required(view_func):
 
 def sales_required(view_func):
     def wrapper(request, *args, **kwargs):
-        if request.user.role == 'sales':
+        if request.user.role == 'Salesperson':
             return view_func(request, *args, **kwargs)
         else:
             return HttpResponseForbidden()
@@ -31,18 +31,22 @@ def accountant_required(view_func):
     return
 
 
-def allowed_users(allowed_roles={}, default_allowed_methods=['GET']):
-    def decorator(view_func):
-        def wrapper(request, *args, **kwargs):
-            role = request.user.role
-            if role not in allowed_roles:
-                return HttpResponseForbidden("You are not authorized to view this resource")
+# def allowed_users(allowed_roles={}, default_allowed_methods=['GET']):
+#     def decorator(view_func):
+#         def wrapper(request, *args, **kwargs):
+#             role = request.user.role
+#             if role not in allowed_roles:
+#                 return HttpResponseForbidden("You are not authorized to view this resource")
 
-            allowed_methods = allowed_roles.get(role, default_allowed_methods)
-            if request.method not in allowed_methods:
-                return HttpResponseForbidden("Method not allowed")
+#             allowed_methods = allowed_roles.get(role, default_allowed_methods)
+#             if not isinstance(allowed_methods, list):
+#                 allowed_methods = default_allowed_methods
 
-            return view_func(request, *args, **kwargs)
-        return wrapper
+#             if request.method not in allowed_methods:
+#                 return HttpResponseForbidden("Method not allowed")
 
-    return decorator
+#             return view_func(request, *args, **kwargs)
+#         return wrapper
+
+#     return decorator
+
