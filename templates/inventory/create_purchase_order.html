@@ -115,7 +115,8 @@
                                 Email<span class="asteriskField">*</span> </label> <input type="email" name="email" maxlength="254" class="emailinput form-control" required="" id="id_email"> </div> <div id="div_id_phone" class="mb-3"> <label for="id_phone" class="form-label requiredField">
                                 Phone<span class="asteriskField">*</span> </label> <input type="text" name="phone" maxlength="20" class="textinput form-control" required="" id="id_phone"> </div> <div id="div_id_address" class="mb-3"> <label for="id_address" class="form-label requiredField">
                                 Address<span class="asteriskField">*</span> </label> <textarea name="address" cols="40" rows="10" class="textarea form-control" required="" id="id_address"></textarea> </div>
-
+                                
+                                <p class="text-danger" id="error"></p>
                                 <div class="d-flex justify-content-end">
                                     <div class="">
                                         <button type="reset" class="btn btn-danger btn-sm w-100">
@@ -132,22 +133,6 @@
                                     </div>
                                 </div>
                         </form>
-                            <div class="d-flex justify-content-end">
-                                <div class="">
-                                    <button type="reset" class="btn btn-danger btn-sm w-100">
-                                        <i class='bx bx-reset'></i>
-                                        Reset
-                                    </button>
-                                </div>
-                                <span class="px-1"></span>
-                                <div class="">
-                                    <button type="submit" id="id_submit_supplier" class="btn btn-secondary btn-sm w-100">
-                                        <i class='bx bx-save'></i>
-                                        Save
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
                     </div>
                 </div>
             </div>
@@ -161,6 +146,7 @@
                         <form method="post">
                                 {% csrf_token %}
                                 {{ product_form | crispy }}
+                                <p class="text-danger" id="error"></p>
                                 <div class="d-flex justify-content-end">
                                     <div class="">
                                         <button type="reset" class="btn btn-danger btn-sm w-100">
@@ -248,7 +234,7 @@
           description: document.getElementById('descriptionInput').value,
         };
 
-        fetch("/inventory/process-transfer-cart/", {
+        fetch("{% url 'inventory:product' %}", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -275,7 +261,7 @@
       }
     async function fetchProducts(){
         try {
-            const response = await fetch('{% url "inventory:add_product_category" %}');
+            const response = await fetch("{% url 'inventory:product' %}");
 
             if (!response.ok) {
                 throw new Error('Network response was not ok.');

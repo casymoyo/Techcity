@@ -1380,13 +1380,55 @@ def delete_purchase_order(request, purchase_order_id):
 
 
 @login_required
-def product_list_json(request):
-    products = Product.objects.all().values(
-        'id',
-        'name'
-    )
-    return JsonResponse(list(products), safe=False)
+def product(request):
 
+    if request.method == 'POST':
+        # payload
+        """
+            name,
+            prince: float,
+            cost: float,
+            quantity: int,
+            category,
+            tax_type,
+            min_stock_level,
+            description
+        """
+        try:
+            data = json.loads(request.body)
+        except Exception as e:
+            return JsonResponse({'success':False, 'message':'Invalid data'})
+        
+        logger.info(f'product data -> {data}')
+        
+        product = Product.objecs.create(
+            name = data.name,
+            price = data.price,
+            cost = data.cost,
+            quantity = data.quantity,
+            category = data.category,
+            tax_type = data.tax_type,
+            min_stock_level = data.min_stock_level,
+            description = data.description, 
+            end_of_day = data.end_of_day
+        )
+        product.save()
+        
+        # try:
+        #     saved_product = Product.objects.get(id=product.id)
+        # except Exception as e:
+        #     return JsonResponse({'success':False, 'message':'Product Does not Exists'})
+        
+        return JsonResponse({'success':True})
+            
+    if request.method == 'GET':
+        products = Product.objects.all().values(
+            'id',
+            'name'
+        )
+        return JsonResponse(list(products), safe=False)
+    
+    return JsonResponse({'success':False, 'message':'Invalid request'})
 
 
         

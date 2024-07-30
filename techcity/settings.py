@@ -6,7 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 # from decouple import config
 from django.apps import apps
-from django.core.exceptions import AppRegistryNotReady
+
 
 
 env = environ.Env()   

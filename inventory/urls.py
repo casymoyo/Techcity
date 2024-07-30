@@ -19,6 +19,9 @@ urlpatterns = [
     path('defective_product_list/', defective_product_list, name='defective_product_list'),
     path('inventory/branches/json', branches_inventory_json, name='branches_inventory_json'),
     
+    # product
+    path('create/product/', product, name='product'),
+    
     # defective
     path('add/defective/product/', create_defective_product, name='create_defective_product'),
     
