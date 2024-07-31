@@ -32,6 +32,7 @@ class Product(models.Model):
     min_stock_level = models.IntegerField(default=0, null=True)
     description = models.TextField()
     end_of_day = models.BooleanField(default=False)
+    service =  models.BooleanField(default=False)
     
     def __str__(self):
         return self.name
@@ -39,7 +40,7 @@ class Product(models.Model):
 class Supplier(models.Model):
     """Model to represent suppliers."""
     name = models.CharField(max_length=255)
-    contact = models.CharField(max_length=255)
+    contact_name = models.CharField(max_length=255)
     email = models.EmailField()
     phone = models.CharField(max_length=20)
     address = models.TextField()
@@ -60,12 +61,17 @@ class PurchaseOrder(models.Model):
     order_number = models.CharField(max_length=100, unique=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True)
     order_date = models.DateTimeField(default=timezone.now)
-    delivery_date = models.DateTimeField(null=True, blank=True)
+    delivery_date = models.DateField(null=True, blank=True)
     total_cost = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     status = models.CharField(max_length=50, choices=status_choices, default='pending')
     notes = models.TextField(null=True, blank=True)
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+    discount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    tax_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    handling_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    other_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     
-    def generate_order_number(self):
+    def generate_order_number():
         return f'PO-{uuid.uuid4().hex[:10].upper()}'
 
     def save(self, *args, **kwargs):
@@ -86,13 +92,6 @@ class PurchaseOrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
-
-    def save(self, *args, **kwargs):
-        # Calculate the total cost for the purchase order item
-        self.total_cost = self.quantity * self.unit_cost
-        super().save(*args, **kwargs)
-        # Update the total cost of the purchase order
-        self.purchase_order.update_total_cost()
 
 
 class Inventory(models.Model):

@@ -12,7 +12,15 @@ from django.contrib import messages
 from utils.utils import generate_pdf
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, HttpResponse
-from finance.models import StockTransaction
+from finance.models import (
+    StockTransaction,
+    PurchaseOrderAccount, 
+    PurchasesAccount,
+    Expense,
+    Currency,
+    VATTransaction, 
+    VATRate
+ )
 from . utils import calculate_inventory_totals
 from . forms import (
     AddProductForm, 
@@ -23,7 +31,9 @@ from . forms import (
     AddDefectiveForm, 
     ServiceForm, 
     AddSupplierForm,
-    CreateOrderForm
+    CreateOrderForm,
+    noteStatusForm,
+    PurchaseOrderStatus
 )
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
@@ -216,7 +226,7 @@ class ProcessTransferCartView(LoginRequiredMixin, View):
                     self.transfer_update_quantity(transfer_item, transfer)  
                     
                 # send email for transfer alert
-                # transaction.on_commit(lambda: send_transfer_email(request.user.email, transfer.id, transfer.transfer_to.id))
+                transaction.on_commit(lambda: send_transfer_email(request.user.email, transfer.id, transfer.transfer_to.id))
                 
             return JsonResponse({'success': True})
         except Exception as e:
@@ -1211,11 +1221,11 @@ def suppliers(request):
 
 @login_required
 def supplier_list_json(request):
-    products = Product.objects.all().values(
+    suppliers = Supplier.objects.all().values(
         'id',
         'name'
     )
-    return JsonResponse(list(products), safe=False)
+    return JsonResponse(list(suppliers), safe=False)
 
 @login_required
 def create_supplier(request):
@@ -1244,7 +1254,7 @@ def create_supplier(request):
         
         supplier = Supplier(
             name = name,
-            contact = contact,
+            contact_name = contact,
             email = email,
             phone = phone,
             address = address
@@ -1280,26 +1290,32 @@ def edit_supplier(request, supplier_id):
 @login_required
 def purchase_orders(request):
     form = CreateOrderForm()
+    status_form = PurchaseOrderStatus()
     orders = PurchaseOrder.objects.filter(branch = request.user.branch)
-    return render(request, 'inventory/suppliers/purchase_orders.html', 
+    return render(request, 'inventory/purchase_orders.html', 
         {
             'form':form,
-            'orders':orders
+            'orders':orders,
+            'status_form':status_form 
         }
     )
     
 @login_required
 def create_purchase_order(request):
     
+    # include the vat account and the purchase order account and the cash account
+    
     if request.method == 'GET':
         supplier_form = AddSupplierForm()
         product_form = AddProductForm()
         suppliers = Supplier.objects.all()
+        note_form = noteStatusForm()
         return render(request, 'inventory/create_purchase_order.html',
             {
                 'product_form':product_form,
                 'supplier_form':supplier_form,
-                'suppliers':suppliers
+                'suppliers':suppliers,
+                'note_form':note_form
             }
         )
 
@@ -1307,16 +1323,21 @@ def create_purchase_order(request):
         try:
             data = json.loads(request.body)
             purchase_order_data = data.get('purchase_order', {})
-            purchase_order_items_data = data.get('items', [])
+            purchase_order_items_data = data.get('po_items', [])
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
 
-        supplier_id = purchase_order_data.get('supplier_id')
-        delivery_date = purchase_order_data.get('delivery_date')
-        status = purchase_order_data.get('status')
-        notes = purchase_order_data.get('notes')
-
-        if not all([supplier_id, delivery_date, status]):
+        supplier_id = purchase_order_data['supplier']
+        delivery_date = purchase_order_data['delivery_date']
+        status = purchase_order_data['status']
+        notes = purchase_order_data['notes']
+        total_cost = Decimal(purchase_order_data['total_cost'])
+        discount = Decimal(purchase_order_data['discount'])
+        handling_amount = Decimal(purchase_order_data['handling_amount'])
+        tax_amount = Decimal(purchase_order_data['tax_amount'])
+        other_amount = Decimal(purchase_order_data['other_amount'])
+    
+        if not all([supplier_id, delivery_date, status, total_cost]):
             return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
 
         try:
@@ -1331,24 +1352,30 @@ def create_purchase_order(request):
                     supplier=supplier,
                     delivery_date=delivery_date,
                     status=status,
-                    notes=notes
+                    notes=notes,
+                    total_cost=total_cost,
+                    discount=discount,
+                    tax_amount=tax_amount,
+                    handling_amount=handling_amount,
+                    other_amount=other_amount,
+                    branch = request.user.branch
                 )
                 purchase_order.save()
 
                 for item_data in purchase_order_items_data:
-                    product_id = item_data.get('product')
-                    quantity = item_data.get('quantity')
-                    unit_cost = item_data.get('unit_cost')
+                    product_name = (item_data['product'])
+                    quantity = int(item_data['quantity'])
+                    unit_cost = Decimal(item_data['price'])
 
-                    if not all([product_id, quantity, unit_cost]):
+                    if not all([product_name, quantity, unit_cost]):
                         transaction.set_rollback(True)
                         return JsonResponse({'success': False, 'message': 'Missing fields in item data'}, status=400)
 
                     try:
-                        product = Product.objects.get(id=product_id)
+                        product = Product.objects.get(name=product_name)
                     except Product.DoesNotExist:
                         transaction.set_rollback(True)
-                        return JsonResponse({'success': False, 'message': f'Product with ID {product_id} not found'}, status=404)
+                        return JsonResponse({'success': False, 'message': f'Product with Name {product_name} not found'}, status=404)
 
                     PurchaseOrderItem.objects.create(
                         purchase_order=purchase_order,
@@ -1357,11 +1384,118 @@ def create_purchase_order(request):
                         unit_cost=unit_cost
                     )
 
+                    # update finance accounts vat input account and the PurchasesAccount
+                    if purchase_order.status == 'Received':
+                        
+                        # change currency (first initial to be default ??)
+                        try:
+                            currency = Currency.objects.get(default=True)
+                            
+                            Expense.objects.create(
+                                issue_date = datetime.datetime.today(),
+                                amount = total_cost - tax_amount,
+                                currency = currency,
+                                description = f'Purchases ({purchase_order.order_number})',
+                                user =request.user,
+                                branch = request.branch,
+                                status = True
+                            )
+                            
+                        except Currency.DoesNotExist:
+                            return JsonResponse({'success':False, 'message':f'currency doesnt exists'})
+                        
+                        try:
+                            rate = VATRate.objects.get(default=True)
+                            
+                            VATTransaction.objects.create(
+                            purchase_order = purchase_order,
+                            vat_type='Input',
+                            vat_rate = rate,
+                            tax_amount = tax_amount
+                        )
+                            
+                        except VATRate.DoesNotExist:
+                            return JsonResponse({'success':False, 'message':f'Make sure you have a stipulated vat rate in the system'})
+          
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
         return JsonResponse({'success': True, 'message': 'Purchase order created successfully'})
+    
+@login_required
+@transaction.atomic
+def change_purchase_order_status(request, order_id):
+    try:
+        purchase_order = PurchaseOrder.objects.get(id=order_id)
+    except PurchaseOrder.DoesNotExist:
+        return JsonResponse({'error': f'Purchase order with ID: {order_id} does not exist'}, status=404)
 
+    try:
+        data = json.loads(request.body)
+        status = data['status']
+        logger.info(f'status -> {status}')
+        
+        if status:
+            purchase_order.status=status
+            if purchase_order.status == 'Received':
+                try:
+                    currency = Currency.objects.get(default=True)
+                    
+                    Expense.objects.create(
+                        issue_date = datetime.datetime.today(),
+                        amount = purchase_order.total_cost - purchase_order.tax_amount,
+                        currency = currency,
+                        description = f'Purchases ({purchase_order.order_number})',
+                        user =request.user,
+                        branch = request.branch,
+                        status = True
+                    )
+                    
+                except Currency.DoesNotExist:
+                    return JsonResponse({'success':False, 'message':f'currency doesnt exists'})
+                
+                try:
+                    rate = VATRate.objects.get(default=True)
+                    
+                    VATTransaction.objects.create(
+                    purchase_order = purchase_order,
+                    vat_type='Input',
+                    vat_rate = rate,
+                    tax_amount = purchase_order.tax_amount
+                )
+                    
+                except VATRate.DoesNotExist:
+                    return JsonResponse({'success':False, 'message':f'Make sure you have a stipulated vat rate in the system'})
+            purchase_order.save()
+            
+            return JsonResponse({'success':True}, status=200)
+        else:
+            return JsonResponse({'success':False, 'message':'Status is required'}, status=400)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
+
+
+@login_required
+def purchase_order_detail(request, order_id):
+    try:
+        purchase_order = PurchaseOrder.objects.get(id=order_id)
+    except PurchaseOrder.DoesNotExist:
+        messages.warning(request, f'Purchase order with ID: {order_id} does not exists')
+        return redirect('inventory:purchase_ordes')
+    
+    try:
+        purchase_order_items = PurchaseOrderItem.objects.filter(purchase_order=purchase_order)
+    except PurchaseOrderItem.DoesNotExist:
+        messages.warning(request, f'Purchase order with ID: {order_id} does not exists')
+        return redirect('inventory:purchase_orders')
+    
+    return render(request, 'inventory/purchase_order_detail.html', 
+        {
+            'orders':purchase_order_items,
+            'purchase_order':purchase_order
+        }
+    )
+    
 @login_required
 def delete_purchase_order(request, purchase_order_id):
     if request.method != "DELETE":
@@ -1399,32 +1533,38 @@ def product(request):
         except Exception as e:
             return JsonResponse({'success':False, 'message':'Invalid data'})
         
-        logger.info(f'product data -> {data}')
+        logger.info(f'product data -> {data['service']} {data['end_of_day']}')
         
-        product = Product.objecs.create(
-            name = data.name,
-            price = data.price,
-            cost = data.cost,
-            quantity = data.quantity,
-            category = data.category,
-            tax_type = data.tax_type,
-            min_stock_level = data.min_stock_level,
-            description = data.description, 
-            end_of_day = data.end_of_day
+        # validation for existance
+        if Product.objects.filter(name=data['name']).exists():
+            print('here')
+            return JsonResponse({'success':False, 'message':f'Product {data['name']} exists'})
+
+        try:
+            category = ProductCategory.objects.get(id=data['category'])
+        except ProductCategory.DoesNotExist:
+            return JsonResponse({'success':False, 'message':f'Category Doesnt Exists'})
+        
+        product = Product.objects.create(
+            name = data['name'],
+            price = data['price'],
+            cost = data['cost'],
+            quantity = data['quantity'],
+            category = category,
+            tax_type = data['tax_type'],
+            min_stock_level = data['min_stock_level'],
+            description = data['description'], 
+            end_of_day = True if data['end_of_day'] else False,
+            service = True if data['service'] else False
         )
         product.save()
-        
-        # try:
-        #     saved_product = Product.objects.get(id=product.id)
-        # except Exception as e:
-        #     return JsonResponse({'success':False, 'message':'Product Does not Exists'})
         
         return JsonResponse({'success':True})
             
     if request.method == 'GET':
         products = Product.objects.all().values(
             'id',
-            'name'
+            'name',
         )
         return JsonResponse(list(products), safe=False)
     

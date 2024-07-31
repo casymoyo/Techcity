@@ -22,6 +22,12 @@ urlpatterns = [
     # product
     path('create/product/', product, name='product'),
     
+    # supplier
+    path('suppliers/list', suppliers, name='suppliers'),
+    path('edit/supplier/', edit_supplier, name='edit_supplier'),
+    path('create/supplier/', create_supplier, name='create_supplier'),
+    path('supplier/json/list/', supplier_list_json, name='supplier_list_json'),
+    
     # defective
     path('add/defective/product/', create_defective_product, name='create_defective_product'),
     
@@ -40,6 +46,8 @@ urlpatterns = [
     # purchase_order
     path('purchase_orders/list/', purchase_orders, name='purchase_orders'),
     path('purchase_order/create/', create_purchase_order, name='create_purchase_order'),
+    path('purchase_order/detail/<int:order_id>/', purchase_order_detail, name='purchase_order_detail'),
+    path('purchase_orders/status/<int:order_id>/', change_purchase_order_status, name='change_purchase_order_status'),
     path('purchase_order/delete/<int:purchase_order_id>/', delete_purchase_order, name='delete_purchase_order'),
     
     # transfers
