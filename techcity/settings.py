@@ -5,6 +5,8 @@ import environ, os
 from pathlib import Path
 from dotenv import load_dotenv
 # from decouple import config
+from django.apps import apps
+
 
 env = environ.Env()   
 load_dotenv()
@@ -77,6 +79,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # "asgiref.sync.AsyncToSyncMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    # custom middlewares
     'inventory.middleware.RequestMiddleware',
 ]
 

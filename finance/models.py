@@ -122,6 +122,7 @@ class VATTransaction(models.Model):
         OUTPUT = 'Output', _('Output')
 
     invoice = models.OneToOneField('finance.invoice', on_delete=models.CASCADE, null=True)
+    purchase_order = models.OneToOneField('inventory.Purchaseorder', on_delete=models.CASCADE, null=True)
     vat_type = models.CharField(max_length=6, choices=VATType.choices)
     vat_rate = models.DecimalField(max_digits=5, decimal_places=2)
     tax_amount = models.DecimalField(max_digits=15, decimal_places=2)
@@ -405,3 +406,22 @@ class CashWithdraw(models.Model):
     
     def __str__(self):
         return f'{self.date} {self.user.username} {self.amount}'
+    
+class PurchaseOrderAccount(models.Model):
+    purchase_order = models.ForeignKey('inventory.PurchaseOrder', on_delete=models.CASCADE, related_name='purchase_order')
+    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    expensed = models.BooleanField(default=False)
+    
+    def __str__(self) -> str:
+        return self.purchase_order.order_number
+
+class PurchasesAccount(models.Model):
+    purchase_order = models.ForeignKey('inventory.PurchaseOrder', on_delete=models.CASCADE, related_name='purchases')
+    debit = models.BooleanField(default=False)
+    credit = models.BooleanField(default=True)
+    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    
+
+    
+    

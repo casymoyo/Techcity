@@ -13,3 +13,6 @@ test.png
 *.log
 *.DS_Store
 .google/*
+*.cpython-312.pyc
+*/__pycache__/*
+*.pyc
