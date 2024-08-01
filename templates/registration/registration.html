@@ -142,96 +142,151 @@
                     </div>
                 </form>
             </div>
+            <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog modal-dialog-right">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <h5>Registration was Successfull</h5>
+                            <p>As the redirect completes, please make sure to create the following</p>
+                            <ul>
+                                <li>Add branches, if your company just have one please add it.</li>
+                                <li>Add Currency and make it the default.</li>
+                            </ul>
+                            <p>Just wait few moments for the redirect to complete......</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
     </div>
     <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>    
-    <script>          
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
         const companyForm = document.getElementById('company_info');
         const userForm = document.getElementById('user_info');
         const nextButton = companyForm.querySelector('button[type="button"]');
         const backButton = userForm.querySelector('button[type="button"]');
         const saveButton = userForm.querySelector('#id_save');
-    
+
         const fileInput = document.getElementById('id_company_logo');
         const fileNameDisplay = document.getElementById('file-name');
-    
+
         const passwordInput = document.getElementById('password1');
         const confirmPasswordInput = document.getElementById('password2');
-    
+
+        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+
         const errorEl = document.getElementById('c_error');
-    
+
+      
+        function checkRequiredFields(form) {
+            let allFilled = true;
+            const requiredInputs = form.querySelectorAll('input[required], textarea[required]');
+
+            requiredInputs.forEach(input => {
+                if (input.value.trim() === '') {
+                    allFilled = false;
+                }
+            });
+
+            return allFilled;
+        }
+
+       
+        companyForm.querySelectorAll('input, textarea').forEach(input => {
+            input.addEventListener('input', () => {
+                nextButton.disabled = !checkRequiredFields(companyForm);
+            });
+        });
+
+   
+        userForm.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', () => {
+                saveButton.disabled = !(checkRequiredFields(userForm) && validatePasswords());
+            });
+        });
+
         confirmPasswordInput.addEventListener('input', () => {
             validatePasswords();
         });
-    
+
         function validatePasswords() {
             const password = passwordInput.value;
             const confirmPassword = confirmPasswordInput.value;
-    
+
             if (password !== confirmPassword) {
-                console.error('Passwords do not match');
                 errorEl.textContent = 'Passwords do not match';
+                return false;
             } else {
                 errorEl.textContent = '';
+                return true;
             }
         }
-    
+
         fileInput.addEventListener('change', (event) => {
             const filePath = event.target.value;
             const fileName = filePath.split('\\').pop() || filePath.split('/').pop();
             fileNameDisplay.textContent = fileName;
         });
-    
+
         nextButton.addEventListener('click', () => {
-            companyForm.style.display = 'none';
-            userForm.style.display = 'block';
+            if (checkRequiredFields(companyForm)) {
+                companyForm.style.display = 'none';
+                userForm.style.display = 'block';
+            }
         });
-    
+
         backButton.addEventListener('click', () => {
             companyForm.style.display = 'block';
             userForm.style.display = 'none';
         });
-    
+
         saveButton.addEventListener('click', () => {
-            const companyData = {
-                name: document.getElementById('name').value,
-                address: document.getElementById('address').value,
-                domain: document.getElementById('domain').value,
-                email: document.getElementById('email').value,
-                phone_number: document.getElementById('phone_number').value,
-                description: document.getElementById('description').value,
-                logo: document.getElementById('id_company_logo').files[0]
-            };
-    
-            const userData = {
-                first_name: document.getElementById('first_name').value,
-                last_name: document.getElementById('last_name').value,
-                username: document.getElementById('username').value,
-                password: document.getElementById('password1').value,
-                confirm_password: document.getElementById('password2').value
-            };
-    
-            const csrftoken = getCookie('csrftoken');
-    
-            fetch("{% url 'company:register_company' %}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken,
-                },
-                body: JSON.stringify({'company_data': companyData, 'user_data': userData})
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data['status'] === 'success') {
-                    window.location.href = "{% url 'users:login' %}";
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+            if (checkRequiredFields(userForm) && validatePasswords()) {
+                const companyData = {
+                    name: document.getElementById('name').value,
+                    address: document.getElementById('address').value,
+                    domain: document.getElementById('domain').value,
+                    email: document.getElementById('email').value,
+                    phone_number: document.getElementById('phone_number').value,
+                    description: document.getElementById('description').value,
+                    logo: document.getElementById('id_company_logo').files[0]
+                };
+
+                const userData = {
+                    first_name: document.getElementById('first_name').value,
+                    last_name: document.getElementById('last_name').value,
+                    username: document.getElementById('username').value,
+                    password: document.getElementById('password1').value,
+                    confirm_password: document.getElementById('password2').value
+                };
+
+                const csrftoken = getCookie('csrftoken');
+
+                fetch("{% url 'company:register_company' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken,
+                    },
+                    body: JSON.stringify({'company_data': companyData, 'user_data': userData})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        successModal.show()
+
+                        setTimeout(()=>{
+                            window.location.href = "{% url 'users:login' %}";
+                        }, 10000)
+                        
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
         });
-    
+
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -247,7 +302,7 @@
             return cookieValue;
         }
     });
-        
+
     </script>
 </body>
 </html>
