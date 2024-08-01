@@ -6,10 +6,10 @@ from django.urls import include, path
 from django.views import defaults as default_views
 
 urlpatterns = [
-    path('', include('pos.urls', namespace='pos')),
+    path('pos/', include('pos.urls', namespace='pos')),
     path("admin/", admin.site.urls),
     path('users/', include('users.urls', namespace='users')),
-    path('company/', include('company.urls', namespace='company')),
+    path('', include('company.urls', namespace='company')),
     path('finance/', include('finance.urls', namespace='finance')),
     path('settings/', include('settings.urls', namespace='settings')),
     # path('analytics/', include('Analytics.urls', namespace='analytics')),
