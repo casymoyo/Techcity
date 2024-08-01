@@ -135,22 +135,22 @@ DATABASES = {
     #     'HOST': config('DB_HOST'),
     #     'PORT': config('DB_PORT')
     # },
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME':  'techcity',
-        'USER': 'casy',
-        'PASSWORD': 'neverfail',
-        'HOST': 'localhost',
-        'PORT': '5432'
-    }
     # 'default': {
-    #     'ENGINE':'django.db.backends.postgresql',
-    #     'NAME':'railway',
-    #     'USER':'postgres',
-    #     'PASSWORD':'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
-    #     'HOST':'monorail.proxy.rlwy.net',
-    #     'PORT':'39004'
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME':  'techcity',
+    #     'USER': 'casy',
+    #     'PASSWORD': 'neverfail',
+    #     'HOST': 'localhost',
+    #     'PORT': '5432'
     # }
+    'default': {
+        'ENGINE':'django.db.backends.postgresql',
+        'NAME':'railway',
+        'USER':'postgres',
+        'PASSWORD':'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
+        'HOST':'monorail.proxy.rlwy.net',
+        'PORT':'39004'
+    }
 }
 
 if 'test' in sys.argv:
