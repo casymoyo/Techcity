@@ -45,10 +45,13 @@ urlpatterns = [
     
     # purchase_order
     path('purchase_orders/list/', purchase_orders, name='purchase_orders'),
+    path('print/purchase_order/<int:order_id>/', print_purchase_order, name='print_purchase_order'),
     path('purchase_order/create/', create_purchase_order, name='create_purchase_order'),
+    path('purchase_order/receive/<int:order_id>/', receive_order, name='receive_order'),
+    path('process/purchase_order/', process_received_order, name='process_received_order'),
     path('purchase_order/detail/<int:order_id>/', purchase_order_detail, name='purchase_order_detail'),
-    path('purchase_orders/status/<int:order_id>/', change_purchase_order_status, name='change_purchase_order_status'),
     path('purchase_order/delete/<int:purchase_order_id>/', delete_purchase_order, name='delete_purchase_order'),
+    path('purchase_orders/status/<int:order_id>/', change_purchase_order_status, name='change_purchase_order_status'),
     
     # transfers
     path('transfers', inventory_transfers, name='transfers'),

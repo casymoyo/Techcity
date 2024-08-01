@@ -70,7 +70,9 @@ class PurchaseOrder(models.Model):
     tax_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     handling_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     other_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
-    
+    is_partial = models.BooleanField(default=False)  
+    received = models.BooleanField(default=False)
+
     def generate_order_number():
         return f'PO-{uuid.uuid4().hex[:10].upper()}'
 
@@ -79,16 +81,47 @@ class PurchaseOrder(models.Model):
             self.order_number = self.generate_order_number()
         super(PurchaseOrder, self).save(*args, **kwargs)
 
+    def check_partial_status(self):
+        partial_items = self.items.filter(received_quantity__lt=F('quantity'))
+        self.is_partial = partial_items.exists()
+        self.save()
+
     def __str__(self):
         return f"PO {self.order_number} - {self.supplier}"
 
 class PurchaseOrderItem(models.Model):
-    """Model for items in a purchase order."""
 
     purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField()
     unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    received_quantity = models.IntegerField(default=0) 
+    received = models.BooleanField(default=False, null=True)
+
+    def receive_items(self, quantity):
+       
+        self.received_quantity += quantity
+        if self.received_quantity >= self.quantity:
+            self.received = True
+        self.save()
+        self.purchase_order.check_partial_status()  
+
+    def check_received(self):
+        """
+        Checks if all related items in the purchase order with the same order_number are received and updates the purchase order's "received" flag.
+        """
+        order_number = self.purchase_order.order_number
+        purchase_order_items = PurchaseOrderItem.objects.filter(purchase_order__order_number=order_number)
+
+        all_received = True
+        for item in purchase_order_items:
+            if not item.received:
+                all_received = False
+            break
+
+        purchase_order = PurchaseOrder.objects.get(order_number=order_number)
+        purchase_order.received = all_received
+        purchase_order.save()
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
@@ -209,6 +242,7 @@ class ActivityLog(models.Model):
     total_quantity = models.IntegerField()
     timestamp = models.DateField(auto_now_add=True)
     description = models.CharField(max_length=255, null=True)
+    purchase_order = models.ForeignKey(PurchaseOrder, null=True, blank=True, on_delete=models.SET_NULL)
     invoice = models.ForeignKey('finance.invoice', null=True, blank=True, on_delete=models.SET_NULL)
     product_transfer = models.ForeignKey(TransferItems, null=True, blank=True, on_delete=models.SET_NULL)
     

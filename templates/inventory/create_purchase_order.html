@@ -801,13 +801,13 @@
           'status':document.getElementById('id_status').value,
           'notes':document.getElementById('id_notes').value,
           'discount':parseFloat(document.getElementById('id_discount').value) || 0,
-          'tax_amount':parseFloat(document.getElementById('tax').value) || 0,
+          'tax_amount':parseFloat(document.getElementById('tax').textContent) || 0,
           'handling_amount':parseFloat(document.getElementById('id_handling').value) || 0,
           'other_amount':parseFloat(document.getElementById('id_other').value) || 0
         }
       }
 
-      console.log(data)
+      console.log(data, parseFloat(document.getElementById('id_handling').value) || 0,)
       
       fetch("{% url 'inventory:create_purchase_order' %}", {
         method: "POST",

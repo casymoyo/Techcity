@@ -408,7 +408,6 @@ class CashWithdraw(models.Model):
         return f'{self.date} {self.user.username} {self.amount}'
     
 class PurchaseOrderAccount(models.Model):
-    expense = models.ForeignKey(Expense, on_delete=models.CASCADE, null=True)
     purchase_order = models.ForeignKey('inventory.PurchaseOrder', on_delete=models.CASCADE, related_name='purchase_order')
     amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
