@@ -1,5 +1,4 @@
 import json
-
 from django.contrib.auth.hashers import make_password
 from django.db.transaction import atomic
 from django.http import JsonResponse
@@ -17,7 +16,9 @@ from django.contrib.auth import get_user_model
 
 def registration(request):
     User = get_user_model()
+    logger.info(User)
     if not User.objects.exists():
+        logger.info('here')
         return redirect('company:register_company')
     return render(request, 'registration/registration.html')
 
@@ -29,6 +30,15 @@ def register_company_view(request):
         'user_data': {}
     }
     """
+    if request.method == 'GET':
+        User = get_user_model()
+        if not User.objects.exists():
+            logger.info('here')
+            return redirect('company:register_company')
+        elif request.user.is_authenticated:
+            return redirect('pos:pos')
+        return render(request, 'auth/login.html')
+    
     if request.method == 'POST':
         payload = json.loads(request.body)
         logger.info(f"Company registration payload: {payload}")
