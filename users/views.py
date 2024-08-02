@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views import View
 from django.shortcuts import render, redirect
 from loguru import logger
-
+from django.contrib.auth import get_user_model
 from company.models import Branch
 from utils.authenticate import authenticate_user
 from .models import User
@@ -65,10 +65,14 @@ def login_view(request):
         else:
             messages.error(request, 'Invalid username or password')
     
-    if not User.objects.exists():
-        return redirect('company:register_company')
-    
-    return render(request, 'auth/login.html', )
+    if request.method == 'GET':
+        User = get_user_model()
+        if not User.objects.exists():
+            logger.info('here')
+            return redirect('company:register_company')
+        elif request.user.is_authenticated:
+            return redirect('pos:pos')
+        return render(request, 'auth/login.html')
 
 
 def user_edit(request, user_id):
