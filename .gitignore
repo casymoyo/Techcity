@@ -1,18 +1,18 @@
-# .venv/
-# env/
-# */migrations/*
+ .venv/
+ env/
+ */migrations/*
 .env
-# *.pyc
-# *~
-# *.swp
-# application.log
-# .idea/
-# .vscode/
-# test.png
-# *.lock
-# *.log
-# *.DS_Store
-# .google/*
+ *.pyc
+ *~
+ *.swp
+ application.log
+ .idea/
+ .vscode/
+ test.png
+ *.lock
+ *.log
+ *.DS_Store
+ .google/*
 *.iml
 *.xml
  *.cpython-312.pyc
