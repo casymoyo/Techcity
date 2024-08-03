@@ -61,3 +61,16 @@ class CreateOrderForm(forms.ModelForm):
         model =  PurchaseOrder
         exclude = ['order_number', 'branch']
         
+class noteStatusForm(forms.ModelForm):
+    class Meta:
+        model =  PurchaseOrder
+        fields = ['status', 'delivery_date', 'notes']
+        
+        widgets = {
+            'delivery_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+class PurchaseOrderStatus(forms.ModelForm):
+    class Meta:
+        model = PurchaseOrder
+        fields = ['status']

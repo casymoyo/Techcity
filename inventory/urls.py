@@ -19,6 +19,15 @@ urlpatterns = [
     path('defective_product_list/', defective_product_list, name='defective_product_list'),
     path('inventory/branches/json', branches_inventory_json, name='branches_inventory_json'),
     
+    # product
+    path('create/product/', product, name='product'),
+    
+    # supplier
+    path('suppliers/list', suppliers, name='suppliers'),
+    path('edit/supplier/', edit_supplier, name='edit_supplier'),
+    path('create/supplier/', create_supplier, name='create_supplier'),
+    path('supplier/json/list/', supplier_list_json, name='supplier_list_json'),
+    
     # defective
     path('add/defective/product/', create_defective_product, name='create_defective_product'),
     
@@ -36,8 +45,13 @@ urlpatterns = [
     
     # purchase_order
     path('purchase_orders/list/', purchase_orders, name='purchase_orders'),
+    path('print/purchase_order/<int:order_id>/', print_purchase_order, name='print_purchase_order'),
     path('purchase_order/create/', create_purchase_order, name='create_purchase_order'),
+    path('purchase_order/receive/<int:order_id>/', receive_order, name='receive_order'),
+    path('process/purchase_order/', process_received_order, name='process_received_order'),
+    path('purchase_order/detail/<int:order_id>/', purchase_order_detail, name='purchase_order_detail'),
     path('purchase_order/delete/<int:purchase_order_id>/', delete_purchase_order, name='delete_purchase_order'),
+    path('purchase_orders/status/<int:order_id>/', change_purchase_order_status, name='change_purchase_order_status'),
     
     # transfers
     path('transfers', inventory_transfers, name='transfers'),
