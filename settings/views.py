@@ -11,7 +11,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 
 import logging
+
+from .models import NotificationsSettings
+
 logger = logging.getLogger(__name__)
+
 
 @login_required
 def settings(request):
@@ -23,29 +27,82 @@ def settings(request):
     except FileNotFoundError:
         lines = []
 
-    printer_data = None  
+    printer_data = None
 
     for line in lines:
         key, *value = line.strip().split('=')
         if key == 'PRINTER_ADDRESS':
-            printer_data = value[0]  
+            printer_data = value[0]
 
     return render(request, 'settings/settings.html', {
-        'printer':printer_data, 
-        'email_form':email_form,
-        'email_status':INVENTORY_EMAIL_NOTIFICATIONS_STATUS
+        'printer': printer_data,
+        'email_form': email_form,
+        'email_status': INVENTORY_EMAIL_NOTIFICATIONS_STATUS
     })
-    
+
+
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 
 
-@require_http_methods(["GET", "POST"])
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Notifications settings >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+def validate_payload(payload):
+    # check payload for status and notification
+    if 'notification' not in payload:
+        return JsonResponse({'success': False, 'error': 'Notification not provided'}, status=400)
+    notification = payload.get('notification')
+    # check if notification is in database
+    logger.info(f'Notifications in database: {NotificationsSettings._meta.get_fields()}')
+    if notification not in NotificationsSettings._meta.get_fields():
+        return JsonResponse({'success': False, 'error': 'Invalid notification'}, status=400)
+
+    if 'status' not in payload:
+        return JsonResponse({'success': False, 'error': 'Status not provided'}, status=400)
+    # if payload is empty
+    if not payload:
+        return JsonResponse({'success': False, 'error': 'Empty payload'}, status=400)
+
+    status = payload.get('status')
+    # check if status is valid
+    if status not in ['on', 'off']:
+        return JsonResponse({'success': False, 'error': 'Invalid status'}, status=400)
+
+    return notification, status
+
+
+# products notifications settings views
+@require_http_methods(["POST"])
+@login_required
+def update_notification_status_view(request):
+    """
+        payload: {"notification": "product_creation","status": "on"}
+    """
+    if request.method == 'POST':
+        try:
+            # payload = json.loads(request.body)
+            # logger.info(f'Payload: {payload}')
+            # notification, status = validate_payload(payload)   # validate payload
+            # logger.info(f'Payload validated: {notification}, {status}')
+            # # update status from NotificationsSettings model
+            # notification_instance = NotificationsSettings.objects.first()
+            # logger.info(f'Notification instance: {notification_instance}')
+            # if notification_instance:
+            #     # update notification_instance
+            #     if status == 'on':
+            #         setattr(notification_instance, notification, True)
+            #     elif status == 'off':
+            #         setattr(notification_instance, notification, False)
+            #     notification_instance.save()
+            # logger.info(f'Notification: {notification} Status: {status}, updated successfully')
+            return JsonResponse({'success': True}, status=200)
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+
+
+@require_http_methods(["POST"])
 @login_required
 def email_notification_status(request):
-    if request.method == 'GET':
-        return JsonResponse({'status': settings.INVENTORY_EMAIL_NOTIFICATIONS_STATUS})
-
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -58,17 +115,13 @@ def email_notification_status(request):
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
 
-    return JsonResponse({'success': False}, status=400)
-
-    
-
 
 @csrf_exempt
 @login_required
 def save_email_config(request):
     if request.method == 'POST':
         env_file_path = Path(__file__).resolve().parent.parent / '.env'
-   
+
         email_settings_mapping = {
             'EMAIL_HOST': 'EMAIL_HOST',
             'EMAIL_PORT': 'EMAIL_PORT',
@@ -133,7 +186,7 @@ def save_email_config(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=400)
 
 
-@csrf_exempt  
+@csrf_exempt
 def scan_for_printers(request):
     if request.method == 'GET':
         try:
@@ -142,8 +195,8 @@ def scan_for_printers(request):
                 {
                     'address': device.address,
                     'name': device.name or "Unknown Device",
-                } 
-                for device in devices 
+                }
+                for device in devices
             ]
             return JsonResponse({'printers': printer_data})
         except Exception as e:
@@ -162,7 +215,7 @@ def update_or_create_printer(request):
             return JsonResponse({'success': False, 'error': 'Invalid printer address'})
 
         device = asyncio.run(get_bluetooth_device(printer_address))
-        
+
         if device:
             env_file_path = Path(__file__).resolve().parent.parent / '.env'
 
@@ -195,9 +248,8 @@ def update_or_create_printer(request):
 
 async def get_bluetooth_device(address):
     devices = await BleakScanner.discover()
-    device = next((d.address for d in devices ), None)
+    device = next((d.address for d in devices), None)
     return device
-
 
 # @login_required
 # def print_receipt(request, invoice_id):
@@ -216,7 +268,7 @@ async def get_bluetooth_device(address):
 #             receipt_data = format_receipt(invoice)  # Your formatting logic
 
 #             await client.write_gatt_char(tx_characteristic, receipt_data)
-            
+
 #         return JsonResponse({'success': True})
 #     except Exception as e:
 #         return JsonResponse({'success': False, 'error': str(e)})
