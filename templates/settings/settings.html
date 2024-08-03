@@ -116,20 +116,20 @@
                                     <tr class="table-row">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Notify on Product update</span>
-                                            <span id="toggle-icon-2" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick="toggleProductUpdateStatus()"></span>
+                                            <span id="toggle-icon-2" class='bx fs-1 toggle-icon' data-status="{{ notifications.product_update|yesno:"true,false" }}" onclick="toggleProductUpdateStatus()"></span>
                                         </td>
                                     </tr>
                                     <tr class="table-row mb-2">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Notify on Product deletion</span>
-                                            <span id="toggle-icon-3" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick="toggleProductDeletionStatus()"></span>
+                                            <span id="toggle-icon-3" class='bx fs-1 toggle-icon' data-status="{{ notifications.product_deletion|yesno:"true,false" }}" onclick="toggleProductDeletionStatus()"></span>
                                         </td>
                                     </tr>
                                     
                                     <tr class="table-row">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Invoice on sale</span>
-                                            <span id="toggle-icon-44" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick="toggleInvoiceOnSaleStatus()"></span>
+                                            <span id="toggle-icon-44" class='bx fs-1 toggle-icon' data-status="{{ notifications.invoice_on_sale|yesno:"true,false" }}" onclick="toggleInvoiceOnSaleStatus()"></span>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -362,16 +362,18 @@
     
     // load status initially
     document.addEventListener('DOMContentLoaded', (event) => {
-        const icon = document.getElementById('toggle-icon-1');
-        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const icons = document.querySelectorAll('.toggle-icon');
+        icons.forEach(icon => {
+            const currentStatus = icon.getAttribute('data-status') === 'true';
     
-        // Set the initial color based on the status
-        if (currentStatus) {
-            icon.classList.add('bxs-toggle-right');
-            icon.style.color = 'green';
-        } else {
-            icon.classList.add('bxs-toggle-left');
-        }
+            // Set the initial color based on the status
+            if (currentStatus) {
+                icon.classList.add('bxs-toggle-right');
+                icon.style.color = 'green';
+            } else {
+                icon.classList.add('bxs-toggle-left');
+            }
+        });
     });
             
     
