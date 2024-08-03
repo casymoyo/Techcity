@@ -13,6 +13,10 @@
 # *.log
 # *.DS_Store
 # .google/*
-# *.cpython-312.pyc
-# */__pycache__/*
-# *.pyc
+*.iml
+*.xml
+ *.cpython-312.pyc
+ */__pycache__/*
+ *.pyc
+# >>>>>>>>>>>> to avoid settings conflict <<<<<<<<<<<<
+ techcity/settings.py
