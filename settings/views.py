@@ -34,10 +34,12 @@ def settings(request):
         if key == 'PRINTER_ADDRESS':
             printer_data = value[0]
 
+    notifications_settings = NotificationsSettings.objects.filter(user=request.user).first()
+
     return render(request, 'settings/settings.html', {
         'printer': printer_data,
         'email_form': email_form,
-        'email_status': INVENTORY_EMAIL_NOTIFICATIONS_STATUS
+        'notifications': notifications_settings
     })
 
 
@@ -68,52 +70,54 @@ def validate_payload(payload):
     if status not in ['on', 'off']:
         return JsonResponse({'success': False, 'error': 'Invalid status'}, status=400)
 
-    return notification, status
-
+    return [notification, status]
 
 # products notifications settings views
 @require_http_methods(["POST"])
 @login_required
-def update_notification_status_view(request):
+def email_notification_status(request):
     """
         payload: {"notification": "product_creation","status": "on"}
     """
     if request.method == 'POST':
         try:
-            # payload = json.loads(request.body)
-            # logger.info(f'Payload: {payload}')
-            # notification, status = validate_payload(payload)   # validate payload
-            # logger.info(f'Payload validated: {notification}, {status}')
-            # # update status from NotificationsSettings model
-            # notification_instance = NotificationsSettings.objects.first()
-            # logger.info(f'Notification instance: {notification_instance}')
-            # if notification_instance:
-            #     # update notification_instance
-            #     if status == 'on':
-            #         setattr(notification_instance, notification, True)
-            #     elif status == 'off':
-            #         setattr(notification_instance, notification, False)
-            #     notification_instance.save()
-            # logger.info(f'Notification: {notification} Status: {status}, updated successfully')
+            payload = json.loads(request.body)
+            logger.info(f'Payload: {payload}')
+            # result = validate_payload(payload)  # validate payload
+            # logger.info(f'Payload validated: {result}')
+            notification = payload.get('notification')
+            status = payload.get('status')
+            logger.info(f'Payload validated: {notification}, {status}')
+            # update status from NotificationsSettings model
+            notification_instance = NotificationsSettings.objects.first()
+            logger.info(f'Notification instance: {notification_instance}')
+            if notification_instance:
+                # update notification_instance
+                if status:
+                    setattr(notification_instance, notification, True)
+                elif not status:
+                    setattr(notification_instance, notification, False)
+                notification_instance.save()
+            logger.info(f'Notification: {notification} Status: {status}, updated successfully')
             return JsonResponse({'success': True}, status=200)
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
 
 
-@require_http_methods(["POST"])
-@login_required
-def email_notification_status(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            status = data.get('status')
-            if status is None:
-                return JsonResponse({'success': False, 'error': 'Status not provided'}, status=400)
-            settings.INVENTORY_EMAIL_NOTIFICATIONS_STATUS = status
-            logger.info(f'{settings.INVENTORY_EMAIL_NOTIFICATIONS_STATUS}')
-            return JsonResponse({'success': True}, status=200)
-        except json.JSONDecodeError:
-            return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+# @require_http_methods(["POST"])
+# @login_required
+# def email_notification_status(request):
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+#             status = data.get('status')
+#             if status is None:
+#                 return JsonResponse({'success': False, 'error': 'Status not provided'}, status=400)
+#             settings.INVENTORY_EMAIL_NOTIFICATIONS_STATUS = status
+#             logger.info(f'{settings.INVENTORY_EMAIL_NOTIFICATIONS_STATUS}')
+#             return JsonResponse({'success': True}, status=200)
+#         except json.JSONDecodeError:
+#             return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
 
 
 @csrf_exempt

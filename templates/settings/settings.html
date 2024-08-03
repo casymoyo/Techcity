@@ -111,26 +111,25 @@
                                     <tr class="table-row">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Notify on Product creation</span>
-                                            <span id="toggle-icon-3" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick="toggleProductCreationStatus()"></span>
-                                        </td>
+                                            <span id="toggle-icon-1" class='bx fs-1 toggle-icon' data-status="{{ notifications.product_creation|yesno:"true,false" }}" onclick="toggleProductCreationStatus()"></span>                                        </td>
                                     </tr>
                                     <tr class="table-row">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Notify on Product update</span>
-                                            <span id="toggle-icon-4" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick="toggleProductUpdateStatus()"></span>
+                                            <span id="toggle-icon-2" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick="toggleProductUpdateStatus()"></span>
                                         </td>
                                     </tr>
                                     <tr class="table-row mb-2">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Notify on Product deletion</span>
-                                            <span id="toggle-icon-5" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick="toggleProductDeletionStatus()"></span>
+                                            <span id="toggle-icon-3" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick="toggleProductDeletionStatus()"></span>
                                         </td>
                                     </tr>
                                     
                                     <tr class="table-row">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Invoice on sale</span>
-                                            <span id="toggle-icon-4" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick="toggleInvoiceOnSaleStatus()"></span>
+                                            <span id="toggle-icon-44" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick="toggleInvoiceOnSaleStatus()"></span>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -361,6 +360,21 @@
     }
     
     
+    // load status initially
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const icon = document.getElementById('toggle-icon-1');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+    
+        // Set the initial color based on the status
+        if (currentStatus) {
+            icon.classList.add('bxs-toggle-right');
+            icon.style.color = 'green';
+        } else {
+            icon.classList.add('bxs-toggle-left');
+        }
+    });
+            
+    
     function changeNotificationStatus(notification, status, icon, newStatus) {
         // {#send request to backend#}
         console.log("sending request to backend")
@@ -394,7 +408,7 @@
     // {#products notifications#}
     
     function toggleProductCreationStatus() {
-        const icon = document.getElementById('toggle-icon-3');
+        const icon = document.getElementById('toggle-icon-1');
         const currentStatus = icon.getAttribute('data-status') === 'true';
         const newStatus = !currentStatus;
 
@@ -405,7 +419,7 @@
     }
     
     function toggleProductUpdateStatus() {
-        const icon = document.getElementById('toggle-icon-4');
+        const icon = document.getElementById('toggle-icon-2');
         const currentStatus = icon.getAttribute('data-status') === 'true';
         const newStatus = !currentStatus;
 
@@ -416,7 +430,7 @@
     }
     
     function toggleProductDeletionStatus() {
-        const icon = document.getElementById('toggle-icon-5');
+        const icon = document.getElementById('toggle-icon-3');
         const currentStatus = icon.getAttribute('data-status') === 'true';
         const newStatus = !currentStatus;
 
@@ -427,7 +441,7 @@
     }
     
     function toggleInvoiceOnSaleStatus() {
-        const icon = document.getElementById('toggle-icon-6');
+        const icon = document.getElementById('toggle-icon-4');
         const currentStatus = icon.getAttribute('data-status') === 'true';
         const newStatus = !currentStatus;
 

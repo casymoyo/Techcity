@@ -7,6 +7,7 @@ class NotificationsSettings(models.Model):
     product_creation = models.BooleanField(default=True)
     product_update = models.BooleanField(default=True)
     product_deletion = models.BooleanField(default=True)
+
     service_creation = models.BooleanField(default=True)
     service_update = models.BooleanField(default=True)
     service_deletion = models.BooleanField(default=True)

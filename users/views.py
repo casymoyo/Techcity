@@ -7,6 +7,7 @@ from django.shortcuts import render, redirect
 from loguru import logger
 from django.contrib.auth import get_user_model
 from company.models import Branch
+from settings.models import NotificationsSettings
 from utils.authenticate import authenticate_user
 from .models import User
 from .forms import UserRegistrationForm, UserDetailsForm, UserDetailsForm2
@@ -118,6 +119,10 @@ def register(request):
             user = form.save(commit=False)
             user.password = make_password(form.cleaned_data['password'])
             user.save()
+
+            # create notifications settings for the user
+            NotificationsSettings.objects.create(user=user)
+
             messages.success(request, 'User successfully added')
         else:
             messages.error(request, 'Error')
