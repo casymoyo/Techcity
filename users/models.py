@@ -63,8 +63,8 @@ class CustomUserManager(BaseUserManager):
 
 class User(AbstractUser):
     USER_ROLES = (
-        ('Owner', 'Owner'),
-        ('Admin', 'Admin'),
+        ('owner', 'Owner'),
+        ('admin', 'Admin'),
         ('sales', 'Salesperson'),
         ('accountant', 'Accountant')
     )

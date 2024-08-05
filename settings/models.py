@@ -31,3 +31,59 @@ class NotificationsSettings(models.Model):
 
     def __str__(self):
         return self.user.email
+
+# >>>>>>>>>>>>>>>>>>>>>> Remove unnecessary later>>>>>>>>>>>>>>>>>>
+
+# class Printer(models.Model):
+#     pc_identifier = models.CharField(max_length=255)
+#     hostname = models.CharField(max_length=255)
+#     name = models.CharField(max_length=100)
+#     address = models.CharField(max_length=100)
+#     printer_type = models.CharField(max_length=50, default='Bluetooth')
+#
+#     def __str__(self):
+#         return f"{self.name} ({self.address}) for PC {self.pc_identifier} and Hostname {self.hostname}"
+
+
+# Printer settings
+# class Printer(models.Model):
+#     """
+#     The system uses 2 types of printers, bluetooth and system(locally configured) printers.
+#     """
+#     name = models.CharField(max_length=255)
+#     ip_address = models.GenericIPAddressField()
+#     pc_identifier = models.CharField(max_length=255)  # unique identifier of the pc
+#     hostname = models.CharField(max_length=255)  # hostname of the pc
+#     type = models.CharField(max_length=255, choices=(('bluetooth', 'Bluetooth'), ('system', 'System')))
+#     is_default = models.BooleanField(default=False)
+#     is_active = models.BooleanField(default=True)
+#
+#     def __str__(self):
+#         return self.name
+
+
+# Bluetooth printer settings
+# class BluetoothPrinterSettings(Printer):
+#     bluetooth_address = models.CharField(max_length=255, blank=True, null=True)
+#     pairing_status = models.CharField(max_length=255)
+#     pairing_code = models.CharField(max_length=255)
+#
+#     def __str__(self):
+#         return self.name
+
+
+# system printer settings
+class Printer(models.Model):
+    name = models.CharField(max_length=100)
+    address = models.CharField(max_length=100)
+    printer_type = models.CharField(max_length=255, choices=(('bluetooth', 'Bluetooth'), ('system', 'System')))
+    port = models.CharField(max_length=255)
+    driver_name = models.CharField(max_length=255, blank=True, null=True)
+    location = models.CharField(max_length=255, blank=True, null=True)
+    pc_identifier = models.CharField(max_length=255)
+    hostname = models.CharField(max_length=255)
+    is_default = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
