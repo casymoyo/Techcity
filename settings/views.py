@@ -3,16 +3,16 @@ import environ
 import asyncio, settings
 from pathlib import Path
 from bleak import BleakScanner
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from .forms import EmailSettingsForm
+from .forms import EmailSettingsForm, PrinterForm
 from techcity.settings import INVENTORY_EMAIL_NOTIFICATIONS_STATUS
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 
 import logging
 
-from .models import NotificationsSettings
+from .models import NotificationsSettings, Printer
 
 logger = logging.getLogger(__name__)
 
@@ -249,6 +249,59 @@ def update_or_create_printer(request):
             return JsonResponse({'success': False, 'error': 'Selected printer not found'})
     return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
 
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>> PRINTER SETTINGS >>>>>>>>>>>>>>>>>>>>>>>>>>
+
+@require_http_methods(["POST"])
+def add_printer(request):
+    """
+    Add printer details to DB:
+
+    payload = {
+        printer_name: printerName,
+        printer_address: printerAddress,
+        pc_identifier: pcIdentifier,
+        hostname: hostname
+    }
+
+    """
+    if request.method == 'POST':
+        payload = json.loads(request.body)
+        logger.info(f"payload: {payload}")
+
+        name = payload.get('printer_name')
+        address = payload.get('printer_address')
+        hostname = payload.get('hostname')
+        pc_identifier = payload.get('pc_identifier')
+
+        if name and address and hostname and pc_identifier:
+            logger.info(f"saving printer details")
+            printer = Printer.objects.create(
+                name=name,
+                address=address,
+                hostname=hostname,
+                pc_identifier=pc_identifier,
+                printer_type='system',
+
+            )
+            logger.info(f"printer {printer.name} added successfully")
+            return JsonResponse({"success": True, "message": "Printer added successfully"}, status=200)
+
+
+def scan_printers(request):
+    """
+    Scan locally configured Printer settings in this OS, filter out printers already in the system
+    """
+    logger.info(f"scanning printers")
+    printers = [
+        {'name': 'Printer 1', 'address': '192.168.1.100'},
+        {'name': 'Printer 2', 'address': '192.168.1.101'},
+    ]
+    logger.info(f"scanning successful")
+    return JsonResponse({"success": True,"printers": printers}, safe=False, status=200)
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE >>>>>>>>>>>>>>>>>>>>>>>>...
 
 async def get_bluetooth_device(address):
     devices = await BleakScanner.discover()
