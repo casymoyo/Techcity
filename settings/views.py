@@ -5,7 +5,9 @@ from pathlib import Path
 from bleak import BleakScanner
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from .forms import EmailSettingsForm, PrinterForm
+
+from utils.identify_pc import get_mac_address, get_system_uuid, get_hostname
+from .forms import EmailSettingsForm
 from techcity.settings import INVENTORY_EMAIL_NOTIFICATIONS_STATUS
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -71,6 +73,7 @@ def validate_payload(payload):
         return JsonResponse({'success': False, 'error': 'Invalid status'}, status=400)
 
     return [notification, status]
+
 
 # products notifications settings views
 @require_http_methods(["POST"])
@@ -284,7 +287,7 @@ def add_printer(request):
                 printer_type='system',
 
             )
-            logger.info(f"printer {printer.name} added successfully")
+            logger.info(f"printer {printer.name} added successfully: {printer}")
             return JsonResponse({"success": True, "message": "Printer added successfully"}, status=200)
 
 
@@ -298,7 +301,17 @@ def scan_printers(request):
         {'name': 'Printer 2', 'address': '192.168.1.101'},
     ]
     logger.info(f"scanning successful")
-    return JsonResponse({"success": True,"printers": printers}, safe=False, status=200)
+    return JsonResponse({"success": True, "printers": printers}, safe=False, status=200)
+
+
+def identify_pc(request):
+    """
+    Identify the PC using MAC address AND system uuid
+    """
+    mac_address = get_mac_address()
+    system_uuid = get_system_uuid()
+    hostname = get_hostname()
+    return JsonResponse({"status": True, "mac_address": mac_address, "system_uuid": system_uuid, "hostname": hostname}, status=200)
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE >>>>>>>>>>>>>>>>>>>>>>>>...

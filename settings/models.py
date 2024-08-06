@@ -81,7 +81,9 @@ class Printer(models.Model):
     driver_name = models.CharField(max_length=255, blank=True, null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
     pc_identifier = models.CharField(max_length=255)
-    hostname = models.CharField(max_length=255)
+    hostname = models.CharField(max_length=255, blank=True, null=True)
+    mac_address = models.CharField(max_length=255, blank=True, null=True)
+    system_uuid = models.CharField(max_length=255, blank=True, null=True)
     is_default = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 

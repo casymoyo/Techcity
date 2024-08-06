@@ -13,6 +13,7 @@ urlpatterns = [
     # system printers (by lee man)
     path('printer/system/scan-printers/', scan_printers, name='scan_printers'),
     path('printer/system/add-printer/', add_printer, name='add_printer'),
+    path('identify-pc-info', identify_pc, name='identify_pc'),
 
     # email
     path('email/config/save/',  save_email_config, name='save_email_config'),

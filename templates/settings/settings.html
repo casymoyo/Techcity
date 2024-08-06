@@ -572,14 +572,13 @@
      
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> SCAN & ADD SYSTEM PRINTER SETTINGS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     
+    
     document.addEventListener("DOMContentLoaded", (event) => {
         const scanButton = document.getElementById("scan-button");
         const viewPrintersButton = document.getElementById("view-printers-button");
         const scannedPrinters = document.getElementById("scanned-printers");
-        
+    
         scanButton.addEventListener("click", async () => {
-            // disable the button scanButton, then proceed
-            
             try {
                 const response = await fetch("{% url 'settings:scan_printers' %}");
                 const data = await response.json();
@@ -587,7 +586,7 @@
                 console.log(response);
                 console.log(data);
                 console.log(">>>>>>>>>>>>>>> Data Fetched <<<<<<<<<<<<<<<<");
-                
+    
                 if (data.success) {
                     scannedPrinters.innerHTML = "";
                     console.log(data.printers);
@@ -600,17 +599,38 @@
                                 <button class="btn btn-primary add-printer-btn" data-name="${printer.name}" data-address="${printer.address}">Add Printer</button>
                             </td>
                         `;
-                        
+    
                         scannedPrinters.appendChild(tr);
                     });
-                    
+    
                     document.querySelectorAll('.add-printer-btn').forEach(btn => {
                         btn.addEventListener('click', async () => {
+                            // get pc infomation from backend
+                            const pc_info = {
+                                hostname: 'Unknown1',
+                                mac_address: 'Unknown2',
+                                system_uuid: 'Unknown3'
+                            };
+                            
+                            const response_one = await fetch("{% url 'settings:identify_pc' %}");
+                            const response_data = await response_one.json();
+                            console.log("logging response and returned data");
+                            console.log(response_data);
+                            // feed our pc_info object with the data
+                            console.log("setting pc info");
+                            pc_info.hostname = response_data.hostname;
+                            pc_info.mac_address = response_data.mac_address;
+                            pc_info.system_uuid = response_data.system_uuid;
+                            console.log("PC Info from backend");
+                            console.log(pc_info);
+                          
                             const printerName = btn.getAttribute('data-name');
                             const printerAddress = btn.getAttribute('data-address');
                             const pcIdentifier = generatePcIdentifier();
-                            const hostname = window.location.hostname;
-                                                        
+                            const hostname = pc_info.hostname || 'HOSTNAME';
+                            const mac_address = pc_info.mac_address || 'MAC_ADDRESS';
+                            const system_uuid = pc_info.system_uuid || 'SYS_UUID';
+    
                             try {
                                 const response = await fetch("{% url 'settings:add_printer' %}", {
                                     method: 'POST',
@@ -622,10 +642,12 @@
                                         printer_name: printerName,
                                         printer_address: printerAddress,
                                         pc_identifier: pcIdentifier,
-                                        hostname: hostname
+                                        hostname: hostname,
+                                        mac_address: mac_address,
+                                        system_uuid: system_uuid
                                     })
                                 });
-                                
+    
                                 const data = await response.json();
                                 if (data.success) {
                                     alert("Printer added successfully");
@@ -648,6 +670,9 @@
             }
         });
     });
+
+    
+    
     
     function generatePcIdentifier() {
         const pcIdentifier = 'pc-' + Math.random().toString(36).substr(2, 9);
