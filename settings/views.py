@@ -3,6 +3,7 @@ import environ
 import asyncio, settings
 from pathlib import Path
 from bleak import BleakScanner
+import win32print
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 
@@ -300,8 +301,22 @@ def scan_printers(request):
         {'name': 'Printer 1', 'address': '192.168.1.100'},
         {'name': 'Printer 2', 'address': '192.168.1.101'},
     ]
+
+    printers = win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS)
+    logger.info(f"printers: {printers}")
+    # Extract printer names and addresses
+    local_printers = [
+        {'name': printer[2], 'address': printer[1]}
+        for printer in printers
+    ]
+    logger.info(f"local printers: {local_printers}")
+    stored_printers = Printer.objects.values_list('name', flat=True)
+    # Filter out the printers that are already stored in the system
+    new_printers = [printer for printer in local_printers if printer['name'] not in stored_printers]
+
+    logger.info(f"new printers add")
     logger.info(f"scanning successful")
-    return JsonResponse({"success": True, "printers": printers}, safe=False, status=200)
+    return JsonResponse({"success": True, "printers": new_printers}, safe=False, status=200)
 
 
 def identify_pc(request):
