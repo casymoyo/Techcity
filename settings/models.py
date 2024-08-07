@@ -7,19 +7,25 @@ class NotificationsSettings(models.Model):
     product_creation = models.BooleanField(default=True)
     product_update = models.BooleanField(default=True)
     product_deletion = models.BooleanField(default=True)
+    invoice_on_sale = models.BooleanField(default=True)
+    low_stock = models.BooleanField(default=False)
 
     service_creation = models.BooleanField(default=True)
     service_update = models.BooleanField(default=True)
     service_deletion = models.BooleanField(default=True)
-    invoice_on_sale = models.BooleanField(default=True)
 
     # transfers settings
     transfer_creation = models.BooleanField(default=True)
     transfer_approval = models.BooleanField(default=True)
+    transfer_receiving = models.BooleanField(default=True)
 
     # finance settings
     expense_creation = models.BooleanField(default=True)
     expense_approval = models.BooleanField(default=True)
+    recurring_invoices = models.BooleanField(default=True)
+    money_transfer = models.BooleanField(default=True)
+    cash_withdrawal = models.BooleanField(default=True)
+    cash_deposits = models.BooleanField(default=True)
 
     # users settings
     user_creation = models.BooleanField(default=True)

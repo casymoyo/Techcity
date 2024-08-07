@@ -84,14 +84,14 @@
                                 </div>
                             </div>
                             <div class='col'>
-                                <div class="container mt-4">  
-                                    <h6>Bluetooth Printer Configuration</h6> 
+                                <div class="container mt-4">
+                                    <h6>Bluetooth Printer Configuration</h6>
                                     <div class="form-group">
                                         <label for="printerSelect" class="form-label">Select Bluetooth Printer:</label>
                                         <select class="form-select" id="printerSelect">
                                         </select>
                                     </div>
-                                
+
                                     <div class="mt-3">
                                         <button type="button" id="scanButton" class="btn btn-primary">Scan Printers</button>
                                         <button type="button" id="selectPrinterBtn" class="btn btn-primary">Select Printer</button>
@@ -99,7 +99,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         {# System Printers #}
                         
                         <div class="container mt-5">
@@ -156,7 +156,13 @@
                                     <tr class="table-row">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Invoice on sale</span>
-                                            <span id="toggle-icon-44" class='bx fs-1 toggle-icon' data-status="{{ notifications.invoice_on_sale|yesno:"true,false" }}" onclick="toggleInvoiceOnSaleStatus()"></span>
+                                            <span id="toggle-icon-4" class='bx fs-1 toggle-icon' data-status="{{ notifications.invoice_on_sale|yesno:"true,false" }}" onclick="toggleInvoiceOnSaleStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Low Stock</span>
+                                            <span id="toggle-icon-5" class='bx fs-1 toggle-icon' data-status="{{ notifications.low_stock|yesno:"true,false" }}" onclick="toggleLowStockStatus()"></span>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -171,19 +177,19 @@
                                     <tr class="table-row">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Notify on Service creation</span>
-                                            <span id="toggle-icon-3" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick=""></span>
+                                            <span id="toggle-icon-service-1" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.service_creation|yesno:"true,false" }}" onclick="toggleServiceCreationStatus()"></span>
                                         </td>
                                     </tr>
                                     <tr class="table-row">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Notify on Service update</span>
-                                            <span id="toggle-icon-4" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick=""></span>
+                                            <span id="toggle-icon-service-2" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.service_update|yesno:"true,false" }}" onclick="toggleServiceUpdateStatus()"></span>
                                         </td>
                                     </tr>
                                     <tr class="table-row">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Notify on Service deletion</span>
-                                            <span id="toggle-icon-5" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick=""></span>
+                                            <span id="toggle-icon-service-3" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.service_deletion|yesno:"true,false" }}" onclick="toggleServiceDeletionStatus()"></span>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -198,13 +204,20 @@
                                     <tr class="table-row">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Notify on Transfer creation</span>
-                                            <span id="toggle-icon-5" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick=""></span>
+                                            <span id="toggle-icon-transfer-1" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.transfer_creation|yesno:"true,false" }}" onclick="toggleTransferCreationStatus()"></span>
                                         </td>
                                     </tr>
                                     <tr class="table-row">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Notify on Transfer approval</span>
-                                            <span id="toggle-icon-6" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick=""></span>
+                                            <span id="toggle-icon-transfer-2" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.transfer_approval|yesno:"true,false" }}" onclick="toggleTransferApprovalStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify on Transfer Receiving</span>
+                                            <span id="toggle-icon-transfer-3" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.transfer_receiving|yesno:"true,false" }}" onclick="toggleTransferReceivingStatus()"></span>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -218,13 +231,37 @@
                                     <tr class="table-row">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Notify on Expense creation</span>
-                                            <span id="toggle-icon-7" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick=""></span>
+                                            <span id="toggle-icon-finance-1" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.expense_creation|yesno:"true,false" }}" onclick="toggleExpenseCreationStatus()"></span>
                                         </td>
                                     </tr>
                                     <tr class="table-row">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Notify on Expense approval</span>
-                                            <span id="toggle-icon-8" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick=""></span>
+                                            <span id="toggle-icon-finance-2" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.expense_approval|yesno:"true,false" }}" onclick="toggleExpenseApprovalStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify for Recurring Invoices</span>
+                                            <span id="toggle-icon-finance-3" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.recurring_invoices|yesno:"true,false" }}" onclick="toggleRecurringInvoiceStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify for Recurring Invoices</span>
+                                            <span id="toggle-icon-finance-4" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.money_transfer|yesno:"true,false" }}" onclick="toggleMoneyTransferStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify for Recurring Invoices</span>
+                                            <span id="toggle-icon-finance-5" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.cash_withdrawal|yesno:"true,false" }}" onclick="toggleCashWithdrawalStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify for Recurring Invoices</span>
+                                            <span id="toggle-icon-finance-6" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.cash_deposits|yesno:"true,false" }}" onclick="toggleCashDepositsStatus()"></span>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -238,27 +275,27 @@
                                     <tr class="table-row">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Notify on User creation</span>
-                                            <span id="toggle-icon-9" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick=""></span>
+                                            <span id="toggle-icon-user-1" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.user_creation|yesno:"true,false" }}" onclick="toggleUserCreationStatus()"></span>
                                         </td>
                                     </tr>
                                     <tr class="table-row">
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Notify on User approval</span>
-                                            <span id="toggle-icon-10" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick=""></span>
+                                            <span id="toggle-icon-user-2" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.user_approval|yesno:"true,false" }}" onclick="toggleUserApprovalStatus()"></span>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td class="d-flex justify-content-between align-items-center">
                                             <span>Notify on User deletion</span>
-                                            <span id="toggle-icon-11" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick=""></span>
+                                            <span id="toggle-icon-user-3" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.user_deletion|yesno:"true,false" }}" onclick="toggleUserDeletionStatus()"></span>
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td class="d-flex justify-content-between align-items-center">
-                                            <span>Notify on User Login</span>
-                                            <span id="toggle-icon-12" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="false" onclick=""></span>
-                                        </td>
-                                    </tr>
+{#                                    <tr>#}
+{#                                        <td class="d-flex justify-content-between align-items-center">#}
+{#                                            <span>Notify on User Login</span>#}
+{#                                            <span id="toggle-icon-user-4" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.user_login|yesno:"true,false" }}" onclick="toggleCashDepositsStatus()"></span>#}
+{#                                        </td>#}
+{#                                    </tr>#}
                                 </tbody>
                             </table>
                         </div>
@@ -458,7 +495,120 @@
     }
     
     
-        
+    function toggleLowStockStatus(){
+         const icon = document.getElementById('toggle-icon-5');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('low_stock', newStatus, icon, newStatus);
+    }
+    
+    
+    // {# service notifications #}
+    
+    function toggleServiceCreationStatus() {
+        const icon = document.getElementById('toggle-icon-service-1');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('service_creation', newStatus, icon, newStatus);
+    }
+    
+    function toggleServiceUpdateStatus() {
+        const icon = document.getElementById('toggle-icon-service-2');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('service_update', newStatus, icon, newStatus);
+    }
+    
+    function toggleServiceDeletionStatus() {
+        const icon = document.getElementById('toggle-icon-service-3');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('service_deletion', newStatus, icon, newStatus);
+    }
+       
+    // {# transfers #}
+    
+    function toggleTransferCreationStatus() {
+        const icon = document.getElementById('toggle-icon-transfer-1');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('transfer_creation', newStatus, icon, newStatus);
+    }
+    function toggleTransferApprovalStatus() {
+        const icon = document.getElementById('toggle-icon-transfer-2');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('transfer_approval', newStatus, icon, newStatus);
+    }
+    function toggleTransferReceivingStatus() {
+        const icon = document.getElementById('toggle-icon-transfer-3');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('transfer_receiving', newStatus, icon, newStatus);
+    }
+    
+    
+    // {# finance #}
+    
+    function toggleExpenseCreationStatus() {
+        const icon = document.getElementById('toggle-icon-finance-1');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('expense_creation', newStatus, icon, newStatus);
+    }
+    function toggleExpenseApprovalStatus() {
+        const icon = document.getElementById('toggle-icon-finance-2');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('expense_approval', newStatus, icon, newStatus);
+    }
+    function toggleRecurringInvoiceStatus() {
+        const icon = document.getElementById('toggle-icon-finance-3');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('recurring_invoices', newStatus, icon, newStatus);
+    }
+    function toggleMoneyTransferStatus() {
+        const icon = document.getElementById('toggle-icon-finance-4');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('money_transfer', newStatus, icon, newStatus);
+    }
+    function toggleCashWithdrawalStatus() {
+        const icon = document.getElementById('toggle-icon-finance-5');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('cash_withdrawal', newStatus, icon, newStatus);
+    }
+    function toggleCashDepositsStatus() {
+        const icon = document.getElementById('toggle-icon-finance-6');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('cash_deposits', newStatus, icon, newStatus);
+    }
+    
+    // {# users #}
+    function toggleUserCreationStatus() {
+        const icon = document.getElementById('toggle-icon-user-1');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('user_creation', newStatus, icon, newStatus);
+    }
+    function toggleUserApprovalStatus() {
+        const icon = document.getElementById('toggle-icon-user-2');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('user_approval', newStatus, icon, newStatus);
+    }
+    function toggleUserDeletionStatus() {
+        const icon = document.getElementById('toggle-icon-user-3');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('user_deletion', newStatus, icon, newStatus);
+    }
+    
+    
+    // {# >>>>>>>>>>>>>> printer settings >>>>>>>>>>> NB:these are system printers >>>>>>>>#}
     scanButton.addEventListener('click', fetchPrinters);
     async function fetchPrinters() {
         loaderModal.show()
