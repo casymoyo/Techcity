@@ -297,11 +297,7 @@ def scan_printers(request):
     Scan locally configured Printer settings in this OS, filter out printers already in the system
     """
     logger.info(f"scanning printers")
-    printers = [
-        {'name': 'Printer 1', 'address': '192.168.1.100'},
-        {'name': 'Printer 2', 'address': '192.168.1.101'},
-    ]
-
+    # Get all printers in the system
     printers = win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS)
     logger.info(f"printers: {printers}")
     # Extract printer names and addresses
@@ -328,6 +324,20 @@ def identify_pc(request):
     hostname = get_hostname()
     return JsonResponse({"status": True, "mac_address": mac_address, "system_uuid": system_uuid, "hostname": hostname}, status=200)
 
+
+def get_printers(request):
+    """
+    Fetch printers from the database based on PC information.
+    """
+    pc_identifier = request.COOKIES.get('pc_identifier')
+    logger.info(f"PC identifier: {pc_identifier}")
+    if not pc_identifier:
+        return JsonResponse({"success": False, "error": "PC identifier not found."}, status=400)
+
+    printers = Printer.objects.filter(pc_identifier=pc_identifier)
+    printer_list = list(printers.values('name', 'address', 'hostname', 'mac_address', 'system_uuid'))
+
+    return JsonResponse({"success": True, "printers": printer_list}, status=200)
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> DONE >>>>>>>>>>>>>>>>>>>>>>>>...
 
