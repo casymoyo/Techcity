@@ -16,8 +16,8 @@
             <div class="mt-3 border rounded p-2">
                 <nav class='recent-nav navbar navbar-expand-lg navbar-light bg-dark text-light px-2'>
                     <ul class='navbar-nav items  mr-auto'>
-                        <li class='nav-item px-2' data-name="notifications">Email Notifications</li>
-                        <li class='nav-item active' data-name="company">Company</li>
+                        <li class='nav-item px-2 active' data-name="notifications">Email Notifications</li>
+                        <li class='nav-item ' data-name="company">Company</li>
                         <li class='nav-item px-2' data-name="printer">Printer</li>
                         <li class='nav-item' data-name="cron">Cron Jobs</li>
                     </ul>
@@ -69,50 +69,264 @@
                             </div>
                         </div>
                     </div>
+                    
+                    
+                {# >>>>>>>>>>>>>>>>>>>>>>>>>>>> Printer Settings <<<<<<<<<<<<<<<<<<<<<<<<<<<<< #}
+                
                     <div class='printer hidden border p-2'>
                         <h6 class='fw-bold'>Printer settings</h6>
-                        <div class='row'>
-                            <div class='col'>
-                                <h6 class='mt-4'>Current Printer Configurations</h6>
-                                <div class='mt-2'>
-                                    <i class='fw-bold bx bx-printer'></i>
-                                    {{ printer }}
-                                </div>
-                            </div>
-                            <div class='col'>
-                                <div class="container mt-4">  
-                                    <h6>Bluetooth Printer Configuration</h6> 
-                                    <div class="form-group">
-                                        <label for="printerSelect" class="form-label">Select Bluetooth Printer:</label>
-                                        <select class="form-select" id="printerSelect">
-                                        </select>
-                                    </div>
+{#                        <div class='row mb-4  pb-4 border-bottom border-primary '>#}
+{#                            <div class='col'>#}
+{#                                <h6 class='mt-4'>Current Bluetooth Printer Configurations</h6>#}
+{#                                <div class='mt-2'>#}
+{#                                    <i class='fw-bold bx bx-printer'></i>#}
+{#                                    {{ printer }}#}
+{#                                </div>#}
+{#                            </div>#}
+{#                            <div class='col'>#}
+{#                                <div class="container mt-4">#}
+{#                                    <h6>Bluetooth Printer Configuration</h6>#}
+{#                                    <div class="form-group">#}
+{#                                        <label for="printerSelect" class="form-label">Select Bluetooth Printer:</label>#}
+{#                                        <select class="form-select" id="printerSelect">#}
+{#                                        </select>#}
+{#                                    </div>#}
+{##}
+{#                                    <div class="mt-3">#}
+{#                                        <button type="button" id="scanButton" class="btn btn-primary">Scan Printers</button>#}
+{#                                        <button type="button" id="selectPrinterBtn" class="btn btn-primary">Select Printer</button>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                        </div>#}
+
+                        {# System Printers #}
+                        
+                        <div class="container">
+{#                            <h3>System Printers</h3>#}
+                            <button id="view-printers-button" class="btn btn-outline-primary mt-3 ">View Available Printers</button>
+                            <button id="scan-button" class="btn btn-primary mt-3 mx-4">Scan for Printers</button>
+                            <div class="available-printers mt-3">
+                                <table class="table table-striped table-borderless" id="current-printers-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Address</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="scanned-printers">
+                                        <!-- Scanned printers will be appended here -->
+                                    </tbody>
+                                </table>
                                 
-                                    <div class="mt-3">
-                                        <button type="button" id="scanButton" class="btn btn-primary">Scan Printers</button>
-                                        <button type="button" id="selectPrinterBtn" class="btn btn-primary">Select Printer</button>
-                                    </div>
-                                </div>
+                                {# On clicking view printers render table with printers in the DB #}
+                                <table class="table table-striped table-borderless" id="db-printers-table" style="display: none;">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Address</th>
+                                            <th>Hostname</th>
+{#                                            <th>MAC Address</th>#}
+{#                                            <th>System UUID</th>#}
+                                        </tr>
+                                    </thead>
+                                    <tbody id="db-printers">
+                                        <!-- Printers from the database will be appended here -->
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
+                        
                     </div>
+                    
+                    
+                    {# >>>>>>>>>>>>>>>>>>>>>>>>>>>> Notifications <<<<<<<<<<<<<<<<<<<<<<<<<<<<< #}
+                    
                     <div class='notifications border p-2'>
                         <h6 class='fw-bold'>Notifications settings</h6>
-                        <table>
-                            <tbody>
-                                <td>Invenoty Email Notification</td>
-                                <td>
-                                    <i id="toggle-icon" class='bx bxs-toggle-left fs-1' data-status="{{ email_status|yesno:'true,false' }}" onclick="toggleEmailStatus()">
-                                        <i class='bx bxs-toggle-left fs-1'></i>    
-                                    </i>
-                                </td>                                
-                            </tbody>
-                        </table>
+                        
+                        {# products notifications #}
+                        <div class="table-responsive">
+                            <h6 class='mt-4 text-primary'>Products Notifications</h6>
+                            <table class="table table-striped table-borderless mt-2">
+                                <tbody>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify on Product creation</span>
+                                            <span id="toggle-icon-1" class='bx fs-1 toggle-icon' data-status="{{ notifications.product_creation|yesno:"true,false" }}" onclick="toggleProductCreationStatus()"></span>                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify on Product update</span>
+                                            <span id="toggle-icon-2" class='bx fs-1 toggle-icon' data-status="{{ notifications.product_update|yesno:"true,false" }}" onclick="toggleProductUpdateStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row mb-2">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify on Product deletion</span>
+                                            <span id="toggle-icon-3" class='bx fs-1 toggle-icon' data-status="{{ notifications.product_deletion|yesno:"true,false" }}" onclick="toggleProductDeletionStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Invoice on sale</span>
+                                            <span id="toggle-icon-4" class='bx fs-1 toggle-icon' data-status="{{ notifications.invoice_on_sale|yesno:"true,false" }}" onclick="toggleInvoiceOnSaleStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Low Stock</span>
+                                            <span id="toggle-icon-5" class='bx fs-1 toggle-icon' data-status="{{ notifications.low_stock|yesno:"true,false" }}" onclick="toggleLowStockStatus()"></span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        {# services notifications #}
+                        <div class="table-responsive">
+                            <h6 class='mt-4 text-primary'>Services Notifications</h6>
+                            <table class="table table-striped table-borderless mt-2">
+                                <tbody>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify on Service creation</span>
+                                            <span id="toggle-icon-service-1" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.service_creation|yesno:"true,false" }}" onclick="toggleServiceCreationStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify on Service update</span>
+                                            <span id="toggle-icon-service-2" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.service_update|yesno:"true,false" }}" onclick="toggleServiceUpdateStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify on Service deletion</span>
+                                            <span id="toggle-icon-service-3" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.service_deletion|yesno:"true,false" }}" onclick="toggleServiceDeletionStatus()"></span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        {# transfers notifications #}
+                        <div class="table-responsive">
+                            <h6 class='mt-4 text-primary'>Transfers Notifications</h6>
+                            <table class="table table-striped table-borderless mt-2">
+                                <tbody>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify on Transfer creation</span>
+                                            <span id="toggle-icon-transfer-1" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.transfer_creation|yesno:"true,false" }}" onclick="toggleTransferCreationStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify on Transfer approval</span>
+                                            <span id="toggle-icon-transfer-2" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.transfer_approval|yesno:"true,false" }}" onclick="toggleTransferApprovalStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify on Transfer Receiving</span>
+                                            <span id="toggle-icon-transfer-3" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.transfer_receiving|yesno:"true,false" }}" onclick="toggleTransferReceivingStatus()"></span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        {# Finance notifications #}
+                        <div class="table-responsive">
+                            <h6 class='mt-4 text-primary'>Finance Notifications</h6>
+                            <table class="table table-striped table-borderless mt-2">
+                                <tbody>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify on Expense creation</span>
+                                            <span id="toggle-icon-finance-1" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.expense_creation|yesno:"true,false" }}" onclick="toggleExpenseCreationStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify on Expense approval</span>
+                                            <span id="toggle-icon-finance-2" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.expense_approval|yesno:"true,false" }}" onclick="toggleExpenseApprovalStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify for Recurring Invoices</span>
+                                            <span id="toggle-icon-finance-3" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.recurring_invoices|yesno:"true,false" }}" onclick="toggleRecurringInvoiceStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify for Recurring Invoices</span>
+                                            <span id="toggle-icon-finance-4" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.money_transfer|yesno:"true,false" }}" onclick="toggleMoneyTransferStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify for Recurring Invoices</span>
+                                            <span id="toggle-icon-finance-5" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.cash_withdrawal|yesno:"true,false" }}" onclick="toggleCashWithdrawalStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify for Recurring Invoices</span>
+                                            <span id="toggle-icon-finance-6" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.cash_deposits|yesno:"true,false" }}" onclick="toggleCashDepositsStatus()"></span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        {# Users notifications #}
+                        <div class="table-responsive">
+                            <h6 class='mt-4 text-primary'>Users Notifications</h6>
+                            <table class="table table-striped table-borderless mt-2">
+                                <tbody>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify on User creation</span>
+                                            <span id="toggle-icon-user-1" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.user_creation|yesno:"true,false" }}" onclick="toggleUserCreationStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify on User approval</span>
+                                            <span id="toggle-icon-user-2" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.user_approval|yesno:"true,false" }}" onclick="toggleUserApprovalStatus()"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="d-flex justify-content-between align-items-center">
+                                            <span>Notify on User deletion</span>
+                                            <span id="toggle-icon-user-3" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.user_deletion|yesno:"true,false" }}" onclick="toggleUserDeletionStatus()"></span>
+                                        </td>
+                                    </tr>
+{#                                    <tr>#}
+{#                                        <td class="d-flex justify-content-between align-items-center">#}
+{#                                            <span>Notify on User Login</span>#}
+{#                                            <span id="toggle-icon-user-4" class='bx bxs-toggle-left fs-1 toggle-icon' data-status="{{ notifications.user_login|yesno:"true,false" }}" onclick="toggleCashDepositsStatus()"></span>#}
+{#                                        </td>#}
+{#                                    </tr>#}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        
+                        
+                        
                     </div>
                 </div>
             </div>
         {% endblock nav %}
     </div>
+    
+    
+    {# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> MODALS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #}
 
     <div class="modal fade" id="paylaterModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
@@ -163,6 +377,27 @@
 
 </div>
 
+<style>
+    .toggle-icon {
+        font-size: 24px; /* Increase the size of the icon */
+        justify-content: center;
+        align-items: center;
+    }
+
+    .table-row {
+        padding: 24px 0; /* Add padding to the table row */
+    }
+
+    .table td {
+        padding: 24px 0; /* Add padding to table cells */
+    }
+
+    .fs-1 {
+        font-size: 2rem; /* Define font size for the icon */
+        cursor: pointer;
+    }
+</style>
+
 <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js'%}"></script>  
 <script src="{% static 'js/jquery.js'%}"></script>  
 <script>
@@ -180,66 +415,249 @@
     const printerDropdown = document.getElementById('printerSelect');
     const scanButton = document.getElementById('scanButton');
     const selectPrinterBtn = document.getElementById('selectPrinterBtn');
-
-
-    function toggleEmailStatus() {
-        const icon = document.getElementById('toggle-icon');
-        const currentStatus = icon.getAttribute('data-status') === 'true';
-        const newStatus = !currentStatus;
-
+ 
+    
+    // load status initially
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const icons = document.querySelectorAll('.toggle-icon');
+        icons.forEach(icon => {
+            const currentStatus = icon.getAttribute('data-status') === 'true';
+    
+            // Set the initial color based on the status
+            if (currentStatus) {
+                icon.classList.add('bxs-toggle-right');
+                icon.style.color = 'green';
+            } else {
+                icon.classList.add('bxs-toggle-left');
+            }
+        });
+    });
+            
+    // this is the function that will be called when the toggle icon is clicked
+    function changeNotificationStatus(notification, status, icon, newStatus) {
+        // {#send request to backend#}
+        console.log("sending request to backend")
         fetch("{% url 'settings:email_notification_status' %}", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken')
             },
-            body: JSON.stringify({ status: newStatus })
+            body: JSON.stringify({ notification: notification, status: status })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 icon.setAttribute('data-status', newStatus);
                 icon.className = newStatus ? 'bx bxs-toggle-right fs-1' : 'bx bxs-toggle-left fs-1';
+                
+                // Change the color to green if the status is true
+                if (newStatus) {
+                    icon.style.color = 'green';
+                } else {
+                    icon.style.color = '';
+                }
             } else {
                 alert('Failed to update status');
             }
         })
         .catch(error => console.error('Error:', error));
     }
+    
+    // {#products notifications#}
+    
+    function toggleProductCreationStatus() {
+        const icon = document.getElementById('toggle-icon-1');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
 
-    scanButton.addEventListener('click', fetchPrinters);
-    async function fetchPrinters() {
-        loaderModal.show()
-        try {
-            const response = await fetch('{% url "settings:scan_for_printers" %}');
-            const data = await response.json();
+        changeNotificationStatus('product_creation', newStatus, icon, newStatus);
 
-            if (data.printers) {
-                loaderModal.hide()
-                
-                populateDropdown(data.printers);
-                console.log(data)
-            } else {
-            handleError(data.error);
-            }
-        } catch (error) {
-            handleError("Error fetching printer data");
-        }
+        // Log the new status to the console (for demonstration purposes)
+        console.log('Product creation status:', newStatus);
     }
+    
+    function toggleProductUpdateStatus() {
+        const icon = document.getElementById('toggle-icon-2');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+
+        changeNotificationStatus('product_update', newStatus, icon, newStatus);
+
+        // Log the new status to the console (for demonstration purposes)
+        console.log('Product update status:', newStatus);
+    }
+    
+    function toggleProductDeletionStatus() {
+        const icon = document.getElementById('toggle-icon-3');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+
+        changeNotificationStatus('product_deletion', newStatus, icon, newStatus);
+
+        // Log the new status to the console (for demonstration purposes)
+        console.log('Product deletion status:', newStatus);
+    }
+    
+    function toggleInvoiceOnSaleStatus() {
+        const icon = document.getElementById('toggle-icon-4');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+
+        changeNotificationStatus('invoice_on_sale', newStatus, icon, newStatus);
+
+        // Log the new status to the console (for demonstration purposes)
+        console.log('Invoice on sale status:', newStatus);
+    }
+    
+    
+    function toggleLowStockStatus(){
+         const icon = document.getElementById('toggle-icon-5');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('low_stock', newStatus, icon, newStatus);
+    }
+    
+    
+    // {# service notifications #}
+    
+    function toggleServiceCreationStatus() {
+        const icon = document.getElementById('toggle-icon-service-1');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('service_creation', newStatus, icon, newStatus);
+    }
+    
+    function toggleServiceUpdateStatus() {
+        const icon = document.getElementById('toggle-icon-service-2');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('service_update', newStatus, icon, newStatus);
+    }
+    
+    function toggleServiceDeletionStatus() {
+        const icon = document.getElementById('toggle-icon-service-3');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('service_deletion', newStatus, icon, newStatus);
+    }
+       
+    // {# transfers #}
+    
+    function toggleTransferCreationStatus() {
+        const icon = document.getElementById('toggle-icon-transfer-1');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('transfer_creation', newStatus, icon, newStatus);
+    }
+    function toggleTransferApprovalStatus() {
+        const icon = document.getElementById('toggle-icon-transfer-2');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('transfer_approval', newStatus, icon, newStatus);
+    }
+    function toggleTransferReceivingStatus() {
+        const icon = document.getElementById('toggle-icon-transfer-3');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('transfer_receiving', newStatus, icon, newStatus);
+    }
+    
+    
+    // {# finance #}
+    
+    function toggleExpenseCreationStatus() {
+        const icon = document.getElementById('toggle-icon-finance-1');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('expense_creation', newStatus, icon, newStatus);
+    }
+    function toggleExpenseApprovalStatus() {
+        const icon = document.getElementById('toggle-icon-finance-2');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('expense_approval', newStatus, icon, newStatus);
+    }
+    function toggleRecurringInvoiceStatus() {
+        const icon = document.getElementById('toggle-icon-finance-3');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('recurring_invoices', newStatus, icon, newStatus);
+    }
+    function toggleMoneyTransferStatus() {
+        const icon = document.getElementById('toggle-icon-finance-4');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('money_transfer', newStatus, icon, newStatus);
+    }
+    function toggleCashWithdrawalStatus() {
+        const icon = document.getElementById('toggle-icon-finance-5');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('cash_withdrawal', newStatus, icon, newStatus);
+    }
+    function toggleCashDepositsStatus() {
+        const icon = document.getElementById('toggle-icon-finance-6');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('cash_deposits', newStatus, icon, newStatus);
+    }
+    
+    // {# users #}
+    function toggleUserCreationStatus() {
+        const icon = document.getElementById('toggle-icon-user-1');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('user_creation', newStatus, icon, newStatus);
+    }
+    function toggleUserApprovalStatus() {
+        const icon = document.getElementById('toggle-icon-user-2');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('user_approval', newStatus, icon, newStatus);
+    }
+    function toggleUserDeletionStatus() {
+        const icon = document.getElementById('toggle-icon-user-3');
+        const currentStatus = icon.getAttribute('data-status') === 'true';
+        const newStatus = !currentStatus;
+        changeNotificationStatus('user_deletion', newStatus, icon, newStatus);
+    }
+    
+    
+    // {# >>>>>>>>>>>>>> printer settings >>>>>>>>>>> NB:these are bluetooth printers >>>>>>>>#}
+    {#scanButton.addEventListener('click', fetchPrinters);#}
+    {#async function fetchPrinters() {#}
+    {#    loaderModal.show()#}
+    {#    try {#}
+    {#        const response = await fetch('{% url "settings:scan_for_printers" %}');#}
+    {#        const data = await response.json();#}
+    {##}
+    {#        if (data.printers) {#}
+    {#            loaderModal.hide()#}
+    {#            #}
+    {#            populateDropdown(data.printers);#}
+    {#            console.log(data)#}
+    {#        } else {#}
+    {#        handleError(data.error);#}
+    {#        }#}
+    {#    } catch (error) {#}
+    {#        handleError("Error fetching printer data");#}
+    {#    }#}
+    {#}#}
 
     // Function to populate the dropdown menu
-    function populateDropdown(printers) {
-    printerDropdown.innerHTML = ''; 
-
-    printers.forEach(printer => {
-        const option = document.createElement('option');
-        option.value = printer.address;
-        option.text = printer.name;
-        printerDropdown.add(option);
-    });
-
-    selectPrinterBtn.disabled = false;
-    }
+    {#function populateDropdown(printers) {#}
+    {#printerDropdown.innerHTML = ''; #}
+    {##}
+    {#printers.forEach(printer => {#}
+    {#    const option = document.createElement('option');#}
+    {#    option.value = printer.address;#}
+    {#    option.text = printer.name;#}
+    {#    printerDropdown.add(option);#}
+    {#});#}
+    {##}
+    {#selectPrinterBtn.disabled = false;#}
+    {#}#}
 
     // Function to handle errors
     function handleError(message) {
@@ -247,24 +665,24 @@
     }
 
 
-    selectPrinterBtn.addEventListener('click', async () => {
-        const selectedPrinterAddress = printerDropdown.value;
-        const selectedPrinterName = printerDropdown[printerDropdown.selectedIndex].textContent;
-        const selectedPrinterPort = '';
-        
-        
-            fetch('{% url "settings:update_or_create_printer" %}', {
-                method: 'POST',
-                headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
-                printer_address: selectedPrinterAddress,
-                printer_name: selectedPrinterName,
-                })
-            })
-        });
+    {#selectPrinterBtn.addEventListener('click', async () => {#}
+    {#    const selectedPrinterAddress = printerDropdown.value;#}
+    {#    const selectedPrinterName = printerDropdown[printerDropdown.selectedIndex].textContent;#}
+    {#    const selectedPrinterPort = '';#}
+    {#    #}
+    {#    #}
+    {#        fetch('{% url "settings:update_or_create_printer" %}', {#}
+    {#            method: 'POST',#}
+    {#            headers: {#}
+    {#            'Content-Type': 'application/json',#}
+    {#            'X-CSRFToken': getCookie('csrftoken')#}
+    {#            },#}
+    {#            body: JSON.stringify({#}
+    {#            printer_address: selectedPrinterAddress,#}
+    {#            printer_name: selectedPrinterName,#}
+    {#            })#}
+    {#        })#}
+    {#    });#}
 
 
     navButtons.forEach((btn)=>{
@@ -317,6 +735,185 @@
         });
     });
     
+     
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> SCAN & ADD SYSTEM PRINTER SETTINGS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    
+    
+    document.addEventListener("DOMContentLoaded", (event) => {
+        const viewPrintersButton = document.getElementById("view-printers-button");
+        const scanButton = document.getElementById("scan-button");
+        const scannedPrinters = document.getElementById("scanned-printers");
+        const dbPrintersTable = document.getElementById("db-printers-table");
+        const currentPrintersTable = document.getElementById("current-printers-table");
+        const dbPrinters = document.getElementById("db-printers");
+
+        scanButton.addEventListener("click", async () => {
+            try {
+                {#loaderModal.show()#}
+                const response = await fetch("{% url 'settings:scan_printers' %}");
+                const data = await response.json();
+                console.log("logging response and returned data");
+                console.log(response);
+                console.log(data);
+                console.log(">>>>>>>>>>>>>>> Data Fetched <<<<<<<<<<<<<<<<");
+    
+                if (data.success) {
+                    {#loaderModal.hide()#}
+                    scannedPrinters.innerHTML = "";
+                    console.log(data.printers);
+                    // check if there are printers 
+                    if (data.printers.length === 0) {
+                        alert("No printers found");
+                        return;
+                    }
+                    data.printers.forEach(printer => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${printer.name}</td>
+                            <td>${printer.address}</td>
+                            <td>
+                                <button class="btn btn-primary add-printer-btn" data-name="${printer.name}" data-address="${printer.address}">Add Printer</button>
+                            </td>
+                        `;
+    
+                        scannedPrinters.appendChild(tr);
+                    });
+                    
+                    currentPrintersTable.style.display = "table";
+                    dbPrintersTable.style.display = "none";
+    
+                    document.querySelectorAll('.add-printer-btn').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            // disable the add printer button
+                            btn.disabled = true;
+                            
+                            // get pc infomation from backend
+                            const pc_info = {
+                                hostname: 'Unknown1',
+                                mac_address: 'Unknown2',
+                                system_uuid: 'Unknown3'
+                            };
+                            
+                            const response_one = await fetch("{% url 'settings:identify_pc' %}");
+                            const response_data = await response_one.json();
+                            console.log("logging response and returned data");
+                            console.log(response_data);
+                            // feed our pc_info object with the data
+                            console.log("setting pc info");
+                            pc_info.hostname = response_data.hostname;
+                            pc_info.mac_address = response_data.mac_address;
+                            pc_info.system_uuid = response_data.system_uuid;
+                            console.log("PC Info from backend");
+                            console.log(pc_info);
+                          
+                            const printerName = btn.getAttribute('data-name');
+                            const printerAddress = btn.getAttribute('data-address');
+                            const pcIdentifier = generatePcIdentifier();
+                            const hostname = pc_info.hostname || 'HOSTNAME';
+                            const mac_address = pc_info.mac_address || 'MAC_ADDRESS';
+                            const system_uuid = pc_info.system_uuid || 'SYS_UUID';
+    
+                            try {
+                                const response = await fetch("{% url 'settings:add_printer' %}", {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': getCookie('csrftoken')
+                                    },
+                                    body: JSON.stringify({
+                                        printer_name: printerName,
+                                        printer_address: printerAddress,
+                                        pc_identifier: pcIdentifier,
+                                        hostname: hostname,
+                                        mac_address: mac_address,
+                                        system_uuid: system_uuid
+                                    })
+                                });
+    
+                                const data = await response.json();
+                                if (data.success) { 
+                                    // alert user that printer has been added
+                                    successModal.show();
+                                } else {
+                                    alert("Failed to add printer");
+                                }
+                            } catch (error) {
+                                console.error("Error:", error);
+                                alert("An error occurred while adding printer");
+                            }
+                        });
+                    });
+                } else {
+                    alert("Failed to scan for printers");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("An error occurred while scanning for printers");
+            }
+        });
+        
+        
+        viewPrintersButton.addEventListener("click", async () => {
+            try {
+                const response = await fetch("{% url 'settings:get_printers' %}");
+                const data = await response.json();
+                console.log("logging response and returned data");
+                console.log(response);
+                console.log(data);
+                console.log(">>>>>>>>>>>>>>> Data Fetched <<<<<<<<<<<<<<<<");
+    
+                if (data.success) {
+                    dbPrinters.innerHTML = "";
+                    console.log(data.printers);
+                    // check if there are printers in the database
+                    if (data.printers.length === 0) {
+                        alert("No printers found in the database");
+                        return;
+                    }
+                    // Populate the table with printers from the database
+                    data.printers.forEach(printer => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${printer.name}</td>
+                            <td>${printer.address}</td>
+                            <td>${printer.hostname}</td>
+                            {#<td>${printer.mac_address}</td>#}
+                            {#<td>${printer.system_uuid}</td>#}
+                        `;
+    
+                        dbPrinters.appendChild(tr);
+                    });
+    
+                    // Hide the current table and show the new table
+                    currentPrintersTable.style.display = "none";
+                    dbPrintersTable.style.display = "table";
+                } else {
+                    alert("Failed to fetch printers");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("An error occurred while fetching printers");
+            }
+        });
+        
+        
+        document.getElementById('successModal').addEventListener('hidden.bs.modal', () => {
+            // Reload the scan printer functionality
+            scanButton.click();
+        });
+        
+    });
+    
+    function generatePcIdentifier() {
+        const existingPcIdentifier = getCookie('pc_identifier');
+        if (existingPcIdentifier) {
+            return existingPcIdentifier;
+        } else {
+            const newPcIdentifier = 'pc-' + Math.random().toString(36).substr(2, 9);
+            document.cookie = `pc_identifier=${newPcIdentifier}; path=/`; // store value for later
+            return newPcIdentifier;
+        }
+    }
     
     function getCookie(name) {
         let cookieValue = null;
@@ -331,7 +928,6 @@
         }
         }
         return cookieValue;
-    } 
-
-    </script>
+    }
+   </script>
 {% endblock content %}

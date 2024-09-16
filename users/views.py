@@ -7,6 +7,7 @@ from django.shortcuts import render, redirect
 from loguru import logger
 from django.contrib.auth import get_user_model
 from company.models import Branch
+from settings.models import NotificationsSettings
 from utils.authenticate import authenticate_user
 from .models import User
 from .forms import UserRegistrationForm, UserDetailsForm, UserDetailsForm2
@@ -41,6 +42,8 @@ def login_view(request):
         email_address = request.POST['email_address']
         password = request.POST['password']
 
+        logger.info(email_address)
+
         # Validate email
         try:
             validate_email(email_address)
@@ -66,12 +69,6 @@ def login_view(request):
             messages.error(request, 'Invalid username or password')
     
     if request.method == 'GET':
-        User = get_user_model()
-        if not User.objects.exists():
-            logger.info('here')
-            return redirect('company:register_company')
-        elif request.user.is_authenticated:
-            return redirect('pos:pos')
         return render(request, 'auth/login.html')
 
 
@@ -118,6 +115,10 @@ def register(request):
             user = form.save(commit=False)
             user.password = make_password(form.cleaned_data['password'])
             user.save()
+
+            # create notifications settings for the user
+            NotificationsSettings.objects.create(user=user)
+
             messages.success(request, 'User successfully added')
         else:
             messages.error(request, 'Error')

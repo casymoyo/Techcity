@@ -2,16 +2,16 @@
 Django settings for techcity project.
 """
 import environ, os
+import dj_database_url
 from pathlib import Path
 from dotenv import load_dotenv
-# from decouple import config
+from decouple import config
 from django.apps import apps
-
 
 env = environ.Env()   
 load_dotenv()
-import sys
 
+import sys
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
@@ -77,10 +77,12 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # "asgiref.sync.AsyncToSyncMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    
     # custom middlewares
     'inventory.middleware.RequestMiddleware',
+    'company.middleware.CompanySetupMiddleware'
+    
 ]
 
 ROOT_URLCONF = "techcity.urls"
@@ -128,29 +130,21 @@ SESSION_AUTH = True
 
 DATABASES = {
     # 'default': {
-    #     'ENGINE': config('DB_ENGINE'),
-    #     'NAME':  config('DB_NAME'),
-    #     'USER': config('DB_USER'),
-    #     'PASSWORD': config('DB_PASSWORD'),
-    #     'HOST': config('DB_HOST'),
-    #     'PORT': config('DB_PORT')
-    # },
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME':  'techcity',
-        'USER': 'casy',
-        'PASSWORD': 'neverfail',
-        'HOST': 'localhost',
-        'PORT': '5432'
-    }
-    # 'default': {
-    #     'ENGINE':'django.db.backends.postgresql',
-    #     'NAME':'railway',
-    #     'USER':'postgres',
-    #     'PASSWORD':'xJbUBjfjGZrMjXOBGYqKDREUEuTUzciV',
-    #     'HOST':'monorail.proxy.rlwy.net',
-    #     'PORT':'39004'
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME':  'techcity',
+    #     'USER': 'postgres',
+    #     'PASSWORD': 'neverfail',
+    #     'HOST': 'localhost',
+    #     'PORT': '5432'
     # }
+    'default': {
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.getenv('DB_NAME', 'postgres'),
+        'USER': os.getenv('DB_USER', 'postgres.uizmccfdsrqjdgvhxren'),
+        'PASSWORD': os.getenv('DB_PASSWORD', '$p-!!v5jdXRDwJT'),  # No password is specified in the URL
+        'HOST': os.getenv('DB_HOST', 'aws-0-eu-central-1.pooler.supabase.com'),
+        'PORT': os.getenv('DB_PORT', '6543'),
+    }
 }
 
 if 'test' in sys.argv:
@@ -273,13 +267,12 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  
-EMAIL_HOST = 'mail.techcity.co.zw'  
-EMAIL_PORT = 465  
-EMAIL_USE_SSL = True 
-EMAIL_HOST_USER = 'admin@techcity.co.zw' 
-EMAIL_HOST_PASSWORD = 'kv]j[N~StShy'
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND')
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 25)) 
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 TWILIO_WHATSAPP_NUMBER = os.getenv('TWILIO_WHATSAPP_NUMBER')
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
