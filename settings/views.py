@@ -2,8 +2,6 @@ import json
 import environ
 import asyncio, settings
 from pathlib import Path
-from bleak import BleakScanner
-import win32print
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 

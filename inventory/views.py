@@ -1580,6 +1580,10 @@ def process_received_order(request):
             product = Product.objects.get(id=order_item.product.id)
         except Product.DoesNotExist:
             return JsonResponse({'success': False, 'message': f'Product with ID: {order_item.product.id} does not exist'}, status=404)
+        
+
+        if quantity > order_item.quantity:
+            return JsonResponse({'success':False, 'message':'quantity can\t be more than quantity ordered.'})
 
         inventory, created = Inventory.objects.get_or_create(
             product=product,

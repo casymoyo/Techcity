@@ -42,6 +42,8 @@ def login_view(request):
         email_address = request.POST['email_address']
         password = request.POST['password']
 
+        logger.info(email_address)
+
         # Validate email
         try:
             validate_email(email_address)
@@ -67,12 +69,6 @@ def login_view(request):
             messages.error(request, 'Invalid username or password')
     
     if request.method == 'GET':
-        User = get_user_model()
-        if not User.objects.exists():
-            logger.info('here')
-            return redirect('company:register_company')
-        elif request.user.is_authenticated:
-            return redirect('pos:pos')
         return render(request, 'auth/login.html')
 
 

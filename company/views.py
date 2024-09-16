@@ -31,17 +31,13 @@ def register_company_view(request):
     }
     """
     if request.method == 'GET':
-        User = get_user_model()
-        if not User.objects.exists():
-            logger.info('here')
-            return redirect('company:register_company')
-        elif request.user.is_authenticated:
-            return redirect('pos:pos')
-        return render(request, 'auth/login.html')
+        if Company.objects.exists():
+            return redirect('users:login')
     
     if request.method == 'POST':
         payload = json.loads(request.body)
         logger.info(f"Company registration payload: {payload}")
+        
         # validate json data
         is_valid, message = validate_company_registration_payload(payload)
         logger.info(f"is valid: {is_valid}")
