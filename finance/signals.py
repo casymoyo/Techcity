@@ -11,7 +11,6 @@ from .models import (
     FinanceNotifications, 
     Expense, 
     Invoice, 
-    Cashbook, 
     CustomerDeposits
 )
 
@@ -82,6 +81,7 @@ def create_cashbook_entry(instance, debit, credit):
     else:
         if instance.amount_paid != 0:
             Cashbook.objects.create(
+                invoice = instance,
                 issue_date=instance.issue_date,
                 description=f'Sale of {instance.products_purchased}({instance.invoice_number})' if instance.amount_paid == instance.amount else f' Sale update for {instance.products_purchased}({instance.invoice_number})',
                 debit=debit,

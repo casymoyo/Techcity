@@ -141,7 +141,7 @@ DATABASES = {
         'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
         'NAME': os.getenv('DB_NAME', 'postgres'),
         'USER': os.getenv('DB_USER', 'postgres.uizmccfdsrqjdgvhxren'),
-        'PASSWORD': os.getenv('DB_PASSWORD', '$p-!!v5jdXRDwJT'),  # No password is specified in the URL
+        'PASSWORD': os.getenv('DB_PASSWORD', '$p-!!v5jdXRDwJT'),  
         'HOST': os.getenv('DB_HOST', 'aws-0-eu-central-1.pooler.supabase.com'),
         'PORT': os.getenv('DB_PORT', '6543'),
     }

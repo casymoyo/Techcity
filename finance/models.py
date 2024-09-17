@@ -183,7 +183,7 @@ class ExpenseCategory(models.Model):
         return self.name
 
 class Expense(models.Model):
-    issue_date = models.DateField()
+    issue_date = models.DateField(auto_now_add=True)
     amount = models.DecimalField(max_digits=15, decimal_places=2)
     payment_method = models.CharField(max_length=15, choices=[
         ('cash', 'cash'),
@@ -310,16 +310,33 @@ class Payment(models.Model):
         return f'{self.invoice.invoice_number} {self.amount_paid}'
 
 class Cashbook(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, null=True)
+    expense = models.ForeignKey(Expense, on_delete=models.CASCADE, null=True)
     issue_date = models.DateField(auto_now_add=True)
     description = models.CharField(max_length=255)
-    debit = models.BooleanField(default=True)
-    credit = models.BooleanField(default=True)
+    debit = models.BooleanField(default=False)
+    credit = models.BooleanField(default=False)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     branch = models.ForeignKey('company.branch', on_delete=models.CASCADE)
-    
+    manager = models.BooleanField(default=False)
+    accountant = models.BooleanField(default=False, null=True)
+    director = models.BooleanField(default=False, null=True)
+    cancelled = models.BooleanField(default=False, null=True)
+    note = models.TextField(default='', null=True)
+
     def __str__(self):
-        return f'{self.date}: {self.balance}'
+        return f'{self.issue_date}'
+
+class CashBookNote(models.Model):
+    entry = models.ForeignKey(Cashbook, related_name="notes", on_delete=models.CASCADE)
+    user = models.ForeignKey('users.user', on_delete=models.CASCADE)
+    note = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Note by {self.user.username} on {self.timestamp}"
+    
 
 class CashTransfers(models.Model):
     class TransferMethod(models.TextChoices):
@@ -421,6 +438,15 @@ class PurchasesAccount(models.Model):
     debit = models.BooleanField(default=False)
     credit = models.BooleanField(default=True)
     amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+
+class COGS(models.Model):
+    date = models.DateField(auto_now_add=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0) 
+
+class COGSItems(models.Model):
+    invoice = models.OneToOneField(Invoice, on_delete=models.CASCADE, null=True)
+    product = models.ForeignKey('inventory.Inventory', on_delete=models.PROTECT)
+
     
 
     

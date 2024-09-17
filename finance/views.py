@@ -1,3 +1,4 @@
+import csv
 from .models import *
 from decimal import Decimal
 from io import BytesIO
@@ -20,6 +21,7 @@ from asgiref.sync import async_to_sync, sync_to_async
 from inventory.models import Inventory
 from channels.layers import get_channel_layer
 import json, datetime, os, boto3, openpyxl 
+from .utils import account_identifier
 from .tasks import send_invoice_email_task, send_account_statement_email
 from pytz import timezone as pytz_timezone 
 from openpyxl.styles import Alignment, Font
@@ -46,13 +48,12 @@ from . forms import (
     customerDepositsRefundForm
 )
 from django.contrib.auth import authenticate
+from loguru import logger
+from .tasks import send_expense_creation_notification
 
-import logging
-
-logger = logging.getLogger(__name__)
 
 class Finance(View):
-    # authentication
+    # authentication loginmixin
     template_name = 'finance/finance.html'
 
     def get(self, request, *args, **kwargs):
@@ -72,144 +73,258 @@ class Finance(View):
         }
         return render(request, self.template_name, context)
 
-class ExpenseView(View):
-    form_class = ExpenseForm
-    template_name = 'finance/expenses/expense_form.html'
-
-    def get(self, request, pk=None):
-        if pk:
-            expense = get_object_or_404(Expense, pk=pk)
-            form = self.form_class(instance=expense)
-            return render(request, self.template_name, {'form': form, 'expense': expense})
-        else:
-            expenses = Expense.objects.filter(branch=request.user.branch).order_by('-issue_date')
-            expense_categories = ExpenseCategory.objects.all()
-            
-            search_query = request.GET.get('q','')
-            category_id = request.GET.get('category', '')
-
-            if category_id:
-                expenses = expenses.filter(category_id=category_id)
-            
-            if search_query:
-                expenses = expenses.filter(Q(amount__icontains=search_query)|Q(description__icontains=search_query))
-                
-            form = self.form_class()
-            
-            return render(request, 'finance/expense_list.html', {
-                'search_query':search_query,
-                'category':category_id,
-                'form': form,
-                'expenses': expenses,
-                'expense_categories': expense_categories,
-            })
-
-    def post(self, request, pk=None):
-        if pk:
-            expense = get_object_or_404(Expense, pk=pk)
-            form = ExpenseForm(request.POST, instance=expense)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Expense edited successfully')
-                return redirect('finance:expense_list')
-        else:
-            form = ExpenseForm(request.POST)
-
-        if form.is_valid():
-            expense = form.save(commit=False)
-            expense.branch = request.user.branch
-            expense.save()
-            messages.success(request, 'Expense successfuly created')
-            return redirect('finance:expense_list')
-        else:
-            return render(request, self.template_name, {'form': form})
-
-    def delete(self, request, pk):
-        expense = get_object_or_404(Expense, pk=pk)
-        expense.delete()
-        return redirect('finance:expenses_list')
-    
 @login_required
-def create_expense(request):
+def expenses(request):
     form = ExpenseForm()
-    expense_category_form = ExpenseCategoryForm() 
-    if request.method == 'POST':
-        form = ExpenseForm(request.POST)
+    cat_form = ExpenseCategoryForm()
 
-        if form.is_valid():
-            expense = form.save(commit=False)
-            expense.issue_date = datetime.date.today()  
-            expense.branch = request.user.branch
-            expense.user = request.user
+    if request.method == 'GET':
+        filter_option = request.GET.get('filter', 'today')
+        download = request.GET.get('download')
+        
+        now = datetime.datetime.now()
+        end_date = now
+        
+        if filter_option == 'today':
+            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif filter_option == 'this_week':
+            start_date = now - timedelta(days=now.weekday())
+        elif filter_option == 'yesterday':
+            start_date = (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        elif filter_option == 'this_month':
+            start_date = now.replace(day=1)
+        elif filter_option == 'last_month':
+            start_date = (now.replace(day=1) - timedelta(days=1)).replace(day=1)
+        elif filter_option == 'this_year':
+            start_date = now.replace(month=1, day=1)
+        elif filter_option == 'custom':
+            start_date = request.GET.get('start_date')
+            end_date = request.GET.get('end_date')
+            start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+            end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
+        else:
+            start_date = now - - timedelta(days=now.weekday())
+            end_date = now
+            
+        expenses = Expense.objects.filter(issue_date__gte=start_date, issue_date__lte=end_date).order_by('issue_date')
+        
+        if download:
+            logger.info('download')
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="expenses_report_{filter_option}.csv"'
+
+            writer = csv.writer(response)
+            writer.writerow(['Date', 'Description', 'Done By', 'Amount'])
+
+            total_expense = 0  
+            for expense in expenses:
+                total_expense += expense.amount
+
+                writer.writerow([
+                    expense.date,
+                    expense.description,
+                    expense.user.first_name,
+                    expense.amount,
+                ])
+
+            writer.writerow(['Total', '', '', total_expense])
+            
+            return response
+        
+        return render(request, 'finance/expenses.html', 
+            {
+                'form':form,
+                'cat_form':cat_form,
+                'expenses':expenses,
+                'filter_option': filter_option,
+            }
+        )
+    if request.method == 'POST':
+        #payload
+        """
+            {
+                amount:float
+                description:str
+                category:id (int)
+                payment_method:str
+                currency:id
+            }
+        """
+    try:
+        data = json.loads(request.body)
+        
+        amount = data.get('amount')
+        description = data.get('description')
+        category = data.get('category')
+        payment_method = data.get('payment_method')
+        currency_id = data.get('currency')
+
+        logger.info(currency_id)
+        
+        if not amount or not description or not category:
+            return JsonResponse({'success':False, 'message':'Missing fields: amount, description, category.'})
+        
+        try:
+            category = ExpenseCategory.objects.get(id=category)
+        except ExpenseCategory.DoesNotExist:
+            return JsonResponse({'success':False, 'message':f'Category with ID: {category}, doesn\'t exists.'})
+        
+        currency = get_object_or_404(Currency, id=currency_id)
+
+        account_details = account_identifier(request, currency, payment_method)
+        account_name = account_details['account_name']
+        account_type = account_details['account_type']
+
+        account, _ = Account.objects.get_or_create(
+            account_name,
+            type=account_type
+        )
+        account_balance, _ = AccountBalance.objects.get_or_create(account=account)
+
+        logger.info(f'Account: {account}')
+        logger.info(f'Account Balance: {account_balance}')
+
+        if account_balance.balance < Decimal(amount):
+            return JsonResponse({'success':False, 'message':f'{account_name} have insufficient balance.'})
+        
+        account_balance.balance -= Decimal(amount)
+        account_balance.save()
+        
+        expense = Expense.objects.create(
+            amount = amount,
+            category = category,
+            user = request.user,
+            currency = currency,
+            payment_method = payment_method,
+            description = description,
+            branch = request.user.branch
+        )
+        
+        Cashbook.objects.create(
+            amount = amount,
+            expense = expense,
+            currency = currency,
+            credit = True,
+            description=f'Expense ({expense.description[:20]})',
+            branch = request.user.branch
+        )
+
+        send_expense_creation_notification(expense.id)
+        
+        return JsonResponse({'success': True, 'messages':'Expense successfully created'}, status=201)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=400)
+
+
+@login_required   
+def get_expense(request, expense_id):
+    expense = get_object_or_404(Expense, id=expense_id)
+    data = {
+        'id': expense.id,
+        'amount': expense.amount,
+        'description': expense.description,
+        'category': expense.category.id
+    }
+    return JsonResponse({'success': True, 'data': data})
+
+@login_required      
+def add_or_edit_expense(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            amount = data.get('amount')
+            description = data.get('description')
+            category_id = data.get('category')
+            expense_id = data.get('id')
+
+            if not amount or not description or not category_id:
+                return JsonResponse({'success': False, 'message': 'Missing fields: amount, description, category.'})
+            
+            category = get_object_or_404(ExpenseCategory, id=category_id)
+
+            if expense_id:  
+                expense = get_object_or_404(Expense, id=expense_id)
+                before_amount = expense.amount
+                
+                expense.amount = amount
+                expense.description = description
+                expense.category = category
+                expense.save()
+                message = 'Expense successfully updated'
+                
+                try:
+                    cashbook_expense = Cashbook.objects.get(expense=expense)
+                    expense_amount = Decimal(expense.amount)
+                    if cashbook_expense.amount < expense_amount:
+                        cashbook_expense.amount = expense_amount
+                        cashbook_expense.description = cashbook_expense.description + f'Expense (update from {before_amount} to {cashbook_expense.amount})'
+                    else:
+                        cashbook_expense.amount -= cashbook_expense.amount - expense_amount
+                        cashbook_expense.description = cashbook_expense.description + f'(update from {before_amount} to {cashbook_expense.amount})'
+                    cashbook_expense.save()
+                except Exception as e:
+                    return JsonResponse({'success': False, 'message': str(e)}, status=400)
+            return JsonResponse({'success': True, 'message': message}, status=201)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=400)
+    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=400)
+
+@login_required
+def add_expense_category(request):
+    categories = ExpenseCategory.objects.all().values()
+    
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        category = data['name']
+        logger.info(data)
+        
+        if ExpenseCategory.objects.filter(name=category).exists():
+            return JsonResponse({'success':False, 'message':f'Category with ID {category} Exists.'}, status=400)
+        
+        ExpenseCategory.objects.create(
+            name=category
+        )
+        return JsonResponse({'success':True}, status=201)
+    return JsonResponse(list(categories), safe=False)
+
+@login_required
+@transaction.atomic
+def delete_expense(request, expense_id):
+    if request.method == 'DELETE':
+        try:
+            expense = get_object_or_404(Expense, id=expense_id)
+            expense.cancel = True
+            expense.save()
+            
+            Cashbook.objects.create(
+                amount=expense.amount,
+                debit=True,
+                credit=False,
+                description=f'Expense ({expense.description}): cancelled'
+            )
+            return JsonResponse({'success': True, 'message': 'Expense successfully deleted'})
+        except Exception as e:
+             return JsonResponse({'success': False, 'message': str(e)}, status=400)
+    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=400)
+
+@login_required
+def update_expense_status(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            expense_id = data.get('id')
+            status = data.get('status')
+
+            expense = Expense.objects.get(id=expense_id)
+            expense.status = status
             expense.save()
 
-            messages.success(request, 'Expense successfully created!')
-            return redirect('finance:expense_list')  
-
-        else:
-            messages.error(request, "Invalid form data. Please correct the errors.")  
-
-    return render(request, 'finance/expenses/add_expense.html', {'form': form, 'expense_category_form': expense_category_form}) 
-
-
-@login_required
-@transaction.atomic  
-def confirm_expense(request, expense_id):
-    expense = Expense.objects.get(id=expense_id)
-    
-    account_types = {
-            'cash': Account.AccountType.CASH,
-            'bank': Account.AccountType.BANK,
-            'ecocash': Account.AccountType.ECOCASH,
-        }
-
-    account_name = f"{request.user.branch} {expense.currency.name} {expense.payment_method.capitalize()} Account"
-    
-    try:
-        account = Account.objects.get(name=account_name, type=account_types[expense.payment_method])
-    except Account.DoesNotExist:
-        messages.error(request, f'{account_name} doesnt exists')
-        return redirect('finance:expense_list')
-    try:
-        account_balance = AccountBalance.objects.get(account=account,  branch=request.user.branch)
-    except AccountBalance.DoesNotExist:
-        messages.error(request, f'Account Balances for account {account_name} doesnt exists')
-        return redirect('finance:expense_list')
-    
-    account_balance.balance -= Decimal(expense.amount)
-    
-    expense.status=True
-    
-    expense.save()
-    account_balance.save()
-    
-    messages.success(request, 'Expense confirmed')
-    return redirect('finance:expense_list')
-
-    
-
-@login_required
-def create_expense_category(request):
-    if request.method == 'POST':
-        form = ExpenseCategoryForm(request.POST)
-
-        if ExpenseCategory.objects.filter(
-            name__iexact=request.POST['name'] 
-        ).exists():
-            return JsonResponse({'message': 'Category already exists.'}, status=400)  
-
-        if form.is_valid():
-            form.save()
-            return JsonResponse({
-                'message': 'Expense category created successfully!'
-            })
-        else:
-            return JsonResponse({
-                'errors': form.errors,  
-                'message': 'Expense category creation failed. Please check the errors.'
-            }, status=400)
-        
-    return JsonResponse({'message': 'Invalid request method.'}) 
+            return JsonResponse({'success': True, 'message': 'Status updated successfully.'})
+        except Expense.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Expense not found.'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    return JsonResponse({'success': False, 'message': 'Invalid request method.'})
 
 
 @login_required
@@ -452,7 +567,7 @@ def create_invoice(request):
                     subtotal=invoice_data['subtotal'],
                     note=invoice_data['note'],
                     reocurring = invoice_data['recourring'],
-                    products_purchased = ', '.join([f'{item['product_name']} x {item['quantity']}' for item in items_data]),
+                    products_purchased = ', '.join([f'{item['product_name']} x {item['quantity']} ' for item in items_data]),
                     recurrence_period = recurrence_period ,
                     next_due_date = datetime.datetime.now() + timedelta(days=recurrence_period )
                 )
@@ -1920,58 +2035,213 @@ def delete_qoute(request, qoutation_id):
     return JsonResponse({'success':True, 'message':'Qoutation successfully deleted'}, status=200)
 
 @login_required
-def cashbook_view(request): 
-    today = datetime.date.today()
-    start_date = today 
-    cashbook_entries = Cashbook.objects.all()
-    today_entries = None
+def cashbook_view(request):
+    filter_option = request.GET.get('filter', 'today')
+    now = datetime.datetime.now()
+    end_date = now
     
-    # Filtering 
-    filter_type = request.GET.get('day', 'today')  
-    if filter_type == 'yesterday':
-        start_date = today - timedelta(days=1)
-    elif filter_type == 'week':
-        start_date = today - timedelta(days=today.weekday())  
-    elif filter_type == 'year':
-        start_date = datetime.date(today.year, 1, 1)
+    if filter_option == 'today':
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif filter_option == 'this_week':
+        start_date = now - timedelta(days=now.weekday())
+    elif filter_option == 'yesterday':
+        start_date = (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    elif filter_option == 'this_month':
+        start_date = now.replace(day=1)
+    elif filter_option == 'last_month':
+        start_date = (now.replace(day=1) - timedelta(days=1)).replace(day=1)
+    elif filter_option == 'this_year':
+        start_date = now.replace(month=1, day=1)
+    elif filter_option == 'custom':
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+        end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
     else:
-        today_entries = Cashbook.objects.filter(issue_date=today).order_by('issue_date')
+        start_date = now - timedelta(days=now.weekday())
+        end_date = now
 
-    # previous
-    debit_balance = sum(
-        entry.amount for entry in cashbook_entries 
-        if entry.issue_date < start_date and entry.debit
-    )
+    entries = Cashbook.objects.filter(issue_date__gte=start_date, issue_date__lte=end_date).order_by('issue_date')
+    
+    total_debit = entries.filter(debit=True, cancelled=False).aggregate(Sum('amount'))['amount__sum'] or 0
+    total_credit = entries.filter(credit=True, cancelled=False).aggregate(Sum('amount'))['amount__sum'] or 0
+    
+    balance_bf = 0 
+    
+    previous_entries = Cashbook.objects.filter(issue_date__lt=start_date)
+    previous_debit = previous_entries.filter(debit=True).aggregate(Sum('amount'))['amount__sum'] or 0
+    previous_credit = previous_entries.filter(credit=True).aggregate(Sum('amount'))['amount__sum'] or 0
+    balance_bf = previous_debit - previous_credit
 
-    credit_balance = sum(
-        entry.amount for entry in cashbook_entries
-        if entry.issue_date < start_date and entry.credit
-    )
+    total_balance = total_debit - total_credit
+    logger.info(total_balance)
+    invoice_items = InvoiceItem.objects.all()
 
-    # todays
-    today_debit_balance = sum(
-        entry.amount for entry in cashbook_entries 
-        if entry.issue_date == start_date and entry.debit
-    )
+    return render(request, 'finance/cashbook.html', {
+        'filter_option': filter_option,
+        'entries': entries,
+        'balance_bf': balance_bf,
+        'total_debit': total_debit,
+        'total_credit': total_credit,
+        'total_balance': total_balance,
+        'end_date': end_date,
+        'start_date': start_date,
+        'invoice_items': invoice_items
+    })
 
-    today_credit_balance = sum(
-        entry.amount for entry in cashbook_entries
-        if entry.issue_date == start_date and entry.credit
-    )
+@login_required
+def download_cashbook_report(request):
+    filter_option = request.GET.get('filter', 'this_week')
+    now = datetime.datetime.now()
+    end_date = now
+    
+    if filter_option == 'today':
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif filter_option == 'this_week':
+        start_date = now - timedelta(days=now.weekday())
+    elif filter_option == 'yesterday':
+        start_date = (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    elif filter_option == 'this_month':
+        start_date = now.replace(day=1)
+    elif filter_option == 'last_month':
+        start_date = (now.replace(day=1) - timedelta(days=1)).replace(day=1)
+    elif filter_option == 'this_year':
+        start_date = now.replace(month=1, day=1)
+    elif filter_option == 'custom':
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+        end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
+    else:
+        start_date = now - timedelta(days=now.weekday())
+        end_date = now
 
-    balance_before = debit_balance - credit_balance
-    balance_carried_forward = debit_balance + today_debit_balance - today_credit_balance
-    yesterday_date = today - timedelta(1)
+    entries = Cashbook.objects.filter(date__gte=start_date, date__lte=end_date).order_by('date')
 
-    context = {
-        'today':today,
-        'cashbook_entries': today_entries if today_entries else cashbook_entries,
-        'balance_before':balance_before,
-        'yesterday_date':yesterday_date,
-        'balance_carried_forward':balance_carried_forward
-    }
-    return render(request, 'finance/cashbook.html', context)
+    # Create a CSV response
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="cashbook_report_{filter_option}.csv"'
 
+    writer = csv.writer(response)
+    writer.writerow(['Date', 'Description', 'Expenses', 'Income', 'Balance'])
+
+    balance = 0  
+    for entry in entries:
+        if entry.debit:
+            balance += entry.amount
+        elif entry.credit:
+            balance -= entry.amount
+
+        writer.writerow([
+            entry.issue_date,
+            entry.description,
+            entry.amount if entry.debit else '',
+            entry.amount if entry.credit else '',
+            balance,
+            entry.accountant,
+            entry.manager,
+            entry.director
+        ])
+
+    return response
+
+
+@login_required
+def cashbook_note(request):
+    #payload
+    """
+        entry_id:id,
+        note:str
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            entry_id = data.get('entry_id')
+            note = data.get('note')
+            
+            entry = Cashbook.objects.get(id=entry_id)
+            entry.note = note
+            
+            entry.save()
+        except Exception as e:
+            return JsonResponse({'success':False, 'message':f'{e}.'}, status=400)
+        return JsonResponse({'success':False, 'message':'Note successfully saved.'}, status=201)
+    return JsonResponse({'success':False, 'message':'Invalid request.'}, status=405)
+
+
+@login_required
+def cashbook_note_view(request, entry_id):
+    entry = get_object_or_404(Cashbook, id=entry_id)
+    
+    if request.method == 'GET':
+        notes = entry.notes.all().order_by('timestamp')
+        notes_data = [
+            {'user': note.user.username, 'note': note.note, 'timestamp': note.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
+            for note in notes
+        ]
+        return JsonResponse({'success': True, 'notes': notes_data})
+    
+    elif request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            note_text = data.get('note')
+            CashBookNote.objects.create(entry=entry, user=request.user, note=note_text)
+            return JsonResponse({'success': True, 'message': 'Note successfully added.'}, status=201)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=400)
+
+    return JsonResponse({'success': False, 'message': 'Invalid request.'}, status=405)
+    
+@login_required
+def cancel_transaction(request):
+    #payload
+    """
+        entry_id:id,
+    """
+    try:
+        data = json.loads(request.body)
+        entry_id = int(data.get('entry_id'))
+        
+        logger.info(entry_id)
+        
+        entry = Cashbook.objects.get(id=entry_id)
+        
+        entry.cancelled = True
+        
+        if entry.director:
+            entry.director = False
+        elif entry.manager:
+            entry.manager = False
+        elif entry.accountant:
+            entry.accountant = False
+            
+        entry.save()
+        logger.info(entry)
+        return JsonResponse({'success': True}, status=201)
+    except Exception as e:
+        logger.info(e)
+        return JsonResponse({'success': False, 'message': str(e)}, status=400)
+
+@login_required
+def update_transaction_status(request, pk):
+    if request.method == 'POST':
+        entry = get_object_or_404(Cashbook, pk=pk)
+        
+        data = json.loads(request.body)
+        
+        status = data.get('status')
+        field = data.get('field')  
+
+        if field in ['manager', 'accountant', 'director']:
+            setattr(entry, field, status)
+
+            if entry.cancelled:
+                entry.cancelled = False
+            entry.save()
+            return JsonResponse({'success': True, 'status': getattr(entry, field)})
+        
+    return JsonResponse({'success': False}, status=400)   
+    
 @login_required
 def cashWithdrawals(request):
     search_query = request.GET.get('q', '')
@@ -2150,3 +2420,33 @@ def delete_withdrawal(request, withdrawal_id):
     return redirect('finance:withdrawals')
     
     
+@login_required
+def days_data(request):
+    current_month = get_current_month()
+
+    sales = Sale.objects.filter(date__month=current_month, staff=False)
+    cogs = COGS.objects.filter(date__month=current_month)
+
+    first_day = min(sales.first().date, cogs.first().date)
+    
+    def get_week_data(queryset, start_date, end_date, amount_field):
+        week_data = queryset.filter(date__gte=start_date, date__lt=end_date).values(amount_field, 'date')
+        total = week_data.aggregate(total=Sum(amount_field))['total'] or 0
+        return week_data, total
+
+    data = {}
+    for week in range(1, 5):
+        week_start = first_day + timedelta(days=(week-1)*7)
+        week_end = week_start + timedelta(days=7)
+        
+        sales_data, sales_total = get_week_data(sales, week_start, week_end, 'total_amount')
+        cogs_data, cogs_total = get_week_data(cogs, week_start, week_end, 'amount')
+        
+        data[f'week {week}'] = {
+            'sales': list(sales_data),
+            'cogs': list(cogs_data),
+            'total_sales': sales_total,
+            'total_cogs': cogs_total
+        }
+    
+    return JsonResponse(data)
