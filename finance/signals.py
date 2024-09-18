@@ -11,7 +11,8 @@ from .models import (
     FinanceNotifications, 
     Expense, 
     Invoice, 
-    CustomerDeposits
+    CustomerDeposits,
+    Cashbook
 )
 
 from django.core.mail import EmailMessage

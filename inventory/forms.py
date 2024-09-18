@@ -64,7 +64,7 @@ class CreateOrderForm(forms.ModelForm):
 class noteStatusForm(forms.ModelForm):
     class Meta:
         model =  PurchaseOrder
-        fields = ['status', 'delivery_date', 'notes']
+        fields = ['status', 'delivery_date', 'payment_method', 'notes']
         
         widgets = {
             'delivery_date': forms.DateInput(attrs={'type': 'date'}),

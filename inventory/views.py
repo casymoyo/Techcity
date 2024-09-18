@@ -19,7 +19,12 @@ from finance.models import (
     Expense,
     Currency,
     VATTransaction, 
-    VATRate
+    VATRate,
+    Account,
+    Cashbook,
+    ExpenseCategory,
+    AccountBalance,
+    AccountTransaction
  )
 from . utils import calculate_inventory_totals
 from . forms import (
@@ -44,10 +49,9 @@ from permissions.permissions import (
     # sales_required, 
     # accountant_required
 )
+from utils.account_name_identifier import account_identifier
+from loguru import logger
 
-
-import logging
-logger = logging.getLogger(__name__)
 
 @login_required
 def notifications_json(request):
@@ -1337,8 +1341,9 @@ def create_purchase_order(request):
         handling_amount = Decimal(purchase_order_data['handling_amount'])
         tax_amount = Decimal(purchase_order_data['tax_amount'])
         other_amount = Decimal(purchase_order_data['other_amount'])
+        payment_method = purchase_order_data.get('payment_method')
     
-        if not all([supplier_id, delivery_date, status, total_cost, tax_amount]):
+        if not all([supplier_id, delivery_date, status, total_cost, tax_amount, payment_method]):
             return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
 
         try:
@@ -1387,41 +1392,92 @@ def create_purchase_order(request):
                         unit_cost=unit_cost,
                         received_quantity=0,
                         received=False
-                    )
-
-                    # update finance accounts vat input account and the PurchasesAccount
-                    if purchase_order.status == 'received':
-                        # change currency (first initial to be default ??)
-                        try:
-                            currency = Currency.objects.get(default=True)
-                            
-                            PurchaseOrderAccount.objects.create(
-                                purchase_order = purchase_order,
-                                amount = purchase_order.total_cost - purchase_order.tax_amount,
-                                balance = 0,
-                                expensed = False
-                            )
-                            
-                        except Currency.DoesNotExist:
-                            return JsonResponse({'success':False, 'message':f'currency doesnt exists'})
-                        
-                        try:
-                            rate = VATRate.objects.get(status=True)
-                            logger.info(f'rate -> {rate}')
-                            VATTransaction.objects.create(
-                                purchase_order = purchase_order,
-                                vat_type='Input',
-                                vat_rate = rate.rate,
-                                tax_amount = tax_amount
-                            )
-                            
-                        except VATRate.DoesNotExist:
-                            return JsonResponse({'success':False, 'message':f'Make sure you have a stipulated vat rate in the system'})
+                    ) 
+    
+                # update finance accounts (vat, cashbook, expense, account_transaction_log)
+                if purchase_order.status in ['Received', 'received']:
+                    if_purchase_order_is_received(
+                        request, 
+                        purchase_order, 
+                        tax_amount, 
+                        payment_method
+                    )       
           
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
         return JsonResponse({'success': True, 'message': 'Purchase order created successfully'})
+    
+    
+def if_purchase_order_is_received(request, purchase_order, tax_amount, payment_method):
+    try:
+        currency = Currency.objects.get(default=True)
+        rate = VATRate.objects.get(status=True)
+
+        # get account 
+        account_details = account_identifier(request, currency, payment_method)
+        account_name = account_details['account_name']
+        account_type = account_details['account_type']
+        account, _ = Account.objects.get_or_create(
+            account_name,
+            type=account_type
+        )
+        account_balance, _ = AccountBalance.objects.get_or_create(account=account)
+        account_balance.balance -= purchase_order.total_cost
+        account_balance.save()
+
+        # get or create purchase order category
+        category, _ = ExpenseCategory.objects.get_or_create(name='Purchase orders')
+
+        # create an expense and exclude the vat amount
+        expense = Expense.objects.create(
+            amount = purchase_order.total_cost - purchase_order.tax_amount,
+            payment_method = payment_method,
+            currency = currency, 
+            category = category,
+            user = request.user,
+            branch = request.user.branch,
+            status = False,
+            purchase_order = purchase_order,
+            description = f'Purchase order: {purchase_order.order_number}',
+        )
+
+        # create a cashbook entry
+        Cashbook.objects.create(
+            expense = expense,
+            description = f'Purchase order: {purchase_order.order_number}',
+            credit = True,
+            amount = purchase_order.total_cost,
+            currency = currency,
+            branch = request.user.branch
+        )
+
+        # create account transaction log
+        AccountTransaction.objects.create(
+            account = account,
+            expense = expense
+        )
+
+        # revisit
+        # PurchaseOrderAccount.objects.create(
+        #     purchase_order = purchase_order,
+        #     amount = purchase_order.total_cost - purchase_order.tax_amount,
+        #     balance = 0,
+        #     expensed = False
+        # )
+
+        # create a vat entry
+        VATTransaction.objects.create(
+            purchase_order = purchase_order,
+            vat_type='Input',
+            vat_rate = rate.rate,
+            tax_amount = tax_amount
+        )
+
+    except Currency.DoesNotExist:
+        return JsonResponse({'success':False, 'message':f'currency doesnt exists'})
+    except VATRate.DoesNotExist:
+        return JsonResponse({'success':False, 'message':f'Make sure you have a stipulated vat rate in the system'})
     
 @login_required
 @transaction.atomic
@@ -1437,33 +1493,20 @@ def change_purchase_order_status(request, order_id):
         
         if status:
             purchase_order.status=status
-            if purchase_order.status == 'received':
-                try:
-                    currency = Currency.objects.get(default=True)
-                    
-                    PurchaseOrderAccount.objects.create(
-                        purchase_order = purchase_order,
-                        amount = purchase_order.total_cost - purchase_order.tax_amount,
-                        balance = 0,
-                        expensed = False
+
+            with transaction.atomic():
+                if purchase_order.status == 'received':
+                    purchase_order.save()
+
+                    tax_amount = purchase_order.tax_amount
+                    payment_method = purchase_order.payment_method
+
+                    if_purchase_order_is_received(
+                        request, 
+                        purchase_order, 
+                        tax_amount,
+                        payment_method
                     )
-                    
-                except Currency.DoesNotExist:
-                    return JsonResponse({'success':False, 'message':f'currency doesnt exists'})
-                
-                try:
-                    rate = VATRate.objects.get(status=True)
-                    
-                    VATTransaction.objects.create(
-                        purchase_order = purchase_order,
-                        vat_type='Input',
-                        vat_rate = rate.rate,
-                        tax_amount = purchase_order.tax_amount
-                    )
-                    
-                except VATRate.DoesNotExist:
-                    return JsonResponse({'success':False, 'message':f'Make sure you have a stipulated vat rate in the system'})
-            purchase_order.save()
             
             return JsonResponse({'success':True}, status=200)
         else:

@@ -91,6 +91,12 @@
                                 ">
                                 {% if entry.invoice %}
                                     <a href=''>{{ entry.description }}</a>
+                                {% elif entry.expense %}
+                                    {% if entry.expense.purchase_order %}
+                                        <a href='{% url "inventory:purchase_order_detail"  entry.expense.purchase_order.id %}'>{{ entry.description }}</a>
+                                    {% else %}
+                                        <a href=''>{{ entry.description }}</a>
+                                    {% endif %}
                                 {% endif %}
                                 </span>
                             </td>

@@ -257,6 +257,7 @@
             return response.json();
         })
         .then(data => {
+            console.log(data)
             populateTable(data);
         })
         .catch(error => {
@@ -283,7 +284,7 @@
 
                 weekData.cogs.forEach(cogs => {
                     const day = getWeekday(cogs.date);
-                    dailyCOGS[day] += parseFloat(cogs.amount);
+                    dailyCOGS[day] += parseFloat(cogs.product__cost);
                 });
 
                 const totalSales = Object.values(dailySales).reduce((a, b) => a + b, 0);
@@ -317,7 +318,6 @@
                     salesRow.innerHTML += `<td>${dailySales[day].toFixed(2)}</td>`;
                     cogsRow.innerHTML += `<td class='text-danger'>${dailyCOGS[day].toFixed(2)}</td>`;
                     grossProfitRow.innerHTML += `<td>${(dailySales[day] - dailyCOGS[day]).toFixed(2)}</td>`;
-                    //gapRow.innerHTML += `<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>`;
                 });
 
                 salesRow.innerHTML += `<td class='fw-bold'>${totalSales.toFixed(2)}</td>`;

@@ -33,7 +33,7 @@
                             </thead>
                         <tbody>
                             {% for order in orders %}
-                                <tr">
+                                <tr>
                                     <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.order_date }}</small></td>
                                     <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.delivery_date }}</small></td>
                                     <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.order_number }}</small></td>
@@ -134,12 +134,20 @@
                       window.location.reload()
                     }, 1000)
                   } else {
-                    cartError.textContent=data.message;
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message,
+                      });
                   } 
                 })
                 .catch((error) => {
                   console.error("Error:", error);
-                  addToCartError.textContent=data.message;
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error,
+                  });
                 });
         
         }

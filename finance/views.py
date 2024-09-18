@@ -21,7 +21,7 @@ from asgiref.sync import async_to_sync, sync_to_async
 from inventory.models import Inventory
 from channels.layers import get_channel_layer
 import json, datetime, os, boto3, openpyxl 
-from .utils import account_identifier
+from utils.account_name_identifier import account_identifier
 from .tasks import send_invoice_email_task, send_account_statement_email
 from pytz import timezone as pytz_timezone 
 from openpyxl.styles import Alignment, Font
@@ -51,6 +51,13 @@ from django.contrib.auth import authenticate
 from loguru import logger
 from .tasks import send_expense_creation_notification
 
+def get_previous_month():
+    first_day_of_current_month = datetime.datetime.now().replace(day=1)
+    last_day_of_previous_month = first_day_of_current_month - timedelta(days=1)
+    return last_day_of_previous_month.month
+
+def get_current_month():
+    return datetime.datetime.now().month
 
 class Finance(View):
     # authentication loginmixin
@@ -103,13 +110,12 @@ def expenses(request):
             start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
             end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
         else:
-            start_date = now - - timedelta(days=now.weekday())
+            start_date = now - timedelta(days=now.weekday())
             end_date = now
             
         expenses = Expense.objects.filter(issue_date__gte=start_date, issue_date__lte=end_date).order_by('issue_date')
         
         if download:
-            logger.info('download')
             response = HttpResponse(content_type='text/csv')
             response['Content-Disposition'] = f'attachment; filename="expenses_report_{filter_option}.csv"'
 
@@ -121,7 +127,7 @@ def expenses(request):
                 total_expense += expense.amount
 
                 writer.writerow([
-                    expense.date,
+                    expense.issue_date,
                     expense.description,
                     expense.user.first_name,
                     expense.amount,
@@ -581,6 +587,9 @@ def create_invoice(request):
                     credit=Decimal('0.00'),
                     customer=customer
                 )
+
+                # Cost of sales parent object
+                cogs = COGS.objects.create(amount=Decimal(0))
                 
                 # Create InvoiceItem objects
                 for item_data in items_data:
@@ -606,6 +615,14 @@ def create_invoice(request):
                         unit_price=item.price,
                         invoice=invoice,
                         date=timezone.now()
+                    )
+
+                    # cost of sales item
+                    COGSItems.objects.create(
+                        invoice=invoice,
+                        cogs=cogs,
+                        product= Inventory.objects.get(product=product)
+
                     )
                     
                     # stock log  
@@ -641,6 +658,13 @@ def create_invoice(request):
                     amount_due=invoice_total_amount - amount_paid,
                     user=request.user
                 )
+
+
+                # calculate total cogs amount
+                cogs.amount = COGSItems.objects.filter(cogs=cogs, cogs__date=datetime.datetime.today())\
+                                               .aggregate(total=Sum('product__cost'))['total'] or 0
+                logger.info(f'COGS amount: {cogs.amount}')
+                cogs.save()
                 
                 # updae account balance
                 if invoice.payment_status == 'Partial':
@@ -2424,13 +2448,14 @@ def delete_withdrawal(request, withdrawal_id):
 def days_data(request):
     current_month = get_current_month()
 
-    sales = Sale.objects.filter(date__month=current_month, staff=False)
-    cogs = COGS.objects.filter(date__month=current_month)
+    sales = Sale.objects.filter(date__month=current_month)
+    cogs = COGSItems.objects.filter(date__month=current_month)
 
     first_day = min(sales.first().date, cogs.first().date)
     
     def get_week_data(queryset, start_date, end_date, amount_field):
         week_data = queryset.filter(date__gte=start_date, date__lt=end_date).values(amount_field, 'date')
+        logger.info(week_data)
         total = week_data.aggregate(total=Sum(amount_field))['total'] or 0
         return week_data, total
 
@@ -2438,9 +2463,12 @@ def days_data(request):
     for week in range(1, 5):
         week_start = first_day + timedelta(days=(week-1)*7)
         week_end = week_start + timedelta(days=7)
-        
+
+        logger.info(week_start)
+        logger.info(week_end)
+
         sales_data, sales_total = get_week_data(sales, week_start, week_end, 'total_amount')
-        cogs_data, cogs_total = get_week_data(cogs, week_start, week_end, 'amount')
+        cogs_data, cogs_total = get_week_data(cogs, week_start, week_end, 'product__cost')
         
         data[f'week {week}'] = {
             'sales': list(sales_data),
@@ -2448,5 +2476,110 @@ def days_data(request):
             'total_sales': sales_total,
             'total_cogs': cogs_total
         }
+
+    return JsonResponse(data)
+
+@login_required
+def income_json(request):
+    current_month = get_current_month()
+    today = datetime.date.today()
+    
+    month = request.GET.get('month', current_month)
+    day = request.GET.get('day', today.day)
+    
+    if request.GET.get('filter') == 'today':
+        sales_total = Sale.objects.filter(date=today).aggregate(Sum('total_amount'))
+    else:
+        sales_total = Sale.objects.filter(date__month=month).aggregate(Sum('total_amount'))
+
+    return JsonResponse({'sales_total': sales_total['total_amount__sum'] or 0})
+
+
+@login_required
+def expense_json(request):
+    current_month = get_current_month()
+    today = datetime.date.today()
+    
+    month = request.GET.get('month', current_month)
+    day = request.GET.get('day', today.day)
+    
+    if request.GET.get('filter') == 'today':
+        expense_total = Expense.objects.filter(issue_date=today, status=False).aggregate(Sum('amount'))
+    else:
+        expense_total = Expense.objects.filter(issue_date__month=month, status=False).aggregate(Sum('amount'))
+    
+    return JsonResponse({'expense_total': expense_total['amount__sum'] or 0})
+
+
+@login_required
+def pl_overview(request):
+    filter_option = request.GET.get('filter')
+    today = datetime.date.today()
+    previous_month = get_previous_month()
+    current_year = today.year
+    current_month = today.month
+
+    if filter_option == 'today':
+        date_filter = today
+    elif filter_option == 'last_week':
+        last_week_start = today - datetime.timedelta(days=today.weekday() + 7)
+        last_week_end = last_week_start + datetime.timedelta(days=6)
+        date_filter = (last_week_start, last_week_end)
+    elif filter_option == 'this_month':
+        date_filter = (datetime.date(current_year, current_month, 1), today)
+    elif filter_option == 'year':
+        year = int(request.GET.get('year', current_year))
+        date_filter = (datetime.date(year, 1, 1), datetime.date(year, 12, 31))
+    else:
+        date_filter = (datetime.date(current_year, current_month, 1), today)
+
+    if filter_option == 'today':
+        current_month_sales = Sale.objects.filter(date=date_filter).aggregate(total_sales=Sum('total_amount'))['total_sales'] or 0
+        current_month_expenses = Expense.objects.filter(issue_date=date_filter).aggregate(total_expenses=Sum('amount'))['total_expenses'] or 0
+        cogs_total = COGSItems.objects.filter(date=date_filter).aggregate(total_cogs=Sum('product__cost'))['total_cogs'] or 0
+    elif filter_option == 'last_week':
+        current_month_sales = Sale.objects.filter(date__range=date_filter).aggregate(total_sales=Sum('total_amount'))['total_sales'] or 0
+        current_month_expenses = Expense.objects.filter(issue_date__range=date_filter).aggregate(total_expenses=Sum('amount'))['total_expenses'] or 0
+        cogs_total = COGSItems.objects.filter(date__range=date_filter).aggregate(total_cogs=Sum('product__cost'))['total_cogs'] or 0
+    else:
+        current_month_sales = Sale.objects.filter(date__range=date_filter).aggregate(total_sales=Sum('total_amount'))['total_sales'] or 0
+        current_month_expenses = Expense.objects.filter(dissue_date__range=date_filter).aggregate(total_expenses=Sum('amount'))['total_expenses'] or 0
+        cogs_total = COGSItems.objects.filter(date__range=date_filter).aggregate(total_cogs=Sum('product__cost'))['total_cogs'] or 0
+
+    previous_month_sales = Sale.objects.filter(date__year=current_year, date__month=previous_month).aggregate(total_sales=Sum('total_amount'))['total_sales'] or 0
+    previous_month_expenses = Expense.objects.filter(issue_date__year=current_year, issue_date__month=previous_month).aggregate(total_expenses=Sum('amount'))['total_expenses'] or 0
+    previous_cogs =  COGSItems.objects.filter(date__year=current_year, date__month=previous_month).aggregate(total_cogs=Sum('product__cost'))['total_cogs'] or 0
+    
+    current_net_income = current_month_sales
+    previous_net_income = previous_month_sales 
+    current_expenses = current_month_expenses 
+    
+    current_gross_profit = current_month_sales - cogs_total
+    previous_gross_profit = previous_month_sales - previous_cogs
+    
+    current_net_profit = current_gross_profit - current_month_expenses
+    previous_net_profit = previous_gross_profit - previous_month_expenses
+
+    current_gross_profit_margin = (current_gross_profit / current_month_sales * 100) if current_month_sales != 0 else 0
+    previous_gross_profit_margin = (previous_gross_profit / previous_month_sales * 100) if previous_month_sales != 0 else 0
+    
+    # net_income_change = calculate_percentage_change(current_net_income, previous_net_income)
+    # gross_profit_change = calculate_percentage_change(current_gross_profit, previous_gross_profit)
+    # gross_profit_margin_change = calculate_percentage_change(current_gross_profit_margin, previous_gross_profit_margin)
+
+
+    data = {
+        'net_profit':current_net_profit,
+        'cogs_total':cogs_total,
+        'current_expenses':current_expenses,
+        'current_net_profit': current_net_profit,
+        'previous_net_profit':previous_net_profit,
+        'current_net_income': current_net_income,
+        'previous_net_income': previous_net_income,
+        'current_gross_profit': current_gross_profit,
+        'previous_gross_profit': previous_gross_profit,
+        'current_gross_profit_margin': f'{current_gross_profit_margin:.2f}',
+        'previous_gross_profit_margin': previous_gross_profit_margin,
+    }
     
     return JsonResponse(data)

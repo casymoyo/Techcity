@@ -73,6 +73,12 @@ class PurchaseOrder(models.Model):
     other_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     is_partial = models.BooleanField(default=False)  
     received = models.BooleanField(default=False)
+    payment_method = models.CharField(max_length=15, choices=[
+        ('cash', 'cash'),
+        ('bank', 'bank'),
+        ('ecocash', 'ecocash')
+    ]
+    , default="cash")
 
     def generate_order_number():
         return f'PO-{uuid.uuid4().hex[:10].upper()}'

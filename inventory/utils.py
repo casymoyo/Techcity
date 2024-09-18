@@ -18,3 +18,5 @@ def calculate_inventory_totals(inventory_queryset):
 
 
 
+
+

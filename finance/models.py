@@ -196,7 +196,7 @@ class Expense(models.Model):
     user = models.ForeignKey('users.user', on_delete=models.CASCADE)
     branch = models.ForeignKey('company.branch', on_delete=models.CASCADE)
     status = models.BooleanField(default=False)
-    
+    purchase_order = models.ForeignKey("inventory.PurchaseOrder", on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return f"{self.issue_date} - {self.category} - {self.description} - ${self.amount}"
@@ -343,7 +343,7 @@ class CashTransfers(models.Model):
         BANK = ('Bank'), _('Bank')
         CASH = ('Cash'), _('Cash')
         ECOCASH =('Ecocash'), _('Ecocash')
-    
+   
     date = models.DateField(auto_now_add=True)    
     from_branch = models.ForeignKey('company.Branch', on_delete=models.CASCADE, related_name='kwarikuenda')
     to = models.ForeignKey('company.Branch', on_delete=models.CASCADE, related_name='to')
@@ -444,10 +444,37 @@ class COGS(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0) 
 
 class COGSItems(models.Model):
+    cogs = models.ForeignKey(COGS, on_delete=models.CASCADE, null=True)
     invoice = models.OneToOneField(Invoice, on_delete=models.CASCADE, null=True)
     product = models.ForeignKey('inventory.Inventory', on_delete=models.PROTECT)
+    date = models.DateField(auto_now_add=True)
 
-    
 
+class SalesReturns(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    reason = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey("users.user", on_delete=models.CASCADE)
     
+    def __str__(self) -> str:
+        return self.invoice
+
+
+class CashDeposit(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    timestamp = models.DateTimeField(auto_now=False, auto_now_add=False)
+    description = models.CharField(max_length=255)
+    user = models.ForeignKey("users.user", on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return self.account.name 
     
+class AccountTransaction(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    expense = models.ForeignKey(Expense, on_delete=models.CASCADE, null=True)
+    cash_withdrawal = models.ForeignKey(CashWithdraw, on_delete=models.CASCADE, null=True)
+    cash_deposit = models.ForeignKey(CashDeposit, on_delete=models.CASCADE, null=True)
+    expense = models.ForeignKey(Expense, on_delete=models.CASCADE, null=True)
+    sales_returns = models.ForeignKey(SalesReturns, on_delete=models.CASCADE, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)

@@ -47,11 +47,11 @@
         <tbody>
             {% for expense in expenses  %}
               <tr>
-                <td class="{% if expense.cancel %}text-decoration-line-through text-danger{% endif %}"><small>{{ expense.date }}</small></td>
-                <td class="{% if expense.cancel %}text-decoration-line-through text-danger{% endif %}"><small>{{ expense.description }}</small></td>
-                <td class="{% if expense.cancel %}text-decoration-line-through text-danger{% endif %}"><small>{{ expense.category.name }}</small></td>
-                <td class="{% if expense.cancel %}text-decoration-line-through text-danger{% endif %}"><small class="amount">{{ expense.amount }}</small></td>
-                <td class="{% if expense.cancel %}text-decoration-line-through text-danger{% endif %}"><small>{{ expense.user.username }}</small></td>
+                <td class="{% if expense.cancel %}text-decoration-line-through text-danger{% endif %}">{{ expense.issue_date }}</td>
+                <td class="{% if expense.cancel %}text-decoration-line-through text-danger{% endif %}">{{ expense.description }}</td>
+                <td class="{% if expense.cancel %}text-decoration-line-through text-danger{% endif %}">{{ expense.category.name }}</small></td>
+                <td class="{% if expense.cancel %}text-decoration-line-through text-danger{% endif %}"><span class="amount">{{ expense.amount }}</span></td>
+                <td class="{% if expense.cancel %}text-decoration-line-through text-danger{% endif %}">{{ expense.user.username }}</td>
                 <td>
                     <input type="checkbox" 
                            onchange="updateExpenseStatus({{ expense.id }})"
