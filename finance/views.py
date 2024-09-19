@@ -2401,12 +2401,13 @@ def cash_withdrawal_to_expense(request):
             branch=branch,
             user = request.user,
             currency = currency,
-            description=reason,
+            description=f'Cash withdrawal: {reason}',
             status=True,
             issue_date=withdrawal.date,
             payment_method='cash'
         )
         
+        logger.info(withdrawal_id)
         withdrawal.status=True
         withdrawal.save()
         
@@ -2583,3 +2584,101 @@ def pl_overview(request):
     }
     
     return JsonResponse(data)
+
+@login_required
+def cash_deposit(request):
+    if request.method == 'GET':
+        deposits = CashDeposit.objects.all()
+        return render(request, 'finance/cash_deposit.html', 
+            {
+                'form':cashDepositForm,
+                'deposits':deposits
+            }
+        )
+    
+@login_required
+def vat(request):
+    if request.method == 'GET':
+        
+        filter_option = request.GET.get('filter', 'today')
+        download = request.GET.get('download')
+        
+        now = datetime.datetime.now()
+        end_date = now
+        
+        if filter_option == 'today':
+            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif filter_option == 'this_week':
+            start_date = now - timedelta(days=now.weekday())
+        elif filter_option == 'yesterday':
+            start_date = (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        elif filter_option == 'this_month':
+            start_date = now.replace(day=1)
+        elif filter_option == 'last_month':
+            start_date = (now.replace(day=1) - timedelta(days=1)).replace(day=1)
+        elif filter_option == 'this_year':
+            start_date = now.replace(month=1, day=1)
+        elif filter_option == 'custom':
+            start_date = request.GET.get('start_date')
+            end_date = request.GET.get('end_date')
+            start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+            end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
+        else:
+            start_date = now - timedelta(days=now.weekday())
+            end_date = now
+            
+        vat_transactions = VATTransaction.objects.filter(date__gte=start_date, date__lte=end_date).order_by('-date')
+        
+        if download:
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="vat_report_{filter_option}.csv"'
+
+            writer = csv.writer(response)
+            writer.writerow(['Date', 'Description', 'Status', 'Input', 'Output'])
+
+            balance = 0
+            for transaction in vat_transactions:
+
+                if transaction.vat_type == 'Input':
+                    balance += transaction.tax_amount
+                else:
+                    balance -= transaction.tax_amount
+
+                writer.writerow([
+                    transaction.date,
+                    transaction.invoice.invoice_number if transaction.invoice else transaction.purchase_order.order_number,
+                    transaction.tax_amount if transaction.vat_type == 'Input' else  '',
+                    transaction.tax_amount if transaction.vat_type == 'Output' else  ''
+                ])
+
+            writer.writerow(['Total', '', '', balance])
+            
+            return response
+        return render(request, 'finance/vat.html', 
+            {
+                'filter_option':filter_option,
+                'vat_transactions':vat_transactions
+            }
+        )
+    
+    if request.method == 'POST':
+        # payload 
+        {
+            'date_from':date,
+            'date_to':date
+        }
+        try:
+            data = json.loads(request.body)
+            
+            date_to = data.get('date_to')
+            date_from = data.get('date_from')
+
+            vat_transactions = VATTransaction.objects.filter(
+                date__gte=date_from, 
+                date__lte=date_to
+            )
+            
+            vat_transactions.update(paid=True)
+        except Exception as e:
+            return JsonResponse({'success':False, 'message':f'{e}'}, status = 400)
+        return JsonResponse({'success':False, 'message':'VAT successfully paid'}, status = 200)

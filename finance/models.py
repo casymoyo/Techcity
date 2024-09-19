@@ -6,7 +6,6 @@ from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
-
 class Currency(models.Model):
     code = models.CharField(max_length=3, unique=True)  
     name = models.CharField(max_length=50)  
@@ -126,6 +125,8 @@ class VATTransaction(models.Model):
     vat_type = models.CharField(max_length=6, choices=VATType.choices)
     vat_rate = models.DecimalField(max_digits=5, decimal_places=2)
     tax_amount = models.DecimalField(max_digits=15, decimal_places=2)
+    paid = models.BooleanField(default=False)
+    date = models.DateField(auto_now_add=True)
     
     def __str__(self):
         return f"VAT Transaction for {self.invoice}"
@@ -459,6 +460,13 @@ class SalesReturns(models.Model):
     def __str__(self) -> str:
         return self.invoice
 
+class CashWithdrawals(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    timestamp = models.DateTimeField(auto_now=False, auto_now_add=False)
+    description = models.CharField(max_length=255)
+    user = models.ForeignKey("users.user", on_delete=models.CASCADE)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE) 
 
 class CashDeposit(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
@@ -466,6 +474,7 @@ class CashDeposit(models.Model):
     timestamp = models.DateTimeField(auto_now=False, auto_now_add=False)
     description = models.CharField(max_length=255)
     user = models.ForeignKey("users.user", on_delete=models.CASCADE)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE) 
 
     def __str__(self) -> str:
         return self.account.name 

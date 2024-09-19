@@ -102,4 +102,7 @@ urlpatterns = [
     path('pl_overview/', pl_overview, name='pl_overview'),
     path('income_json/', income_json, name='income_json'),
     path('expense_json/', expense_json, name='expense_json'),
+
+    # vat
+    path('vat/', vat, name='vat')
 ]   
