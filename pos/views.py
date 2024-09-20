@@ -17,3 +17,7 @@ def pos(request):
     invoice_count = Invoice.objects.filter(issue_date=timezone.now(), branch=request.user.branch ).count()
             
     return render(request, 'Pos/pos.html', {'invoice_count':invoice_count, 'form':form})
+
+@login_required
+def process_receipt(request):
+    pass    

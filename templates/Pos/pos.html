@@ -870,10 +870,9 @@ async function processCart(el) {
             console.log('Error:', result.message);
         }
     } catch (error) {
-        console.error("Error during request:", error.message);
+        console.error("Error during request:", error);
     }
 }
-
 
 
 async function displayReceipt(invoiceId) {

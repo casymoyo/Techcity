@@ -50,6 +50,13 @@ from . forms import (
 from django.contrib.auth import authenticate
 from loguru import logger
 from .tasks import send_expense_creation_notification
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
+from django.http import FileResponse
+import io
 
 def get_previous_month():
     first_day_of_current_month = datetime.datetime.now().replace(day=1)
@@ -510,45 +517,6 @@ def create_invoice(request):
             
             amount_paid = Decimal(invoice_data['amount_paid'])
             invoice_total_amount = Decimal(invoice_data['payable'])
-            
-            # check for due invoices 
-            # if Invoice.objects.filter(customer=customer, payment_status='Partial', branch=request.user.branch, currency=currency).exists():
-            #     due_invoice = Invoice.objects.filter(customer=customer, payment_status='Partial', branch=request.user.branch).last()
-            #     if amount_paid > due_invoice.amount_due:
-            #         due_invoice.amount_paid += due_invoice.amount_due
-            #         amount_paid -= due_invoice.amount_due
-            #         due_invoice.payment_status= due_invoice.PaymentStatus.PAID
-                    
-            #         # refactor
-            #         Payment.objects.create(
-            #             invoice=due_invoice,
-            #             amount_paid=due_invoice.amount_due,
-            #             payment_method=invoice_data['payment_method'],
-            #             amount_due= 0,
-            #             user=request.user
-            #         )
-                    
-            #         customer_account_balance.balance -= due_invoice.amount_due
-            #         due_invoice.amount_due = 0
-                    
-            #     else:
-            #         due_invoice.amount_due -= amount_paid
-            #         due_invoice.amount_paid += amount_paid
-                    
-            #         Payment.objects.create(
-            #             invoice=due_invoice,
-            #             amount_paid=amount_paid,
-            #             payment_method=invoice_data['payment_method'],
-            #             user=request.user
-            #         )
-        
-            #         customer_account_balance.balance -= amount_paid
-            #         amount_paid = 0
-                
-            #     customer_account_balance.save()
-            #     due_invoice.save()
-
-            # calculate amount due
             amount_due = invoice_total_amount - amount_paid  
             
             with transaction.atomic():
@@ -674,6 +642,11 @@ def create_invoice(request):
                 # Update customer balance
                 account_balance.balance = Decimal(invoice_data['payable']) + Decimal(account_balance.balance)
                 account_balance.save()
+
+                try:
+                    return create_invoice_pdf(invoice)
+                except Exception as e:
+                    logger.info(e)
                 
                 # return redirect('finance:invoice_preview', invoice.id)
                 return JsonResponse({'success':True, 'invoice_id': invoice.id})
@@ -682,6 +655,82 @@ def create_invoice(request):
             return JsonResponse({'success': False, 'error': str(e)})
 
     return render(request, 'finance/invoices/add_invoice.html')
+
+
+def create_invoice_pdf(invoice):
+    # Buffer to hold the PDF
+    buffer = io.BytesIO()
+    
+    # Create the PDF object, using the buffer as its "file."
+    pdf = SimpleDocTemplate(buffer, pagesize=A4)
+    elements = []
+    
+    # Styles
+    styles = getSampleStyleSheet()
+    normal_style = styles['Normal']
+    heading_style = styles['Heading1']
+    
+    # Company logo and header
+    elements.append(Paragraph('<b>Tech City</b>', heading_style))
+    elements.append(Paragraph('See • Touch • Own Quality', normal_style))
+    elements.append(Paragraph(f'Invoice Number: {invoice.invoice_number}', normal_style))
+    
+    elements.append(Spacer(1, 12))
+    
+    # Table Data (Items)
+    data = [
+        ['Q.', 'Description', 'Amount'],
+        [1, 'Hp (hp 250)', 'USD 250.00'],
+        ['Sub Total', '', 'USD 250.00'],
+        ['Discount', '', 'USD 0.00'],
+        ['VAT @15%', '', 'USD 37.50'],
+        ['Delivery Charge', '', 'USD 0.00'],
+        ['Previous Due', '', 'USD 75.00'],
+        ['Current Due', '', 'USD 287.50'],
+        ['Total Balance', '', 'USD 362.50'],
+        ['Amount Paid', '', 'USD 362.50'],
+        ['Due Amount', '', 'USD 0.00']
+    ]
+    
+    # Create table
+    table = Table(data, colWidths=[0.5*inch, 3*inch, 1.5*inch])
+    
+    # Add style to the table
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('ALIGN', (2, 1), (2, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 0.25, colors.black),
+    ]))
+    
+    elements.append(table)
+    
+    elements.append(Spacer(1, 24))
+    
+    # Terms and conditions
+    terms = '''
+    All laptop in-built batteries attract 1 month warranty.
+    Non in-built batteries attract 48hrs warranty.
+    Warranty for all preowned laptops is 5 months. Tech City does not warranty laptops if damaged by water, liquids, or short circuits.
+    Any withdrawn deposits for any purchase will attract 10percent administration fee.
+    Tech City only accepts exchanges on faulty laptops.
+    '''
+    elements.append(Paragraph('Terms and Conditions', heading_style))
+    elements.append(Paragraph(terms, normal_style))
+    
+    elements.append(Spacer(1, 12))
+    elements.append(Paragraph('Thanks for your purchase!', normal_style))
+    
+    # Build PDF
+    pdf.build(elements)
+    
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename=f'Invoice_{invoice.invoice_number}.pdf')
+
 
 @login_required
 @transaction.atomic

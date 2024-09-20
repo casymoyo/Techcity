@@ -65,7 +65,7 @@ LOCAL_APPS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
-CSRF_TRUSTED_ORIGINS = ['https://techcity-production.up.railway.app']
+CSRF_TRUSTED_ORIGINS = ['https://web-production-86a7.up.railway.app ']
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
