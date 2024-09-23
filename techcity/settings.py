@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-rb&d1ur&gv!uedx9&nym9zthkk(32-kdvh1x_b0+c+&^hny!o9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DJANGO_DEBUG", True)
 
-ALLOWED_HOSTS = ['*', 'http://techcity-production.up.railway.app']
+ALLOWED_HOSTS = ['*', 'https://web-production-86a7.up.railway.app']
 
 
 # Application definition
@@ -65,7 +65,7 @@ LOCAL_APPS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
-CSRF_TRUSTED_ORIGINS = ['https://web-production-86a7.up.railway.app ']
+CSRF_TRUSTED_ORIGINS = ['https://web-production-86a7.up.railway.app', "web-production-86a7.up.railway.app"]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
