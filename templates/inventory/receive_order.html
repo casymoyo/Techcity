@@ -20,6 +20,7 @@
                 <th>Ordered Quantity</th>
                 <th>Received Quantity</th>
                 <th>Enter Quantity</th>
+                <th>Enter Price</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -41,6 +42,14 @@
                     {% endif %}
                 </td>
                 <td>
+                    {% if item.product.price == 0 %}
+                        {{ item.price }}
+                    {% else %}
+                        
+                    {% endif %}
+                    <input type="number" id="selling_{{ item.id }}" placeholder="Enter Selling Price" min="1" class='form-control'>
+                </td>
+                <td>
                     {% if item.received %}
                         <button class="submit-btn btn btn-secondary w-100" disabled onclick="submitQuantity('{{ item.id }}')">Submit</button>
                     {% else %}
@@ -58,14 +67,23 @@
     function submitQuantity(itemId) {
         console.log(itemId)
         const quantity = document.getElementById(`quantity_${itemId}`).value;
+        const selling_price = document.getElementById(`selling_${itemId}`).value;
+
+        console.log(selling_price)
+
         if (quantity <= 0) {
-            alert("Quantity must be greater than zero.");
+            Swal.fire({
+                title: 'success',
+                text: "Quantity must be greater than zero.",
+                icon: 'success'
+            })
             return;
         }
 
         const data = {
             id: itemId,
-            quantity: parseInt(quantity)
+            quantity: parseInt(quantity),
+            price: parseFloat(selling_price)
         };
 
         fetch(`{% url "inventory:process_received_order" %}`, {

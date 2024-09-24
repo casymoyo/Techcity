@@ -5,6 +5,13 @@ from django.db.models import Sum
 from django.utils import timezone
 from django.db.models import F
 
+class BatchCode(models.Model):
+    code = models.CharField(max_length=255)
+
+    def __str__(self) -> str:
+        return self.code
+    
+
 class ProductCategory(models.Model):
     """Model for product categories."""
 
@@ -23,9 +30,9 @@ class Product(models.Model):
         ('zero rated', 'Zero Rated')
     ]
     
-    batch_code = models.CharField(max_length=255)
+    batch_code = models.ForeignKey(BatchCode,on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     cost = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.IntegerField(default=0, null=True)
     category = models.ForeignKey(ProductCategory, on_delete=models.SET_NULL, null=True)
@@ -102,6 +109,7 @@ class PurchaseOrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField()
     unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    actual_unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
     received_quantity = models.IntegerField(default=0) 
     received = models.BooleanField(default=False, null=True)
 

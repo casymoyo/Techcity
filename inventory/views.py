@@ -28,6 +28,7 @@ from finance.models import (
  )
 from . utils import calculate_inventory_totals
 from . forms import (
+    BatchForm,
     AddProductForm, 
     addCategoryForm, 
     addTransferForm, 
@@ -72,6 +73,27 @@ def service(request):
         messages.warning(request, 'Invalid form data')
     return redirect('inventory:inventory')
     
+@login_required
+def batch_code(request):
+    if request.method == 'GET':
+        
+        batch_codes = BatchCode.objects.all().values(
+            'id',
+            'code'
+        )
+        logger.info(batch_codes)
+        return JsonResponse(list(batch_codes), safe=False)
+    
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            code = data.get('batch_code')
+
+            BatchCode.objects.create(code=code)
+            return JsonResponse({'success':True}, status=200)
+        except Exception as e:
+            logger.info(e)
+            return JsonResponse({'success':False, 'message':f'{e}'}, status=400)
 
 @login_required
 def product_list(request): 
@@ -210,9 +232,8 @@ class ProcessTransferCartView(LoginRequiredMixin, View):
                     transfer_ref = Transfer.generate_transfer_ref(request.user.branch.name, branch_to.name)
                 )
                 
-                logger.info(f'transfer: {data['cart']}')
                 for item in data['cart']:
-                    logger.info(type(item))
+    
                     transfer_item = TransferItems(
                         transfer=transfer,
                         product= Product.objects.get(name=item['product']),
@@ -223,8 +244,6 @@ class ProcessTransferCartView(LoginRequiredMixin, View):
                     )   
                     transfer.save()         
                     transfer_item.save()
-                    logger.info(f'transfer {transfer}')
-                    logger.info(f'transfer item: {transfer_item}')
                     
                     self.deduct_inventory(transfer_item)
                     self.transfer_update_quantity(transfer_item, transfer)  
@@ -879,7 +898,7 @@ def delete_inventory(request):
     return redirect('inventory:inventory')
 
 @login_required
-@admin_required
+# @admin_required
 def add_product_category(request):
     categories = ProductCategory.objects.all().values()
     
@@ -888,7 +907,7 @@ def add_product_category(request):
         category_name = data['name']
         
         if ProductCategory.objects.filter(name=category_name).exists():
-            return JsonResponse({'error', 'Category Exists'})
+            return JsonResponse({'success':False, 'message':'Category Exists'})
         
         ProductCategory.objects.create(
             name=category_name
@@ -1307,20 +1326,22 @@ def purchase_orders(request):
     
 @login_required
 def create_purchase_order(request):
-    
-    # include the vat account and the purchase order account and the cash account
-    
     if request.method == 'GET':
         supplier_form = AddSupplierForm()
         product_form = AddProductForm()
         suppliers = Supplier.objects.all()
         note_form = noteStatusForm()
+        batch_form = BatchForm()
+
+        batch_codes = BatchCode.objects.all()
         return render(request, 'inventory/create_purchase_order.html',
             {
                 'product_form':product_form,
                 'supplier_form':supplier_form,
                 'suppliers':suppliers,
-                'note_form':note_form
+                'note_form':note_form,
+                'batch_form':batch_form,
+                'batch_codes':batch_codes
             }
         )
 
@@ -1374,6 +1395,7 @@ def create_purchase_order(request):
                     product_name = (item_data['product'])
                     quantity = int(item_data['quantity'])
                     unit_cost = Decimal(item_data['price'])
+                    actual_unit_cost = Decimal(item_data['actualPrice'])
 
                     if not all([product_name, quantity, unit_cost]):
                         transaction.set_rollback(True)
@@ -1390,6 +1412,7 @@ def create_purchase_order(request):
                         product=product,
                         quantity=quantity,
                         unit_cost=unit_cost,
+                        actual_unit_cost=actual_unit_cost,
                         received_quantity=0,
                         received=False
                     ) 
@@ -1605,7 +1628,8 @@ def process_received_order(request):
 
         order_item_id = data.get('id')
         quantity = data.get('quantity', 0)
-
+        selling_price = data.get('price')
+        logger.info(selling_price)
         if not order_item_id or not isinstance(quantity, int) or quantity <= 0:
             return JsonResponse({'success': False, 'message': 'Invalid data'}, status=400)
 
@@ -1632,8 +1656,8 @@ def process_received_order(request):
             product=product,
             defaults={
                 'branch': request.user.branch,
-                'cost': order_item.unit_cost,
-                'price': product.price,
+                'cost': order_item.actual_unit_cost,
+                'price': selling_price,
                 'quantity': quantity,
                 'stock_level_threshold': product.min_stock_level,
                 'reorder': False,
@@ -1643,7 +1667,7 @@ def process_received_order(request):
 
         if not created:
             inventory.quantity += quantity
-            inventory.cost = order_item.unit_cost
+            inventory.cost = order_item.actual_unit_cost
             
         
         ActivityLog.objects.create(
@@ -1674,7 +1698,6 @@ def product(request):
         # payload
         """
             name,
-            prince: float,
             cost: float,
             quantity: int,
             category,
@@ -1684,11 +1707,15 @@ def product(request):
         """
         try:
             data = json.loads(request.body)
+            batch_code_id = int(data.get('batch_code'))
+            
         except Exception as e:
             return JsonResponse({'success':False, 'message':'Invalid data'})
         
-        logger.info(f'product data -> {data['service']} {data['end_of_day']}')
+        logger.info(batch_code_id)
         
+        batch_code = BatchCode.objects.get(id=batch_code_id)
+        logger.info(data)
         # validation for existance
         if Product.objects.filter(name=data['name']).exists():
             return JsonResponse({'success':False, 'message':f'Product {data['name']} exists'})
@@ -1698,11 +1725,14 @@ def product(request):
         except ProductCategory.DoesNotExist:
             return JsonResponse({'success':False, 'message':f'Category Doesnt Exists'})
         
+        logger.info(category)
+        
         product = Product.objects.create(
+            batch_code = batch_code,
             name = data['name'],
-            price = data['price'],
-            cost = data['cost'],
-            quantity = data['quantity'],
+            price = 0,
+            cost = 0,
+            quantity = 0,
             category = category,
             tax_type = data['tax_type'],
             min_stock_level = data['min_stock_level'],

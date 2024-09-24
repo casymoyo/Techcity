@@ -65,8 +65,10 @@ def login_view(request):
                 return redirect('pos:pos')
             else:
                 messages.error(request, 'Your account is not active, contact admin')
+                return render(request, 'auth/login.html')
         else:
             messages.error(request, 'Invalid username or password')
+            return render(request, 'auth/login.html')
     
     if request.method == 'GET':
         return render(request, 'auth/login.html')

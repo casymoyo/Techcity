@@ -6,8 +6,14 @@ from . models import (
     DefectiveProduct, 
     Service, 
     Supplier, 
-    PurchaseOrder
+    PurchaseOrder,
+    BatchCode
 )
+
+class BatchForm(forms.ModelForm):
+    class Meta:
+        model = BatchCode
+        fields = '__all__'
 
 class AddProductForm(forms.ModelForm):
     class Meta:
