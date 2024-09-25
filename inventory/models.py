@@ -72,11 +72,10 @@ class PurchaseOrder(models.Model):
     delivery_date = models.DateField(null=True, blank=True)
     total_cost = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     status = models.CharField(max_length=50, choices=status_choices, default='pending')
-    notes = models.TextField(null=True, blank=True)
+    notes = models.CharField(max_length=255 ,null=True, blank=True)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     discount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     tax_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
-    handling_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     other_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     is_partial = models.BooleanField(default=False)  
     received = models.BooleanField(default=False)
@@ -140,6 +139,18 @@ class PurchaseOrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
+    
+
+class otherExpenses(models.Model):
+
+    """additional expenses for the purchase order"""
+
+    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, null=True)
+    name = models.CharField(max_length=100)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self) -> str:
+        return f'{self.purchase_order} : {self.name} -> {self.amount}'
 
 
 class Inventory(models.Model):

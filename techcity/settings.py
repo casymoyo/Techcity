@@ -129,22 +129,22 @@ SESSION_AUTH = True
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME':  'techcity',
-    #     'USER': 'postgres',
-    #     'PASSWORD': 'neverfail',
-    #     'HOST': 'localhost',
-    #     'PORT': '5432'
-    # }
     'default': {
-        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.getenv('DB_NAME', 'postgres'),
-        'USER': os.getenv('DB_USER', 'postgres.uizmccfdsrqjdgvhxren'),
-        'PASSWORD': os.getenv('DB_PASSWORD', '$p-!!v5jdXRDwJT'),  
-        'HOST': os.getenv('DB_HOST', 'aws-0-eu-central-1.pooler.supabase.com'),
-        'PORT': os.getenv('DB_PORT', '6543'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME':  'techcoty',
+        'USER': 'postgres',
+        'PASSWORD': 'neverfail',
+        'HOST': 'localhost',
+        'PORT': '5432'
     }
+    # 'default': {
+    #     'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+    #     'NAME': os.getenv('DB_NAME', 'postgres'),
+    #     'USER': os.getenv('DB_USER', 'postgres.uizmccfdsrqjdgvhxren'),
+    #     'PASSWORD': os.getenv('DB_PASSWORD', '$p-!!v5jdXRDwJT'),  
+    #     'HOST': os.getenv('DB_HOST', 'aws-0-eu-central-1.pooler.supabase.com'),
+    #     'PORT': os.getenv('DB_PORT', '6543'),
+    # }
 }
 
 if 'test' in sys.argv:

@@ -1347,9 +1347,11 @@ def create_purchase_order(request):
 
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
+            data = json.loads(request.body) 
             purchase_order_data = data.get('purchase_order', {})
             purchase_order_items_data = data.get('po_items', [])
+            expenses = data.get('expenses')
+
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
 
@@ -1359,7 +1361,6 @@ def create_purchase_order(request):
         notes = purchase_order_data['notes']
         total_cost = Decimal(purchase_order_data['total_cost'])
         discount = Decimal(purchase_order_data['discount'])
-        handling_amount = Decimal(purchase_order_data['handling_amount'])
         tax_amount = Decimal(purchase_order_data['tax_amount'])
         other_amount = Decimal(purchase_order_data['other_amount'])
         payment_method = purchase_order_data.get('payment_method')
@@ -1383,14 +1384,14 @@ def create_purchase_order(request):
                     total_cost=total_cost,
                     discount=discount,
                     tax_amount=tax_amount,
-                    handling_amount=handling_amount,
                     other_amount=other_amount,
                     branch = request.user.branch,
                     is_partial = False,
                     received = False
                 )
                 purchase_order.save()
-
+                
+                purchase_order_items_bulk = []
                 for item_data in purchase_order_items_data:
                     product_name = (item_data['product'])
                     quantity = int(item_data['quantity'])
@@ -1407,16 +1408,37 @@ def create_purchase_order(request):
                         transaction.set_rollback(True)
                         return JsonResponse({'success': False, 'message': f'Product with Name {product_name} not found'}, status=404)
 
-                    PurchaseOrderItem.objects.create(
-                        purchase_order=purchase_order,
-                        product=product,
-                        quantity=quantity,
-                        unit_cost=unit_cost,
-                        actual_unit_cost=actual_unit_cost,
-                        received_quantity=0,
-                        received=False
-                    ) 
-    
+                    purchase_order_items_bulk.append(
+                        PurchaseOrderItem(
+                            purchase_order=purchase_order,
+                            product=product,
+                            quantity=quantity,
+                            unit_cost=unit_cost,
+                            actual_unit_cost=actual_unit_cost,
+                            received_quantity=0,
+                            received=False
+                        )
+                    )
+                
+                PurchaseOrderItem.objects.bulk_create(purchase_order_items_bulk)
+
+                logger.info(expenses)
+                expense_bulk = []
+                for expense in expenses:
+                    name = expense['name'] 
+                    amount = expense['amount']
+
+                    expense_bulk.append(
+                        otherExpenses(
+                            purchase_order=purchase_order,
+                            name=name,
+                            amount=amount
+                        )
+                    )
+                logger.info(expense_bulk)
+                otherExpenses.objects.bulk_create(expense_bulk)
+                    
+
                 # update finance accounts (vat, cashbook, expense, account_transaction_log)
                 if purchase_order.status in ['Received', 'received']:
                     if_purchase_order_is_received(
@@ -1629,7 +1651,7 @@ def process_received_order(request):
         order_item_id = data.get('id')
         quantity = data.get('quantity', 0)
         selling_price = data.get('price')
-        logger.info(selling_price)
+        
         if not order_item_id or not isinstance(quantity, int) or quantity <= 0:
             return JsonResponse({'success': False, 'message': 'Invalid data'}, status=400)
 
@@ -1685,7 +1707,6 @@ def process_received_order(request):
         order_item.check_received()
         
         inventory.save()
-        logger.info(inventory)
 
         return JsonResponse({'success': True, 'message': 'Inventory updated successfully'}, status=200)
             

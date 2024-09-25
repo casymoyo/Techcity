@@ -5,7 +5,7 @@
 {% block content %}
    <div class="inventory">
         <div class='add-purchase-order'>
-            <div class='purchase-order-nav shadow p-2 bg-dark text-light d-flex justify-content-between align-items-center rounded'>
+            <div class='purchase-order-nav shadow p-2 text-light d-flex justify-content-between align-items-center rounded' style="background:#373f4c !important;">
                 <div>
                     <h5 class='fw-bold px-2 mt-2'>Create Purchase order</h5>
                 </div>
@@ -15,70 +15,72 @@
                     <div class="d-flex flex-column">
                         <p id="cart-title">Purchase order Items</p>
                         <table class="table border rounder p-2" id="cart-table">
-                            <thead>
-                              <th>Product</th>
-                              <th>Unit Price</th>
-                              <th>Quantity</th>
-                              <th class="text-center">Total</th>
-                            </thead>
-                            <tbody id="cart-items"></tbody>
-                            <tfoot>
-                              <tr>
-                                  <td></td>
-                                  <td></td>
-                                  <td class="fw-bold">Subtotal</td>
-                                  <td class="text-center fw-bold" id="subtotal"></td>
-                              </tr>
-                              <tr>
-                                  <td></td>
-                                  <td></td>
-                                  <td class="fw-bold">Discount</td>
-                                  <td>
-                                      <input id="id_discount" class="form-control text-center fw-bold" oninput="calculateTotals()">
-                                  </td>
-                              </tr>
-                              <tr>
-                                  <td></td>
-                                  <td></td>
-                                  <td class="fw-bold">Tax Rate</td>
-                                  <td id="tax_rate" class="fw-bold text-center">15%</td>
-                              </tr>
-                              <tr>
-                                  <td></td>
-                                  <td></td>
-                                  <td class="fw-bold">Tax Total</td>
-                                  <td id="tax" class="fw-bold text-center"></td>
-                              </tr>
-                              <tr>
-                                  <td></td>
-                                  <td></td>
-                                  <td class="fw-bold">Handling Fee</td>
-                                  <td>
-                                      <input id="id_handling" class="form-control text-center fw-bold" oninput="calculateTotals()">
-                                  </td>
-                              </tr>
-                              <tr>
-                                  <td></td>
-                                  <td></td>
-                                  <td class="fw-bold">Other</td>
-                                  <td>
-                                      <input id="id_other" class="form-control text-center fw-bold" oninput="calculateTotals()">
-                                  </td>
-                              </tr>
-                              <tr>
-                                  <td></td>
-                                  <td></td>
-                                  <td class="fw-bold">Total</td>
-                                  <td class="fw-bold text-center" id="id_total"></td>
-                              </tr>
-                            </tfoot>
+                          <thead>
+                            <th>Product</th>
+                            <th>Unit Price</th>
+                            <th>Quantity</th>
+                            <th class="text-center">Total</th>
+                          </thead>
+                          <tbody id="cart-items"></tbody>
+                          <tfoot>
+                            <tr>
+                              <td></td>
+                              <td></td>
+                              <td class="fw-bold">Subtotal</td>
+                              <td class="text-center fw-bold" id="subtotal"></td>
+                            </tr>
+                            <tr>
+                              <td></td>
+                              <td></td>
+                              <td class="fw-bold">Discount</td>
+                              <td>
+                                <input id="id_discount" class="form-control text-center fw-bold" oninput="calculateTotals()">
+                              </td>
+                            </tr>
+                            <tr>
+                              <td></td>
+                              <td></td>
+                              <td class="fw-bold">Tax Rate</td>
+                              <td id="tax_rate" class="fw-bold text-center">15%</td>
+                            </tr>
+                            <tr>
+                              <td></td>
+                              <td></td>
+                              <td class="fw-bold">Tax Total</td>
+                              <td id="tax" class="fw-bold text-center"></td>
+                            </tr>
+                            <tr id="other-expense-row">
+                              <td></td>
+                              <td></td>
+                              <td class="fw-bold">Expenses</td>
+                              <td>
+                                <input id="id_other" class="form-control text-center fw-bold" oninput="calculateTotals()" readonly>
+                              </td>
+                            </tr>
+                            <!-- Add dynamic rows for other expenses here -->
+                            <tr>
+                              <td colspan="3"></td>
+                              <td>
+                                <button class="btn btn-outline-dark btn-sm w-100" id="add-expense-btn" onclick="addExpense()">Add Expense</button>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td></td>
+                              <td></td>
+                              <td class="fw-bold">Total</td>
+                              <td class="fw-bold text-center" id="id_total"></td>
+                            </tr>
+                          </tfoot>
                         </table>
-                        <button class="btn btn-danger btn-sm flex" onclick="reload();">Cancel</button>
-                        <button class="btn btn-primary btn-sm flex  mt-1" id="next_button">Next</button>
+                        <div class="d-flex justify-content-end">
+                          <button class="btn btn-outline-dark btn-sm flex mx-2" onclick="reload();">Cancel</button>
+                          <button class="btn btn-dark btn-sm flex" id="next_button">Next</button>
+                        </div>                        
                     </div>
                 </div>
                 <div class="col-3">
-                    <div class='mt-2 shadow'>
+                    <div class=''>
+                      <p id="cart-title">Add Product</p>
                         <form class='d-flex flex-column mt-2 w-100 mt-2 w-100 px-2' method='post'>
                             {% csrf_token %}
                             <div class="mb-1">
@@ -138,7 +140,7 @@
                                 <p id="cart_error" class="text-danger"></p>
                             </div> 
                             <div class='d-flex justify-content-end mb-2'>
-                                <button type='button' class='btn btn-secondary btn-sm w-100' id="id_add_to_cart" onclick="addItem();">
+                                <button type='button' class='btn btn-dark btn-sm w-100' id="id_add_to_cart" onclick="addItem();">
                                   <i class='bx bx-save' ></i>
                                     save
                                 </button>
@@ -196,26 +198,20 @@
 
 
       <div class="apportionment" id="apportionment-section" style="display: none;">
-        <table class="table">
+        <table class="table table-bordered">
           <thead>
             <th>Product</th>
             <th>Quantity</th>
-            <th>Buying Cost</th>
-            <th>Actual Price Per Unit</th>
-            <th>Total Expense Apportionment</th>
+            <th>Supplier Price</th>
+            <th>Additional Expsense Cost/unit</th>
+            <th>Cost Per Unit + AEC/unit</th>
           </thead>
           <tbody class="" id="apportionment-table"></tbody>
-          <tfoot>
-            <tr>
-              <td>Total Expenses</td>
-              <td colspan="3"></td>
-              <td id="total_expenses"></td>
-            </tr>
-          </tfoot>
+          <tfoot id="expense-footer"></tfoot>
         </table>
         <div class="d-flex justify-content-between align-items-center">
-          <button class="btn btn-secondary btn-sm mt-1" id="back_button" onclick="showMain()">Back</button>
-          <button class="btn btn-primary btn-sm mt-1" id="confirm_btn">Confirm</button>
+          <button class="btn btn-outline-dark btn-sm" id="back_button" onclick="showMain()">Back</button>
+          <button class="btn btn-dark btn-sm mt-1" id="confirm_btn">Confirm</button>
       </div>
       </div>
     </div>
@@ -294,7 +290,7 @@
                               <select name="category" class="select form-select" required id="id_category"> 
                                   <option value="">---------</option> 
                               </select> 
-                              <button class='btn small' type="button" id='id_add_category'>
+                              <button class='btn border small' type="button" id='id_add_category'>
                                   <i class='bx bx-plus'></i>
                               </button>
                           </div>
@@ -384,14 +380,14 @@
                       <p id="cartError" class="text-danger"></p>
                       <div class="d-flex justify-content-end">
                         <div class="">
-                            <button type="reset" class="btn btn-danger btn-sm w-100">
+                            <button type="reset" class="btn btn-outline-dark btn-sm w-100">
                                 <i class='bx bx-reset'></i>
                                 Reset
                             </button>
                         </div>
                         <span class="px-1"></span>
                         <div class="">
-                            <button type="button" onclick="processCart();" class="btn btn-secondary btn-sm w-100">
+                            <button type="button" onclick="processCart();" class="btn btn-dark btn-sm w-100">
                                 <i class='bx bx-save'></i>
                                 Save
                             </button>
@@ -435,6 +431,7 @@
               </div>
           </div>
         </div>
+        
    </div>   
 <script>
     let cart = [];
@@ -444,6 +441,9 @@
     let prodPrice = 0;
     let prodCost  = 0;
     let finalTotal = 0;
+    let expenseCount = 0;
+    let otherExpenses = 0;
+    let expensesData = [];
    
     const errorEl = document.getElementById('error');
     const addToCartError = document.getElementById('cart_error');
@@ -470,7 +470,64 @@
 
     const cartError = document.getElementById('cartError');
 
+    // event listener for save to cart
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); 
+            addItem()
+        }
+    });
 
+    function addExpense() {
+      expenseCount++;
+      
+      // Create new elements for the expense name and amount
+      const row = document.createElement('tr');
+      row.id = `expense-row-${expenseCount}`;
+
+      // Name column
+      const cell = document.createElement('td');
+      cell.colSpan='2';
+
+      const nameCell = document.createElement('td');
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.placeholder = 'Expense Name';
+      nameInput.className = 'form-control';
+      nameInput.id = `expense-name-${expenseCount}`;
+      nameCell.appendChild(nameInput);
+
+      // Amount column
+      const amountCell = document.createElement('td');
+      const amountInput = document.createElement('input');
+      amountInput.type = 'number';
+      amountInput.placeholder = 'Amount';
+      amountInput.className = 'form-control text-center';
+      amountInput.id = `expense-amount-${expenseCount}`;
+      amountInput.oninput = () => calculateExpense();
+      amountCell.appendChild(amountInput);
+
+      // Insert the new row into the table
+      row.appendChild(cell);
+      row.appendChild(nameCell);
+      row.appendChild(amountCell);
+      
+      const otherRow = document.getElementById('other-expense-row');
+      otherRow.insertAdjacentElement('afterend', row);
+    }
+
+    // Function to calculate total expenses in 'Other' field
+    function calculateExpense() {
+      let totalExpense = 0;
+      for (let i = 1; i <= expenseCount; i++) {
+        const amount = parseFloat(document.getElementById(`expense-amount-${i}`).value) || 0;
+        totalExpense += amount;
+      }
+
+      // Set the total in the 'Other' field
+      document.getElementById('id_other').value = totalExpense.toFixed(2);
+      calculateTotals();
+    }
 
     function showMain() {
         document.getElementById('main-section').style.display = 'flex';
@@ -585,7 +642,7 @@
     // update batchcodes
     function updateBatchCodes(data){
         const catElement = document.querySelector('#id_code_select')
-        console.log(catElement)
+        
         while(catElement.options.length > 1){
               catElement.remove(1)
         }
@@ -736,7 +793,7 @@
         
         while(prodElement.options.length > 1){
           prodElement.remove(1)
-      }
+        }
         data.forEach((data)=>{
             prodElement.innerHTML += `<option value=${data.id}>${data.name}</option>`
         })
@@ -942,6 +999,7 @@
 
       const data= {
         'po_items':cart,
+        'expenses':expensesData,
         'purchase_order':{
           'payment_method':document.getElementById('id_payment_method').value,
           'supplier':document.getElementById('id_supplier').value,
@@ -951,12 +1009,9 @@
           'notes':document.getElementById('id_notes').value,
           'discount':parseFloat(document.getElementById('id_discount').value) || 0,
           'tax_amount':parseFloat(document.getElementById('tax').textContent) || 0,
-          'handling_amount':parseFloat(document.getElementById('id_handling').value) || 0,
           'other_amount':parseFloat(document.getElementById('id_other').value) || 0
         }
       }
-
-      console.log(data, parseFloat(document.getElementById('id_handling').value) || 0,)
       
       fetch("{% url 'inventory:create_purchase_order' %}", {
         method: "POST",
@@ -974,7 +1029,7 @@
               title: 'success',
               text: 'Purchase Order Successfully Created',
             }).then(()=>{
-              window.location.reload()
+              window.location.reload() 
             })
           } else {
             Swal.fire({
@@ -1007,10 +1062,9 @@
       let taxRate = 0.15;
       let tax = discountedTotal * taxRate;
 
-      let handlingFee = parseFloat(document.getElementById('id_handling').value) || 0;
       let other = parseFloat(document.getElementById('id_other').value) || 0;
 
-      finalTotal = discountedTotal + tax + handlingFee + other;
+      finalTotal = discountedTotal + tax + other;
 
       // Update the table
       document.getElementById('subtotal').innerText = subtotal.toFixed(2);
@@ -1029,15 +1083,13 @@
 
         let totalExpenses = 0;
         let rate = 0;
-        let handling_amount = parseFloat(document.getElementById('id_handling').value) || 0;
+      
+        const apportionmentTable = document.getElementById('apportionment-table');
         let other_amount = parseFloat(document.getElementById('id_other').value) || 0;
 
-        const apportionmentTable = document.getElementById('apportionment-table');
-        
-        totalExpenses = handling_amount + other_amount;
-        rate = apportionmentRate(cart, totalExpenses);
-
-        document.getElementById('total_expenses').innerHTML = totalExpenses.toFixed(2);
+        totalExpenses = other_amount;
+  
+        cost = apportionmentRate(cart, totalExpenses);
 
         apportionmentTable.innerHTML = '';
 
@@ -1045,27 +1097,62 @@
         cart.forEach((item) => {
           const row = document.createElement("tr");
           let actualCostPrice = 0;
+          console.log(totalExpenses)
+          // actual cost per product
+          additional_expense = (item.price/cost) * totalExpenses;
 
           // add actual cost price 
-          actualCostPrice = item.price + parseFloat(rate)
+          actualCostPrice = item.price + additional_expense;
 
           // add to cart
-          item.actualPrice = item.price + parseFloat(rate)
-
-          console.log(rate)
+          item.actualPrice = actualCostPrice
 
           row.innerHTML = `
             <td>${item.product}</td>
             <td>${item.quantity}</td>
             <td>${item.price.toFixed(2)}</td>
+            <td>${additional_expense.toFixed(2)}</td>
             <td>${actualCostPrice.toFixed(2)}</td> 
-            <td class='text-center'>${(item.quantity * rate).toFixed(2)}</td>
         `;
         
         apportionmentTable.appendChild(row);
+
+        const expenseFooter = document.getElementById('expense-footer');
+        expenseFooter.innerHTML = '';  
+
+        expenseFooter.innerHTML += `
+          <tr>
+              <td class='fw-bold'>Total Expenses</td>
+              <td colspan="2"></td>
+              <td id="total_expenses" class='fw-bold'></td>
+              <td></td>
+          </tr>
+        `;
+
+        for (let i = 1; i <= expenseCount; i++) {
+          const expenseName = document.getElementById(`expense-name-${i}`).value;
+          const expenseAmount = parseFloat(document.getElementById(`expense-amount-${i}`).value) || 0;
+
+          // Push each expense as an object to the expensesData array
+          expensesData.push({
+              name: expenseName,
+              amount: expenseAmount
+          });
+  
+          // Create and append the expense row to the footer
+          const expenseRow = document.createElement('tr');
+          expenseRow.innerHTML += `
+            <td>${expenseName}</td>
+            <td colspan='2'></td>
+            <td>${expenseAmount.toFixed(2)}</td>
+            <td></td>
+          `;
+          expenseFooter.appendChild(expenseRow);
+        }
+        document.getElementById('total_expenses').innerHTML = totalExpenses.toFixed(2);
       });
 
-        console.log(cart)
+        console.log(expensesData)
 
       }else{
         Swal.fire({
@@ -1078,14 +1165,14 @@
     })
 
 
-    function apportionmentRate(cart, totalExpenses) {
-      let totalQuantity = 0;
+    function apportionmentRate(cart) {
+      let totalCost = 0;
 
       cart.forEach((item) => {
-        totalQuantity += item.quantity;
+        totalCost += item.price;
       })
-
-      return parseFloat(totalExpenses) / parseInt(totalQuantity);
+      
+      return parseFloat(totalCost) || 0;
     }
 
     function getCookie(name) {

@@ -9,6 +9,7 @@ from . models import (
     PurchaseOrder,
     BatchCode
 )
+from datetime import date
 
 class BatchForm(forms.ModelForm):
     class Meta:
@@ -66,15 +67,22 @@ class CreateOrderForm(forms.ModelForm):
     class Meta:
         model =  PurchaseOrder
         exclude = ['order_number', 'branch']
-        
+      
+
 class noteStatusForm(forms.ModelForm):
     class Meta:
-        model =  PurchaseOrder
+        model = PurchaseOrder
         fields = ['status', 'delivery_date', 'payment_method', 'notes']
         
         widgets = {
             'delivery_date': forms.DateInput(attrs={'type': 'date'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super(noteStatusForm, self).__init__(*args, **kwargs)
+        
+        if not self.initial.get('delivery_date'):
+            self.initial['delivery_date'] = date.today()
 
 class PurchaseOrderStatus(forms.ModelForm):
     class Meta:
