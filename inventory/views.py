@@ -1438,7 +1438,6 @@ def create_purchase_order(request):
                 logger.info(expense_bulk)
                 otherExpenses.objects.bulk_create(expense_bulk)
                     
-
                 # update finance accounts (vat, cashbook, expense, account_transaction_log)
                 if purchase_order.status in ['Received', 'received']:
                     if_purchase_order_is_received(
@@ -1463,16 +1462,29 @@ def if_purchase_order_is_received(request, purchase_order, tax_amount, payment_m
         account_details = account_identifier(request, currency, payment_method)
         account_name = account_details['account_name']
         account_type = account_details['account_type']
+
         account, _ = Account.objects.get_or_create(
-            account_name,
+            name=account_name,
             type=account_type
         )
-        account_balance, _ = AccountBalance.objects.get_or_create(account=account)
+        
+        account_balance, _ = AccountBalance.objects.get_or_create(
+            account=account,
+
+            defaults={
+                'branch':request.user.branch,
+                'currency':currency,
+                'balance':0
+            }
+        )
+
         account_balance.balance -= purchase_order.total_cost
+        
         account_balance.save()
 
         # get or create purchase order category
         category, _ = ExpenseCategory.objects.get_or_create(name='Purchase orders')
+        logger.info(category)
 
         # create an expense and exclude the vat amount
         expense = Expense.objects.create(
@@ -1519,7 +1531,9 @@ def if_purchase_order_is_received(request, purchase_order, tax_amount, payment_m
             tax_amount = tax_amount
         )
 
-    except Currency.DoesNotExist:
+        logger.info('done')
+    except Exception as e:
+        logger.info(e)
         return JsonResponse({'success':False, 'message':f'currency doesnt exists'})
     except VATRate.DoesNotExist:
         return JsonResponse({'success':False, 'message':f'Make sure you have a stipulated vat rate in the system'})

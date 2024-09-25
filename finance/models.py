@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
+
 class Currency(models.Model):
     code = models.CharField(max_length=3, unique=True)  
     name = models.CharField(max_length=50)  

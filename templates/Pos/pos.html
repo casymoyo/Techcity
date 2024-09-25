@@ -21,6 +21,7 @@
     <script src="{% static 'css/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'js/jquery.js'%}"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <title>
         {% block title %}Techcity POS{% endblock title %}
@@ -101,7 +102,7 @@
                     <small class=" text-danger id_client_error"></small>
 
                     <table class="table table-responsive table-sm">
-                        <tr class="border head">
+                        <tr class="border">
                             <th>Quanity</th>
                             <th>Product</th>
                             <th>Price</th>
@@ -408,7 +409,11 @@ document.querySelector('#id_pay').addEventListener(
             modal.classList.remove("hidden");
             overlay.classList.remove("hidden");
         }else{
-            chooseCustomerModal.show()
+            Swal.fire({
+                icon:'error',
+                text:'Choose Customer First.',
+                title:'error'
+            })
         }
     }
 )
@@ -741,7 +746,7 @@ function updateTfoot(vat, totalAmount, discountAmount, discount, delivery, payab
     if(bal>0){
         totalDueAmount = parseFloat(bal.toFixed(2)) + parseFloat(payable.toFixed(2)); 
     }else{
-        totalDueAmount = parseFloat(bal.toFixed(2)) - parseFloat(payable.toFixed(2)); 
+        totalDueAmount = parseFloat(payable.toFixed(2)); 
     }
 
     const totalBalanceDue = totalDueAmount - parseFloat(amount_paid.toFixed(2));
@@ -927,12 +932,16 @@ async function displayReceipt(invoiceId) {
         modal.classList.add("hidden");
         overlay.classList.add("hidden");
 
-        loaderModal.show();
-
-        setTimeout(() => {
+        Swal.fire({
+            icon: 'success',
+            title: 'success',
+            text: 'Invoice successfully processed',
+            timer: 2000,
+            showConfirmButton: false
+        }).then(()=>{
             loaderModal.hide();
             receiptModal.show();
-        }, 2000);
+        })
 
     } catch (error) {
         console.error("Error:", error);
@@ -962,13 +971,24 @@ function submitClient() {
     .then(data => {
         if (data.success) {
             clientModal.hide();
-            customerModal.show();
-            setTimeout(() => {
+            Swal.fire({
+              icon: 'success',
+              title: 'success',
+              text: 'Customer Succesfully Added.',
+              timer: 2000,
+              showConfirmButton: false
+            }).then(()=>{
                 customerModal.hide();
                 fetchCustomers();
-            }, 300);
+            })
         } else {
-            document.getElementById('id_client_error').textContent = '*' + data.message;
+            Swal.fire({
+              icon: 'error',
+              title: 'error',
+              text: data.message,
+              timer: 2000,
+              showConfirmButton: false
+            })
         }
     })
     .catch(error => {

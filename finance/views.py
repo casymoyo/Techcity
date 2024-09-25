@@ -643,10 +643,10 @@ def create_invoice(request):
                 account_balance.balance = Decimal(invoice_data['payable']) + Decimal(account_balance.balance)
                 account_balance.save()
 
-                try:
-                    return create_invoice_pdf(invoice)
-                except Exception as e:
-                    logger.info(e)
+                # try:
+                #     return create_invoice_pdf(invoice)
+                # except Exception as e:
+                #     logger.info(e)
                 
                 # return redirect('finance:invoice_preview', invoice.id)
                 return JsonResponse({'success':True, 'invoice_id': invoice.id})
