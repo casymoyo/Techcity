@@ -43,17 +43,16 @@
                 </td>
                 <td>
                     {% if item.product.price == 0 %}
-                        {{ item.price }}
+                        <input type="number" id="selling_{{ item.id }}" placeholder="Enter Selling Price" min="1" class='form-control'>
                     {% else %}
-                        
+                        {{ item.product.price }}
                     {% endif %}
-                    <input type="number" id="selling_{{ item.id }}" placeholder="Enter Selling Price" min="1" class='form-control'>
                 </td>
                 <td>
                     {% if item.received %}
-                        <button class="submit-btn btn btn-secondary w-100" disabled onclick="submitQuantity('{{ item.id }}')">Submit</button>
+                        <button class="submit-btn btn btn-secondary w-100" disabled onclick="submitQuantity('{{ item.id }}', this)">Submit</button>
                     {% else %}
-                        <button class="submit-btn btn btn-secondary w-100" onclick="submitQuantity('{{ item.id }}')">Submit</button>
+                        <button class="submit-btn btn btn-secondary w-100" onclick="submitQuantity('{{ item.id }}', this)">Submit</button>
                     {% endif %}
                 </td>
             </tr>
@@ -64,18 +63,18 @@
  <script>
     new DataTable('#order_items_table')
 
-    function submitQuantity(itemId) {
-        console.log(itemId)
+    function submitQuantity(itemId, el) {
+        console.log(el)
         const quantity = document.getElementById(`quantity_${itemId}`).value;
         const selling_price = document.getElementById(`selling_${itemId}`).value;
 
-        console.log(selling_price)
+        el.disabled = true;
 
         if (quantity <= 0) {
             Swal.fire({
-                title: 'success',
+                title: 'error',
                 text: "Quantity must be greater than zero.",
-                icon: 'success'
+                icon: 'error'
             })
             return;
         }
@@ -99,7 +98,13 @@
             if (data.success) {
                 window.location.reload()
             } else {
-                alert(data.message);
+                Swal.fire({
+                    title:'error',
+                    icon:'error',
+                    text:data.message
+                }).then(()=>{
+                    el.disabled=false;
+                })
             }
         })
         .catch(error => {

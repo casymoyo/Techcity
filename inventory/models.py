@@ -32,7 +32,7 @@ class Product(models.Model):
     
     batch_code = models.ForeignKey(BatchCode,on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
-    price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, default=0)
     cost = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.IntegerField(default=0, null=True)
     category = models.ForeignKey(ProductCategory, on_delete=models.SET_NULL, null=True)

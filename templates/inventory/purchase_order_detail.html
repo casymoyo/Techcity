@@ -29,12 +29,23 @@
                             <td data-id={{ order.id }}><small>{{ order.purchase_order.order_date }}</small></td>
                             <td data-id={{ order.id }}><small>{{ order.purchase_order.order_number }}</small></td> 
                             <td data-id={{ order.id }}><small>{{ order.product.name }}</small></td>
-                            <td data-id={{ order.id }}><small>{{ order.unit_cost }}</small></td>
+                            <td data-id={{ order.id }}><small>{{ order.actual_unit_cost }}</small></td>
                             <td data-id={{ order.id }}><small>{{ order.quantity }}</small></td>
                             <td data-id={{ order.id }}><small id='total'></small></td>  
                         </tr>
                         {% endfor %}
                     </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="6">Expenses</td>
+                        </tr>
+                        {% for expense in expenses %}
+                            <tr>
+                                <td colspan="5">{{ expense.name }}</td>
+                                <td>{{ expense.amount }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tfoot>
                 </table>
             </div>
         </div>

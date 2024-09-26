@@ -1608,10 +1608,14 @@ def purchase_order_detail(request, order_id):
         messages.warning(request, f'Purchase order with ID: {order_id} does not exists')
         return redirect('inventory:purchase_orders')
     
+    purchase_order_expenses = otherExpenses.objects.filter(purchase_order=purchase_order)
+    logger.info(purchase_order_expenses)
+    
     return render(request, 'inventory/purchase_order_detail.html', 
         {
             'orders':purchase_order_items,
-            'purchase_order':purchase_order
+            'purchase_order':purchase_order,
+            'expenses':purchase_order_expenses
         }
     )
     

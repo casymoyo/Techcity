@@ -203,8 +203,11 @@
             <th>Product</th>
             <th>Quantity</th>
             <th>Supplier Price</th>
-            <th>Additional Expsense Cost/unit</th>
-            <th>Cost Per Unit + AEC/unit</th>
+            <th>Total Buying Price</th>
+            <th>Allocated Expense Cost</th>
+            <th>Total Buying Price (with expense)</th>
+            <th>Cost Per Unit</th>
+            <th>Total Cost (with expense)</th>
           </thead>
           <tbody class="" id="apportionment-table"></tbody>
           <tfoot id="expense-footer"></tfoot>
@@ -1111,9 +1114,12 @@
             <td>${item.product}</td>
             <td>${item.quantity}</td>
             <td>${item.price.toFixed(2)}</td>
+            <td>${item.price * item.quantity}</td>
+            <td>${result.allocated}</td>
+            <td>${(item.price * item.quantity) + result.allocated}</td>
             <td>${result.allocationRate}</td>
             <td>${actualCostPrice.toFixed(2)}</td> 
-        `;
+          `;
         
         apportionmentTable.appendChild(row);
 
@@ -1123,9 +1129,9 @@
         expenseFooter.innerHTML += `
           <tr>
               <td class='fw-bold'>Total Expenses</td>
-              <td colspan="2"></td>
+              <td colspan="3"></td>
               <td id="total_expenses" class='fw-bold'></td>
-              <td></td>
+              <td colspan="2"></td>
           </tr>
         `;
 
@@ -1143,7 +1149,7 @@
           const expenseRow = document.createElement('tr');
           expenseRow.innerHTML += `
             <td>${expenseName}</td>
-            <td colspan='2'></td>
+            <td colspan='3'></td>
             <td>${expenseAmount.toFixed(2)}</td>
             <td></td>
           `;
@@ -1185,10 +1191,16 @@
       productCost = price * quantity;
       productCostAllocationRate = productCost / totalCost;
 
+      console.log(productCostAllocationRate)
+
       let expCost = (productCost + (productCostAllocationRate * expenses)) / quantity
+      let allocated = productCostAllocationRate * expenses;
+
+      console.log(allocated)
 
       return {
         expCost:expCost,
+        allocated:allocated,
         allocationRate:expCost - price 
       }
     }
