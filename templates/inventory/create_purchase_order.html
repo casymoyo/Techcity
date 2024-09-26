@@ -1089,7 +1089,8 @@
 
         totalExpenses = other_amount;
   
-        cost = apportionmentRate(cart, totalExpenses);
+        cost = totalProductCost(cart, totalExpenses);
+        console.log(cost)
 
         apportionmentTable.innerHTML = '';
 
@@ -1097,12 +1098,11 @@
         cart.forEach((item) => {
           const row = document.createElement("tr");
           let actualCostPrice = 0;
-          console.log(totalExpenses)
-          // actual cost per product
-          additional_expense = (item.price/cost) * totalExpenses;
+          let result = allocateCost(cost, item.price, item.quantity, totalExpenses)
 
+          console.log(result)
           // add actual cost price 
-          actualCostPrice = item.price + additional_expense;
+          actualCostPrice = result.expCost;
 
           // add to cart
           item.actualPrice = actualCostPrice
@@ -1111,7 +1111,7 @@
             <td>${item.product}</td>
             <td>${item.quantity}</td>
             <td>${item.price.toFixed(2)}</td>
-            <td>${additional_expense.toFixed(2)}</td>
+            <td>${result.allocationRate}</td>
             <td>${actualCostPrice.toFixed(2)}</td> 
         `;
         
@@ -1165,15 +1165,34 @@
     })
 
 
-    function apportionmentRate(cart) {
+    // calculate total product costs
+    function totalProductCost(cart) {
       let totalCost = 0;
 
       cart.forEach((item) => {
-        totalCost += item.price;
+        totalCost += item.price * item.quantity;
       })
       
       return parseFloat(totalCost) || 0;
     }
+
+
+    // Allocate expenses costs -> Cost Based Allocation
+    function allocateCost(totalCost, price, quantity, expenses) {
+      let productCost = 0;
+      let productCostAllocationRate = 0;
+
+      productCost = price * quantity;
+      productCostAllocationRate = productCost / totalCost;
+
+      let expCost = (productCost + (productCostAllocationRate * expenses)) / quantity
+
+      return {
+        expCost:expCost,
+        allocationRate:expCost - price 
+      }
+    }
+
 
     function getCookie(name) {
       let cookieValue = null;
