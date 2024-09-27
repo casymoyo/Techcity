@@ -216,7 +216,6 @@ class ProcessTransferCartView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
-                logger.info('processing')
                 data = json.loads(request.body)
                 branch_name = data['branch_to']
                 
@@ -1422,10 +1421,9 @@ def create_purchase_order(request):
 
                     product.price = 0
                     product.save()
-                
+
                 PurchaseOrderItem.objects.bulk_create(purchase_order_items_bulk)
 
-                logger.info(expenses)
                 expense_bulk = []
                 for expense in expenses:
                     name = expense['name'] 
@@ -1438,7 +1436,6 @@ def create_purchase_order(request):
                             amount=amount
                         )
                     )
-                logger.info(expense_bulk)
                 otherExpenses.objects.bulk_create(expense_bulk)
                     
                 # update finance accounts (vat, cashbook, expense, account_transaction_log)
@@ -1652,6 +1649,8 @@ def receive_order(request, order_id):
         messages.warning(request, f'Purchase order with ID: {order_id} does not exists')
         return redirect('inventory:purchase_orders')
     
+    # an
+    
     return render(request, 'inventory/receive_order.html', 
         {
             'orders':purchase_order_items,
@@ -1672,12 +1671,15 @@ def process_received_order(request):
         order_item_id = data.get('id')
         quantity = data.get('quantity', 0)
         selling_price = data.get('price')
+        expected_profit = data.get('expected_profit')
         
         if not order_item_id or not isinstance(quantity, int) or quantity <= 0:
             return JsonResponse({'success': False, 'message': 'Invalid data'}, status=400)
 
         try:
             order_item = PurchaseOrderItem.objects.get(id=order_item_id)
+            order_item.expected_profit = expected_profit
+            order_item.save()
         except PurchaseOrderItem.DoesNotExist:
             return JsonResponse({'success': False, 'message': f'Purchase Order Item with ID: {order_item_id} does not exist'}, status=404)
 
@@ -1728,6 +1730,7 @@ def process_received_order(request):
         
         order_item.receive_items(quantity) 
         order_item.check_received()
+        
         
         inventory.save()
 

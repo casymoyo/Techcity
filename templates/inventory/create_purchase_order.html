@@ -453,6 +453,7 @@
     let otherExpenses = 0;
     let expensesData = [];
     let products = [];
+    let purchaseData = [];
    
     const errorEl = document.getElementById('error');
     const addToCartError = document.getElementById('cart_error');
@@ -1016,6 +1017,7 @@
       const data= {
         'po_items':cart,
         'expenses':expensesData,
+        'purchaseData':purchaseData,
         'purchase_order':{
           'payment_method':document.getElementById('id_payment_method').value,
           'supplier':document.getElementById('id_supplier').value,
@@ -1220,6 +1222,9 @@
         const productId = `product_${data.product.replace(/\s+/g, '_')}`;
 
         let existingProduct = document.getElementById(productId);
+
+        existItem = cart.find((item) => item.product === data.product)
+        existItem.actualPrice = parseFloat(input.value)
         
         // push product 
         products.push(data.product)
@@ -1294,23 +1299,17 @@
     // Update values and UI after product removal
     function updateValues(newCart, expenses, product) {
         // Find the index of the product to be removed
+        let totalCost = totalProductCost(newCart);
 
         for(prod in products){
-          console.log(products[prod])
           let existingItemIndex = newCart.findIndex((item) => item.product === products[prod]);
-          console.log(newCart)
 
-          // Remove the product from the cart if it exists
           if (existingItemIndex !== -1) {
               newCart.splice(existingItemIndex, 1);  
           }
+
+        
         }
-
-        console.log(newCart)
-        // Recalculate the total cost after updating the cart
-        let totalCost = totalProductCost(newCart);
-
-        // Iterate through the rows of the apportionment table
         const rows = document.querySelectorAll('#apportionment-table tr');
 
         newCart.forEach((item) => {
@@ -1319,7 +1318,6 @@
 
                 if (firstCell && firstCell.textContent.trim() === item.product) {
                     
-                    console.log(totalCost, item.price, item.quantity, expenses, 'items')
                     let result = allocateCost(
                         totalCost, 
                         item.price, 
@@ -1327,7 +1325,6 @@
                         expenses
                     );
 
-                    console.log(result, newCart)
                     let totalBuying = item.price * item.quantity;
                     let total = totalBuying + parseFloat(result.allocated);
 

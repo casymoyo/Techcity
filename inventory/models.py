@@ -111,6 +111,7 @@ class PurchaseOrderItem(models.Model):
     actual_unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
     received_quantity = models.IntegerField(default=0) 
     received = models.BooleanField(default=False, null=True)
+    expected_profit = models.DecimalField(max_digits=10, decimal_places=2, null=True)
 
     def receive_items(self, quantity):
        
@@ -139,7 +140,9 @@ class PurchaseOrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
-    
+
+class ProductDetail(models.Model):
+    purchase_order = models.ForeignKey(PurchaseOrderItem, on_delete=models.CASCADE) 
 
 class otherExpenses(models.Model):
 

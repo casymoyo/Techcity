@@ -1,19 +1,19 @@
 {% extends "base.html" %}
-{% load static%}
+{% load static %}
 {% load crispy_forms_tags %}
-{% block title%} Receive Purchase Order {% endblock%}
+{% block title %} Receive Purchase Order {% endblock %}
 {% block content %}
 <div class="inventory-navbar">
     <nav class="d-flex justify-content-between align-items-center text-light rounded mb-2 p-2" style="background:#373f4c !important;">
         <div class="d-flex">
             <div>
-                <h4 class='mt-1 fw-bold'><small class='px-1 fw-bold fx-6'>Receive Purchase Order: </small>{{ purchase_order.order_number}}</h4>
+                <h4 class='mt-1 fw-bold'><small class='px-1 fw-bold fx-6'>Receive Purchase Order: </small>{{ purchase_order.order_number }}</h4>
             </div>
         </div>
     </nav>
 </div>
 <div>
-     <table class='table table-striped table-responsive' id='order_items_table' style='width:100%;'> 
+    <table class='table table-striped table-responsive' id='order_items_table' style='width:100%;'> 
         <thead>
             <tr>
                 <th>Product Name</th>
@@ -21,6 +21,7 @@
                 <th>Enter Quantity</th>
                 <th>Product Cost/unit</th>
                 <th>Enter Selling Price</th>
+                <th>Expected Profit</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -28,9 +29,7 @@
             {% for item in orders %}
             <tr>
                 <td class='fs-5'>{{ item.product.name }}</td>
-                <td>
-                    {{ item.quantity }}
-                </td>
+                <td>{{ item.quantity }}</td>
                 <td>
                     {% if item.received %}
                         <div class="rounded fs-6">All received</div>
@@ -38,19 +37,29 @@
                         <input type="number" id="quantity_{{ item.id }}" placeholder="Enter quantity received" min="1" class='form-control'>
                     {% endif %}
                 </td>
-                <td>
-                    {{ item.actual_unit_cost }}
-                </td>
+                <td>{{ item.actual_unit_cost }}</td>
                 <td>
                     {% if item.product.price == 0 %}
-                        <input type="number" id="selling_{{ item.id }}" placeholder="Enter Selling Price" min="1" class='form-control'>
+                        <input 
+                            type="number" 
+                            id="selling_{{ item.id }}" 
+                            placeholder="Enter Selling Price" 
+                            min="1" 
+                            class='form-control'
+                            oninput="expectedProfit(
+                                '{{ item.id }}', 
+                                '{{ item.quantity }}', 
+                                '{{ item.actual_unit_cost }}'
+                            )"
+                        >
                     {% else %}
                         {{ item.product.price }}
                     {% endif %}
                 </td>
+                <td id="profit_{{ item.id }}">{{ item.expected_profit }}</td>
                 <td>
                     {% if item.received %}
-                        <button class="submit-btn btn btn-secondary w-100" disabled onclick="submitQuantity('{{ item.id }}', this)">Submit</button>
+                        <button class="submit-btn btn btn-secondary w-100" disabled>Submit</button>
                     {% else %}
                         <button class="submit-btn btn btn-secondary w-100" onclick="submitQuantity('{{ item.id }}', this)">Submit</button>
                     {% endif %}
@@ -59,30 +68,46 @@
             {% endfor %}
         </tbody>
     </table>
- </div>
- <script>
+</div>
+<script>
     new DataTable('#order_items_table')
 
+    // Function to calculate and display expected profit
+    function expectedProfit(itemId, quantity, actualUnitCost) {
+        const sellingPrice = document.getElementById(`selling_${itemId}`).value;
+        const expectedProfitField = document.getElementById(`profit_${itemId}`);
+
+        if (sellingPrice && quantity && actualUnitCost) {
+            const profitPerUnit = parseFloat(sellingPrice) - parseFloat(actualUnitCost);
+            const expectedProfit = profitPerUnit * parseInt(quantity);
+            expectedProfitField.textContent = expectedProfit.toFixed(2);
+        } else {
+            expectedProfitField.textContent = '';
+        }
+    }
+
+    // Function to submit quantity, selling price, and expected profit
     function submitQuantity(itemId, el) {
-        console.log(el)
         const quantity = document.getElementById(`quantity_${itemId}`).value;
-        const selling_price = document.getElementById(`selling_${itemId}`).value;
+        const sellingPrice = document.getElementById(`selling_${itemId}`).value;
+        const expectedProfit = document.getElementById(`profit_${itemId}`).textContent;
 
-        el.disabled = true;
-
-        if (quantity <= 0) {
+        if (quantity <= 0 || sellingPrice <= 0) {
             Swal.fire({
-                title: 'error',
-                text: "Quantity must be greater than zero.",
+                title: 'Error',
+                text: "Quantity and Selling Price must be greater than zero.",
                 icon: 'error'
-            })
+            });
             return;
         }
+
+        el.disabled = true;
 
         const data = {
             id: itemId,
             quantity: parseInt(quantity),
-            price: parseFloat(selling_price)
+            price: parseFloat(sellingPrice),
+            expected_profit: parseFloat(expectedProfit)
         };
 
         fetch(`{% url "inventory:process_received_order" %}`, {
@@ -96,22 +121,26 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                window.location.reload()
+                window.location.reload();
             } else {
                 Swal.fire({
-                    title:'error',
-                    icon:'error',
-                    text:data.message
-                }).then(()=>{
-                    el.disabled=false;
-                })
+                    title: 'Error',
+                    icon: 'error',
+                    text: data.message
+                }).then(() => {
+                    el.disabled = false;
+                });
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            Swal.fire({
+                title: 'Error',
+                icon: 'error',
+                text: 'An error occurred. Please try again.'
+            });
+            el.disabled = false;
         });
     }
 </script>
 {% endblock content %}
-
