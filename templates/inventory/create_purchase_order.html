@@ -3,231 +3,361 @@
 {% load crispy_forms_tags %}
 {% block title%} Create Purchase Order {% endblock%}
 {% block content %}
-   <div class="inventory">
-        <div class='add-purchase-order'>
-            <div class='purchase-order-nav shadow p-2 text-light d-flex justify-content-between align-items-center rounded' style="background:#373f4c !important;">
-                <div>
-                    <h5 class='fw-bold px-2 mt-2'>Create Purchase order</h5>
+<style>
+  .po-input{
+    border: none !important;
+  }
+</style>
+<div class="inventory">
+    <div class='add-purchase-order'>
+        <div class='purchase-order-nav shadow p-2 text-light d-flex justify-content-between align-items-center rounded' style="background:#373f4c !important;">
+            <div>
+                <h5 class='fw-bold px-2 mt-2'>Create Purchase order</h5>
+            </div>
+        </div>
+        <div class="row mt-2 main" id="main-section">
+            <div class="col-9">
+                <div class="d-flex flex-column">
+                    <p id="cart-title">Purchase order Items</p>
+                    <table class="table border rounder p-2" id="cart-table">
+                      <thead>
+                        <th>Product</th>
+                        <th>Unit Price</th>
+                        <th>Quantity</th>
+                        <th class="text-center">Total</th>
+                      </thead>
+                      <tbody id="cart-items"></tbody>
+                      <tfoot>
+                        <tr>
+                          <td></td>
+                          <td></td>
+                          <td class="fw-bold">Subtotal</td>
+                          <td class="text-center fw-bold" id="subtotal"></td>
+                        </tr>
+                        <tr>
+                          <td></td>
+                          <td></td>
+                          <td class="fw-bold">Discount</td>
+                          <td>
+                            <input id="id_discount" class="form-control text-center fw-bold" oninput="calculateTotals()">
+                          </td>
+                        </tr>
+                        <tr>
+                          <td></td>
+                          <td></td>
+                          <td class="fw-bold">Tax Rate</td>
+                          <td id="tax_rate" class="fw-bold text-center">15%</td>
+                        </tr>
+                        <tr>
+                          <td></td>
+                          <td></td>
+                          <td class="fw-bold">Tax Total</td>
+                          <td id="tax" class="fw-bold text-center"></td>
+                        </tr>
+                        <tr id="other-expense-row">
+                          <td></td>
+                          <td></td>
+                          <td class="fw-bold">Expenses</td>
+                          <td>
+                            <input id="id_other" class="form-control text-center fw-bold" oninput="calculateTotals()" readonly>
+                          </td>
+                        </tr>
+                        <!-- Add dynamic rows for other expenses here -->
+                        <tr>
+                          <td colspan="3"></td>
+                          <td>
+                            <button class="btn btn-outline-dark btn-sm w-100" id="add-expense-btn" onclick="addExpense()">Add Expense</button>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td></td>
+                          <td></td>
+                          <td class="fw-bold">Total</td>
+                          <td class="fw-bold text-center" id="id_total"></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                    <div class="d-flex justify-content-end">
+                      <button class="btn btn-outline-dark btn-sm flex mx-2" onclick="reload();">Cancel</button>
+                      <button class="btn btn-dark btn-sm flex" id="next_button">Next</button>
+                    </div>                        
                 </div>
             </div>
-            <div class="row mt-2 main" id="main-section">
-                <div class="col-9">
-                    <div class="d-flex flex-column">
-                        <p id="cart-title">Purchase order Items</p>
-                        <table class="table border rounder p-2" id="cart-table">
-                          <thead>
-                            <th>Product</th>
-                            <th>Unit Price</th>
-                            <th>Quantity</th>
-                            <th class="text-center">Total</th>
-                          </thead>
-                          <tbody id="cart-items"></tbody>
-                          <tfoot>
-                            <tr>
-                              <td></td>
-                              <td></td>
-                              <td class="fw-bold">Subtotal</td>
-                              <td class="text-center fw-bold" id="subtotal"></td>
-                            </tr>
-                            <tr>
-                              <td></td>
-                              <td></td>
-                              <td class="fw-bold">Discount</td>
-                              <td>
-                                <input id="id_discount" class="form-control text-center fw-bold" oninput="calculateTotals()">
-                              </td>
-                            </tr>
-                            <tr>
-                              <td></td>
-                              <td></td>
-                              <td class="fw-bold">Tax Rate</td>
-                              <td id="tax_rate" class="fw-bold text-center">15%</td>
-                            </tr>
-                            <tr>
-                              <td></td>
-                              <td></td>
-                              <td class="fw-bold">Tax Total</td>
-                              <td id="tax" class="fw-bold text-center"></td>
-                            </tr>
-                            <tr id="other-expense-row">
-                              <td></td>
-                              <td></td>
-                              <td class="fw-bold">Expenses</td>
-                              <td>
-                                <input id="id_other" class="form-control text-center fw-bold" oninput="calculateTotals()" readonly>
-                              </td>
-                            </tr>
-                            <!-- Add dynamic rows for other expenses here -->
-                            <tr>
-                              <td colspan="3"></td>
-                              <td>
-                                <button class="btn btn-outline-dark btn-sm w-100" id="add-expense-btn" onclick="addExpense()">Add Expense</button>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td></td>
-                              <td></td>
-                              <td class="fw-bold">Total</td>
-                              <td class="fw-bold text-center" id="id_total"></td>
-                            </tr>
-                          </tfoot>
-                        </table>
-                        <div class="d-flex justify-content-end">
-                          <button class="btn btn-outline-dark btn-sm flex mx-2" onclick="reload();">Cancel</button>
-                          <button class="btn btn-dark btn-sm flex" id="next_button">Next</button>
-                        </div>                        
-                    </div>
-                </div>
-                <div class="col-3">
-                    <div class=''>
-                      <p id="cart-title">Add Product</p>
-                        <form class='d-flex flex-column mt-2 w-100 mt-2 w-100 px-2' method='post'>
-                            {% csrf_token %}
-                            <div class="mb-1">
-                                <label for="id_product" class="form-label requiredField">
-                                    Product
-                                </label> 
-                                <div class="d-flex form-group">
-                                    <select class="select form-select" id='id_product'>
-                                        <option value="">-----</option>
-                                        {% for product in inventory %}
-                                            <option value={{product.product.name}}>{{product.product.name}} [{{ product.quantity }}]</option>
-                                        {% endfor %}
-                                    </select>
-                                    <button type="button" class="btn bx bx-plus border" id="id_add_supplier"></button>
-                                </div>
+            <div class="col-3">
+                <div class=''>
+                  <p id="cart-title">Add Product</p>
+                    <form class='d-flex flex-column mt-2 w-100 mt-2 w-100 px-2' method='post'>
+                        {% csrf_token %}
+                        <div class="mb-1">
+                            <label for="id_product" class="form-label requiredField">
+                                Product
+                            </label> 
+                            <div class="d-flex form-group">
+                                <select class="select form-select" id='id_product'>
+                                    <option value="">-----</option>
+                                    {% for product in inventory %}
+                                        <option value={{product.product.name}}>{{product.product.name}} [{{ product.quantity }}]</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn bx bx-plus border" id="id_add_supplier"></button>
                             </div>
-                            <div class="mb-1">
-                                <label for="id_product" class="form-label requiredField">
-                                    Supplier
-                                </label>
-                                <div class="d-flex form-group">
-                                    <select class="select form-select" id='id_supplier'>
-                                        <option value="">-----</option>
-                                        {% for supplier in suppliers %}
-                                            <option value={{supplier.id}}>{{supplier.name}}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <button type="button" class="btn border bx bx-plus" id="id_add_product"></button>
-                                </div>
+                        </div>
+                        <div class="mb-1">
+                            <label for="id_product" class="form-label requiredField">
+                                Supplier
+                            </label>
+                            <div class="d-flex form-group">
+                                <select class="select form-select" id='id_supplier'>
+                                    <option value="">-----</option>
+                                    {% for supplier in suppliers %}
+                                        <option value={{supplier.id}}>{{supplier.name}}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn border bx bx-plus" id="id_add_product"></button>
                             </div>
-                            <div id="div_id_price" class="mb-1">
-                                <label for="unit_price" class="form-label requiredField">
-                                    Unit price
-                                </label> 
-                                <input  
-                                    type="number" 
-                                    name="price" step="0.01" 
-                                    class="numberinput form-control" 
-                                    required 
-                                    id="id_p_price"
-                                >
-                                <p id="price_error" class="fs-6 text-danger"></p>
-                            </div> 
-                            <div id="div_id_quantity" class="mb-1"> 
-                                <label for="id_p_quantity" class="form-label requiredField">
-                                    Quantity
-                                </label> 
-                                <input 
-                                    type="number" 
-                                    name="quantity"
-                                    value="" 
-                                    min="0" 
-                                    class="numberinput form-control" 
-                                    required id="id_p_quantity"
-                                > 
-                                <p id="quantity_error" class="fs-6 text-danger"></p>
-                                <p id="cart_error" class="text-danger"></p>
-                            </div> 
-                            <div class='d-flex justify-content-end mb-2'>
-                                <button type='button' class='btn btn-dark btn-sm w-100' id="id_add_to_cart" onclick="addItem();">
-                                  <i class='bx bx-save' ></i>
-                                    save
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                        </div>
+                        <div id="div_id_price" class="mb-1">
+                            <label for="unit_price" class="form-label requiredField">
+                                Unit price
+                            </label> 
+                            <input  
+                                type="number" 
+                                name="price" step="0.01" 
+                                class="numberinput form-control" 
+                                required 
+                                id="id_p_price"
+                            >
+                            <p id="price_error" class="fs-6 text-danger"></p>
+                        </div> 
+                        <div id="div_id_quantity" class="mb-1"> 
+                            <label for="id_p_quantity" class="form-label requiredField">
+                                Quantity
+                            </label> 
+                            <input 
+                                type="number" 
+                                name="quantity"
+                                value="" 
+                                min="0" 
+                                class="numberinput form-control" 
+                                required id="id_p_quantity"
+                            > 
+                            <p id="quantity_error" class="fs-6 text-danger"></p>
+                            <p id="cart_error" class="text-danger"></p>
+                        </div> 
+                        <div class='d-flex justify-content-end mb-2'>
+                            <button type='button' class='btn btn-dark btn-sm w-100' id="id_add_to_cart" onclick="addItem();">
+                              <i class='bx bx-save' ></i>
+                                save
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
-        <div class="modal fade" id="addSupplierModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-body">
-                        <h5 class="fw-bold">Add Supplier</h5>
-                        <form method="post">
-                            {% csrf_token %}
-                            <div id="div_id_name" class="mb-3"> <label for="id_name" class="form-label requiredField">
-                            Name<span class="asteriskField">*</span> </label> <input type="text" name="name" maxlength="255" class="textinput form-control" required="" id="id_sup_name"> </div> <div id="div_id_contact" class="mb-3"> <label for="id_contact" class="form-label requiredField">
-                            Contact Name<span class="asteriskField">*</span> </label> <input type="text" name="contact" maxlength="255" class="textinput form-control" required="" id="id_contact_name"> </div> <div id="div_id_email" class="mb-3"> <label for="id_email" class="form-label requiredField">
-                            Email<span class="asteriskField">*</span> </label> <input type="email" name="email" maxlength="254" class="emailinput form-control" required="" id="id_email"> </div> <div id="div_id_phone" class="mb-3"> <label for="id_phone" class="form-label requiredField">
-                            Phone<span class="asteriskField">*</span> </label> <input type="text" name="phone" maxlength="20" class="textinput form-control" required="" id="id_phone"> </div> <div id="div_id_address" class="mb-3"> <label for="id_address" class="form-label requiredField">
-                            Address<span class="asteriskField">*</span> </label> <textarea name="address" cols="40" rows="10" class="textarea form-control" required="" id="id_address"></textarea> </div>
-                            
-                            <p class="text-danger" id="sup_error"></p>
-                            <div class="d-flex justify-content-end">
-                                <div class="">
-                                    <button type="reset" class="btn btn-danger btn-sm w-100">
-                                        <i class="bx bx-reset"></i>
-                                        Reset
-                                    </button>
-                                </div>
-                                <span class="px-1"></span>
-                                <div class="">
-                                    <button type="button" id="id_submit_supplier" class="btn btn-secondary btn-sm w-100">
-                                        <i class="bx bx-save"></i>
-                                        Save
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-          <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content">
-                  <div class="modal-body">
-                      {% include 'inventory/components/category_modal.html'%}
-                  </div>
-              </div>
-          </div>
-      </div>
-
-
-      <div class="apportionment" id="apportionment-section" style="display: none;">
-        <table class="table table-bordered">
-          <thead>
-            <th>Product</th>
-            <th>Quantity</th>
-            <th>Supplier Price</th>
-            <th>Total Buying Price</th>
-            <th>Allocated Expense Cost</th>
-            <th>Total Buying Price (with expense)</th>
-            <th>Cost Per Unit</th>
-            <th>Total Cost (with expense)</th>
-          </thead>
-          <tbody class="" id="apportionment-table"></tbody>
-          <tfoot id="expense-footer"></tfoot>
-        </table>
-        <div class="d-flex justify-content-between align-items-center">
-          <button class="btn btn-outline-dark btn-sm" id="back_button" onclick="showMain()">Back</button>
-          <button class="btn btn-dark btn-sm mt-1" id="confirm_btn">Confirm</button>
-      </div>
-      </div>
     </div>
-
-      <div class="modal fade" id="batchModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal fade" id="addSupplierModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-body">
-                  <h5 class="fw-bold">Enter Batch Code</h5>
-                  <form class="mt-2">
-                    {{ batch_form | crispy}}
-                    <p id="cartError" class="text-danger"></p>
-                    <div class="d-flex justify-content-end">
+                    <h5 class="fw-bold">Add Supplier</h5>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div id="div_id_name" class="mb-3"> <label for="id_name" class="form-label requiredField">
+                        Name<span class="asteriskField">*</span> </label> <input type="text" name="name" maxlength="255" class="textinput form-control" required="" id="id_sup_name"> </div> <div id="div_id_contact" class="mb-3"> <label for="id_contact" class="form-label requiredField">
+                        Contact Name<span class="asteriskField">*</span> </label> <input type="text" name="contact" maxlength="255" class="textinput form-control" required="" id="id_contact_name"> </div> <div id="div_id_email" class="mb-3"> <label for="id_email" class="form-label requiredField">
+                        Email<span class="asteriskField">*</span> </label> <input type="email" name="email" maxlength="254" class="emailinput form-control" required="" id="id_email"> </div> <div id="div_id_phone" class="mb-3"> <label for="id_phone" class="form-label requiredField">
+                        Phone<span class="asteriskField">*</span> </label> <input type="text" name="phone" maxlength="20" class="textinput form-control" required="" id="id_phone"> </div> <div id="div_id_address" class="mb-3"> <label for="id_address" class="form-label requiredField">
+                        Address<span class="asteriskField">*</span> </label> <textarea name="address" cols="40" rows="10" class="textarea form-control" required="" id="id_address"></textarea> </div>
+                        
+                        <p class="text-danger" id="sup_error"></p>
+                        <div class="d-flex justify-content-end">
+                            <div class="">
+                                <button type="reset" class="btn btn-danger btn-sm w-100">
+                                    <i class="bx bx-reset"></i>
+                                    Reset
+                                </button>
+                            </div>
+                            <span class="px-1"></span>
+                            <div class="">
+                                <button type="button" id="id_submit_supplier" class="btn btn-secondary btn-sm w-100">
+                                    <i class="bx bx-save"></i>
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+              <div class="modal-body">
+                  {% include 'inventory/components/category_modal.html'%}
+              </div>
+          </div>
+      </div>
+  </div>
+
+
+  <div class="apportionment" id="apportionment-section" style="display: none;">
+    <table class="table table-bordered">
+      <thead>
+        <th class="fs-6 text-dark" style="color:black;">Product</th>
+        <th class="fs-6 text-dark" style="color:black;">Quantity</th>
+        <th class="fs-6 text-dark" style="color:black;">Supplier Price</th>
+        <th class="fs-6 text-dark" style="color:black;">Total Supplier Price</th>
+        <th class="fs-6 text-dark" style="color:black;">Total Product Expenses</th>
+        <th class="fs-6 text-dark" style="color:black;">Unit Product Expense</th>
+        <th class="fs-6 text-dark" style="color:black;">Total Purchase Price + Expense</th>
+        <th class="fs-6 text-dark" style="color:black;">Total Purchase Price</th>                                                                   
+      </thead>
+      <tbody class="" id="apportionment-table"></tbody>
+      <tfoot id="expense-footer"></tfoot>
+    </table>
+    <div class="d-flex justify-content-between align-items-center">
+      <button class="btn btn-outline-dark btn-sm" id="back_button" onclick="showMain()">Back</button>
+      <button class="btn btn-dark btn-sm mt-1" id="confirm_btn">Confirm</button>
+  </div>
+  </div>
+</div>
+
+  <div class="modal fade" id="batchModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body">
+              <h5 class="fw-bold">Enter Batch Code</h5>
+              <form class="mt-2">
+                {{ batch_form | crispy}}
+                <p id="cartError" class="text-danger"></p>
+                <div class="d-flex justify-content-end">
+                  <div class="">
+                      <button type="reset" class="btn btn-danger btn-sm w-100">
+                          <i class='bx bx-reset'></i>
+                          Reset
+                      </button>
+                  </div>
+                  <span class="px-1"></span>
+                  <div class="">
+                      <button type="button" onclick="addBatchCode();" class="btn btn-secondary btn-sm w-100">
+                          <i class='bx bx-save'></i>
+                          Save
+                      </button>
+                  </div>
+              </div>
+              </form>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body">
+                <h5 class="fw-bold">Add Product</h5>
+                <form method="post" class='mt-2 p-2'>
+                  {% csrf_token %} 
+                  <div id="div_id_batch_code" class="mb-3"> 
+                      <label for="id_batch_code" class="form-label requiredField">
+                          Batch code<span class="asteriskField">*</span>
+                      </label>
+                      <div class="d-flex form-group">
+                        <select class="select form-select" id='id_code_select'>
+                            <option value="">-----</option>
+                        </select>
+                        <button 
+                          type="button" 
+                          class="btn border bx bx-plus" 
+                          id="add_batch_modal">
+                        </button>
+                    </div>
+                  </div>
+                  <div id="div_id_name" class="mb-3">
+                        <label for="id_name" class="form-label requiredField">
+                          Name
+                          <span class="asteriskField">*</span> 
+                      </label> 
+                      <input 
+                          type="text" 
+                          name="name" 
+                          maxlength="255" 
+                          class="textinput form-control" 
+                          required id="id_name"
+                      > 
+                  </div> 
+                  <div id="div_id_category form-group" class="mb-3"> 
+                      <label for="id_category" class="form-label requiredField">
+                          Category<span class="asteriskField">*</span> 
+                      </label> 
+                      <div class='d-flex align-items-center'>
+                          <select name="category" class="select form-select" required id="id_category"> 
+                              <option value="">---------</option> 
+                          </select> 
+                          <button class='btn border small' type="button" id='id_add_category'>
+                              <i class='bx bx-plus'></i>
+                          </button>
+                      </div>
+                  </div> 
+                  <div id="div_id_tax_type" class="mb-3"> 
+                      <label for="id_tax_type" class="form-label requiredField">
+                      Tax type
+                      <span class="asteriskField">*</span> 
+                      </label> 
+                      <select name="tax_type" class="select form-select" required id="id_tax_type"> 
+                          <option value="" selected>---------</option>
+                          <option value="exempted">Exempted</option> 
+                          <option value="standard">Standard</option> 
+                          <option value="zero rated">Zero Rated</option>
+                      </select> 
+                  </div>
+                  <div id="div_id_min_stock_level" class="mb-3"> 
+                      <label for="id_min_stock_level" class="form-label requiredField">
+                          Min stock level
+                          <span class="asteriskField">*</span> 
+                      </label> 
+                      <input 
+                          type="number" 
+                          name="min_stock_level" 
+                          value="0" 
+                          class="numberinput form-control" 
+                          required id="id_min_stock_level"
+                      > 
+                  </div>
+                  <div id="div_id_description" class="mb-3"> 
+                      <label for="id_description" class="form-label requiredField">
+                          Description<span class="asteriskField">*</span> 
+                      </label> 
+                      <textarea 
+                          name="description" 
+                          cols="20" 
+                          rows="2" 
+                          class="textarea form-control" 
+                          required id="id_description"
+                      ></textarea> 
+                  </div>
+                  <div class="mb-3"> 
+                      <div id="div_id_end_of_day" class="form-check"> 
+                          <input type="checkbox" name="end_of_day" class="checkboxinput form-check-input" id="id_end_of_day"> 
+                          <label for="id_end_of_day" class="form-check-label">
+                              End of day
+                          </label> 
+                      </div> 
+                  </div>
+                  <div class="mb-3"> 
+                    <div id="div_id_service" class="form-check"> 
+                      <input type="checkbox" name="service" class="checkboxinput form-check-input" id="id_service"> 
+                      <label for="id_service" class="form-check-label">
+                        Service
+                    </label> 
+                  </div> 
+                </div>
+                <p class='text-danger' id='error'></p>
+                  <div class="d-flex justify-content-end">
                       <div class="">
                           <button type="reset" class="btn btn-danger btn-sm w-100">
                               <i class='bx bx-reset'></i>
@@ -236,206 +366,81 @@
                       </div>
                       <span class="px-1"></span>
                       <div class="">
-                          <button type="button" onclick="addBatchCode();" class="btn btn-secondary btn-sm w-100">
+                          <button type="button" id="id_submit_product" class="btn btn-secondary btn-sm w-100">
                               <i class='bx bx-save'></i>
                               Save
                           </button>
                       </div>
                   </div>
-                  </form>
-                </div>
-                </div>
+              </form>
             </div>
         </div>
     </div>
+</div>
 
-
-    <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <h5 class="fw-bold">Add Product</h5>
-                    <form method="post" class='mt-2 p-2'>
-                      {% csrf_token %} 
-                      <div id="div_id_batch_code" class="mb-3"> 
-                          <label for="id_batch_code" class="form-label requiredField">
-                              Batch code<span class="asteriskField">*</span>
-                          </label>
-                          <div class="d-flex form-group">
-                            <select class="select form-select" id='id_code_select'>
-                                <option value="">-----</option>
-                            </select>
-                            <button 
-                              type="button" 
-                              class="btn border bx bx-plus" 
-                              id="add_batch_modal">
-                            </button>
-                        </div>
-                      </div>
-                      <div id="div_id_name" class="mb-3">
-                            <label for="id_name" class="form-label requiredField">
-                              Name
-                              <span class="asteriskField">*</span> 
-                          </label> 
-                          <input 
-                              type="text" 
-                              name="name" 
-                              maxlength="255" 
-                              class="textinput form-control" 
-                              required id="id_name"
-                          > 
-                      </div> 
-                      <div id="div_id_category form-group" class="mb-3"> 
-                          <label for="id_category" class="form-label requiredField">
-                              Category<span class="asteriskField">*</span> 
-                          </label> 
-                          <div class='d-flex align-items-center'>
-                              <select name="category" class="select form-select" required id="id_category"> 
-                                  <option value="">---------</option> 
-                              </select> 
-                              <button class='btn border small' type="button" id='id_add_category'>
-                                  <i class='bx bx-plus'></i>
-                              </button>
-                          </div>
-                      </div> 
-                      <div id="div_id_tax_type" class="mb-3"> 
-                          <label for="id_tax_type" class="form-label requiredField">
-                          Tax type
-                          <span class="asteriskField">*</span> 
-                          </label> 
-                          <select name="tax_type" class="select form-select" required id="id_tax_type"> 
-                              <option value="" selected>---------</option>
-                              <option value="exempted">Exempted</option> 
-                              <option value="standard">Standard</option> 
-                              <option value="zero rated">Zero Rated</option>
-                          </select> 
-                      </div>
-                      <div id="div_id_min_stock_level" class="mb-3"> 
-                          <label for="id_min_stock_level" class="form-label requiredField">
-                              Min stock level
-                              <span class="asteriskField">*</span> 
-                          </label> 
-                          <input 
-                              type="number" 
-                              name="min_stock_level" 
-                              value="0" 
-                              class="numberinput form-control" 
-                              required id="id_min_stock_level"
-                          > 
-                      </div>
-                      <div id="div_id_description" class="mb-3"> 
-                          <label for="id_description" class="form-label requiredField">
-                              Description<span class="asteriskField">*</span> 
-                          </label> 
-                          <textarea 
-                              name="description" 
-                              cols="20" 
-                              rows="2" 
-                              class="textarea form-control" 
-                              required id="id_description"
-                          ></textarea> 
-                      </div>
-                      <div class="mb-3"> 
-                          <div id="div_id_end_of_day" class="form-check"> 
-                              <input type="checkbox" name="end_of_day" class="checkboxinput form-check-input" id="id_end_of_day"> 
-                              <label for="id_end_of_day" class="form-check-label">
-                                  End of day
-                              </label> 
-                          </div> 
-                      </div>
-                      <div class="mb-3"> 
-                        <div id="div_id_service" class="form-check"> 
-                          <input type="checkbox" name="service" class="checkboxinput form-check-input" id="id_service"> 
-                          <label for="id_service" class="form-check-label">
-                            Service
-                        </label> 
-                      </div> 
+    <div class="modal fade" id="noteStatusModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+              <div class="modal-body">
+                <h5 class="fw-bold">Proceed by filling the Purchase Order form below</h5>
+                <form class="mt-2">
+                  {{ note_form | crispy}}
+                  <p id="cartError" class="text-danger"></p>
+                  <div class="d-flex justify-content-end">
+                    <div class="">
+                        <button type="reset" class="btn btn-outline-dark btn-sm w-100">
+                            <i class='bx bx-reset'></i>
+                            Reset
+                        </button>
                     </div>
-                    <p class='text-danger' id='error'></p>
-                      <div class="d-flex justify-content-end">
-                          <div class="">
-                              <button type="reset" class="btn btn-danger btn-sm w-100">
-                                  <i class='bx bx-reset'></i>
-                                  Reset
-                              </button>
-                          </div>
-                          <span class="px-1"></span>
-                          <div class="">
-                              <button type="button" id="id_submit_product" class="btn btn-secondary btn-sm w-100">
-                                  <i class='bx bx-save'></i>
-                                  Save
-                              </button>
-                          </div>
-                      </div>
-                  </form>
+                    <span class="px-1"></span>
+                    <div class="">
+                        <button type="button" onclick="processCart();" class="btn btn-dark btn-sm w-100">
+                            <i class='bx bx-save'></i>
+                            Save
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </div>
+                </form>
+              </div>
+          </div>
+      </div>
     </div>
 
-        <div class="modal fade" id="noteStatusModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-          <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content">
-                  <div class="modal-body">
-                    <h5 class="fw-bold">Proceed by filling the Purchase Order form below</h5>
-                    <form class="mt-2">
-                      {{ note_form | crispy}}
-                      <p id="cartError" class="text-danger"></p>
-                      <div class="d-flex justify-content-end">
-                        <div class="">
-                            <button type="reset" class="btn btn-outline-dark btn-sm w-100">
-                                <i class='bx bx-reset'></i>
-                                Reset
-                            </button>
-                        </div>
-                        <span class="px-1"></span>
-                        <div class="">
-                            <button type="button" onclick="processCart();" class="btn btn-dark btn-sm w-100">
-                                <i class='bx bx-save'></i>
-                                Save
-                            </button>
-                        </div>
-                    </div>
-                    </form>
-                  </div>
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+              <div class="modal-body text-center" id='payment_content'>
+                <i class='bx bx-check-circle h1'></i>
+                <h5>Product Successfully Created</h5>
               </div>
           </div>
-        </div>
+      </div>
+    </div>
 
-        <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-          <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content">
-                  <div class="modal-body text-center" id='payment_content'>
-                    <i class='bx bx-check-circle h1'></i>
-                    <h5>Product Successfully Created</h5>
-                  </div>
+    <div class="modal fade" id="supplierSuccessModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+              <div class="modal-body text-center" id='payment_content'>
+                <i class='bx bx-check-circle h1'></i>
+                <h5>Supplier Successfully Created</h5>
               </div>
           </div>
-        </div>
+      </div>
+    </div>
 
-        <div class="modal fade" id="supplierSuccessModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-          <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content">
-                  <div class="modal-body text-center" id='payment_content'>
-                    <i class='bx bx-check-circle h1'></i>
-                    <h5>Supplier Successfully Created</h5>
-                  </div>
+    <div class="modal fade" id="poSuccessModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+              <div class="modal-body text-center" id='payment_content'>
+                <i class='bx bx-check-circle h1'></i>
+                <h5>Purchase Order Successfully Created</h5>
               </div>
           </div>
-        </div>
-
-        <div class="modal fade" id="poSuccessModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-          <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content">
-                  <div class="modal-body text-center" id='payment_content'>
-                    <i class='bx bx-check-circle h1'></i>
-                    <h5>Purchase Order Successfully Created</h5>
-                  </div>
-              </div>
-          </div>
-        </div>
-        
-   </div>   
+      </div>
+    </div>
+    
+</div>   
 <script>
     let cart = [];
     let prodData = [];
@@ -447,6 +452,7 @@
     let expenseCount = 0;
     let otherExpenses = 0;
     let expensesData = [];
+    let products = [];
    
     const errorEl = document.getElementById('error');
     const addToCartError = document.getElementById('cart_error');
@@ -954,6 +960,8 @@
         const supplier = document.getElementById('id_supplier').value;
         const price = parseFloat(document.getElementById('id_p_price').value);
         const quantity = Number(document.getElementById('id_p_quantity').value);
+
+        
       
         if (!product || !quantity || !price || !supplier) {
           Swal.fire({
@@ -966,7 +974,12 @@
       
         const existingItem = cart.find((item) => item.product === product);
         if (existingItem) {
-          existingItem.quantity += quantity;
+          Swal.fire({
+            icon:'error',
+            text:'Product Exists',
+            title:'error'
+          })
+          return;
         } else {
           const newTransfer = { 
             id: generateUniqueId(),
@@ -1083,6 +1096,7 @@
 
         document.getElementById('main-section').style.display = 'none';
         document.getElementById('apportionment-section').style.display = 'block';
+        const expenseFooter = document.getElementById('expense-footer');
 
         let totalExpenses = 0;
         let rate = 0;
@@ -1100,6 +1114,7 @@
         // populate the table 
         cart.forEach((item) => {
           const row = document.createElement("tr");
+          let id = 1;
           let actualCostPrice = 0;
           let result = allocateCost(cost, item.price, item.quantity, totalExpenses)
 
@@ -1108,58 +1123,77 @@
           actualCostPrice = result.expCost;
 
           // add to cart
-          item.actualPrice = actualCostPrice
+          item.actualPrice = actualCostPrice;
+
+          let total = parseFloat(item.price * item.quantity) + parseFloat(result.allocated);
+          let totalBuying = item.price * item.quantity;
+          let product = item.product.toString();
 
           row.innerHTML = `
-            <td>${item.product}</td>
-            <td>${item.quantity}</td>
-            <td>${item.price.toFixed(2)}</td>
-            <td>${item.price * item.quantity}</td>
-            <td>${result.allocated}</td>
-            <td>${(item.price * item.quantity) + result.allocated}</td>
-            <td>${result.allocationRate}</td>
-            <td>${actualCostPrice.toFixed(2)}</td> 
+            <td id='${item.id}'><small>${item.product}</small></td>
+            <td id='${item.id}'><small>${item.quantity}</small></td>
+            <td id='${item.id}'><small>${item.price.toFixed(2)}</small></td>
+            <td id='${item.id}'><small>${totalBuying.toFixed(2)}</small></td>
+            <td id='${item.id}'><small>${result.allocated}</small></td>
+            <td id='${item.id}'><small>${result.allocationRate.toFixed(2)}</small></td>
+            <td id='${item.id}'>
+              <small>
+                <input 
+                  value='${actualCostPrice}' 
+                  class='po-input form-control' 
+                  type='number'
+                  data-id='${item.id}'
+                  oninput='priceOverride(
+                    this, 
+                    {
+                      tB:${result.allocated},
+                      exp:${totalExpenses},
+                      product:"${product}",
+                      acp:${actualCostPrice}
+                    }
+                  )'
+                />
+              </small>
+            </td> 
+            <td id='${item.id}'><small>${total.toFixed(2)}</small></td>
           `;
         
-        apportionmentTable.appendChild(row);
+          apportionmentTable.appendChild(row);
 
-        const expenseFooter = document.getElementById('expense-footer');
-        expenseFooter.innerHTML = '';  
+          expenseFooter.innerHTML = '';  
 
-        expenseFooter.innerHTML += `
-          <tr>
-              <td class='fw-bold'>Total Expenses</td>
-              <td colspan="3"></td>
-              <td id="total_expenses" class='fw-bold'></td>
-              <td colspan="2"></td>
-          </tr>
-        `;
-
-        for (let i = 1; i <= expenseCount; i++) {
-          const expenseName = document.getElementById(`expense-name-${i}`).value;
-          const expenseAmount = parseFloat(document.getElementById(`expense-amount-${i}`).value) || 0;
-
-          // Push each expense as an object to the expensesData array
-          expensesData.push({
-              name: expenseName,
-              amount: expenseAmount
-          });
-  
-          // Create and append the expense row to the footer
-          const expenseRow = document.createElement('tr');
-          expenseRow.innerHTML += `
-            <td>${expenseName}</td>
-            <td colspan='3'></td>
-            <td>${expenseAmount.toFixed(2)}</td>
-            <td></td>
+          expenseFooter.innerHTML += `
+            <tr>
+                <td class='fw-bold'><small>Total Expenses</small></td>
+                <td colspan="3"></td>
+                <td><small id="total_expenses" class='fw-bold'></small></td>
+                <td colspan="3"></td>
+            </tr>
           `;
-          expenseFooter.appendChild(expenseRow);
-        }
-        document.getElementById('total_expenses').innerHTML = totalExpenses.toFixed(2);
+
+          for (let i = 1; i <= expenseCount; i++) {
+            const expenseName = document.getElementById(`expense-name-${i}`).value;
+            const expenseAmount = parseFloat(document.getElementById(`expense-amount-${i}`).value) || 0;
+
+            // Push each expense as an object to the expensesData array
+            expensesData.push({
+                name: expenseName,
+                amount: expenseAmount
+            });
+    
+            // Create and append the expense row to the footer
+            const expenseRow = document.createElement('tr');
+            expenseRow.innerHTML += `
+              <td>${expenseName}</td>
+              <td colspan='3'></td>
+              <td>${expenseAmount.toFixed(2)}</td>
+              <td colspan='3'></td>
+            `;
+
+            expenseFooter.appendChild(expenseRow);
+          }
+          document.getElementById('total_expenses').innerHTML = totalExpenses.toFixed(2);
       });
-
-        console.log(expensesData)
-
       }else{
         Swal.fire({
           icon: 'warning',   
@@ -1170,6 +1204,171 @@
       }
     })
 
+    // cost price overide
+    function priceOverride(input, data) {
+      let expense = 0;
+      let totalCost = 0;
+      const newCart = JSON.parse(JSON.stringify(cart));
+      let exp = parseFloat(document.getElementById('total_expenses').textContent);
+      const newCost = parseFloat(input.value);
+      const expFooter = document.getElementById('expense-footer');  
+      const tdEls = document.querySelectorAll(`[id^='${input.dataset.id}']`);
+
+      expense = exp;
+
+      if (data.acp !== newCost) {
+        const productId = `product_${data.product.replace(/\s+/g, '_')}`;
+
+        let existingProduct = document.getElementById(productId);
+        
+        // push product 
+        products.push(data.product)
+
+        if (!existingProduct) {
+          
+          addProductToFooter(expFooter, data, productId);
+          products.push(data.product);  
+          console.log('Added new product:', data.product);
+
+          recalculateTotalExpenses(exp, data.tB);
+          updateValues(newCart, expense, data.product)
+          tdEls.forEach((td)=>{
+            td.classList.add('bg-danger');
+            td.classList.add('text-light');
+          })
+        } else {
+          // If product exists, update the amount
+          // updateProductAmount(existingProduct, data);
+          // console.log('Updated product:', data.product);
+        }
+
+      } else {
+
+        const productId = `product_${data.product.replace(/\s+/g, '_')}`;
+        let existingProduct = document.getElementById(productId);
+
+        if (existingProduct) {
+          existingProduct.remove();
+          revertTotalExpenses(data.exp, data.tB);
+        }
+        updateValues(newCart, expense, data.product)
+        tdEls.forEach((td)=>{
+          td.classList.remove('bg-danger');
+          td.classList.remove('text-light');
+        })
+      }
+
+    }
+
+    function revertTotalExpenses(exp, tB) {
+      // Add the original cost back to total expenses
+      document.getElementById('total_expenses').innerHTML = (parseFloat(exp)).toFixed(2);
+    }
+
+    // New helper method to add a product to the footer
+    function addProductToFooter(expFooter, data, productId) {
+      expFooter.innerHTML += `
+        <tr id='${productId}'>
+          <td class='text-danger'>${data.product}</td>
+          <td colspan='3'></td>
+          <td class='text-danger' id='value_${productId}'>(${data.tB.toFixed(2)})</td>
+          <td colspan='3'></td>
+        </tr>
+      `;
+    }
+
+    // update an existing product's amount
+    function updateProductAmount(existingProduct, data) {
+      let amountCell = existingProduct.querySelector(`#value_${existingProduct.id}`);
+      let currentAmount = parseFloat(amountCell.textContent.replace(/[()]/g, ''));
+      let newAmount = currentAmount + data.tB; 
+      amountCell.textContent = `(${newAmount.toFixed(2)})`; 
+    }
+
+    // recalculate total expenses
+    function recalculateTotalExpenses(exp, tB) {
+      expense = (exp - tB).toFixed(2)
+      document.getElementById('total_expenses').innerHTML = expense;
+    }
+
+    // Update values and UI after product removal
+    function updateValues(newCart, expenses, product) {
+        // Find the index of the product to be removed
+
+        for(prod in products){
+          console.log(products[prod])
+          let existingItemIndex = newCart.findIndex((item) => item.product === products[prod]);
+          console.log(newCart)
+
+          // Remove the product from the cart if it exists
+          if (existingItemIndex !== -1) {
+              newCart.splice(existingItemIndex, 1);  
+          }
+        }
+
+        console.log(newCart)
+        // Recalculate the total cost after updating the cart
+        let totalCost = totalProductCost(newCart);
+
+        // Iterate through the rows of the apportionment table
+        const rows = document.querySelectorAll('#apportionment-table tr');
+
+        newCart.forEach((item) => {
+            rows.forEach((row) => {
+                const firstCell = row.querySelector('td:first-child small');
+
+                if (firstCell && firstCell.textContent.trim() === item.product) {
+                    
+                    console.log(totalCost, item.price, item.quantity, expenses, 'items')
+                    let result = allocateCost(
+                        totalCost, 
+                        item.price, 
+                        item.quantity, 
+                        expenses
+                    );
+
+                    console.log(result, newCart)
+                    let totalBuying = item.price * item.quantity;
+                    let total = totalBuying + parseFloat(result.allocated);
+
+                    // Update the row content with new values
+                    row.innerHTML = `
+                        <td id='${item.id}'><small>${item.product}</small></td>
+                        <td id='${item.id}'><small>${item.quantity}</small></td>
+                        <td id='${item.id}'><small>${item.price.toFixed(2)}</small></td>
+                        <td id='${item.id}'><small>${totalBuying.toFixed(2)}</small></td>
+                        <td id='${item.id}'><small>${result.allocated}</small></td>
+                        <td id='${item.id}'><small>${result.allocationRate.toFixed(2)}</small></td>
+                        <td id='${item.id}'>
+                            <small>
+                                <input 
+                                    value='${result.expCost}' 
+                                    class='po-input form-control' 
+                                    type='number'
+                                    data-id='input_${item.id}'
+                                    oninput='priceOverride(
+                                        this, 
+                                        {
+                                            tB:${result.allocated},
+                                            exp:${expenses},
+                                            product:"${item.product}",
+                                            acp:${result.expCost}
+                                        }
+                                    )'
+                                />
+                            </small>
+                        </td>
+                        <td id='${item.id}'><small>${total.toFixed(2)}</small></td>
+                    `;
+                }
+            });
+        });
+    }
+
+    // update UI
+    function updateUi(params) {
+      
+    }
 
     // calculate total product costs
     function totalProductCost(cart) {
@@ -1196,11 +1395,9 @@
       let expCost = (productCost + (productCostAllocationRate * expenses)) / quantity
       let allocated = productCostAllocationRate * expenses;
 
-      console.log(allocated)
-
       return {
-        expCost:expCost,
-        allocated:allocated,
+        expCost:expCost.toFixed(2),
+        allocated:allocated.toFixed(2),
         allocationRate:expCost - price 
       }
     }

@@ -1419,6 +1419,9 @@ def create_purchase_order(request):
                             received=False
                         )
                     )
+
+                    product.price = 0
+                    product.save()
                 
                 PurchaseOrderItem.objects.bulk_create(purchase_order_items_bulk)
 
@@ -1692,6 +1695,8 @@ def process_received_order(request):
         if quantity > order_item.quantity:
             return JsonResponse({'success':False, 'message':'quantity can\t be more than quantity ordered.'})
 
+        product.price = selling_price
+        product.save()
         inventory, created = Inventory.objects.get_or_create(
             product=product,
             defaults={
