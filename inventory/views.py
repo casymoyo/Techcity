@@ -25,8 +25,11 @@ from finance.models import (
     ExpenseCategory,
     AccountBalance,
     AccountTransaction
- )
-from . utils import calculate_inventory_totals
+)
+from . utils import (
+    calculate_inventory_totals, 
+    average_inventory_cost
+)
 from . forms import (
     BatchForm,
     AddProductForm, 
@@ -1698,12 +1701,13 @@ def process_received_order(request):
             return JsonResponse({'success':False, 'message':'quantity can\t be more than quantity ordered.'})
 
         product.price = selling_price
-        product.save()
+        cost = average_inventory_cost(product.id, order_item.actual_unit_cost, quantity)
+        
         inventory, created = Inventory.objects.get_or_create(
             product=product,
             defaults={
                 'branch': request.user.branch,
-                'cost': order_item.actual_unit_cost,
+                'cost': cost,
                 'price': selling_price,
                 'quantity': quantity,
                 'stock_level_threshold': product.min_stock_level,
@@ -1712,9 +1716,11 @@ def process_received_order(request):
             }
         )
 
+        product.save()
+
         if not created:
             inventory.quantity += quantity
-            inventory.cost = order_item.actual_unit_cost
+            inventory.cost = cost
             
         
         ActivityLog.objects.create(
