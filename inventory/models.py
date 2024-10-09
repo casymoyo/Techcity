@@ -331,3 +331,14 @@ class Service(models.Model):
     
     def __str__(self):
         return self.name
+    
+class reorderSettings(models.Model):
+    supplier = models.CharField(max_length=255)
+    quantity_suggestion = models.BooleanField(default=False)
+    number_of_days_from = models.FloatField(null=True)
+    number_of_days_to = models.FloatField(null=True)
+    order_enough_stock = models.BooleanField(default=False)
+    date_created = models.DateField(auto_now_add=True)
+
+    
+

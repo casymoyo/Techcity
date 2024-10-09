@@ -7,7 +7,8 @@ from . models import (
     Service, 
     Supplier, 
     PurchaseOrder,
-    BatchCode
+    BatchCode, 
+    reorderSettings
 )
 from datetime import date
 
@@ -88,3 +89,9 @@ class PurchaseOrderStatus(forms.ModelForm):
     class Meta:
         model = PurchaseOrder
         fields = ['status']
+
+class ReorderSettingsForm(forms.ModelForm):
+    class Meta:
+        model = reorderSettings
+        fields = ['supplier', 'quantity_suggestion', 'number_of_days_from', 'number_of_days_to', 'order_enough_stock']
+       

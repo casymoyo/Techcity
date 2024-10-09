@@ -42,7 +42,8 @@ from . forms import (
     AddSupplierForm,
     CreateOrderForm,
     noteStatusForm,
-    PurchaseOrderStatus
+    PurchaseOrderStatus,
+    ReorderSettingsForm
 )
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
@@ -963,7 +964,7 @@ def reorder_list(request):
 
             workbook.save(response)
             return response
-        return render(request, 'inventory/reorder_list.html', {})
+        return render(request, 'inventory/reorder_list.html', {'form':ReorderSettingsForm()})
         
 @login_required
 def reorder_list_json(request):
@@ -1806,6 +1807,46 @@ def product(request):
     
     return JsonResponse({'success':False, 'message':'Invalid request'})
 
+@login_required
+def reorder_settings(request):
+    """ method to set reorder settings"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            quantity_suggestion = data.get('suggestion')
+            order_enough = data.get('enough')
+            supplier = data.get('supplier', 'all')
+            days_from = data.get('from')
+            days_to = data.get('to')
+
+            if not quantity_suggestion or not order_enough or not supplier:
+                return JsonResponse({'success':False, 'message':'Please fill all required data.'})
+
+            settings = reorderSettings.objects.get_or_create(id=1)
+
+            settings.supplier=supplier,
+            settings.quantity_suggestion = True if quantity_suggestion else False,
+            settings.order_enough_stock = True if order_enough else False
+            
+            if order_enough:
+                # validate days 
+                if not days_from or not days_to:
+                    return JsonResponse({'success':False, 'message':'Please fill in the days.'})
+                settings.number_of_days_from = days_from
+                settings.number_of_days_to = days_to
+                settings.save()
+            
+            return JsonResponse({'success':True, 'message':'Reorder Settings Succefully Saved.'}, status=200)
+        except Exception as e:
+            return JsonResponse({'success':False, 'message':f'{e}'}, status=400)
+    
+    if request.method == 'GET':
+        try:
+            settings = reorderSettings.objects.filter(id=1).values()
+            JsonResponse({'success':True, 'data':settings}, status=200)
+        except Exception as e:
+            return JsonResponse({'success':False, 'message':f'{e}'}, status=400)
+        return JsonResponse({'success':False, 'message':'Invalid request'}, status=500)
 
         
                     
