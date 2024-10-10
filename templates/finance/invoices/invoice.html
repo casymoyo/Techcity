@@ -106,6 +106,16 @@
             </div>
         </div>
 
+        <div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        {% include 'Pos/printable_receipt.html' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="modal fade" id="paymentsModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
@@ -211,6 +221,11 @@
 
 <script src="{% static 'assets/DataTables/datatables.min.js' %}"></script>
 <script type="text/javascript">
+
+    let invoiceId = '';
+    let invoiceAmountDue = '';
+    let paymentMethod = '';
+
     const whatsappBtn = document.getElementById('whatsappBtn');
     const appModal = new bootstrap.Modal(document.getElementById('appModal'));
 
@@ -230,13 +245,12 @@
 
     const loader = new bootstrap.Modal(document.getElementById('loaderModal'));
 
-    let invoiceId = '';
-    let invoiceAmountDue = '';
-    let paymentMethod = '';
     const error = document.querySelector('#id_amount_error');
     const loaderModal = new bootstrap.Modal(document.getElementById('loaderModal'));
     const tableEl = document.querySelector('#invoiceTable');
     const loaderSpin = document.querySelector('#loader');
+
+    const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
 
     new DataTable('#invoiceTable');
     
@@ -295,10 +309,7 @@
             .then(data => {
                 if (data.success) {
                     updateModal.hide()
-                    loaderModal.show()
-                    setTimeout(() => {
-                        window.location.href='{% url "finance:invoice" %}';
-                    }, 2000);
+                    displayReceipt(invoiceId)
                 } else {
                     loaderModal.hide()
                     error.textContent='*' + data.message
@@ -308,6 +319,10 @@
             console.error("Error:", error);
             });
         }
+    }
+
+    function name(params) {
+        
     }
 
     updateBtn.forEach((btn)=>{
@@ -384,6 +399,77 @@
             console.error('Error:', error);
         });
     });
+
+    async function displayReceipt(invoiceId) {
+        try {
+            const response = await fetch(`/finance/invoice/preview/json/${invoiceId}/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken"),
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok.');
+            }
+            
+            receiptModal.show()
+
+            const data = await response.json();
+            const { invoice, invoice_items: invoiceItems } = data;
+            const {
+                invoice_number: invoiceNumber,
+                amount: invoiceTotal,
+                delivery_charge: deliveryCharge,
+                discount_amount: discountAmount,
+                vat: vatAmount,
+                subtotal: subTotal,
+                currency_symbol: currencySymbol,
+                amount_paid: amountPaid
+            } = invoice;
+
+            console.log(invoice)
+
+            document.querySelector('#receiptNumber').textContent = invoiceNumber;
+
+            const receiptTableBody = document.querySelector('#receiptTable');
+            receiptTableBody.innerHTML = '';
+
+            // Populate the table with invoice items
+            invoiceItems.forEach(({ quantity, item__product__name, item__product__description, total_amount }) => {
+                const newRow = receiptTableBody.insertRow();
+                newRow.insertCell().textContent = quantity;
+                newRow.insertCell().textContent = `${item__product__name} (${item__product__description})`;
+                newRow.insertCell().textContent = `${currencySymbol} ${total_amount}`;
+            });
+
+            // Update total amounts in the footer
+            document.querySelector('#subTotalAmount').textContent = `${currencySymbol} ${subTotal}`;
+            //document.querySelector('#totalAmount').textContent = `${currencySymbol} ${invoiceTotal}`;
+            document.querySelector('#deliveryChargeAmount').textContent = `${currencySymbol} ${deliveryCharge}`;
+            document.querySelector('#discountAmount').textContent = `${currencySymbol} ${discountAmount}`;
+            document.querySelector('#vatAmount').textContent = `${currencySymbol} ${vatAmount}`;
+            document.querySelector('#rid_paid_amount').textContent = `${currencySymbol} ${amount_paid}`;
+            document.querySelector('#rprevious_due').textContent = `${currencySymbol} ${previousDue}`;
+
+
+            Swal.fire({
+                icon: 'success',
+                title: 'success',
+                text: 'Invoice successfully processed',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(()=>{
+
+                receiptModal.show();
+            })
+
+        } catch (error) {
+            console.error("Error:", error);
+            loaderModal.hide();
+        }
+    }
 
     function getCookie(name) {
         let cookieValue = null;

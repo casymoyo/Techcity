@@ -81,7 +81,8 @@
             a { color: black; text-decoration: underline; } 
         }
       }
-</style> {% endcomment %}
+</style> 
+{% endcomment %}
 <body class='d-flex justify-content-center align-items-center flex-column w-100'>
     <div class="ticket d-flex justify-content-center align-items-center flex-column">
         <img src='{% static 'assets/logo.png' %}' width='200px' />
@@ -188,9 +189,9 @@
     <script src="{% static 'js/jquery.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    <script>
+    <!-- <script>
         const invoiceId = {{invoice_id}}
-        const printBtn = document.querySelector('.btn-primary')
+        // const printBtn = document.querySelector('.btn-primary')
         const emailBtn = document.querySelector('.btn-secondary')
         const whatsappBtn = document.querySelector('.btn-success')
     
@@ -273,7 +274,7 @@
             return cookieValue;
         }
     
-    </script>
+    </script> -->
 </body>
 </html>
 
