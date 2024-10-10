@@ -1372,7 +1372,7 @@ def create_purchase_order(request):
         other_amount = Decimal(purchase_order_data['other_amount'])
         payment_method = purchase_order_data.get('payment_method')
     
-        if not all([supplier_id, delivery_date, status, total_cost, tax_amount, payment_method]):
+        if not all([supplier_id, delivery_date, status, total_cost, payment_method]):
             return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
 
         try:
@@ -1545,7 +1545,63 @@ def if_purchase_order_is_received(request, purchase_order, tax_amount, payment_m
         return JsonResponse({'success':False, 'message':f'currency doesnt exists'})
     except VATRate.DoesNotExist:
         return JsonResponse({'success':False, 'message':f'Make sure you have a stipulated vat rate in the system'})
-    
+
+@login_required
+def delete_purchase_order(request, purchase_order_id):
+    try:
+        # Retrieve the purchase order
+        purchase_order = PurchaseOrder.objects.get(id=purchase_order_id)
+
+        if purchase_order.received:
+            return JsonResponse({'success': False, 'message': 'Cannot delete a received purchase order'}, status=400)
+
+        with transaction.atomic():
+            # Reverse related account transactions
+            currency = Currency.objects.get(default=True)
+
+            account_transaction = AccountTransaction.objects.filter(expense__purchase_order=purchase_order).first()
+            if account_transaction:
+                account_balance = AccountBalance.objects.get(account=account_transaction.account)
+
+                # Reverse account balance adjustments
+                account_balance.balance += purchase_order.total_cost
+                account_balance.save()
+
+                # Delete account transaction log
+                account_transaction.delete()
+
+            # Reverse Cashbook entry
+            cashbook_entry = Cashbook.objects.filter(expense__purchase_order=purchase_order).first()
+            if cashbook_entry:
+                cashbook_entry.delete()
+
+            # Reverse the VAT transaction
+            vat_transaction = VATTransaction.objects.filter(purchase_order=purchase_order).first()
+            if vat_transaction:
+                vat_transaction.delete()
+
+            # Reverse the Expense record
+            expense = Expense.objects.filter(purchase_order=purchase_order).first()
+            if expense:
+                expense.delete()
+
+            # Reverse other expenses related to the purchase order
+            other_expenses = otherExpenses.objects.filter(purchase_order=purchase_order)
+            if other_expenses.exists():
+                other_expenses.delete()
+
+            # Remove PurchaseOrderItems
+            PurchaseOrderItem.objects.filter(purchase_order=purchase_order).delete()
+
+            # Finally, delete the purchase order itself
+            purchase_order.delete()
+
+        return JsonResponse({'success': True, 'message': 'Purchase order deleted successfully'})
+    except PurchaseOrder.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Purchase order not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
 @login_required
 @transaction.atomic
 def change_purchase_order_status(request, order_id):
@@ -1698,6 +1754,7 @@ def process_received_order(request):
         
         try:
             product = Product.objects.get(id=order_item.product.id)
+            logger.info(product)
         except Product.DoesNotExist:
             return JsonResponse({'success': False, 'message': f'Product with ID: {order_item.product.id} does not exist'}, status=404)
         
@@ -1706,7 +1763,10 @@ def process_received_order(request):
             return JsonResponse({'success':False, 'message':'quantity can\t be more than quantity ordered.'})
 
         product.price = selling_price
-        cost = average_inventory_cost(product.id, order_item.actual_unit_cost, quantity)
+        
+        logger.info(product.name)
+        # cost = average_inventory_cost(product.id, order_item.actual_unit_cost, quantity, request.user.branch.id)
+        cost = order_item.actual_unit_cost
         
         inventory, created = Inventory.objects.get_or_create(
             product=product,
@@ -1720,7 +1780,7 @@ def process_received_order(request):
                 'alert_notification': True
             }
         )
-
+        logger.info(inventory)
         product.save()
 
         if not created:
