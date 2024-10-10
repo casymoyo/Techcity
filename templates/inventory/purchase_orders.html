@@ -53,7 +53,7 @@
                                                 <a href="{% url 'inventory:receive_order' order.id %}" class="btn btn-sm btn-light">Receive Order Items</a>
                                             {% endif %}
                                         {% endif %}
-                                        <button class="btn btn-danger" onclick="confirmDeletePurchaseOrder({{ order.id }})">Delete</button>
+                                        <button class="btn btn-danger btn-sm" onclick="confirmDeletePurchaseOrder({{ order.id }})">Delete</button>
                                     </td>
                                 </tr>
                             {% endfor %}
