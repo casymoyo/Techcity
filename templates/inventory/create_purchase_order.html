@@ -121,7 +121,7 @@
                                 Unit price
                             </label> 
                             <input  
-                                type="number" 
+                                type="text" 
                                 name="price" step="0.01" 
                                 class="numberinput form-control" 
                                 required 
@@ -477,6 +477,7 @@
     </div>
     
 </div>   
+<script src="{% static 'js/calculater.js' %}"></script>
 <script>
     let cart = [];
     let prodData = [];
@@ -515,6 +516,8 @@
     const confirmBtn = document.getElementById('confirm_btn');
 
     const cartError = document.getElementById('cartError');
+
+    calculateExpression('id_p_price', errorId = null)
 
     function addExpense() {
       expenseCount++;
