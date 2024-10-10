@@ -903,7 +903,11 @@ def delete_inventory(request):
 @login_required
 # @admin_required
 def add_product_category(request):
-    categories = ProductCategory.objects.all().values()
+    
+    if request.method == 'GET': 
+        categories = ProductCategory.objects.all().values()
+        logger.info(categories)
+        return JsonResponse(list(categories), safe=False)
     
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -912,10 +916,10 @@ def add_product_category(request):
         if ProductCategory.objects.filter(name=category_name).exists():
             return JsonResponse({'success':False, 'message':'Category Exists'})
         
-        ProductCategory.objects.create(
+        category = ProductCategory.objects.create(
             name=category_name
         )
-    return JsonResponse(list(categories), safe=False)       
+        return JsonResponse({'success':True, 'id': category.id, 'name':category.name})        
 
 @login_required
 def reorder_list(request):

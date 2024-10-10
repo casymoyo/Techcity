@@ -195,7 +195,43 @@
       <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
               <div class="modal-body">
-                  {% include 'inventory/components/category_modal.html'%}
+                <div class="category">
+                  <div class='add-product-category' id="id_category_form">
+                      <div class='add-product-category-nav d-flex mt-2 py-3 px-2 align-items-center'>
+                          <div>
+                              <h6 class='mt-2 fw-bold'>Add Category</h6>
+                          </div>
+                      </div>
+                      <form method='post' class='px-2'>
+                          {% csrf_token %}
+                          <div class='mb-2'>
+                              <label for='id_name'>Category Name</label>
+                              <input 
+                                  name='name' 
+                                  id='id_category_name' 
+                                  type='text' 
+                                  class='form-control'
+                              />
+                          </div>
+                          <small id='id_error'></small>
+                          <div class="d-flex justify-content-end">
+                              <div class="">
+                                  <button type="reset" class="btn btn-danger btn-sm w-100">
+                                      <i class='bx bx-reset'></i>
+                                      reset
+                                  </button>
+                              </div>
+                              <span class="px-1"></span>
+                              <div class="">
+                                  <button type="button" onclick="categorySubmit();" class="btn btn-secondary btn-sm w-100">
+                                      <i class='bx bx-save'></i>
+                                      save
+                                  </button>
+                              </div>
+                          </div>
+                      </form>
+                  </div>
+             </div> 
               </div>
           </div>
       </div>
@@ -480,13 +516,27 @@
 
     const cartError = document.getElementById('cartError');
 
+    // document.getElementById('id_description').addEventListener('keydown', function(event) {
+    //     // Check if the Enter key is pressed
+    //     if (event.key === 'Enter') {
+    //         if (event.shiftKey) {
+    //             // Allow new line insertion when Shift + Enter is pressed
+    //             // No need to prevent default behavior
+    //             return true;
+    //         } else {
+    //             // Prevent default behavior (form submission) when just Enter is pressed
+    //             event.preventDefault();
+    //         }
+    //     }
+    // });
+
     // event listener for save to cart
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault(); 
-            addItem()
-        }
-    });
+    // document.addEventListener('keydown', function(event) {
+    //     if (event.key === 'Enter') {
+    //         event.preventDefault(); 
+    //         addItem()
+    //     }
+    // });
 
     function addExpense() {
       expenseCount++;
@@ -591,7 +641,7 @@
     // add batch_code
     function addBatchCode(){
       const data = {batch_code:$('#id_code').val()}
-      console.log(data)
+      
       fetch("{% url 'inventory:batch_code' %}", {
           method: "POST",
           headers: {
@@ -674,8 +724,8 @@
           },
           body: JSON.stringify(data),
         })
+          .then(response => response.json())
           .then((response) => {
-          
             if (response.success) {
               Swal.fire({
                 title: 'success',
@@ -696,11 +746,7 @@
             }
           })
           .catch((error) => {
-            Swal.fire({
-                title:'warning',
-                text:error,
-                icon:'warning',
-              })
+            console.log(error)
           });
         }
 
@@ -722,6 +768,8 @@
 
       function updateCategory(data){
           const catElement = document.querySelector('#id_category')
+
+          console.log('loading products')
       
           while(catElement.options.length > 1){
               catElement.remove(1)
@@ -1078,11 +1126,11 @@
       let discountedTotal = subtotal - discount;
 
       let taxRate = 0.15;
-      let tax = discountedTotal * taxRate;
+      let tax = 0
 
       let other = parseFloat(document.getElementById('id_other').value) || 0;
 
-      finalTotal = discountedTotal + tax + other;
+      finalTotal = discountedTotal + other;
 
       // Update the table
       document.getElementById('subtotal').innerText = subtotal.toFixed(2);
