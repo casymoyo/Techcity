@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Table</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<style>
+    body {
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+    padding: 20px;
+}
+
+.table-container {
+    max-width: 100%;
+    margin: auto;
+    overflow-x: auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background-color: white;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+thead th {
+    background-color: #f9f9f9;
+    padding: 12px 15px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+}
+
+tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.status {
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.9em;
+}
+
+.status.completed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status.pending {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.payment-btn {
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.payment-btn.paid {
+    background-color: #28a745;
+    color: white;
+}
+
+.payment-btn.due {
+    background-color: #dc3545;
+    color: white;
+}
+
+</style>
+<body>
+    <div class="table-container">
+        <table id="invoice-table">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="select-all"></th>
+                    <th>Customer Name &#9650;</th>
+                    <th>Reference &#9650;</th>
+                    <th>Date &#9650;</th>
+                    <th>Status &#9650;</th>
+                    <th>Grand Total &#9650;</th>
+                    <th>Paid &#9650;</th>
+                    <th>Due &#9650;</th>
+                    <th>Payment</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="checkbox" class="row-checkbox"></td>
+                    <td>Thomas</td>
+                    <td>SL0101</td>
+                    <td>19 Jan 2023</td>
+                    
+                    <td>$550</td>
+                    <td>$550</td>
+                    <td>$0.00</td>
+                    <td><button class="payment-btn paid">Paid</button></td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" class="row-checkbox"></td>
+                    <td>Rose</td>
+                    <td>SL0102</td>
+                    <td>26 Jan 2023</td>
+                    <td><span class="status completed">Completed</span></td>
+                    <td>$250</td>
+                    <td>$250</td>
+                    <td>$0.00</td>
+                    <td><button class="payment-btn paid">Paid</button></td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" class="row-checkbox"></td>
+                    <td>Benjamin</td>
+                    <td>SL0103</td>
+                    <td>08 Feb 2023</td>
+                    <td><span class="status completed">Completed</span></td>
+                    <td>$570</td>
+                    <td>$570</td>
+                    <td>$0.00</td>
+                    <td><button class="payment-btn paid">Paid</button></td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" class="row-checkbox"></td>
+                    <td>Lilly</td>
+                    <td>SL0104</td>
+                    <td>12 Feb 2023</td>
+                    <td><span class="status pending">Pending</span></td>
+                    <td>$300</td>
+                    <td>$0.00</td>
+                    <td>$300</td>
+                    <td><button class="payment-btn due">Due</button></td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox" class="row-checkbox"></td>
+                    <td>Freda</td>
+                    <td>SL0105</td>
+                    <td>17 Mar 2023</td>
+                    <td><span class="status pending">Pending</span></td>
+                    <td>$700</td>
+                    <td>$0.00</td>
+                    <td>$700</td>
+                    <td><button class="payment-btn due">Due</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Select All Checkbox
+const selectAllCheckbox = document.getElementById('select-all');
+const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+
+selectAllCheckbox.addEventListener('change', function () {
+    rowCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+});
+
+// Column Sorting
+const headers = document.querySelectorAll("thead th");
+const tableBody = document.querySelector("tbody");
+const rows = Array.from(tableBody.querySelectorAll("tr"));
+
+headers.forEach((header, index) => {
+    header.addEventListener("click", () => {
+        const isAscending = header.classList.toggle("ascending");
+        const direction = isAscending ? 1 : -1;
+        const type = header.innerText.trim();
+        
+        rows.sort((rowA, rowB) => {
+            const cellA = rowA.querySelectorAll("td")[index].innerText;
+            const cellB = rowB.querySelectorAll("td")[index].innerText;
+            
+            if (!isNaN(cellA) && !isNaN(cellB)) {
+                return direction * (parseFloat(cellA) - parseFloat(cellB));
+            }
+            return direction * cellA.localeCompare(cellB);
+        });
+        
+        rows.forEach(row => tableBody.appendChild(row));
+    });
+});
+
+    </script>
+</body>
+</html>

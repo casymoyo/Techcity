@@ -81,19 +81,29 @@
             a { color: black; text-decoration: underline; } 
         }
       }
+      .vat-details p{
+        margin-bottom: -10px;
+      }
 </style> 
 {% endcomment %}
-<body class='d-flex justify-content-center align-items-center flex-column w-100'>
-    <div class="ticket d-flex justify-content-center align-items-center flex-column">
+<div class="d-flex justify-content-center align-content-center flex-column">
+    <div>
         <img src='{% static 'assets/logo.png' %}' width='200px' />
         <p class="centered" style='font-size:10px;'>
             <small><i class='bx bx-phone'></i> {{ request.user.branch.phonenumber }} </small>
             <small><i class='bx bx-building'></i> {{ request.user.branch.address }} </small>
             <small><i class='bx bx-enevelope'></i> {{ request.user.branch.email }} </small>
         </p>
+    </div>
+    <div>
+        <div class="d-flex vat-details">
+            <p class="fw-bold">VAT: <small id="vat_number">220356643</small></p>
+            <p class="fw-bold mx-2">TIN: <small id="tin_number">201020099</small></p>
+            <p class="fw-bold">Invoice:#<small id="receiptNumber"></small></p>
+        </div>
+    </div>
 
-        <p>Invoice Number: <small id="receiptNumber"></small></p>
-
+    <div class="ticket d-flex justify-content-center align-items-center flex-column">
         <table>
             <thead class='border'>
                 <tr>
@@ -105,51 +115,51 @@
             <tbody id="receiptTable" class='border'></tbody>
             <tfoot class='border bg-light mt-2'>
                 <tr>
-                    <td></td>
                     <td class='fw-bold text-right'>Sub Total</td>
+                    <td></td>
                     <td id="subTotalAmount"></td> 
                 </tr>
                 <tr id='discount_amount'>
-                    <td></td>
                     <td class='fw-bold' style="display:block;">Discount</td>
+                    <td></td>
                     <td id="discountAmount"></td>
                 </tr>
                 <tr>
-                    <td></td>
                     <td class='fw-bold'>Vat @15%</td>
+                    <td></td>
                     <td id="vatAmount"></td>
                 </tr>
                 <tr id='delivery_amount'>
-                    <td></td>
                     <td class='fw-bold' style="display:block;">Delivery Charge</td>
-                    <td id="deliveryChargeAmount"></td>
-                </tr> 
-                <tr id='prv'>
                     <td></td>
-                    <td class='fw-bold'>Previous Due</td>
-                    <td class="" id="rprevious_due"></td>
+                    <td id="deliveryChargeAmount"></td>
                 </tr>
                 <tr>
-                    <td></td>
                     <td class='fw-bold'>Current Due</td>
-                    <td class="" id="rid_due_amount">0.00</td>
+                    <td></td>
+                    <td class="border-top" id="rid_due_amount">0.00</td>
+                </tr> 
+                <tr id='prv'>
+                    <td class='fw-bold'>Previous Due</td>
+                    <td></td>
+                    <td class="border-bottom" id="rprevious_due"></td>
                 </tr>
                 <tr id='prv'>
-                    <td></td>
                     <td class='fw-bold'>Total Balance</td>
-                    <td class="" id="tb_due">
-                        <span class='p_due fw-bold' id='rtotal_balance_due'>25.00</span>
+                    <td></td>
+                    <td class="border-top" id="tb_due">
+                        <span class='p_due fw-bold' id='rtotal_balance_due'>0.00</span>
                     </td>
                 </tr>
                 <tr>
-                    <td></td>
                     <td class='fw-bold'>Amount Paid</td>
+                    <td></td>
                     <td class="" id="rid_paid_amount">0.00</td>
                 </tr>
                 <tr>
-                    <td></td>
                     <td class='fw-bold'>Due Amount</td>
-                    <td class="fw-bold" id="rid_balance" class='border'>0.00</td>
+                    <td></td>
+                    <td class="fw-bold border-top" id="rid_balance">0.00</td>
                 </tr>
             </tfoot>
         </table>
