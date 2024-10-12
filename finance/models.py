@@ -7,6 +7,12 @@ from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 
+class PaymentMethod(models.Model):
+    name = models.CharField(max_length=255)
+    
+    def __str__(self):
+        return self.name
+    
 class Currency(models.Model):
     code = models.CharField(max_length=3, unique=True)  
     name = models.CharField(max_length=50)  
@@ -148,6 +154,7 @@ class Account(models.Model):
     
     def __str__(self):
         return f'{self.name} ({self.type})'
+    
 class AccountBalance(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='balances')
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)

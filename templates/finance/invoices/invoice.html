@@ -197,13 +197,13 @@ input[type="checkbox"] {
                         <td>
                             <button class="
                                 payment-btn
-                                {% if amount_due > 0 %}
+                                {% if invoice.amount_due > 0 %}
                                     due
                                 {% else %}
                                     paid
                                 {% endif %}
                             ">
-                                {% if amount_due > 0 %}
+                                {% if invoice.amount_due > 0 %}
                                     Due
                                 {% else %}
                                     Paid

@@ -50,6 +50,36 @@ tbody tr:hover {
     background-color: #f1f1f1;
 }
 
+// modal css
+    .payment-modal{
+        background-color: #fff;
+        width: 60%;
+        max-width: 600px;
+        max-height: 80%; 
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow-y: auto; 
+        padding: 20px;
+        position: relative;
+    
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none; 
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        overflow-y: auto;  
+    }
 </style>
 <body class="techcity">
     <div class='pos'>
@@ -429,7 +459,6 @@ document.querySelector('#id_pay').addEventListener(
     'click', ()=>{
         if(clientName){
             updateCartDisplay();
-            updateOrderDisplay() 
             modal.classList.remove("hidden");
             overlay.classList.remove("hidden");
         }else{
@@ -632,7 +661,6 @@ function addItem(product) {
         cart.push(newTransfer);
     }
     updateCartDisplay(); 
-    updateOrderDisplay()
     cartButton()
     totals()
 }
@@ -662,7 +690,7 @@ function totals(){
         payable_amount = payable
         discount_amount = discount
 
-        updateTfoot(vatAmount, totalAmount, discountAmount, discount, delivery, payable)
+        updateTfoot(vatAmount, totalAmount, delivery, payable)
 
     }else{
         totalAmount = totalAmount - discount
@@ -680,7 +708,7 @@ function totals(){
         document.getElementById("id_vat_amount").textContent =`${ currencyData[0][0].symbol + ' ' + vatAmount.toFixed(2)}`;
         document.getElementById('id_payable').textContent = `${ currencyData[0][0].symbol + ' ' + payable.toFixed(2)}`;
 
-        updateTfoot(vatAmount, totalAmount, discountAmount, discount, delivery, payable)
+        updateTfoot(vatAmount, totalAmount, payable)
     }
 }
 
@@ -740,30 +768,16 @@ function updateCartDisplay() {
     if (existingItem) {
         existingItem.quantity = updatedQuantity;
         updateCartDisplay();
-        updateOrderDisplay();
         cartButton();
         totals();
     }
 }
 
 
-function updateOrderDisplay() {
-    const orderDetails = document.getElementById("order_details");
-    orderDetails.innerHTML = ""; 
-  
-    let total = 0;
-    cart.forEach((item) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${item.product_name} x ${item.quantity}</td>
-        <td class='d-flex justify-content-end'>${currencyData[0][0].symbol + ' ' + (parseInt(item.quantity) * parseFloat(item.price)).toFixed(2)}</td>
-      `;
-      orderDetails.appendChild(row);
-    });
-  }
+
 
 // update tfoot
-function updateTfoot(vat, totalAmount, discountAmount, discount, delivery, payable){
+function updateTfoot(vat, totalAmount, payable){
     let totalDueAmount = 0;
     const symbol = currencyData[0][0].symbol;
     
@@ -777,11 +791,7 @@ function updateTfoot(vat, totalAmount, discountAmount, discount, delivery, payab
 
     document.querySelector('#id_subtotal').textContent = `${ symbol + ' ' + calculateTotalAmount(cart) }`
     document.querySelector('#id_vat').textContent = `${ symbol + ' ' + vat.toFixed(2) }`
-    document.querySelector('#id_dcp').textContent = `Discount`
-    document.querySelector('#id_disc').textContent = `${ symbol + ' ' + '<span class="disc_c">' + discountAmount.toFixed(2) + '</span>' }`
-    document.querySelector('#id_delivery_charge').textContent = `${ symbol + ' ' + '<span class="d_c">' + delivery.toFixed(2) + "</span>" }`
-    document.querySelector('#id_interest_amount').textContent = `${ symbol + ' ' +  '<span class="inter">' + 0.00 + "</span>"} `
-    document.querySelector('#id_due_amount').textContent = `${ symbol + ' ' + payable.toFixed(2) }`
+    // document.querySelector('#id_due_amount').textContent = `${ symbol + ' ' + payable.toFixed(2) }`
     document.querySelector('#id_balance').textContent = `${ symbol + ' ' + totalBalanceDue.toFixed(2) }`, 
     document.querySelector('#total_balance_due').textContent = `${symbol + ' ' + totalDueAmount.toFixed(2) }`
 
@@ -903,7 +913,6 @@ async function processCart(el) {
     }
 }
 
-
 async function displayReceipt(invoiceId) {
     try {
         const response = await fetch(`/finance/invoice/preview/json/${invoiceId}/`, {
@@ -939,19 +948,19 @@ async function displayReceipt(invoiceId) {
         // Populate the table with invoice items
         invoiceItems.forEach(({ quantity, item__product__name, item__product__description, total_amount }) => {
             const newRow = receiptTableBody.insertRow();
+            newRow.insertCell().textContent = `${item__product__name} `
             newRow.insertCell().textContent = quantity;
-            newRow.insertCell().textContent = `${item__product__name} (${item__product__description})`;
+            newRow.insertCell().textContent = `(${item__product__description})`;
+            newRow.insertCell().textContent = `${item__product__unit_cost}`
             newRow.insertCell().textContent = `${currencySymbol} ${total_amount}`;
         });
 
         // Update total amounts in the footer
         document.querySelector('#subTotalAmount').textContent = `${currencySymbol} ${subTotal}`;
         //document.querySelector('#totalAmount').textContent = `${currencySymbol} ${invoiceTotal}`;
-        document.querySelector('#deliveryChargeAmount').textContent = `${currencySymbol} ${deliveryCharge}`;
-        document.querySelector('#discountAmount').textContent = `${currencySymbol} ${discountAmount}`;
         document.querySelector('#vatAmount').textContent = `${currencySymbol} ${vatAmount}`;
         document.querySelector('#rid_paid_amount').textContent = `${currencySymbol} ${amount_paid.toFixed(2)}`;
-        document.querySelector('#rprevious_due').textContent = `${currencySymbol} ${previousDue.toFixed(2)}`;
+        //document.querySelector('#rprevious_due').textContent = `${currencySymbol} ${previousDue.toFixed(2)}`;
 
         modal.classList.add("hidden");
         overlay.classList.add("hidden");

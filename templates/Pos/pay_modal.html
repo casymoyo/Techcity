@@ -1,186 +1,299 @@
-{% load static%}
-{% block content %}
-
-<div class='payment'>
-    <div class="bg-secondary text-light border d-flex justify-content-between align-items-center rounded w-100 py-2">
-        <h4 class='px-2' id="id_customer_details">Process Payment -> <span>Cash</span></h4>
-       <div class='px-2'>
-            <button id='closebtn' class="btn-close text-light btn-sm"></button>
-       </div>
-    </div>
-    <div class='row mt-2 payment-details'>
-        <div class='col-3 border p-2'>
-            <h5>Order details</h5>
-            <table class="table table-borderless">
-                <tbody id="order_details"></tbody>
-            </table>
-           <div>
-                <table id="oder_details_foot" class="table table-borderless">
-                    <tr>
-                        <td class='px-5 fw-bold'>Subtotal</td>
-                        <td class="d-flex justify-content-end" id="id_subtotal"></td>
-                    </tr>
-                    <tr id='disc'>
-                        <td id="id_dcp"class='px-5 fw-bold'></td>
-                        <td class="d-flex justify-content-end" id="id_disc">
-                            <span class='disc_c'>0.00</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class='px-5 fw-bold'>VAT</td>
-                        <td class="d-flex justify-content-end" id="id_vat">0.00</td>
-                    </tr>
-                    <tr id='d_charge'>
-                        <td class='px-5 fw-bold'>Delivery Charge</td>
-                        <td class="d-flex justify-content-end" id="id_delivery_charge">
-                            <span class='d_c'>0.00</span>
-                        </td>
-                    </tr>
-                    <tr id='int'>
-                        <td class='px-5 fw-bold'>Interest Amount</td>
-                        <td class="d-flex justify-content-end" id="id_interest_amount">
-                            <span class='inter'>0.00</span>
-                        </td>
-                    </tr>
-                    <tr id='prv'>
-                        <td class='px-5 fw-bold'>Previous Due</td>
-                        <td class="d-flex justify-content-end" id="previous_due">
-                            <span class='p_due'>25.00</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class='px-5 fw-bold'>Current Due</td>
-                        <td class="d-flex justify-content-end" id="id_due_amount">0.00</td>
-                    </tr>
-                    <tr id='prv'>
-                        <td class='px-5 fw-bold'>Total Balance</td>
-                        <td class="d-flex justify-content-end" id="tb_due">
-                            <span class='p_due' id='total_balance_due'>25.00</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class='px-5 fw-bold'>Amount Paid</td>
-                        <td class="d-flex justify-content-end" id="id_paid_amount">0.00</td>
-                    </tr>
-                    <tr>
-                        <td class='px-5 fw-bold'>Due Amount</td>
-                        <td class="d-flex justify-content-end fw-bold" id="id_balance">0.00</td>
-                    </tr>
-                    
-                </table>
-           </div>
-        </div>
-        <div class='col-6 border p-2'>
-            <div class='payment-form mt-3'>
-                <div class='mb-2 d-flex align-items-center'>
-                    <label for="id_amount_paid" class="px-2">Amount</label>
-                    <input
-                        id='id_amount_paid'
-                        name='amount'
-                        type="number"
-                        class='form-control'
-                     />
-                </div>
-
-                <div class="credit border rounded p-2 mb-2">
-                    <p>Credit details</p>
-                    <div class="mb-2">
-                        <label for="id_date">Credit Duration</label>
-                        <input
-                            type="number"
-                            class="form-control"
-                            placeholder="number of days"
-                            id="id_days"
-                            value="0"
-                        />
-                    </div>
-                </div>
-                <div class="mb-2 d-flex justify-content-between align-items-center">
-                    <div class="d-flex">
-                        <label for="reoccuring">Reoccuring</label>
-                        <input class="mx-2" type="checkbox" id="reoccuring" class="form-check"/>
-                    </div>
-                    <div class="hidden" id="next_due_date_p">
-                        <label class="mx-2" for="next_due_date">Next due days</label>
-                        <input type="number" id="next_due_date" class="form-control"/>
-                    </div>
-                </div>
-                <div class='d-flex align-items-center'>
-                    <label for="id_note p-1" class="px-2">Note</label>
-                    <textarea
-                        title="note"
-                        id='id_note'
-                        rows='2'
-                        name='note'
-                        class='form-control'
-                        placeholder=""
-                    ></textarea>
-                </div>
-            </div>
-            <small class'text-danger fw-bold' id='pay_error'></small>
-        </div>
-        <div class="col-3 border p-2">
-            <div class='button-choose w-100'>
-                <div class="w-100 p-2">
-                    <button type="button"  class='btn btn-light btn-lg w-100 pm' data-name='cash' id="id_cash_btn" onclick="processCart(this)">
-                        CASH
-                    </button>
-                </div>
-
-                <div class="w-100 mt-2 p-2">
-                    <button type="button" class='bank btn btn-success btn-lg w-100 pm' data-name='pay_later' id="id_paylater" onclick="processCart(this)">
-                        PAY LATER
-                    </button>
-                </div>
-
-                <div class="w-100 mt-2 p-2">
-                    <button type="button" class='bank btn btn-secondary btn-lg w-100 pm' data-name='bank' id="id_bank_transfer" onclick="processCart(this)">
-                        BANK CARD
-                    </button>
-                </div>
-
-                <div class="w-100 mt-2 p-2">
-                    <button type="button" class='ecocash btn btn-primary btn-lg w-100 pm' data-name='ecocash' id="id_credit_ecocash" onclick="processCart(this)">
-                        ECOCASH
-                    </button>
-                </div>
-
-                <div class="w-100 mt-2 p-2">
-                    <button type="button" class='btn btn-danger btn-lg w-100 pm' data-name='qoutation'  onclick="processCart(this)">
-                        QOUTATION
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<script>
-    const previousV = document.querySelector('.p_due');
-    const interestV = document.querySelector('.inter');
-    const deliveryV = document.querySelector('.d_c');
-    const discountV = document.querySelector('.disc_c');
-
-    const reocurring = document.getElementById('reoccuring');
-    const nextDueDaysEl = document.getElementById('next_due_date_p');
-    const nextDueDays = document.getElementById('next_due_date');
-
-    reocurring.addEventListener('click', () => {
-        nextDueDaysEl.classList.toggle('hidden');
-        nextDueDaysEl.classList.toggle('d-flex');
-    });
-
-    function hideIfZero(element, selector) {
-        if (element.textContent.trim() === '0.00') {
-            const el = document.querySelector(selector);
-            el.style.display = 'none';
-            el.classList.add('hidden');
-        }
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="Techcity Pos System" />
+        <meta name="Author" content="casy moyo" />
+        <link rel="icon" href="{% static 'images/favicons/favicon.ico' %}" />
+    
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+            integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    
+        {% block css %}
+        <link rel="stylesheet" href="{% static 'css/main.css' %}">
+        <link rel="stylesheet" href="{% static 'css/bootstrap/css/bootstrap.min.css' %}">
+        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        {% endblock css %}
+    
+    </head>
+    <style>
+    .receipt-el{
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f4f4f4;
     }
 
-    hideIfZero(previousV, '#prv');
-    hideIfZero(interestV, '#int');
-    hideIfZero(deliveryV, '#d_charge');
-    hideIfZero(discountV, '#disc');
-</script>
+    .receipt {
+        background-color: white;
+        padding: 20px;
+        max-width: 800px;
+        margin: auto;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
 
-{% endblock content %}
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+    }
+
+    .logo img {
+        height: 50px;
+        margin-right: 10px;
+    }
+
+    .company-info {
+        font-size: 0.9em;
+    }
+
+    .receipt-info {
+        text-align: right;
+    }
+
+    .receipt-info h3 {
+        color: red;
+    }
+
+    .payment-details, .customer-info, .totals, .layby-terms {
+        font-size: 0.9em;
+        margin-bottom: 20px;
+    }
+
+    .payment-details p, .totals p, .layby-terms p {
+        margin: 5px 0;
+    }
+
+    .customer-info {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .customer-info div {
+        width: 45%;
+    }
+
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+    .items-table th, .items-table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .items-table th {
+        background-color: #f4f4f4;
+    }
+
+    .totals {
+        text-align: right;
+    }
+
+    .layby-terms h4 {
+        margin-bottom: 10px;
+        font-size: 1.1em;
+    }
+
+    </style>
+<div class="receipt-el">
+    <div class="receipt">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <img src="logo.png" alt="TechCity Logo">
+                <div class="company-info">
+                    <h2>TechCity</h2>
+                    <p>Tin No:20012500</p>
+                    <p>Vat: 2001278367</p>
+                    <p>65 Speke, Speke Avenue</p>
+                </div>
+            </div>
+            <div class="receipt-info">
+                <h3>Receipt <span id="invoiceNumber"></span></h3>
+                <p>Date: 02/11/2024</p>
+                <p>Time: 14:39 pm</p>
+            </div>
+        </div>
+        
+        <hr>
+
+        <!-- Payment Details -->
+        <div class="payment-details">
+            <p><strong>Payment:</strong>
+                <select name="paymentMethod" id="id_payment_method" class="form-select">
+                    {% for method in payment_methods %}
+                        <option value="{{ method.id }}">{{ method.name }}</option>
+                    {% endfor %}
+                </select>
+            </p>
+            <p><strong>Terms:</strong>
+                <select name="terms" id="id_terms" class="form-select">
+                    <option value="cash" selected>Cash</option>
+                    <option value="layby">Layby</option>
+                    <option value="ecocash">Ecocash</option>
+                    <option value="monthly">Monthly Installment</option>
+                </select>
+            </p>
+            <p><strong>Currency:</strong><select  id='currency' class='form-select'>
+                <option value=''>Currency</option>
+                {% for currency in currencies %}
+                    {% if currency.default %}
+                        <option value='{{currency.id}}' selected>{{currency.name}}</option>
+                    {% else %}
+                        <option value='{{currency.id}}'>{{currency.name}}</option>
+                    {% endif %}
+                {% endfor %}
+            </select></p>
+            <p><strong>Cashier:</strong> {{ request.user.first_name }}</p>
+        </div>
+
+        <hr>
+
+        <!-- Customer Info -->
+        <div class="customer-info">
+            <div class="company">
+                <p><strong>Company:</strong> {{ request.user.company.name }}</p>
+                <p><strong>Name:</strong> <span id="customerName"></span></p>
+                <p><strong>Cell:</strong> <span id="customerPhone"></span></p>
+                <p><strong>Email:</strong> <span id="customerEmail"></span></p>
+                <p><strong>Vat:</strong> {{ request.user.company.vat_number }}</p>
+                <p><strong>Tin:</strong> 245004667 {{ request.user.company.tin_number}}</p>
+                <p><strong>Address:</strong> <span id="customerAddress"></span></p>
+            </div>
+            <div class="account-summary">
+                <h4>Customer Account Summary</h4>
+                <p><strong>Amount Received:</strong>
+                    <input type="number" id="id_amount_paid" name="amount_received" class="form-control">
+                </p>
+                <p><strong>Previous bal <span id="customerInvoice"></span id='previous_due'>:</strong> 5,500 USD</p>
+                <p><strong>Available bal:</strong> <span id="availableBalance"></span></p>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- Item Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>NAME</th>
+                    <th>DESCRIPTION</th>
+                    <th>QNTY</th>
+                    <th>UNIT PRICE</th>
+                    <th>TOTAL</th>
+                </tr>
+            </thead>
+            <tbody id="receiptTable" class='border'></tbody>
+        </table>
+
+        <hr>
+
+        <!-- Totals -->
+        <div class="totals">
+            <p><strong>Subtotal:</strong> <span id="id_subtotal"></span></p>
+            <p><strong>VAT 15%:</strong> <span id="id_vat"></span></p>
+            <p><strong>Total:</strong> <span id='total_balance_due'>25.00</span></p>
+            <p><strong>Available bal:</strong> <span id='total_balance_due'>25.00</span></p>
+            <p><strong>Due amount:</strong> <span id="id_balance"></span></p>
+        </div>
+
+        <hr>
+
+        <!-- Layby Terms -->
+        <div class="layby-terms">
+            <h4>Layby Terms</h4>
+            <p><strong>Deposited:</strong> <span id="id_deposited"></span></p>
+            <p><strong>Period:</strong>
+                <input type="number" name="interval" id="id_period" form="control">
+            </p>
+            <p id="payment_date"></p>
+        </div>
+
+        <!-- Monthly Installments-->
+        <!-- <div>
+            <h4>Monthly Payments</h4>
+            <p><strong>Amount Paid:</strong> <span id="id_deposited"></span></p>
+            <p><strong>Reoccuring:</strong>
+                <input type="checkbox" name="reoccuring" id="id_reoccuring">
+            </p>
+            <p id="monthly_payment_date"></p>
+        </div> -->
+
+        <div class="d-flex justify-content-end">
+            <button class="btn btn-danger btn-sm" id="closebtn">Cancel</button>
+            <button class="btn btn-primary btn-sm mx-2" id="id_hold">Hold</button>
+            <button class="btn btn-success btn-sm " id="processCart">Process Receipt</button>
+        </div>
+    </div>
+
+    <script>
+        const id_amount_paid = document.getElementById('id_amount_paid');
+        const depositedAmount = document.getElementById('id_deposited');
+        const period = document.getElementById('id_period')
+
+        period.addEventListener('input', ()=>{
+            if(period.value < 0){
+                Swal.fire({
+                    icon:'danger',
+                    text:'Period interval can be less than 0', 
+                })
+                return;
+            }
+            displayDueDates(period.value)
+        })
+
+        id_amount_paid.addEventListener('input', ()=>{
+            let value = id_amount_paid.value
+            depositedAmount.textContent = value
+        })
+
+        const calculateNextDueDate = (period) => {
+            const todayDate = new Date(); 
+            const dueDates = []; 
+
+            for (let i = 1; i <= period; i++) {
+                const nextDueDate = new Date(todayDate); 
+                nextDueDate.setDate(todayDate.getDate() + 30 * i); 
+                dueDates.push(nextDueDate); 
+            }
+
+            return dueDates;
+        };
+
+        
+        const displayDueDates = (period) => {
+            const dueDates = calculateNextDueDate(period); // Get due dates
+            const paymentDateElement = document.getElementById('payment_date'); // Get the <p> element
+
+            let dateFields = ''; 
+
+            dueDates.forEach((date, index) => {
+                // Format the date as yyyy-mm-dd for the date input field
+                const formattedDate = date.toISOString().split('T')[0];
+
+                // Create input fields for each payment date
+                dateFields += `
+                    <label for="payment_date_${index}">Payment ${index + 1}:</label>
+                    <input type="date" id="payment_date_${index}" value="${formattedDate}">
+                    <br>
+                `;
+            });
+
+            paymentDateElement.innerHTML = dateFields; 
+        };
+    </script>
+</body>
+</html>
