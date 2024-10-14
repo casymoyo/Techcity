@@ -30,7 +30,7 @@ class Product(models.Model):
         ('zero rated', 'Zero Rated')
     ]
     
-    batch_code = models.ForeignKey(BatchCode,on_delete=models.CASCADE)
+    batch_code = models.ForeignKey(BatchCode,on_delete=models.CASCADE, null=True)
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, default=0)
     cost = models.DecimalField(max_digits=10, decimal_places=2)
