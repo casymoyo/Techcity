@@ -1736,9 +1736,6 @@ def process_received_order(request):
         quantity = data.get('quantity', 0)
         selling_price = data.get('price')
         expected_profit = data.get('expected_profit')
-        
-        if not order_item_id or not isinstance(quantity, int) or quantity <= 0:
-            return JsonResponse({'success': False, 'message': 'Invalid data'}, status=400)
 
         try:
             order_item = PurchaseOrderItem.objects.get(id=order_item_id)
@@ -1767,42 +1764,45 @@ def process_received_order(request):
         logger.info(product.name)
         # cost = average_inventory_cost(product.id, order_item.actual_unit_cost, quantity, request.user.branch.id)
         cost = order_item.actual_unit_cost
+
+        if request.user.role in ['admin', 'owner']:
+            logger.info('here')
+            inventory, created = Inventory.objects.get_or_create(
+                product=product,
+                defaults={
+                    'branch': request.user.branch,
+                    'cost': cost,
+                    'price': selling_price,
+                    'quantity': 0,
+                    'stock_level_threshold': product.min_stock_level,
+                    'reorder': False,
+                    'alert_notification': True
+                }
+            )
+            if not created:
+                inventory.cost = cost
+                inventory.price = selling_price
+        else:
+            inventory = Inventory.objects.get(product=product)
+            inventory.quantity += quantity
+
+            ActivityLog.objects.create(
+                purchase_order = purchase_order,
+                branch = request.user.branch,
+                user=request.user,
+                action= 'stock in',
+                inventory=inventory,
+                quantity=quantity,
+                description=f'Stock in from {order_item.purchase_order.order_number}',
+                total_quantity=inventory.quantity 
+            )
+
+            order_item.receive_items(quantity) 
+            order_item.check_received()
+
         
-        inventory, created = Inventory.objects.get_or_create(
-            product=product,
-            defaults={
-                'branch': request.user.branch,
-                'cost': cost,
-                'price': selling_price,
-                'quantity': quantity,
-                'stock_level_threshold': product.min_stock_level,
-                'reorder': False,
-                'alert_notification': True
-            }
-        )
         logger.info(inventory)
         product.save()
-
-        if not created:
-            inventory.quantity += quantity
-            inventory.cost = cost
-            
-        
-        ActivityLog.objects.create(
-            purchase_order = purchase_order,
-            branch = request.user.branch,
-            user=request.user,
-            action= 'stock in',
-            inventory=inventory,
-            quantity=quantity,
-            description=f'Stock in from {order_item.purchase_order.order_number}',
-            total_quantity=inventory.quantity 
-        )
-        
-        order_item.receive_items(quantity) 
-        order_item.check_received()
-        
-        
         inventory.save()
 
         return JsonResponse({'success': True, 'message': 'Inventory updated successfully'}, status=200)
@@ -1856,7 +1856,8 @@ def product(request):
             min_stock_level = data['min_stock_level'],
             description = data['description'], 
             end_of_day = True if data['end_of_day'] else False,
-            service = True if data['service'] else False
+            service = True if data['service'] else False,
+            branch=Branch.objects.get(id=1)
         )
         product.save()
         

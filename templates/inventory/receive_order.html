@@ -40,6 +40,7 @@
                 <td>{{ item.actual_unit_cost }}</td>
                 <td>
                     {% if item.product.price == 0 %}
+                        {% if request.user.role == 'admin' or request.user.role == 'owner' %}    
                         <input 
                             type="number" 
                             id="selling_{{ item.id }}" 
@@ -52,6 +53,7 @@
                                 '{{ item.actual_unit_cost }}'
                             )"
                         >
+                        {% endif %}
                     {% else %}
                         {{ item.product.price }}
                     {% endif %}
@@ -88,25 +90,16 @@
 
     // Function to submit quantity, selling price, and expected profit
     function submitQuantity(itemId, el) {
-        const quantity = document.getElementById(`quantity_${itemId}`).value;
-        const sellingPrice = document.getElementById(`selling_${itemId}`).value;
+        const quantity = document.getElementById(`quantity_${itemId}`)?.value || 0;
+        const sellingPrice = document.getElementById(`selling_${itemId}`)?.value || 0;
         const expectedProfit = document.getElementById(`profit_${itemId}`).textContent;
 
-        if (quantity <= 0 || sellingPrice <= 0) {
-            Swal.fire({
-                title: 'Error',
-                text: "Quantity and Selling Price must be greater than zero.",
-                icon: 'error'
-            });
-            return;
-        }
-
-        el.disabled = true;
+        el.disabled = true; 
 
         const data = {
             id: itemId,
-            quantity: parseInt(quantity),
-            price: parseFloat(sellingPrice),
+            quantity: parseInt(quantity) || 0,
+            price: parseFloat(sellingPrice) || 0,
             expected_profit: parseFloat(expectedProfit)
         };
 

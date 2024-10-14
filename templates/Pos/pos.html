@@ -50,12 +50,11 @@ tbody tr:hover {
     background-color: #f1f1f1;
 }
 
-// modal css
     .payment-modal{
         background-color: #fff;
         width: 60%;
-        max-width: 600px;
-        max-height: 80%; 
+        max-width: 100%;
+        max-height: 100%; 
         border-radius: 10px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         overflow-y: auto; 
@@ -359,6 +358,111 @@ const ostBtn = document.getElementById('out_of_stock');
 
 const tableEl = document.querySelector('#invoiceTable');
 const loaderSpin = document.querySelector('#loader');
+const previousDueEl = document.querySelector('#previous_due');
+
+// set receipt items
+function setReceiptItems(){
+    const receiptTableBody = document.querySelector('#receiptTable');
+    console.log(receiptTableBody, cart[0])
+    receiptTableBody.innerHTML = '';
+
+    // Populate the table with invoice items
+    cart.forEach(({ quantity, product_name, price, product_description }) => {
+        const newRow = receiptTableBody.insertRow();
+            newRow.insertCell().textContent = `${product_name}`
+            newRow.insertCell().textContent = `(${product_description})`;
+            newRow.insertCell().textContent = quantity;
+            newRow.insertCell().textContent = `${price}`
+            newRow.insertCell().textContent = `${quantity * price}`;
+        });
+}
+
+const receipt = () =>{
+    const id_amount_paid = document.getElementById('id_amount_paid');
+    const depositedAmount = document.getElementById('id_deposited');
+    const period = document.getElementById('id_period')
+    const availableBalance = document.getElementById('availableBalance')
+    const previousDue = document.getElementById('previous_due')
+    const termsButtons = document.querySelectorAll('.btn');
+
+    // active class terms button
+    termsButtons.forEach((btn)=>{
+        btn.addEventListener('click', ()=>{
+            termsButtons.forEach((button)=>{
+                if(button.classList.contains('active')){
+                    button.classList.remove('active')
+                }
+            })
+            btn.classList.add('active')
+        })
+    })
+
+    // default if they is previous due
+    availableBalance.textContent = previousDue.textContent || 0.00;
+
+    //time and date
+    const todayDate = new Date()
+    document.getElementById('date').textContent = (new Date(todayDate.getDate))
+    document.getElementById('time').textContent = todayDate.getTime()
+
+    period.addEventListener('input', ()=>{
+        if(period.value < 0){
+            Swal.fire({
+                icon:'error',
+                text:'Period interval can be less than 0', 
+                title: 'error'
+            })
+            return;
+        }
+        displayDueDates(period.value)
+    })
+
+    id_amount_paid.addEventListener('input', ()=>{
+        let value = id_amount_paid.value
+        depositedAmount.textContent = value
+
+        // availabe balancce
+        availableBalance.textContent = parseFloat(value) + (parseFloat(previousDue.textContent) || 0)
+        console.log(availableBalance)
+    })
+
+    const calculateNextDueDate = (period) => {
+        const todayDate = new Date(); 
+        const dueDates = []; 
+
+        for (let i = 1; i <= period; i++) {
+            const nextDueDate = new Date(todayDate); 
+            nextDueDate.setDate(todayDate.getDate() + 30 * i); 
+            dueDates.push(nextDueDate); 
+        }
+
+        return dueDates;
+    };
+
+    
+    const displayDueDates = (period) => {
+        const dueDates = calculateNextDueDate(period); // Get due dates
+        const paymentDateElement = document.getElementById('payment_date'); // Get the <p> element
+
+        let dateFields = ''; 
+
+        dueDates.forEach((date, index) => {
+            // Format the date as yyyy-mm-dd for the date input field
+            const formattedDate = date.toISOString().split('T')[0];
+
+            // Create input fields for each payment date
+            dateFields += `
+                <label for="payment_date_${index}">Payment ${index + 1}:</label>
+                <input type="date" id="payment_date_${index}" value="${formattedDate}">
+                <br>
+            `;
+        });
+
+        paymentDateElement.innerHTML = dateFields; 
+    };
+}
+
+receipt()
 
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -459,8 +563,9 @@ document.querySelector('#id_pay').addEventListener(
     'click', ()=>{
         if(clientName){
             updateCartDisplay();
-            modal.classList.remove("hidden");
-            overlay.classList.remove("hidden");
+            setReceiptItems()
+            modal.classList.remove('hidden')
+            overlay.classList.remove('hidden')
         }else{
             Swal.fire({
                 icon:'error',
@@ -623,7 +728,7 @@ async function fetchProductData (product){
                 throw new Error('Network response was not ok.');
             }
             const product = await response.json();
-
+            console.log('product', product)
             addItem(product);
             addedToCartProduct = [];
             addedToCartProduct.push(product);
@@ -655,6 +760,7 @@ function addItem(product) {
         id:generateUniqueId(),
         inventory_id:product[0].inventory_id, 
         product_name: product[0].product_name,
+        product_description: product[0].description,
         quantity:1,
         price:`${product[0].price * parseFloat(currencyData[0][0]?.exchange_rate)}`
         };
@@ -804,15 +910,6 @@ function updateReceiptFooter(symbol, totalBalanceDue, totalDueAmount, payable){
     document.querySelector('#rtotal_balance_due').textContent = `${symbol + ' ' + totalDueAmount.toFixed(2) }`
 }
 
-// pay amount event
-document.querySelector('#id_amount_paid').addEventListener(
-    'input', ()=>{
-        amount_paid = parseFloat($('#id_amount_paid').val())
-        document.querySelector('#id_paid_amount').textContent = `${currencyData[0][0].symbol + ' ' +  amount_paid.toFixed(2)}`
-        totals()
-    }
-)
-
 const removeItem = (el) => {
     const id = el.dataset.id
     cart = cart.filter((item) => item.id !== id);
@@ -943,6 +1040,7 @@ async function displayReceipt(invoiceId) {
         document.querySelector('#receiptNumber').textContent = invoiceNumber;
 
         const receiptTableBody = document.querySelector('#receiptTable');
+        console.log(receiptTableBody, invoice)
         receiptTableBody.innerHTML = '';
 
         // Populate the table with invoice items
@@ -1028,8 +1126,7 @@ function submitClient() {
         console.error("Error:", error);
     });
 }
-
-
+    
 async function fetchCustomers() {
     try {
         const response = await fetch('{% url "finance:customers" %}');
@@ -1041,6 +1138,7 @@ async function fetchCustomers() {
 
         customersData.push(customers);
         displayCustomers(customers);
+
     } catch (error) {
         console.error('Error fetching customers:', error);
         productListContainer.innerHTML = '<p class="error-message">Error loading customers. Please try again later.</p>';
@@ -1084,7 +1182,7 @@ async function fetchCustomerAccount(customerId) {
         const balanceEl = document.querySelector('#due_balance');
         balanceEl.innerHTML = '';
 
-        const previousDueEl = document.querySelector('#previous_due');
+        const previousDueEl = document.getElementById('previous_due');
         const balance = data.find(item => item.currency__symbol === currencyData[0][0]?.symbol);
 
         if (balance.balance < 0) {
@@ -1103,12 +1201,31 @@ async function fetchCustomerAccount(customerId) {
             balanceItem.textContent = `${balance.currency__symbol} ${balance.balance}`;
             balanceEl.appendChild(balanceItem);
         });
+        setCustomer(customerId)
         totals();
     } catch (error) {
         console.error('Error:', error);
     }
 }
 
+function setCustomer(customerId){
+    // customer information
+    const company = document.getElementById('customerCompany');
+    const name = document.getElementById('customerName');
+    const cell = document.getElementById('customerPhone');
+    const email = document.getElementById('customerEmail')
+    const address = document.getElementById('customerAddress')
+
+    console.log(customerId, 'customer id')
+
+    data = customersData[0].filter((cus)=> cus.id == customerId)
+    console.log(data)
+
+    name.textContent = data[0]?.name;
+    cell.textContent = data[0]?.phone_number;
+    email.textContent = data[0]?.email;
+    address.textContent = data[0]?.address;
+}
 
 function getCookie(name) {
     let cookieValue = null;
