@@ -161,6 +161,7 @@ class Inventory(models.Model):
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     cost =  models.DecimalField(max_digits=10, decimal_places=2)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    dealer_price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.IntegerField()
     status = models.BooleanField(default=True)
     stock_level_threshold = models.IntegerField(default=5)

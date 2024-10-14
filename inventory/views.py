@@ -441,7 +441,7 @@ def edit_inventory(request, product_name):
         
         product = Product.objects.get(name=product_name)
         product.name=request.POST['name']
-        product.batch_code=request.POST['batch_code']
+        # product.batch_code=request.POST['batch_code']
         product.description=request.POST['description']
         
         end_of_day = request.POST.get('end_of_day')
@@ -458,8 +458,9 @@ def edit_inventory(request, product_name):
             
         inv_product.price = Decimal(request.POST['price'])
         inv_product.cost = Decimal(request.POST['cost'])
+        inv_product.dealer_price = Decimal(request.POST['dealer_price'])
         inv_product.stock_level_threshold = request.POST['min_stock_level']
-        logger.info(f'msl -> {inv_product.stock_level_threshold}')
+        
         inv_product.save()
         
         ActivityLog.objects.create(
@@ -1734,7 +1735,8 @@ def process_received_order(request):
 
         order_item_id = data.get('id')
         quantity = data.get('quantity', 0)
-        selling_price = data.get('price')
+        selling_price = data.get('price', 0)
+        dealer_price = data.get('dealer_price', 0)
         expected_profit = data.get('expected_profit')
 
         try:
@@ -1755,13 +1757,11 @@ def process_received_order(request):
         except Product.DoesNotExist:
             return JsonResponse({'success': False, 'message': f'Product with ID: {order_item.product.id} does not exist'}, status=404)
         
-
         if quantity > order_item.quantity:
             return JsonResponse({'success':False, 'message':'quantity can\t be more than quantity ordered.'})
 
         product.price = selling_price
-        
-        logger.info(product.name)
+    
         # cost = average_inventory_cost(product.id, order_item.actual_unit_cost, quantity, request.user.branch.id)
         cost = order_item.actual_unit_cost
 
@@ -1773,6 +1773,7 @@ def process_received_order(request):
                     'branch': request.user.branch,
                     'cost': cost,
                     'price': selling_price,
+                    'dealer_price': dealer_price,
                     'quantity': 0,
                     'stock_level_threshold': product.min_stock_level,
                     'reorder': False,
@@ -1782,6 +1783,7 @@ def process_received_order(request):
             if not created:
                 inventory.cost = cost
                 inventory.price = selling_price
+                dealer_price = dealer_price
         else:
             inventory = Inventory.objects.get(product=product)
             inventory.quantity += quantity
@@ -1857,10 +1859,17 @@ def product(request):
             description = data['description'], 
             end_of_day = True if data['end_of_day'] else False,
             service = True if data['service'] else False,
-            branch=Branch.objects.get(id=1)
         )
         product.save()
         
+        Inventory.objects.create(
+            product = product,
+            branch = Branch.objects.get(id=1), # To be specific
+            cost = product.cost,
+            price = product.price,
+            dealer_price = 0,
+            quantity = product.quantity
+        )
         return JsonResponse({'success':True})
             
     if request.method == 'GET':
