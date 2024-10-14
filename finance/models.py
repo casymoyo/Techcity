@@ -256,7 +256,11 @@ class Invoice(models.Model):
     cancelled = models.BooleanField(default=False)
     products_purchased = models.TextField()
     invoice_return = models.BooleanField(default=False)
-    
+    payment_terms = models.CharField(choices=(
+        ('cash', 'cash'),
+        ('layby', 'layby'),
+        ('installment', 'installment')
+    ))
     def generate_invoice_number(branch):
         last_invoice = Invoice.objects.filter(branch__name=branch).order_by('-id').first()
         if last_invoice:

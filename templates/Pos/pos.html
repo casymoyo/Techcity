@@ -52,7 +52,7 @@ tbody tr:hover {
 
     .payment-modal{
         background-color: #fff;
-        width: 60%;
+        width: 100%;
         max-width: 100%;
         max-height: 100%; 
         border-radius: 10px;
@@ -71,8 +71,6 @@ tbody tr:hover {
         height: 100%;
         background-color: rgba(0, 0, 0, 0.5);
         display: none; 
-        justify-content: center;
-        align-items: center;
         z-index: 1000;
     }
 
@@ -340,7 +338,8 @@ let paymentMethod = 'cash'
 let menuName = '';
 let clientName = '';
 let initialCurrencyValue = '';
-let addedToCartProduct = []
+let addedToCartProduct = [];
+let paymentTerms = 'cash'
 
 let error = document.querySelector('#error_message')
 
@@ -377,6 +376,114 @@ function setReceiptItems(){
         });
 }
 
+const laybyButton = document.getElementById("layby");
+const installmentButton = document.getElementById("Installment");
+const cashButton = document.getElementById("cash");
+
+const laybyTerms = document.querySelector(".layby-terms");
+const monthlyInstallments = document.querySelector(".monthly-installments");
+
+laybyTerms.style.display = "none";
+monthlyInstallments.style.display = "none";
+
+const amountPaidInput = document.getElementById('id_amount_paid');
+const totalBalanceDueElement = document.getElementById('total_balance_due');
+const balanceDueElement = document.getElementById('id_balance');
+const balanceLabel = document.getElementById('balance_label');
+const paymentButtons = document.querySelectorAll(".btn-terms");
+
+let paymentTerm = 'cash'; 
+
+function calculateBalance() {
+    let total = parseFloat(totalBalanceDueElement.textContent.split(' ')[1]); 
+
+    console.log(totalBalanceDueElement.textContent.split('')[1], totalBalanceDueElement.textContent)
+    let amountPaid = parseFloat(amountPaidInput.value) || 0;
+    let balance;
+
+    if (paymentTerm === 'cash') {
+        console.log(total, amountPaid)
+        balance = amountPaid - total; 
+        balanceLabel.textContent = 'Change';
+        balanceDueElement.textContent = Math.abs(balance).toFixed(2);
+        console.log(balanceDueElement.textContent, balance)
+    } else {
+        balance = total - amountPaid; 
+        balanceLabel.textContent = 'Amount Due';
+        balanceDueElement.textContent = balance.toFixed(2);
+    }
+}
+
+amountPaidInput.addEventListener('input', calculateBalance);
+paymentButtons.forEach(button => {
+    button.addEventListener('click', function () {
+        paymentTerm = this.id === 'cash' ? 'cash' : 'layby_installment';
+
+        paymentButtons.forEach(btn => btn.classList.remove("active"));
+        this.classList.add("active");
+
+        calculateBalance();
+    });
+});
+
+function handlePaymentTypeClick(selectedButton) {
+    
+    cashButton.classList.remove("active");
+    laybyButton.classList.remove("active");
+    installmentButton.classList.remove("active");
+
+    selectedButton.classList.add("active");
+
+    if (selectedButton.id === "layby") {
+        laybyTerms.style.display = "block";
+        monthlyInstallments.style.display = "none";
+    } else if (selectedButton.id === "Installment") {
+        laybyTerms.style.display = "none";
+        monthlyInstallments.style.display = "block";
+    } else if (selectedButton.id === "cash") {
+        laybyTerms.style.display = "none";
+        monthlyInstallments.style.display = "none";
+    }
+}
+
+laybyButton.addEventListener("click", function () {
+    handlePaymentTypeClick(laybyButton);
+    paymentTerms = 'layby';
+});
+
+installmentButton.addEventListener("click", function () {
+    handlePaymentTypeClick(installmentButton);
+    paymentTerms = 'installment';
+});
+
+function handlePaymentMethodClick(selectedButton) {
+    paymentButtons.forEach(button => button.classList.remove("active"));
+    selectedButton.classList.add("active");
+}
+
+const paymentMethodButtons = document.querySelectorAll(".payment-method button");
+
+function toggleActiveButton(selectedButton) {
+    paymentMethodButtons.forEach(button => {
+        button.classList.remove("active");
+    });
+    selectedButton.classList.add("active");
+}
+
+paymentMethodButtons.forEach(button => {
+    button.addEventListener("click", function () {
+        toggleActiveButton(button);
+        if (button.dataset.name === 'cash') { 
+            paymentMethod = button.dataset.name;
+        } else if (button.dataset.name === 'ecocash'){
+            paymentMethod = button.dataset.name;
+        } else if (button.dataset.name === 'bank'){
+            paymentMethod = button.dataset.name;
+        }
+    });
+    
+});
+
 const receipt = () =>{
     const id_amount_paid = document.getElementById('id_amount_paid');
     const depositedAmount = document.getElementById('id_deposited');
@@ -398,12 +505,7 @@ const receipt = () =>{
     })
 
     // default if they is previous due
-    availableBalance.textContent = previousDue.textContent || 0.00;
-
-    //time and date
-    const todayDate = new Date()
-    document.getElementById('date').textContent = (new Date(todayDate.getDate))
-    document.getElementById('time').textContent = todayDate.getTime()
+    availableBalance.textContent = previousDue.textContent || 0.00
 
     period.addEventListener('input', ()=>{
         if(period.value < 0){
@@ -940,33 +1042,15 @@ async function processCart(el) {
             currency: currencyData[0][0].id,
             amount_paid: amount_paid,
             client_id: clientName,
-            days: $('#id_days').val(),
-            note: $('#id_note').val(),
-            discount: discount_amount,
-            delivery: delivery_amount,
             payable: payable_amount,
             vat_amount: vat_amount,
             payment_method: paymentMethod,
-            next_due_days : document.getElementById('next_due_date').value,
-            recourring:document.getElementById('reoccuring').checked,
+            recourring:document.getElementById('id_reoccuring').checked,
+            paymentTerms:paymentTerms
         }
     ];
-
-    if (data[0].recourring) {
-        const next_due_date = document.getElementById('next_due_date').value;
-        if (next_due_date === undefined || next_due_date === null || next_due_date.trim() === "") {
-            document.querySelector('#pay_error').textContent = '* Please enter recurring days';
-            document.querySelector('#next_due_date').focus();
-            return;
-        }
-    }
-
-    if (el.dataset.name === 'pay_later' && data[0].days <= 0) {
-        document.querySelector('#pay_error').textContent = '* Please enter the credit days';
-        document.querySelector('#id_days').focus();
-        return;
-    }
-
+    
+    console.log(data)
     const url = el.dataset.name === 'qoutation' 
         ? "{% url 'finance:add_qoutation' %}" 
         : "{% url 'finance:create_invoice' %}";
@@ -1000,7 +1084,13 @@ async function processCart(el) {
                     window.location.href = `/finance/qoutation/preview/${result.qoute_id}`;
                 }, 2000);
             } else {
-                displayReceipt(result.invoice_id);
+                Swal.fire({
+                    text:'Invoice Successfully Procesed',
+                    icon:'success',
+                    title:'Success'
+                }).then(()=>{
+                    displayReceipt(result.invoice_id);
+                })
             }
         } else {
             console.log('Error:', result.message);
@@ -1222,9 +1312,7 @@ function setCustomer(customerId){
     console.log(data)
 
     name.textContent = data[0]?.name;
-    cell.textContent = data[0]?.phone_number;
-    email.textContent = data[0]?.email;
-    address.textContent = data[0]?.address;
+   
 }
 
 function getCookie(name) {

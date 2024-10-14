@@ -541,19 +541,19 @@ def create_invoice(request):
                     amount=invoice_total_amount,
                     amount_paid=amount_paid,
                     amount_due=amount_due,
-                    discount_amount=invoice_data['discount'],
-                    delivery_charge=invoice_data['delivery'],
+                    discount_amount=invoice_data['discount'] or 0,
+                    delivery_charge=invoice_data['delivery'] or 0,
                     vat=Decimal(invoice_data['vat_amount']),
                     payment_status = Invoice.PaymentStatus.PARTIAL if amount_due > 0 else Invoice.PaymentStatus.PAID,
                     branch = request.user.branch,
                     user=request.user,
                     currency=currency,
                     subtotal=invoice_data['subtotal'],
-                    note=invoice_data['note'],
+                    note=invoice_data['note'] or 'h',
                     reocurring = invoice_data['recourring'],
                     products_purchased = ', '.join([f'{item['product_name']} x {item['quantity']} ' for item in items_data]),
-                    recurrence_period = recurrence_period ,
-                    next_due_date = datetime.datetime.now() + timedelta(days=recurrence_period )
+                    recurrence_period = recurrence_period,
+                    payment_term = invoice_data['paymentTerms']
                 )
                 
                 # #create transaction

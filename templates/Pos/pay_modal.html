@@ -28,6 +28,11 @@
         background-color: #f4f4f4;
     }
 
+    .currency_rcp{
+        display: flex;
+        align-items: center;
+    }
+
     .receipt {
         background-color: white;
         padding: 20px;
@@ -76,6 +81,7 @@
     .customer-info {
         display: flex;
         justify-content: space-between;
+        align-items: center;
     }
 
     .customer-info div {
@@ -102,7 +108,7 @@
         text-align: right;
     }
 
-    .layby-terms h4 {
+    .layby-terms h4 , .monthly-installments h4{
         margin-bottom: 10px;
         font-size: 1.1em;
     }
@@ -115,39 +121,9 @@
     </style>
 <div class="receipt-el">
     <div class="receipt">
-        <!-- Header -->
-        <div class="header">
-            <div class="logo">
-                <img src="{% static 'assets/logo.png' %}" alt="TechCity Logo">
-                <div class="company-info">
-                    <!-- <h2>TechCity</h2> -->
-                    <p>Tin No:20012500</p>
-                    <p>Vat: 2001278367</p>
-                    <p>65 Speke, Speke Avenue</p>
-                </div>
-            </div>
-            <div class="receipt-info">
-                <h3>Receipt <span id="invoiceNumber"></span></h3>
-                <p>Date: <span id="date"></span></p>
-                <p>Time: <span id="time"></span>14:39 pm</p>
-            </div>
-        </div>
-        
-        <hr>
-
         <!-- Payment Details -->
         <div class="payment-details">
-            <p><strong>Payment:</strong>
-                {% for method in payment_methods %}
-                    <button class="btn  btn-outline-dark btn-sm" id="{{ method.id }}">{{ method.name }}</button>
-                {% endfor %}
-            </p>
-            <p class="terms"><strong>Terms:</strong>
-                <button class="btn btn-outline-dark btn-sm border active" id="cash">Cash</button>
-                <button class="btn btn-outline-dark btn-sm border" id="layby">Layby</button>
-                <button class="btn btn-outline-dark btn-sm border" id="Installment">Monthly Installment</button>
-            </p>
-            <p><strong>Currency:</strong><select  id='rp_currency' class='form-select'>
+            <p class="currency_rcp"><strong>Currency:</strong><select  id='rp_currency' class='form-select' style="width: 100px;">
                 <option value=''>Currency</option>
                 {% for currency in currencies %}
                     {% if currency.default %}
@@ -157,27 +133,33 @@
                     {% endif %}
                 {% endfor %}
             </select></p>
-            <p><strong>Cashier:</strong> {{ request.user.first_name }}</p>
+            <p class="payment-method"><strong>Payment:</strong>
+                {% for method in payment_methods %}
+                    <button class="btn  btn-outline-dark btn-sm" id="{{ method.id }}">{{ method.name }}</button>
+                {% endfor %}
+                    <button class="btn-outline-dark btn-sm border" id="pCash" data-name="cash">Cash</button>
+                    <button class="btn-outline-dark btn-sm border" id="pBank" data-name="bank">Bank</button>
+                    <button class="btn-outline-dark btn-sm border" id="pEcocash" data-name="ecocash">Ecocash</button>
+            </p>
+            <p class="terms"><strong>Terms:</strong>
+                <button class="btn btn-outline-dark btn-sm btn-terms border active" id="cash">Cash</button>
+                <button class="btn btn-outline-dark btn-sm btn-terms border" id="layby">Layby</button>
+                <button class="btn btn-outline-dark btn-sm btn-terms border" id="Installment">Monthly Installment</button>
+            </p>
         </div>
 
         <hr>
 
         <!-- Customer Info -->
+         
+        <h4>Payment by <span id="customerName"></span></h4>
         <div class="customer-info">
-            <div class="company">
-                <p><strong>Company:</strong> {{ request.user.company.name }}</p>
-                <p><strong>Name:</strong> <span id="customerName"></span></p>
-                <p><strong>Cell:</strong> <span id="customerPhone"></span></p>
-                <p><strong>Email:</strong> <span id="customerEmail"></span></p>
-                <!-- <p><strong>Vat:</strong> {{ request.user.company.vat_number }}</p>
-                <p><strong>Tin:</strong> 245004667 {{ request.user.company.tin_number}}</p> -->
-                <p><strong>Address:</strong> <span id="customerAddress"></span></p>
-            </div>
             <div class="account-summary">
-                <h4>Customer Account Summary</h4>
-                <p><strong>Amount Received:</strong>
+                <p><strong>Enter Amount Received:</strong>
                     <input type="number" id="id_amount_paid" name="amount_received" class="form-control">
                 </p>
+            </div>
+            <div>
                 <p><strong>Previous bal:</strong><span id="previous_due"></span></p>
                 <p><strong>Available bal:</strong> <span id="availableBalance"></span></p>
             </div>
@@ -205,9 +187,10 @@
         <div class="totals">
             <p><strong>Subtotal:</strong> <span id="id_subtotal"></span></p>
             <p><strong>VAT 15%:</strong> <span id="id_vat"></span></p>
-            <p><strong>Total:</strong> <span id='total_balance_due'>25.00</span></p>
-            <p><strong>Available bal:</strong> <span id='total_balance_due'>25.00</span></p>
-            <p><strong>Due amount:</strong> <span id="id_balance"></span></p>
+            <p><strong>Previous Due</strong> <span id="previous_due"></span></p>
+            <p><strong>Total:</strong> <span id='total_balance_due'></span></p>
+            <!-- <p><strong>Available bal:</strong> <span id='total_balance_due'>25.00</span></p> -->
+            <p><strong><span id="balance_label">Amount Due</span>:</strong> <span id="id_balance"></span></p>
         </div>
 
         <hr>
@@ -223,27 +206,20 @@
         </div>
 
         <!-- Monthly Installments-->
-        <!-- <div>
+        <div class="monthly-installments">
             <h4>Monthly Payments</h4>
             <p><strong>Amount Paid:</strong> <span id="id_deposited"></span></p>
             <p><strong>Reoccuring:</strong>
                 <input type="checkbox" name="reoccuring" id="id_reoccuring">
             </p>
             <p id="monthly_payment_date"></p>
-        </div> -->
+        </div>
 
         <div class="d-flex justify-content-end">
             <button class="btn btn-danger btn-sm" id="closebtn">Cancel</button>
             <button class="btn btn-primary btn-sm mx-2" id="id_hold">Hold</button>
-            <button class="btn btn-success btn-sm " id="processCart">Process Receipt</button>
+            <button class="btn btn-success btn-sm " id="processCart" data-name="invoice" onclick="processCart(this)">Process Receipt</button>
         </div>
     </div>
-
-    <script>
-        
-
-        termsButtons[0].classList.add('active')
-        
-    </script>
 </body>
 </html>
