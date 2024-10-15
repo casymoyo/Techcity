@@ -531,6 +531,8 @@ def create_invoice(request):
             amount_due = invoice_total_amount - amount_paid  
 
             logger.info(f'Invoice for customer: {customer.name}')
+
+            cogs = COGS.objects.create(amount=Decimal(0))
             
             with transaction.atomic():
                 
@@ -590,7 +592,7 @@ def create_invoice(request):
                 logger.info(f'Creating transaction obj for invoice: {invoice}')
                 
                 # Cost of sales parent object
-                cogs = COGS.objects.create(amount=Decimal(0))
+                
                 
                 # Create InvoiceItem objects
                 for item_data in items_data:
@@ -619,11 +621,9 @@ def create_invoice(request):
                     )
 
                     # cost of sales item
-                    COGSItems.objects.create(
+                    COGSItems.objects.get_or_create(
                         invoice=invoice,
-                        cogs=cogs,
-                        product= Inventory.objects.get(product=product)
-
+                        defaults={'cogs': cogs, 'product': Inventory.objects.get(product=product)}
                     )
                     
                     # stock log  

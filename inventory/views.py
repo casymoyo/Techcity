@@ -460,6 +460,7 @@ def edit_inventory(request, product_name):
         inv_product.cost = Decimal(request.POST['cost'])
         inv_product.dealer_price = Decimal(request.POST['dealer_price'])
         inv_product.stock_level_threshold = request.POST['min_stock_level']
+        inv_product.dealer_price = inv_product.dealer_price
         
         inv_product.save()
         
@@ -1764,45 +1765,41 @@ def process_received_order(request):
 
             cost = order_item.actual_unit_cost
 
-            if request.user.role in ['admin', 'owner']:
-                inventory, created = Inventory.objects.get_or_create(
-                    product=product,
-                    defaults={
-                        'branch': request.user.branch,
-                        'cost': cost,
-                        'price': selling_price,
-                        'dealer_price': dealer_price,
-                        'quantity': 0,
-                        'stock_level_threshold': product.min_stock_level,
-                        'reorder': False,
-                        'alert_notification': True
-                    }
-                )
-                if not created:
-                    inventory.cost = cost
-                    inventory.price = selling_price
-                    inventory.dealer_price = dealer_price
-                    inventory.quantity += quantity
-
-            else:
-                inventory = Inventory.objects.get(product=product)
+            
+            inventory, created = Inventory.objects.get_or_create(
+                product=product,
+                defaults={
+                    'branch': request.user.branch,
+                    'cost': cost,
+                    'price': selling_price,
+                    'dealer_price': dealer_price,
+                    'quantity': 0,
+                    'stock_level_threshold': product.min_stock_level,
+                    'reorder': False,
+                    'alert_notification': True
+                }
+            )
+            if not created:
+                inventory.cost = cost
+                inventory.price = selling_price
+                inventory.dealer_price = dealer_price
                 inventory.quantity += quantity
 
-                # Log the inventory activity
-                ActivityLog.objects.create(
-                    purchase_order=purchase_order,
-                    branch=request.user.branch,
-                    user=request.user,
-                    action='stock in',
-                    inventory=inventory,
-                    quantity=quantity,
-                    description=f'Stock in from {order_item.purchase_order.order_number}',
-                    total_quantity=inventory.quantity
-                )
+            # Log the inventory activity
+            ActivityLog.objects.create(
+                purchase_order=purchase_order,
+                branch=request.user.branch,
+                user=request.user,
+                action='stock in',
+                inventory=inventory,
+                quantity=quantity,
+                description=f'Stock in from {order_item.purchase_order.order_number}',
+                total_quantity=inventory.quantity
+            )
 
-                # Update order item received quantity and status
-                order_item.receive_items(quantity)
-                order_item.check_received()
+            # Update order item received quantity and status
+            order_item.receive_items(quantity)
+            order_item.check_received()
 
             product.save()
             inventory.save()

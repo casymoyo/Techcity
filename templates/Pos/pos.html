@@ -1133,7 +1133,7 @@ async function displayReceipt(invoiceId) {
         console.log(prvDue)
 
         document.getElementById('rcp-payment')
-        document.getElementById('rcp-terms').textContent = payment_terms;
+        document.getElementById('rcp-pterms').textContent = payment_terms;
         document.getElementById('rcp-currency').textContent = currencySymbol;
         document.getElementById('rcp_amount_paid').textContent = currencySymbol + ' ' + amountPaid;
         document.getElementById('rcp_previous_due').textContent = currencySymbol + ' ' + prvDue;
