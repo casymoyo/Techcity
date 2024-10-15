@@ -486,6 +486,12 @@ paymentMethodButtons.forEach(button => {
     
 });
 
+console.log(previousDue)
+
+const tpreviousDue = document.getElementById('tpreviousDue');
+    
+tpreviousDue.textContent = previousDue;
+
 const receipt = () =>{
     const id_amount_paid = document.getElementById('id_amount_paid');
     const depositedAmount = document.getElementById('id_deposited');
@@ -983,9 +989,6 @@ function updateCartDisplay() {
         totals();
     }
 }
-
-
-
 
 // update tfoot
 function updateTfoot(vat, totalAmount, payable){
