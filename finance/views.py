@@ -1597,6 +1597,7 @@ def invoice_preview_json(request, invoice_id):
         'quantity',
         'item__product__description',
         'total_amount',
+        'unit_price'
     )
 
     invoice_dict = {

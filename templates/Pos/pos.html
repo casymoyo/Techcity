@@ -483,12 +483,6 @@ paymentMethodButtons.forEach(button => {
     
 });
 
-console.log(previousDue)
-
-const tpreviousDue = document.getElementById('tpreviousDue');
-    
-tpreviousDue.textContent = previousDue;
-
 const receipt = () =>{
     const id_amount_paid = document.getElementById('id_amount_paid');
     const depositedAmount = document.getElementById('id_deposited');
@@ -1128,9 +1122,23 @@ async function displayReceipt(invoiceId) {
             vat: vatAmount,
             subtotal: subTotal,
             currency_symbol: currencySymbol,
-            amount_paid: amountPaid
+            amount_paid: amountPaid,
+            payment_terms: payment_terms
         } = invoice;
 
+        console.log(invoice);
+
+        let prvDue = parseFloat(document.getElementById('tpreviousDue').textContent.split(' ')[1]);
+
+        console.log(prvDue)
+
+        document.getElementById('rcp-payment')
+        document.getElementById('rcp-terms').textContent = payment_terms;
+        document.getElementById('rcp-currency').textContent = currencySymbol;
+        document.getElementById('rcp_amount_paid').textContent = currencySymbol + ' ' + amountPaid;
+        document.getElementById('rcp_previous_due').textContent = currencySymbol + ' ' + prvDue;
+        document.getElementById('available_balance').textContent = currencySymbol + ' ' + (invoiceTotal - amountPaid + prvDue)
+        document.getElementById('total_amount').textContent = currencySymbol + ' ' + invoiceTotal
         document.querySelector('#invoiceNumber').textContent = invoiceNumber;
 
         const receiptTableBody = document.querySelector('#receipt');
@@ -1138,13 +1146,13 @@ async function displayReceipt(invoiceId) {
         receiptTableBody.innerHTML = '';
 
         // Populate the table with invoice items
-        invoiceItems.forEach(({ quantity, product_name, price, product_description }) => {
+        invoiceItems.forEach(({ quantity, item__product__name, unit_price, item__product__description, total_amount }) => {
             const newRow = receiptTableBody.insertRow();
-            newRow.insertCell().textContent = `${product_name}`
-            newRow.insertCell().textContent = `(${product_description})`;
+            newRow.insertCell().textContent = `${item__product__name}`
+            newRow.insertCell().textContent = `(${item__product__description})`;
             newRow.insertCell().textContent = quantity;
-            newRow.insertCell().textContent = `${price}`
-            newRow.insertCell().textContent = `${quantity * price}`;
+            newRow.insertCell().textContent = `${unit_price}`;
+            newRow.insertCell().textContent = `${quantity * unit_price}`;
         });;
 
         // Update total amounts in the footer
@@ -1310,12 +1318,13 @@ function setCustomer(customerId){
     const email = document.getElementById('customerEmail')
     const address = document.getElementById('customerAddress')
 
-    console.log(customerId, 'customer id')
-
     data = customersData[0].filter((cus)=> cus.id == customerId)
-    console.log(data)
 
     name.textContent = data[0]?.name;
+    name.textContent = data[0]?.name;
+    cell.textContent = data[0]?.cell;
+    email.textContent = data[0]?.email;
+    address.textContent = data[0]?.address;
    
 }
 

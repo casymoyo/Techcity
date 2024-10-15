@@ -22,7 +22,6 @@
     </head>
     <style>
     .receipt-el{
-        font-family: Arial, sans-serif;
         margin: 0;
         padding: 20px;
         background-color: #f4f4f4;
@@ -114,7 +113,7 @@
 
     .payment-details{
         display: flex;
-        justify-content: between;
+        justify-content: space-evenly;
         align-items: center;
     }
 
@@ -141,9 +140,11 @@
         
         <hr>
 
+        <input type="text" hidden id="paymentTerm">
+
         <!-- Payment Details -->
         <div class="payment-details">
-            <p><strong>Payment:</strong><span id="rcp-ayment"></span> </p>
+            <p><strong>Payment:</strong><span id="rcp-payment"></span> </p>
             <p class="terms"><strong>Terms:</strong><span id="rcp-terms"></span></p>
             <p><strong>Currency:</strong><span id="rcp-currency"></span></p>
             <p><strong>Cashier:</strong> {{ request.user.first_name }}</p>
@@ -164,11 +165,9 @@
             </div>
             <div class="account-summary">
                 <h4>Customer Account Summary</h4>
-                <p><strong>Amount Received:</strong>
-                    <input type="number" id="id_amount_paid" name="amount_received" class="form-control">
-                </p>
-                <p><strong>Previous bal:</strong><span id="previous_due"></span></p>
-                <p><strong>Available bal:</strong> <span id="availableBalance"></span></p>
+                <p><strong>Amount Paid:</strong> <span id="rcp_amount_paid"></span></p>
+                <p><strong>Previous bal:</strong><span id="rcp_previous_due"></span></p>
+                <p><strong>Available bal:</strong> <span id="available_balance"></span></p>
             </div>
         </div>
 
@@ -194,15 +193,14 @@
         <div class="totals">
             <p><strong>Subtotal:</strong> <span id="subTotalAmount"></span></p>
             <p><strong>VAT 15%:</strong> <span id="vatAmount"></span></p>
-            <p><strong>Total:</strong> <span id='totalAmount'></span></p>
-            <p><strong>Available bal:</strong> <span id='total_balance_due'></span></p>
-            <p><strong>Due amount:</strong> <span id="id_balance"></span></p>
+            <p><strong>Total:</strong> <span id='total_amount'></span></p>
+            <!-- <p><strong>Available bal:</strong> <span id='total_balance_due'></span></p>
+            <p><strong>Due amount:</strong> <span id="id_balance"></span></p> -->
         </div>
 
         <hr>
 
-        <!-- Layby Terms -->
-        <div class="layby-terms">
+        <div class="layby-terms" id="laybyTerms" style="display: none;">
             <h4>Layby Terms</h4>
             <p><strong>Deposited:</strong> <span id="id_deposited"></span></p>
             <p><strong>Period:</strong>
@@ -210,30 +208,60 @@
             </p>
             <p id="payment_date"></p>
         </div>
-
-        <!-- Monthly Installments-->
-        <!-- <div>
+        
+        <div class="monthly-installments" id="installmentTerms" style="display: none;">
             <h4>Monthly Payments</h4>
             <p><strong>Amount Paid:</strong> <span id="id_deposited"></span></p>
-            <p><strong>Reoccuring:</strong>
-                <input type="checkbox" name="reoccuring" id="id_reoccuring">
+            <p><strong>Recurring:</strong>
+                <input type="checkbox" name="recurring" id="id_recurring">
             </p>
-            <p id="monthly_payment_date"></p>
-        </div> -->
-
-        <div class="d-flex justify-content-end">
-            <button class="btn btn-danger btn-sm" id="closebtn">Cancel</button>
-            <button class="btn btn-primary btn-sm mx-2" id="id_hold">Hold</button>
-            <button class="btn btn-success btn-sm " id="processCart">Process Receipt</button>
+            <p><strong>Date:</strong>
+                <input type="date" id="installment_date">
+            </p>
         </div>
+        
+
+        <button class="btn btn-success btn-sm w-100">Print Receipt</button>
     </div>
 
-    <script>
-        
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const paymentTerm = document.getElementById('rcp_terms').textContent || '';
+    const laybyTerms = document.getElementById('laybyTerms');
+    const installmentTerms = document.getElementById('installmentTerms');
 
-        termsButtons[0].classList.add('active')
-        
-    </script>
+    // Show or hide sections based on payment term
+    if (paymentTerm === 'cash') {
+        laybyTerms.style.display = 'none';
+        installmentTerms.style.display = 'none';
+    } else if (paymentTerm === 'layby') {
+        laybyTerms.style.display = 'block';
+        installmentTerms.style.display = 'none';
+    } else if (paymentTerm === 'installment') {
+        laybyTerms.style.display = 'none';
+        installmentTerms.style.display = 'block';
+    }
+});
+
+function updateDateTime() {
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10);  
+
+    let hours = now.getHours();
+    let minutes = now.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    const time = hours + ':' + minutes + ' ' + ampm;
+
+    document.getElementById('date').textContent = date;
+    document.getElementById('time').textContent = time;
+}
+
+updateDateTime();
+setInterval(updateDateTime, 1000);
+</script>
 </body>
 </html>
 
