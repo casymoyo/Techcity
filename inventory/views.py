@@ -1726,90 +1726,89 @@ def receive_order(request, order_id):
 @login_required
 @transaction.atomic
 def process_received_order(request):
-    
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
+            items = data.get('items', [])
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
 
-        order_item_id = data.get('id')
-        quantity = data.get('quantity', 0)
-        selling_price = data.get('price', 0)
-        dealer_price = data.get('dealer_price', 0)
-        expected_profit = data.get('expected_profit')
+        for item_data in items:
+            order_item_id = item_data.get('id')
+            quantity = item_data.get('quantity', 0)
+            selling_price = item_data.get('selling_price', 0)
+            dealer_price = item_data.get('dealer_price', 0)
+            expected_profit = item_data.get('expected_profit')
 
-        try:
-            order_item = PurchaseOrderItem.objects.get(id=order_item_id)
-            order_item.expected_profit = expected_profit
-            order_item.save()
-        except PurchaseOrderItem.DoesNotExist:
-            return JsonResponse({'success': False, 'message': f'Purchase Order Item with ID: {order_item_id} does not exist'}, status=404)
+            try:
+                order_item = PurchaseOrderItem.objects.get(id=order_item_id)
+                order_item.expected_profit = expected_profit
+                order_item.save()
+            except PurchaseOrderItem.DoesNotExist:
+                return JsonResponse({'success': False, 'message': f'Purchase Order Item with ID: {order_item_id} does not exist'}, status=404)
 
-        try:
-            purchase_order = PurchaseOrder.objects.get(order_number=order_item.purchase_order.order_number)
-        except PurchaseOrderItem.DoesNotExist:
-            return JsonResponse({'success': False, 'message': f'Purchase Order Item with Order number: {order_item.order.purchase_order.order_number} does not exist'}, status=404)
-        
-        try:
-            product = Product.objects.get(id=order_item.product.id)
-            logger.info(product)
-        except Product.DoesNotExist:
-            return JsonResponse({'success': False, 'message': f'Product with ID: {order_item.product.id} does not exist'}, status=404)
-        
-        if quantity > order_item.quantity:
-            return JsonResponse({'success':False, 'message':'quantity can\t be more than quantity ordered.'})
+            try:
+                purchase_order = PurchaseOrder.objects.get(order_number=order_item.purchase_order.order_number)
+            except PurchaseOrderItem.DoesNotExist:
+                return JsonResponse({'success': False, 'message': f'Purchase Order Item with Order number: {order_item.purchase_order.order_number} does not exist'}, status=404)
+            
+            try:
+                product = Product.objects.get(id=order_item.product.id)
+            except Product.DoesNotExist:
+                return JsonResponse({'success': False, 'message': f'Product with ID: {order_item.product.id} does not exist'}, status=404)
+            
+            if quantity > order_item.quantity:
+                return JsonResponse({'success': False, 'message': 'Quantity cannot be more than ordered quantity.'})
 
-        product.price = selling_price
-    
-        # cost = average_inventory_cost(product.id, order_item.actual_unit_cost, quantity, request.user.branch.id)
-        cost = order_item.actual_unit_cost
+            product.price = selling_price
 
-        if request.user.role in ['admin', 'owner']:
-            logger.info('here')
-            inventory, created = Inventory.objects.get_or_create(
-                product=product,
-                defaults={
-                    'branch': request.user.branch,
-                    'cost': cost,
-                    'price': selling_price,
-                    'dealer_price': dealer_price,
-                    'quantity': 0,
-                    'stock_level_threshold': product.min_stock_level,
-                    'reorder': False,
-                    'alert_notification': True
-                }
-            )
-            if not created:
-                inventory.cost = cost
-                inventory.price = selling_price
-                dealer_price = dealer_price
-        else:
-            inventory = Inventory.objects.get(product=product)
-            inventory.quantity += quantity
+            cost = order_item.actual_unit_cost
 
-            ActivityLog.objects.create(
-                purchase_order = purchase_order,
-                branch = request.user.branch,
-                user=request.user,
-                action= 'stock in',
-                inventory=inventory,
-                quantity=quantity,
-                description=f'Stock in from {order_item.purchase_order.order_number}',
-                total_quantity=inventory.quantity 
-            )
+            if request.user.role in ['admin', 'owner']:
+                inventory, created = Inventory.objects.get_or_create(
+                    product=product,
+                    defaults={
+                        'branch': request.user.branch,
+                        'cost': cost,
+                        'price': selling_price,
+                        'dealer_price': dealer_price,
+                        'quantity': 0,
+                        'stock_level_threshold': product.min_stock_level,
+                        'reorder': False,
+                        'alert_notification': True
+                    }
+                )
+                if not created:
+                    inventory.cost = cost
+                    inventory.price = selling_price
+                    inventory.dealer_price = dealer_price
+                    inventory.quantity += quantity
 
-            order_item.receive_items(quantity) 
-            order_item.check_received()
+            else:
+                inventory = Inventory.objects.get(product=product)
+                inventory.quantity += quantity
 
-        
-        logger.info(inventory)
-        product.save()
-        inventory.save()
+                # Log the inventory activity
+                ActivityLog.objects.create(
+                    purchase_order=purchase_order,
+                    branch=request.user.branch,
+                    user=request.user,
+                    action='stock in',
+                    inventory=inventory,
+                    quantity=quantity,
+                    description=f'Stock in from {order_item.purchase_order.order_number}',
+                    total_quantity=inventory.quantity
+                )
+
+                # Update order item received quantity and status
+                order_item.receive_items(quantity)
+                order_item.check_received()
+
+            product.save()
+            inventory.save()
 
         return JsonResponse({'success': True, 'message': 'Inventory updated successfully'}, status=200)
-            
-            
+         
         
 @login_required
 def product(request):

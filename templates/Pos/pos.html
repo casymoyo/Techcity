@@ -339,7 +339,9 @@ let menuName = '';
 let clientName = '';
 let initialCurrencyValue = '';
 let addedToCartProduct = [];
-let paymentTerms = 'cash'
+let paymentTerms = 'cash';
+
+const layby_dates = []
 
 let error = document.querySelector('#error_message')
 
@@ -535,6 +537,7 @@ const receipt = () =>{
         for (let i = 1; i <= period; i++) {
             const nextDueDate = new Date(todayDate); 
             nextDueDate.setDate(todayDate.getDate() + 30 * i); 
+            layby_dates.push(nextDueDate);
             dueDates.push(nextDueDate); 
         }
 
@@ -1003,7 +1006,7 @@ function updateTfoot(vat, totalAmount, payable){
     document.querySelector('#id_balance').textContent = `${ symbol + ' ' + totalBalanceDue.toFixed(2) }`, 
     document.querySelector('#total_balance_due').textContent = `${symbol + ' ' + totalDueAmount.toFixed(2) }`
 
-    updateReceiptFooter(symbol, totalBalanceDue, totalDueAmount, payable)
+    // updateReceiptFooter(symbol, totalBalanceDue, totalDueAmount, payable)
 }
 
 function updateReceiptFooter(symbol, totalBalanceDue, totalDueAmount, payable){
@@ -1046,11 +1049,10 @@ async function processCart(el) {
             vat_amount: vat_amount,
             payment_method: paymentMethod,
             recourring:document.getElementById('id_reoccuring').checked,
-            paymentTerms:paymentTerms
+            paymentTerms:paymentTerms,
         }
     ];
-    
-    console.log(data)
+
     const url = el.dataset.name === 'qoutation' 
         ? "{% url 'finance:add_qoutation' %}" 
         : "{% url 'finance:create_invoice' %}";
@@ -1064,7 +1066,8 @@ async function processCart(el) {
             },
             body: JSON.stringify({
                 data: data,
-                items: cart
+                items: cart,
+                layby_dates: layby_dates
             }),
         });
 
@@ -1083,6 +1086,7 @@ async function processCart(el) {
                     qouteModal.hide();
                     window.location.href = `/finance/qoutation/preview/${result.qoute_id}`;
                 }, 2000);
+                
             } else {
                 Swal.fire({
                     text:'Invoice Successfully Procesed',
@@ -1127,27 +1131,27 @@ async function displayReceipt(invoiceId) {
             amount_paid: amountPaid
         } = invoice;
 
-        document.querySelector('#receiptNumber').textContent = invoiceNumber;
+        document.querySelector('#invoiceNumber').textContent = invoiceNumber;
 
-        const receiptTableBody = document.querySelector('#receiptTable');
+        const receiptTableBody = document.querySelector('#receipt');
         console.log(receiptTableBody, invoice)
         receiptTableBody.innerHTML = '';
 
         // Populate the table with invoice items
-        invoiceItems.forEach(({ quantity, item__product__name, item__product__description, total_amount }) => {
+        invoiceItems.forEach(({ quantity, product_name, price, product_description }) => {
             const newRow = receiptTableBody.insertRow();
-            newRow.insertCell().textContent = `${item__product__name} `
+            newRow.insertCell().textContent = `${product_name}`
+            newRow.insertCell().textContent = `(${product_description})`;
             newRow.insertCell().textContent = quantity;
-            newRow.insertCell().textContent = `(${item__product__description})`;
-            newRow.insertCell().textContent = `${item__product__unit_cost}`
-            newRow.insertCell().textContent = `${currencySymbol} ${total_amount}`;
-        });
+            newRow.insertCell().textContent = `${price}`
+            newRow.insertCell().textContent = `${quantity * price}`;
+        });;
 
         // Update total amounts in the footer
         document.querySelector('#subTotalAmount').textContent = `${currencySymbol} ${subTotal}`;
         //document.querySelector('#totalAmount').textContent = `${currencySymbol} ${invoiceTotal}`;
         document.querySelector('#vatAmount').textContent = `${currencySymbol} ${vatAmount}`;
-        document.querySelector('#rid_paid_amount').textContent = `${currencySymbol} ${amount_paid.toFixed(2)}`;
+       //document.querySelector('#rid_paid_amount').textContent = `${currencySymbol} ${amount_paid.toFixed(2)}`;
         //document.querySelector('#rprevious_due').textContent = `${currencySymbol} ${previousDue.toFixed(2)}`;
 
         modal.classList.add("hidden");

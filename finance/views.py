@@ -482,6 +482,7 @@ def create_invoice(request):
             data = json.loads(request.body)
             invoice_data = data['data'][0]  
             items_data = data['items']
+            layby_dates = data.get('layby_dates')
            
             # get currency
             currency = Currency.objects.get(id=invoice_data['currency'])
@@ -528,44 +529,66 @@ def create_invoice(request):
             amount_paid = Decimal(invoice_data['amount_paid'])
             invoice_total_amount = Decimal(invoice_data['payable'])
             amount_due = invoice_total_amount - amount_paid  
+
+            logger.info(f'Invoice for customer: {customer.name}')
             
             with transaction.atomic():
-                
-                recurrence_period = int(invoice_data['next_due_days']) if invoice_data['next_due_days'] else 0
                 
                 invoice = Invoice.objects.create(
                     invoice_number=Invoice.generate_invoice_number(request.user.branch.name),  
                     customer=customer,
                     issue_date=timezone.now(),
-                    due_date=timezone.now() + timezone.timedelta(days=int(invoice_data['days'])),
                     amount=invoice_total_amount,
                     amount_paid=amount_paid,
-                    amount_due=amount_due,
-                    discount_amount=invoice_data['discount'] or 0,
-                    delivery_charge=invoice_data['delivery'] or 0,
+                    amount_due=amount_due if amount_due < 0 else 0,
                     vat=Decimal(invoice_data['vat_amount']),
                     payment_status = Invoice.PaymentStatus.PARTIAL if amount_due > 0 else Invoice.PaymentStatus.PAID,
                     branch = request.user.branch,
                     user=request.user,
                     currency=currency,
                     subtotal=invoice_data['subtotal'],
-                    note=invoice_data['note'] or 'h',
                     reocurring = invoice_data['recourring'],
                     products_purchased = ', '.join([f'{item['product_name']} x {item['quantity']} ' for item in items_data]),
-                    recurrence_period = recurrence_period,
-                    payment_term = invoice_data['paymentTerms']
+                    payment_terms = invoice_data['paymentTerms']
                 )
+
+                logger.info(f'Invoice created for customer: {invoice}')
+
+                # create layby object
+                if invoice.payment_terms == 'layby':
+                    layby_obj = layby.objects.create(invoice=invoice)
+
+                    logger.info(layby_obj)
+
+                    layby_dates_list = []
+                    for date in layby_dates:
+                        laybyDates.objects.create(
+                            layby=layby_obj,
+                            due_date=date
+                        )
+                    
+                    # laybyDates.objects.bulk_create(layby_dates)
+                
+                # create monthly installment object
+                if invoice.payment_terms == 'installment':
+                    recurringInvoices.objects.create(
+                        invoice = invoice,
+                        status = False
+                    )
+
                 
                 # #create transaction
                 transaction_obj = Transaction.objects.create(
                     date=timezone.now(),
-                    description=invoice_data['note'],
+                    description=invoice.products_purchased,
                     account=accounts_receivable,
                     debit=Decimal(invoice_data['payable']),
                     credit=Decimal('0.00'),
                     customer=customer
                 )
 
+                logger.info(f'Creating transaction obj for invoice: {invoice}')
+                
                 # Cost of sales parent object
                 cogs = COGS.objects.create(amount=Decimal(0))
                 
@@ -1573,7 +1596,7 @@ def invoice_preview_json(request, invoice_id):
         'item__product__name', 
         'quantity',
         'item__product__description',
-        'total_amount'
+        'total_amount',
     )
 
     invoice_dict = {
@@ -1586,6 +1609,7 @@ def invoice_preview_json(request, invoice_id):
     invoice_dict['customer_email'] = invoice.customer.email 
     invoice_dict['currency_symbol'] = invoice.currency.symbol
     invoice_dict['amount_paid'] = invoice.amount_paid
+    invoice_dict['payment_terms'] = invoice.payment_terms
     
     if invoice.branch:
         invoice_dict['branch_name'] = invoice.branch.name
@@ -1598,6 +1622,7 @@ def invoice_preview_json(request, invoice_id):
         'invoice': invoice_dict,
         'invoice_items': list(invoice_items),
     }
+    logger.info(f'invoice data: {invoice_data}')
 
     return JsonResponse(invoice_data)
 

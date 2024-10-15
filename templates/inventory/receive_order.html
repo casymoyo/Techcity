@@ -3,6 +3,14 @@
 {% load crispy_forms_tags %}
 {% block title %} Receive Purchase Order {% endblock %}
 {% block content %}
+<style>
+    td, input{
+        font-size: 12px;
+    }
+    input{
+        height: 30px;
+    }
+</style>
 <div class="inventory-navbar">
     <nav class="d-flex justify-content-between align-items-center text-light rounded mb-2 p-2" style="background:#373f4c !important;">
         <div class="d-flex">
@@ -21,14 +29,14 @@
                 <th>Enter Quantity</th>
                 <th>Product Cost/unit</th>
                 <th>Enter Selling Price</th>
+                <th>Enter Dealer Price</th>
                 <th>Expected Profit</th>
-                <th>Action</th>
             </tr>
         </thead>
         <tbody>
             {% for item in orders %}
             <tr>
-                <td class='fs-5'>{{ item.product.name }}</td>
+                <td>{{ item.product.name }}</td>
                 <td>{{ item.quantity }}</td>
                 <td>
                     {% if item.received %}
@@ -79,17 +87,12 @@
                     {% endif %}
                 </td>
                 <td id="profit_{{ item.id }}">{{ item.expected_profit }}</td>
-                <td>
-                    {% if item.received %}
-                        <button class="submit-btn btn btn-secondary w-100" disabled>Submit</button>
-                    {% else %}
-                        <button class="submit-btn btn btn-secondary w-100" onclick="submitQuantity('{{ item.id }}', this)">Submit</button>
-                    {% endif %}
-                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    <!-- Submit All Button -->
+    <button class="submit-btn btn btn-secondary w-100 mt-3" onclick="submitAllItems()">Submit All</button>
 </div>
 <script>
     new DataTable('#order_items_table')
@@ -108,20 +111,30 @@
         }
     }
 
-    // Function to submit quantity, selling price, and expected profit
-    function submitQuantity(itemId, el) {
-        const quantity = document.getElementById(`quantity_${itemId}`)?.value || 0;
-        const sellingPrice = document.getElementById(`selling_${itemId}`)?.value || 0;
-        const expectedProfit = document.getElementById(`profit_${itemId}`).textContent;
+    // Function to submit all items
+    function submitAllItems() {
+        const rows = document.querySelectorAll('#order_items_table tbody tr');
+        const itemsData = [];
 
-        el.disabled = true; 
+        rows.forEach(row => {
+            const itemId = row.querySelector('input[id^="quantity_"]')?.id.split('_')[1];
+            const quantity = row.querySelector(`#quantity_${itemId}`)?.value || 0;
+            const sellingPrice = row.querySelector(`#selling_${itemId}`)?.value || 0;
+            const dealerPrice = row.querySelector(`#dealer_${itemId}`)?.value || 0;
+            const expectedProfit = row.querySelector(`#profit_${itemId}`)?.textContent || 0;
 
-        const data = {
-            id: itemId,
-            quantity: parseInt(quantity) || 0,
-            price: parseFloat(sellingPrice) || 0,
-            expected_profit: parseFloat(expectedProfit)
-        };
+            if (itemId) {
+                itemsData.push({
+                    id: itemId,
+                    quantity: parseInt(quantity),
+                    selling_price: parseFloat(sellingPrice),
+                    dealer_price: parseFloat(dealerPrice),
+                    expected_profit: parseFloat(expectedProfit),
+                });
+            }
+        });
+
+        console.log(itemsData)
 
         fetch(`{% url "inventory:process_received_order" %}`, {
             method: 'POST',
@@ -129,7 +142,7 @@
                 'Content-Type': 'application/json',
                 'X-CSRFToken': '{{ csrf_token }}'
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify({ items: itemsData })
         })
         .then(response => response.json())
         .then(data => {
@@ -140,8 +153,6 @@
                     title: 'Error',
                     icon: 'error',
                     text: data.message
-                }).then(() => {
-                    el.disabled = false;
                 });
             }
         })
@@ -152,7 +163,6 @@
                 icon: 'error',
                 text: 'An error occurred. Please try again.'
             });
-            el.disabled = false;
         });
     }
 </script>

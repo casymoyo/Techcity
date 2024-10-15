@@ -236,23 +236,20 @@ class Invoice(models.Model):
     invoice_number = models.CharField(max_length=50, unique=True)       
     customer = models.ForeignKey(Customer, on_delete=models.PROTECT)  
     issue_date = models.DateTimeField()
-    due_date = models.DateField()
     amount = models.DecimalField(max_digits=15, decimal_places=2, default=0) 
     vat = models.DecimalField(max_digits=15, decimal_places=2, default=0)     
     amount_paid = models.DecimalField(max_digits=15, decimal_places=2, default=0)  
     amount_due = models.DecimalField(max_digits=15, decimal_places=2, default=0) 
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE, null=True) 
     payment_status = models.CharField(max_length=10, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
-    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    delivery_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True)
+    delivery_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True)
     branch = models.ForeignKey('company.branch', on_delete=models.CASCADE)
     status = models.BooleanField(default=True)
     user = models.ForeignKey('users.User', on_delete=models.PROTECT, null=True)
     reocurring = models.BooleanField(default=False)
-    recurrence_period = models.IntegerField(default=0)  
-    next_due_date = models.DateField(null=True, blank=True) 
     subtotal =  models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    note = models.TextField()
+    note = models.TextField(null=True)
     cancelled = models.BooleanField(default=False)
     products_purchased = models.TextField()
     invoice_return = models.BooleanField(default=False)
@@ -304,6 +301,24 @@ class InvoiceItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.item.product.description} for Invoice #{self.invoice.invoice_number}"
+    
+
+class layby(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='layby')
+
+    def __str__(self):
+        return f'{self.invoice}'
+
+class laybyDates(models.Model):
+    layby = models.ForeignKey(layby, on_delete=models.CASCADE)
+    due_date = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.invoice}: {self.due_date}'
+    
+class recurringInvoices(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    status = models.BooleanField(default=False)
     
 class Payment(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='payments')
