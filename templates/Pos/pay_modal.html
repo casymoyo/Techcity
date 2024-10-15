@@ -147,12 +147,9 @@
             </select></p>
             <div class="side">
                 <p class="payment-method"><strong>Payment:</strong>
-                    {% for method in payment_methods %}
-                        <button class="btn  btn-outline-dark btn-sm" id="{{ method.id }}">{{ method.name }}</button>
-                    {% endfor %}
-                        <button class="btn btn-outline-dark btn-sm border" id="pCash" data-name="cash">Cash</button>
-                        <button class="btn btn-outline-dark btn-sm border" id="pBank" data-name="bank">Bank</button>
-                        <button class="btn btn-outline-dark btn-sm border" id="pEcocash" data-name="ecocash">Ecocash</button>
+                        <button class="btn btn-outline-dark btn-pm btn-sm border" id="pCash" data-name="cash">Cash</button>
+                        <button class="btn btn-outline-dark btn-pm btn-sm border" id="pBank" data-name="bank">Bank</button>
+                        <button class="btn btn-outline-dark btn-pm btn-sm border" id="pEcocash" data-name="ecocash">Ecocash</button>
                 </p>
                 <p class="terms"><strong>Terms:</strong>
                     <button class="btn btn-outline-dark btn-sm btn-terms border active" id="cash">Cash</button>

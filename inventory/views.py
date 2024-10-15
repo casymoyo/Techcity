@@ -458,7 +458,7 @@ def edit_inventory(request, product_name):
             
         inv_product.price = Decimal(request.POST['price'])
         inv_product.cost = Decimal(request.POST['cost'])
-        inv_product.dealer_price = Decimal(request.POST['dealer_price'])
+        # inv_product.dealer_price = Decimal(request.POST['dealer_price'])
         inv_product.stock_level_threshold = request.POST['min_stock_level']
         inv_product.dealer_price = inv_product.dealer_price
         

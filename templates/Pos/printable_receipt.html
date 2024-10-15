@@ -21,7 +21,7 @@
     
     </head>
     <style>
-    .receipt-el{
+    .receipt-rcp{
         margin: 0;
         padding: 20px;
         background-color: #f4f4f4;
@@ -118,8 +118,8 @@
     }
 
     </style>
-<div class="receipt-el">
-    <div class="receipt">
+<div class="receipt-rcp">
+    <div class="receipt-print">
         <!-- Header -->
         <div class="header">
             <div class="logo">
@@ -139,8 +139,6 @@
         </div>
         
         <hr>
-
-        <input type="text" hidden id="paymentTerm">
 
         <!-- Payment Details -->
         <div class="payment-details">
@@ -202,45 +200,26 @@
 
         <div class="layby-terms" id="laybyTerms" style="display: none;">
             <h4>Layby Terms</h4>
-            <p><strong>Deposited:</strong> <span id="id_deposited"></span></p>
-            <p><strong>Period:</strong>
-                <input type="number" name="interval" id="id_period" form="control">
-            </p>
-            <p id="payment_date"></p>
+            <p><strong>Deposited:</strong> <span id="rcp_deposited"></span></p>
+            <p><strong>Period:</strong> <span id="rcp_period"></span></p>
+            <p id="rcp_payment_dates"></p>
         </div>
         
         <div class="monthly-installments" id="installmentTerms" style="display: none;">
             <h4>Monthly Payments</h4>
-            <p><strong>Amount Paid:</strong> <span id="id_deposited"></span></p>
-            <p><strong>Recurring:</strong>
-                <input type="checkbox" name="recurring" id="id_recurring">
-            </p>
+            <p><strong>Amount Paid:</strong> <span id="rcp_installment_deposit"></span></p>
             <p><strong>Date:</strong>
                 <input type="date" id="installment_date">
             </p>
         </div>
         
 
-        <button class="btn btn-success btn-sm w-100" onclick="printReceipt()">Print Receipt</button>
+        <button class="btn btn-success btn-sm w-100" onclick="printReceipt(this)">Print Receipt</button>
     </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-    const paymentTerm = document.getElementById('rcp_pterms')?.textContent;
-    const laybyTerms = document.getElementById('laybyTerms');
-    const installmentTerms = document.getElementById('installmentTerms');
-
-    // Show or hide sections based on payment term
-    if (paymentTerm === 'cash') {
-        laybyTerms.style.display = 'none';
-        installmentTerms.style.display = 'none';
-    } else if (paymentTerm === 'layby') {
-        laybyTerms.style.display = 'block';
-        installmentTerms.style.display = 'none';
-    } else if (paymentTerm === 'installment') {
-        laybyTerms.style.display = 'none';
-        installmentTerms.style.display = 'block';
-    }
+    
 });
 
 function updateDateTime() {
@@ -262,9 +241,10 @@ function updateDateTime() {
 updateDateTime();
 setInterval(updateDateTime, 1000);
 
-function printReceipt() {
+function printReceipt(el) {
+    el.style.display='none';
     // Get the receipt content
-    const receiptContent = document.querySelector('.receipt-el').outerHTML;
+    const receiptContent = document.querySelector('.receipt-print').outerHTML;
 
     // Create a new window
     const printWindow = window.open('', '_blank', 'width=600,height=600');
@@ -287,6 +267,104 @@ function printReceipt() {
                         text-align: left;
                     }
                 </style>
+                    <style>
+    .receipt-rcp{
+        margin: 0;
+        padding: 20px;
+        background-color: #f4f4f4;
+    }
+
+    .receipt {
+        background-color: white;
+        padding: 20px;
+        max-width: 800px;
+        margin: auto;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+    }
+
+    .logo img {
+        height: 50px;
+        margin-right: 10px;
+    }
+
+    .company-info {
+        font-size: 0.9em;
+    }
+
+    .receipt-info {
+        text-align: right;
+    }
+
+    .receipt-info h3 {
+        color: red;
+    }
+
+    .payment-details, .customer-info, .totals, .layby-terms {
+        font-size: 0.9em;
+        margin-bottom: 20px;
+    }
+
+    .payment-details p, .totals p, .layby-terms p {
+        margin: 5px 0;
+    }
+
+    .customer-info {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .customer-info div {
+        width: 45%;
+    }
+
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+    .items-table th, .items-table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .items-table th {
+        background-color: #f4f4f4;
+    }
+
+    .totals {
+        text-align: right;
+    }
+
+    .layby-terms h4 {
+        margin-bottom: 10px;
+        font-size: 1.1em;
+    }
+
+    .receipt-el .active{
+        background: #333;
+        color: #fff;
+    }
+
+    .payment-details{
+        display: flex;
+        justify-content: space-evenly;
+        align-items: center;
+    }
+
+    </style>
             </head>
             <body onload="window.print(); window.close();">
                 <div class="receipt">${receiptContent}</div>

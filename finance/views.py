@@ -1591,6 +1591,11 @@ def invoice_preview_json(request, invoice_id):
 
     except Invoice.DoesNotExist:
         return JsonResponse({"error": "Invoice not found"}, status=404) 
+    
+    if invoice.payment_terms == 'layby':
+        dates = laybyDates.objects.filter(layby__invoice=invoice).values('due_date')
+    else:
+        dates = {}
      
     invoice_items = InvoiceItem.objects.filter(invoice=invoice).values(
         'item__product__name', 
@@ -1622,6 +1627,7 @@ def invoice_preview_json(request, invoice_id):
     invoice_data = {
         'invoice': invoice_dict,
         'invoice_items': list(invoice_items),
+        'dates':list(dates)
     }
     logger.info(f'invoice data: {invoice_data}')
 
