@@ -389,6 +389,8 @@ def invoice(request):
     total_paid = invoices.filter(payment_status='Paid').aggregate(Sum('amount'))['amount__sum'] or 0
     total_amount = invoices.aggregate(Sum('amount'))['amount__sum'] or 0
 
+    logger.info(f'Invoices: {invoices.values}')
+
     return render(request, 'finance/invoices/invoice.html', {
         'form': form,
         'invoices': invoices,
@@ -542,7 +544,7 @@ def create_invoice(request):
                     issue_date=timezone.now(),
                     amount=invoice_total_amount,
                     amount_paid=amount_paid,
-                    amount_due=amount_due if amount_due < 0 else 0,
+                    amount_due=amount_due,
                     vat=Decimal(invoice_data['vat_amount']),
                     payment_status = Invoice.PaymentStatus.PARTIAL if amount_due > 0 else Invoice.PaymentStatus.PAID,
                     branch = request.user.branch,

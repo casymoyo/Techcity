@@ -455,7 +455,7 @@ def edit_inventory(request, product_name):
         
         # think through
         inv_product.quantity = quantity
-            
+             
         inv_product.price = Decimal(request.POST['price'])
         inv_product.cost = Decimal(request.POST['cost'])
         # inv_product.dealer_price = Decimal(request.POST['dealer_price'])
@@ -1558,6 +1558,7 @@ def delete_purchase_order(request, purchase_order_id):
             return JsonResponse({'success': False, 'message': 'Cannot delete a received purchase order'}, status=400)
 
         with transaction.atomic():
+            
             # Reverse related account transactions
             currency = Currency.objects.get(default=True)
 

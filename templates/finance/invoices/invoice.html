@@ -326,6 +326,7 @@ input[type="checkbox"] {
     let invoiceId = '';
     let invoiceAmountDue = '';
     let paymentMethod = '';
+    let duePaid = 0;
 
     const whatsappBtn = document.getElementById('whatsappBtn');
     const appModal = new bootstrap.Modal(document.getElementById('appModal'));
@@ -430,6 +431,8 @@ input[type="checkbox"] {
         const amount_paid = parseFloat(document.querySelector('#id_amount_paid').value);
         let validation = false
 
+        duePaid = amount_paid;
+
         const data = {
             amount_paid: amount_paid,
             payment_method: paymentMethod
@@ -485,7 +488,7 @@ input[type="checkbox"] {
                 invoiceId= btn.dataset.id
                 invoiceAmountDue = btn.dataset.amount
                 updateModal.show()
-            }   
+            }    
         )
     })
 
@@ -551,75 +554,112 @@ input[type="checkbox"] {
     });
 
     async function displayReceipt(invoiceId) {
-        try {
-            const response = await fetch(`/finance/invoice/preview/json/${invoiceId}/`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken"),
-                },
-            });
+    try {
+        const response = await fetch(`/finance/invoice/preview/json/${invoiceId}/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"),
+            },
+        });
 
-            if (!response.ok) {
-                throw new Error('Network response was not ok.');
-            }
-            
-            receiptModal.show()
+        if (!response.ok) {
+            throw new Error('Network response was not ok.');
+        }
 
-            const data = await response.json();
-            const { invoice, invoice_items: invoiceItems } = data;
-            const {
-                invoice_number: invoiceNumber,
-                amount: invoiceTotal,
-                delivery_charge: deliveryCharge,
-                discount_amount: discountAmount,
-                vat: vatAmount,
-                subtotal: subTotal,
-                currency_symbol: currencySymbol,
-                amount_paid: amountPaid
-            } = invoice;
-
-            console.log(invoice)
-
-            document.querySelector('#receiptNumber').textContent = invoiceNumber;
-
-            const receiptTableBody = document.querySelector('#receiptTable');
-            receiptTableBody.innerHTML = '';
-
-            // Populate the table with invoice items
-            invoiceItems.forEach(({ quantity, item__product__name, item__product__description, total_amount }) => {
-                const newRow = receiptTableBody.insertRow();
-                newRow.insertCell().textContent = quantity;
-                newRow.insertCell().textContent = `${item__product__name} (${item__product__description})`;
-                newRow.insertCell().textContent = `${currencySymbol} ${total_amount}`;
-            });
-
-            // Update total amounts in the footer
-            document.querySelector('#subTotalAmount').textContent = `${currencySymbol} ${subTotal}`;
-            //document.querySelector('#totalAmount').textContent = `${currencySymbol} ${invoiceTotal}`;
-            document.querySelector('#deliveryChargeAmount').textContent = `${currencySymbol} ${deliveryCharge}`;
-            document.querySelector('#discountAmount').textContent = `${currencySymbol} ${discountAmount}`;
-            document.querySelector('#vatAmount').textContent = `${currencySymbol} ${vatAmount}`;
-            document.querySelector('#rid_paid_amount').textContent = `${currencySymbol} ${amount_paid}`;
-            document.querySelector('#rprevious_due').textContent = `${currencySymbol} ${previousDue}`;
+        const data = await response.json();
+        const { invoice, invoice_items: invoiceItems, lay_dates:dates} = data;
+        const {
+            invoice_number: invoiceNumber,
+            amount: invoiceTotal,
+            delivery_charge: deliveryCharge,
+            discount_amount: discountAmount,
+            vat: vatAmount,
+            subtotal: subTotal,
+            currency_symbol: currencySymbol,
+            amount_paid: amountPaid,
+            payment_terms: payment_terms
+        } = invoice;
 
 
-            Swal.fire({
-                icon: 'success',
-                title: 'success',
-                text: 'Invoice successfully processed',
-                timer: 2000,
-                showConfirmButton: false
-            }).then(()=>{
 
-                receiptModal.show();
+        document.getElementById('rcp-payment')
+        document.getElementById('rcp-pterms').textContent = payment_terms;
+        document.getElementById('rcp-currency').textContent = currencySymbol;
+        document.getElementById('rcp_amount_paid').textContent = currencySymbol + ' ' + duePaid;
+        document.getElementById('rcp_prv_paid').textContent = currencySymbol + ' ' + amountPaid;
+        document.getElementById('available_balance').textContent = currencySymbol + ' ' + (invoiceTotal - amountPaid + prvDue)
+        document.getElementById('total_amount').textContent = currencySymbol + ' ' + invoiceTotal
+        document.querySelector('#invoiceNumber').textContent = invoiceNumber;
+
+        const receiptTableBody = document.querySelector('#receipt');
+        receiptTableBody.innerHTML = '';
+
+        // Populate the table with invoice items
+        invoiceItems.forEach(({ quantity, item__product__name, unit_price, item__product__description, total_amount }) => {
+            const newRow = receiptTableBody.insertRow();
+            newRow.insertCell().textContent = `${item__product__name}`
+            newRow.insertCell().textContent = `(${item__product__description})`;
+            newRow.insertCell().textContent = quantity;
+            newRow.insertCell().textContent = `${unit_price}`;
+            newRow.insertCell().textContent = `${quantity * unit_price}`;
+        });;
+
+        // Update total amounts in the footer
+        document.querySelector('#subTotalAmount').textContent = `${currencySymbol} ${subTotal}`;
+        //document.querySelector('#totalAmount').textContent = `${currencySymbol} ${invoiceTotal}`;
+        document.querySelector('#vatAmount').textContent = `${currencySymbol} ${vatAmount}`;
+       //document.querySelector('#rid_paid_amount').textContent = `${currencySymbol} ${amount_paid.toFixed(2)}`;
+        //document.querySelector('#rprevious_due').textContent = `${currencySymbol} ${previousDue.toFixed(2)}`;
+        
+        const laybyDateEl = document.getElementById('rcp_payment_dates')
+        const laybyTerms = document.getElementById('laybyTerms');
+        const installmentTerms = document.getElementById('installmentTerms');
+
+        if (payment_terms === 'cash') {
+            laybyTerms.style.display = 'none';
+            installmentTerms.style.display = 'none';
+        } else if (payment_terms === 'layby') {
+            laybyTerms.style.display = 'block';
+            installmentTerms.style.display = 'none';
+
+            let ul = document.createElement('ul');
+            document.getElementById('rcp_deposited').textContent = currencySymbol + ' ' + amountPaid;
+            document.getElementById('rcp_period').textContent = Object.keys(layby_dates).length + '' + 'month(s)';
+
+            layby_dates.forEach((date)=>{
+                let li = document.createElement('li');
+                li.textContent = new Date(date).toLocaleDateString()
+                ul.appendChild(li)
             })
 
-        } catch (error) {
-            console.error("Error:", error);
-            loaderModal.hide();
+            laybyDateEl.appendChild(ul);
+
+        } else if (payment_terms === 'installment') {
+            laybyTerms.style.display = 'none';
+            installmentTerms.style.display = 'block';
+            document.getElementById('rcp_installment_deposit').textContent = currencySymbol + ' ' + amountPaid;
         }
+
+        modal.classList.add("hidden");
+        overlay.classList.add("hidden");
+
+        Swal.fire({
+            icon: 'success',
+            title: 'success',
+            text: 'Invoice successfully processed',
+            timer: 2000,
+            showConfirmButton: false
+        }).then(()=>{
+            loaderModal.hide();
+            receiptModal.show();
+        })
+
+    } catch (error) {
+        console.error("Error:", error);
+        loaderModal.hide();
     }
+}
 
     function getCookie(name) {
         let cookieValue = null;

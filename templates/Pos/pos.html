@@ -1023,7 +1023,9 @@ document.querySelectorAll('.pm').forEach(button => {
 async function processCart(el) {
 
     const amountReceived = document.getElementById('id_amount_paid');
+
     console.log(paymentTerms, Number((amountReceived.value)))
+
     if(Number((amountReceived.value) <= 0) && (paymentTerms === 'cash')){
         Swal.fire({
             icon:'Error',
@@ -1039,7 +1041,7 @@ async function processCart(el) {
         {
             subtotal: calculateTotalAmount(cart),
             currency: currencyData[0][0].id,
-            amount_paid: amount_paid,
+            amount_paid: parseFloat(amountReceived.value),
             client_id: clientName,
             payable: payable_amount,
             vat_amount: vat_amount,
@@ -1189,7 +1191,7 @@ async function displayReceipt(invoiceId) {
         } else if (payment_terms === 'installment') {
             laybyTerms.style.display = 'none';
             installmentTerms.style.display = 'block';
-            document.getElementById('id_id_installment_deposit').textContent = currencySymbol + ' ' + amountPaid;
+            document.getElementById('rcp_installment_deposit').textContent = currencySymbol + ' ' + amountPaid;
         }
 
         modal.classList.add("hidden");
