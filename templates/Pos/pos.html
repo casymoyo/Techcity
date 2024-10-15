@@ -211,16 +211,9 @@ tbody tr:hover {
                         </table>
                     </div>
                     <div class=" w-100 payment-buttons d-flex justify-content-between mt-3">
-                        <div class="w-50 bg-danger">
-                            <button class="btn btn-danger w-100">
-                                <i class="bx bx-reset"></i>
-                                Reset
-                            </button>
-                        </div>
-                        <div class="w-50 bg-success">
-                            <button class="btn btn-success w-100"id='id_pay' >
-                                <i class="bx bx-money"></i>
-                                Pay Now
+                        <div class="w-100">
+                            <button class="btn btn-secondary w-100"id='id_pay' >
+                                Next
                             </button>
                         </div>
                     </div>
@@ -364,7 +357,11 @@ const previousDueEl = document.querySelector('#previous_due');
 // set receipt items
 function setReceiptItems(){
     const receiptTableBody = document.querySelector('#receiptTable');
-    console.log(receiptTableBody, cart[0])
+    const prvDue = document.getElementById('previous_due');
+    const tpreviousDue = document.getElementById('tpreviousDue')
+
+    tpreviousDue.textContent = prvDue.textContent
+    
     receiptTableBody.innerHTML = '';
 
     // Populate the table with invoice items
