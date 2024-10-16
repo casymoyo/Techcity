@@ -1,3 +1,4 @@
+from pickle import FALSE
 import uuid
 from decimal import Decimal
 from django.db import models
@@ -258,6 +259,8 @@ class Invoice(models.Model):
         ('layby', 'layby'),
         ('installment', 'installment')
     ))
+    hold_status = models.BooleanField(default=False)
+
     def generate_invoice_number(branch):
         last_invoice = Invoice.objects.filter(branch__name=branch).order_by('-id').first()
         if last_invoice:

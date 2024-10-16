@@ -320,6 +320,8 @@ let currencyData = [];
 const customersData = [];
 let customerBalanceData = [];
 
+let holdStatus = false;
+
 let bal = 0;
 let previousDue = 0
 let discount_amount = 0;
@@ -353,6 +355,12 @@ const ostBtn = document.getElementById('out_of_stock');
 const tableEl = document.querySelector('#invoiceTable');
 const loaderSpin = document.querySelector('#loader');
 const previousDueEl = document.querySelector('#previous_due');
+const holdBtn = document.getElementById('id_hold');
+
+holdBtn.addEventListener('click', () => {
+        holdStatus = true;
+        processCart(holdBtn);
+})
 
 // set receipt items
 function setReceiptItems(){
@@ -1026,28 +1034,30 @@ async function processCart(el) {
 
     console.log(paymentTerms, Number((amountReceived.value)))
 
-    if(Number((amountReceived.value) <= 0) && (paymentTerms === 'cash')){
-        Swal.fire({
-            icon:'Error',
-            text:'Please amount cant be zero when payment its cash',
-            title:'Error'
-        }).then(()=>{
-            amountReceived.focus()
-        })
-        return;
+    if (!holdStatus) {
+        if (Number((amountReceived.value) <= 0) && (paymentTerms === 'cash')) {
+            Swal.fire({
+                icon: 'Error',
+                text: 'Please amount cant be zero when payment its cash',
+                title: 'Error'
+            }).then(() => {
+                amountReceived.focus()
+            })
+            return;
+        }
     }
-
     const data = [
         {
             subtotal: calculateTotalAmount(cart),
             currency: currencyData[0][0].id,
-            amount_paid: parseFloat(amountReceived.value),
+            amount_paid: parseFloat(amountReceived.value) || 0.00,
             client_id: clientName,
             payable: payable_amount,
             vat_amount: vat_amount,
             payment_method: paymentMethod,
             recourring:document.getElementById('id_reoccuring').checked,
-            paymentTerms:paymentTerms,
+            paymentTerms: paymentTerms,
+            hold_status: holdStatus,
         }
     ];
 
@@ -1071,6 +1081,8 @@ async function processCart(el) {
 
         const result = await response.json();
 
+        console.log(result)
+
         if (result.success) {
             cart = [];
             updateCartDisplay();
@@ -1084,16 +1096,24 @@ async function processCart(el) {
                     qouteModal.hide();
                     window.location.href = `/finance/qoutation/preview/${result.qoute_id}`;
                 }, 2000);
-                
+
             } else {
                 Swal.fire({
-                    text:'Proccessing Receipt',
-                    icon:'success',
-                    title:'Success'
-                }).then(()=>{
+                    text: 'Proccessing Receipt',
+                    icon: 'success',
+                    title: 'Success'
+                }).then(() => {
                     displayReceipt(result.invoice_id);
                 })
             }
+        } else if (result.hold){
+            modal.classList.add('hidden');
+            overlay.classList.add('hidden');
+            Swal.fire({
+                icon: 'success',
+                text: result.message,
+                title: 'success'
+            })
         } else {
             console.log('Error:', result.message);
         }

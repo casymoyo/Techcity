@@ -530,9 +530,15 @@ def create_invoice(request):
             
             amount_paid = Decimal(invoice_data['amount_paid'])
             invoice_total_amount = Decimal(invoice_data['payable'])
+
+            if amount_paid > invoice_total_amount:
+                amount_paid = invoice_total_amount
+            
             amount_due = invoice_total_amount - amount_paid  
 
             logger.info(f'Invoice for customer: {customer.name}')
+
+            logger.info(invoice_data)
 
             cogs = COGS.objects.create(amount=Decimal(0))
             
@@ -553,10 +559,18 @@ def create_invoice(request):
                     subtotal=invoice_data['subtotal'],
                     reocurring = invoice_data['recourring'],
                     products_purchased = ', '.join([f'{item['product_name']} x {item['quantity']} ' for item in items_data]),
-                    payment_terms = invoice_data['paymentTerms']
+                    payment_terms = invoice_data['paymentTerms'],
+                    hold_status = invoice_data['hold_status']
                 )
 
+                logger.info(invoice.hold_status)
+
                 logger.info(f'Invoice created for customer: {invoice}')
+
+                # check if invoice status is hold
+                if invoice.hold_status == True:
+                    held_invoice(items_data, invoice, request, vat_rate)
+                    return JsonResponse({'hold':True, 'message':'Invoice succesfully on hold'})
 
                 # create layby object
                 if invoice.payment_terms == 'layby':
@@ -690,6 +704,43 @@ def create_invoice(request):
             return JsonResponse({'success': False, 'error': str(e)})
 
     return render(request, 'finance/invoices/add_invoice.html')
+
+def held_invoice(items_data, invoice, request, vat_rate):
+    for item_data in items_data:
+        item = Inventory.objects.get(pk=item_data['inventory_id'])
+        product = Product.objects.get(pk=item.product.id)
+                    
+        item.quantity -= item_data['quantity']
+        item.save()
+                  
+        InvoiceItem.objects.create(
+            invoice=invoice,
+            item=item,
+            quantity=item_data['quantity'],
+            unit_price=item_data['price'],
+            vat_rate = vat_rate
+        )
+                    
+                    # Create StockTransaction for each sold item
+        stock_transaction = StockTransaction.objects.create(
+            item=product,
+            transaction_type=StockTransaction.TransactionType.SALE,
+            quantity=item_data['quantity'],
+            unit_price=item.price,
+            invoice=invoice,
+            date=timezone.now()
+        )
+                    
+        # stock log  
+        ActivityLog.objects.create(
+            branch=request.user.branch,
+            inventory=item,
+            user=request.user,
+            quantity=item_data['quantity'],
+            total_quantity = item.quantity,
+            action='Sale',
+            invoice=invoice
+        )
 
 
 def create_invoice_pdf(invoice):
