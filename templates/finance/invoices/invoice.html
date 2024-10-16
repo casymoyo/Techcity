@@ -278,7 +278,7 @@ input[type="checkbox"] {
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-body">
-                        {% include 'Pos/printable_receipt.html' %} 
+                        {% include 'finance/invoices/update_receipt.html' %} 
                     </div>
                 </div>
             </div>
@@ -578,19 +578,38 @@ input[type="checkbox"] {
             subtotal: subTotal,
             currency_symbol: currencySymbol,
             amount_paid: amountPaid,
-            payment_terms: payment_terms
+            payment_terms: payment_terms,
+            customer_name: customer_name,
+            customer_email: customer_email,
+            customer_cell: customer_cell,
+            customer_address: customer_address,
         } = invoice;
 
+        console.log(data)
 
+        let amount_due = invoiceTotal - amountPaid;
+        let prvPaid = amountPaid - duePaid;
+        console.log(duePaid)
 
-        document.getElementById('rcp-payment')
+        document.getElementById('rcp-payment').textContent = paymentMethod;
         document.getElementById('rcp-pterms').textContent = payment_terms;
         document.getElementById('rcp-currency').textContent = currencySymbol;
-        document.getElementById('rcp_amount_paid').textContent = currencySymbol + ' ' + duePaid;
-        document.getElementById('rcp_prv_paid').textContent = currencySymbol + ' ' + amountPaid;
-        document.getElementById('available_balance').textContent = currencySymbol + ' ' + (invoiceTotal - amountPaid + prvDue)
+        document.getElementById('rcp_amount_paid').textContent = currencySymbol + ' ' + duePaid.toFixed(2);
+        document.getElementById('rcp_prv_paid').textContent = currencySymbol + ' ' + prvPaid.toFixed(2);
+        //document.getElementById('available_balance').textContent = currencySymbol + ' ' + (invoiceTotal - amountPaid + prvDue)
         document.getElementById('total_amount').textContent = currencySymbol + ' ' + invoiceTotal
         document.querySelector('#invoiceNumber').textContent = invoiceNumber;
+        document.getElementById('rcp_due').textContent = currencySymbol + ' ' + amount_due.toFixed(2);
+        document.getElementById('id_balance').textContent = currencySymbol + ' ' + amount_due.toFixed(2);
+        document.getElementById('f_prv_paid').textContent = currencySymbol + ' ' + amountPaid;
+
+        // set customer details
+        document.getElementById('customerCompany').textContent = customer_name;
+        document.getElementById('customerName').textContent = customer_name;
+        document.getElementById('customerPhone').textContent = customer_cell;
+        document.getElementById('customerEmail').textContent = customer_email;
+        document.getElementById('customerAddress').textContent = customer_address;
+
 
         const receiptTableBody = document.querySelector('#receipt');
         receiptTableBody.innerHTML = '';
@@ -616,33 +635,9 @@ input[type="checkbox"] {
         const laybyTerms = document.getElementById('laybyTerms');
         const installmentTerms = document.getElementById('installmentTerms');
 
-        if (payment_terms === 'cash') {
-            laybyTerms.style.display = 'none';
-            installmentTerms.style.display = 'none';
-        } else if (payment_terms === 'layby') {
-            laybyTerms.style.display = 'block';
-            installmentTerms.style.display = 'none';
-
-            let ul = document.createElement('ul');
-            document.getElementById('rcp_deposited').textContent = currencySymbol + ' ' + amountPaid;
-            document.getElementById('rcp_period').textContent = Object.keys(layby_dates).length + '' + 'month(s)';
-
-            layby_dates.forEach((date)=>{
-                let li = document.createElement('li');
-                li.textContent = new Date(date).toLocaleDateString()
-                ul.appendChild(li)
-            })
-
-            laybyDateEl.appendChild(ul);
-
-        } else if (payment_terms === 'installment') {
-            laybyTerms.style.display = 'none';
-            installmentTerms.style.display = 'block';
-            document.getElementById('rcp_installment_deposit').textContent = currencySymbol + ' ' + amountPaid;
-        }
-
-        modal.classList.add("hidden");
-        overlay.classList.add("hidden");
+        
+        //modal.classList.add("hidden");
+        //overlay.classList.add("hidden");
 
         Swal.fire({
             icon: 'success',

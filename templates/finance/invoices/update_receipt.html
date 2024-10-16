@@ -153,12 +153,10 @@
         <!-- Customer Info -->
         <div class="customer-info">
             <div class="company">
-                <p><strong>Company:</strong> {{ request.user.company.name }}</p>
+                <p><strong>Company:</strong> <span id="customerCompany"></span></p>
                 <p><strong>Name:</strong> <span id="customerName"></span></p>
                 <p><strong>Cell:</strong> <span id="customerPhone"></span></p>
                 <p><strong>Email:</strong> <span id="customerEmail"></span></p>
-                <!-- <p><strong>Vat:</strong> {{ request.user.company.vat_number }}</p>
-                <p><strong>Tin:</strong> 245004667 {{ request.user.company.tin_number}}</p> -->
                 <p><strong>Address:</strong> <span id="customerAddress"></span></p>
             </div>
             <div class="account-summary">
@@ -170,6 +168,8 @@
         </div>
 
         <hr>
+
+        <p>Payment update details:</p>
 
         <!-- Item Table -->
         <table class="items-table">
@@ -193,7 +193,7 @@
             <p><strong>Subtotal:</strong> <span id="subTotalAmount"></span></p>
             <p><strong>VAT 15%:</strong> <span id="vatAmount"></span></p>
             <p><strong>Total:</strong> <span id='total_amount'></span></p>
-            <!-- <p><strong>Available bal:</strong> <span id='total_balance_due'></span></p>
+            <p><strong>Amount paid:</strong> <span id='f_prv_paid'></span></p>
             <p><strong>Due amount:</strong> <span id="id_balance"></span></p> -->
         </div>
 
@@ -204,6 +204,7 @@
             <p><strong>Deposited:</strong> <span id="rcp_deposited"></span></p>
             <p><strong>Period:</strong> <span id="rcp_period"></span></p>
             <p id="rcp_payment_dates"></p>
+        </div>
         </div>
         
         <div class="monthly-installments" id="installmentTerms" style="display: none;">
