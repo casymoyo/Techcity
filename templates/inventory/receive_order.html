@@ -21,7 +21,7 @@
     }
 
     table {
-        border-collapse: separate;
+/*        border-collapse: separate;*/
         width: 100%;
     }
     /* Add a max-height to the table container to make the header stick */
@@ -50,6 +50,7 @@
                 <th>Enter Selling Price</th>
                 <th>Enter Dealer Price</th>
                 <th>Expected Profit</th>
+                <th>Actions</th> <!-- Add Actions Column -->
             </tr>
         </thead>
         <tbody>
@@ -59,14 +60,14 @@
                 <td>{{ item.quantity }}</td>
                 <td>
                     {% if item.received %}
-                    <div class="rounded fs-6">All received</div>
+                    <div class="rounded">All received</div>
                     {% else %}
                     <input type="number" id="quantity_{{ item.id }}" placeholder="Enter quantity received" min="1" class='form-control'>
                     {% endif %}
                 </td>
                 <td>{{ item.actual_unit_cost }}</td>
                 <td>
-                    {% if item.product.price == 0 %}
+                    {% if not item.received %}
                     {% if request.user.role == 'admin' or request.user.role == 'owner' %}
                     <input type="number"
                            id="selling_{{ item.id }}"
@@ -84,7 +85,7 @@
                     {% endif %}
                 </td>
                 <td>
-                    {% if item.product.price == 0 %}
+                    {% if not item.received %}
                     {% if request.user.role == 'admin' or request.user.role == 'owner' %}
                     <input type="number"
                            id="dealer_{{ item.id }}"
@@ -98,25 +99,30 @@
                             )">
                     {% endif %}
                     {% else %}
-                    {{ item.product.price }}
+                    {{ item.product.dealer_price }}
                     {% endif %}
                 </td>
                 <td id="profit_{{ item.id }}">{{ item.expected_profit }}</td>
+                <td>
+                    {% if not item.received %}
+                    <button class="btn btn-primary" onclick="submitItem('{{ item.id }}')">Submit</button>
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
-<!-- Submit All Button -->
-<button class="submit-btn btn btn-secondary w-100 mt-3" onclick="submitAllItems()">Submit All</button>
+
 <script>
     new DataTable('#order_items_table', {
         paging: false,  // This removes pagination
-        scrollY: '700px',  // Adjust to your preferred height for scroll
+        //scrollY: '700px',
+        //scrollX: '100%',  // Adjust to your preferred height for scroll
         scrollCollapse: true
     });
 
-
+    let expectedProfitAmnt = 0;
     // Function to calculate and display expected profit
     function expectedProfit(itemId, quantity, actualUnitCost) {
         const sellingPrice = document.getElementById(`selling_${itemId}`).value;
@@ -126,35 +132,27 @@
             const profitPerUnit = parseFloat(sellingPrice) - parseFloat(actualUnitCost);
             const expectedProfit = profitPerUnit * parseInt(quantity);
             expectedProfitField.textContent = expectedProfit.toFixed(2);
+            expectedProfitAmnt = expectedProfit.toFixed(2)
         } else {
             expectedProfitField.textContent = '';
         }
     }
 
-    // Function to submit all items
-    function submitAllItems() {
-        const rows = document.querySelectorAll('#order_items_table tbody tr');
-        const itemsData = [];
+    // Function to submit a single item
+    function submitItem(itemId) {
+        const quantity = document.getElementById(`quantity_${itemId}`)?.value || 0;
+        const sellingPrice = document.getElementById(`selling_${itemId}`)?.value || 0;
+        const dealerPrice = document.getElementById(`dealer_${itemId}`)?.value || 0;
 
-        rows.forEach(row => {
-            const itemId = row.querySelector('input[id^="quantity_"]')?.id.split('_')[1];
-            const quantity = row.querySelector(`#quantity_${itemId}`)?.value || 0;
-            const sellingPrice = row.querySelector(`#selling_${itemId}`)?.value || 0;
-            const dealerPrice = row.querySelector(`#dealer_${itemId}`)?.value || 0;
-            const expectedProfit = row.querySelector(`#profit_${itemId}`)?.textContent || 0;
+        const itemData = {
+            id: itemId,
+            quantity: parseInt(quantity),
+            selling_price: parseFloat(sellingPrice),
+            dealer_price: parseFloat(dealerPrice),
+            expected_profit: parseFloat(expectedProfitAmnt)
+        };
 
-            if (itemId) {
-                itemsData.push({
-                    id: itemId,
-                    quantity: parseInt(quantity),
-                    selling_price: parseFloat(sellingPrice),
-                    dealer_price: parseFloat(dealerPrice),
-                    expected_profit: parseFloat(expectedProfit),
-                });
-            }
-        });
-
-        console.log(itemsData)
+        console.log(itemData)
 
         fetch(`{% url "inventory:process_received_order" %}`, {
             method: 'POST',
@@ -162,12 +160,15 @@
                 'Content-Type': 'application/json',
                 'X-CSRFToken': '{{ csrf_token }}'
             },
-            body: JSON.stringify({ items: itemsData })
+            body: JSON.stringify(itemData)
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                window.location.reload();
+                // Update the row with the new values
+                document.getElementById(`quantity_${itemId}`).replaceWith(`${itemData.quantity}`);
+                document.getElementById(`selling_${itemId}`).replaceWith(`${itemData.selling_price}`);
+                document.getElementById(`dealer_${itemId}`).replaceWith(`${itemData.dealer_price}`);
             } else {
                 Swal.fire({
                     title: 'Error',

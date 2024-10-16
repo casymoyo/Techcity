@@ -41,6 +41,7 @@ class Product(models.Model):
     description = models.TextField()
     end_of_day = models.BooleanField(default=False)
     service =  models.BooleanField(default=False)
+    dealer_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, default=0)
     
     def __str__(self):
         return self.name
