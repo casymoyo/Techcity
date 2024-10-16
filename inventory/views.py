@@ -1325,20 +1325,6 @@ def purchase_orders(request):
     form = CreateOrderForm()
     status_form = PurchaseOrderStatus()
     orders = PurchaseOrder.objects.filter(branch = request.user.branch)
-
-    for product in Product.objects.all():
-        product.price = 0
-        product.cost = 0        
-        product.save()
-        
-
-    products = Inventory.objects.filter(branch__name='test')
-    logger.info(products)
-
-    for prod in products:
-        prod.quantity = 0
-
-        prod.save()
    
     return render(request, 'inventory/purchase_orders.html', 
         {
