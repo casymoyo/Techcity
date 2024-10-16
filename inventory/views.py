@@ -1325,6 +1325,21 @@ def purchase_orders(request):
     form = CreateOrderForm()
     status_form = PurchaseOrderStatus()
     orders = PurchaseOrder.objects.filter(branch = request.user.branch)
+
+    for product in Product.objects.all():
+        product.price = 0
+        product.cost = 0        
+        product.save()
+        
+
+    products = Inventory.objects.filter(branch__name='test')
+    logger.info(products)
+
+    for prod in products:
+        prod.quantity = 0
+
+        prod.save()
+   
     return render(request, 'inventory/purchase_orders.html', 
         {
             'form':form,
@@ -1716,7 +1731,6 @@ def receive_order(request, order_id):
         messages.warning(request, f'Purchase order with ID: {order_id} does not exists')
         return redirect('inventory:purchase_orders')
     
-    # an
     
     return render(request, 'inventory/receive_order.html', 
         {
@@ -1735,12 +1749,21 @@ def process_received_order(request):
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
 
+        inventory_updates = []
+        new_inventories = []
+        logs = []
+        order_items = []
+
         for item_data in items:
             order_item_id = item_data.get('id')
             quantity = item_data.get('quantity', 0)
             selling_price = item_data.get('selling_price', 0)
             dealer_price = item_data.get('dealer_price', 0)
             expected_profit = item_data.get('expected_profit')
+
+            # Skip this item if quantity is 0
+            if quantity == 0:
+                continue
 
             try:
                 order_item = PurchaseOrderItem.objects.get(id=order_item_id)
@@ -1763,31 +1786,33 @@ def process_received_order(request):
                 return JsonResponse({'success': False, 'message': 'Quantity cannot be more than ordered quantity.'})
 
             product.price = selling_price
-
             cost = order_item.actual_unit_cost
 
-            
-            inventory, created = Inventory.objects.get_or_create(
-                product=product,
-                defaults={
-                    'branch': request.user.branch,
-                    'cost': cost,
-                    'price': selling_price,
-                    'dealer_price': dealer_price,
-                    'quantity': 0,
-                    'stock_level_threshold': product.min_stock_level,
-                    'reorder': False,
-                    'alert_notification': True
-                }
-            )
-            if not created:
+            try:
+                inventory = Inventory.objects.get(product=product, branch=request.user.branch)
+                # Update existing inventory
                 inventory.cost = cost
                 inventory.price = selling_price
                 inventory.dealer_price = dealer_price
                 inventory.quantity += quantity
+                inventory_updates.append(inventory)
+            except Inventory.DoesNotExist:
+                # Create a new inventory object
+                inventory = Inventory(
+                    product=product,
+                    branch=request.user.branch,
+                    cost=cost,
+                    price=selling_price,
+                    dealer_price=dealer_price,
+                    quantity=quantity,
+                    stock_level_threshold=product.min_stock_level,
+                    reorder=False,
+                    alert_notification=True
+                )
+                new_inventories.append(inventory)
 
-            # Log the inventory activity
-            ActivityLog.objects.create(
+            # Prepare activity log for bulk insert
+            log = ActivityLog(
                 purchase_order=purchase_order,
                 branch=request.user.branch,
                 user=request.user,
@@ -1797,13 +1822,30 @@ def process_received_order(request):
                 description=f'Stock in from {order_item.purchase_order.order_number}',
                 total_quantity=inventory.quantity
             )
+            logs.append(log)
 
             # Update order item received quantity and status
             order_item.receive_items(quantity)
             order_item.check_received()
+            order_items.append(order_item)
 
             product.save()
-            inventory.save()
+
+        # Bulk update existing inventories
+        if inventory_updates:
+            Inventory.objects.bulk_update(inventory_updates, ['cost', 'price', 'dealer_price', 'quantity'])
+
+        # Bulk create new inventories
+        if new_inventories:
+            Inventory.objects.bulk_create(new_inventories)
+
+        # Bulk create activity logs
+        if logs:
+            ActivityLog.objects.bulk_create(logs)
+
+        # Bulk update order items
+        if order_items:
+            PurchaseOrderItem.objects.bulk_update(order_items, ['received_quantity', 'status'])
 
         return JsonResponse({'success': True, 'message': 'Inventory updated successfully'}, status=200)
          

@@ -386,12 +386,14 @@ function setReceiptItems(){
 const laybyButton = document.getElementById("layby");
 const installmentButton = document.getElementById("Installment");
 const cashButton = document.getElementById("cash");
-
+const payLaterBtn = document.getElementById('pay_later');
 const laybyTerms = document.querySelector(".layby-terms");
+const payLaterTerms = document.querySelector(".paylater");
 const monthlyInstallments = document.querySelector(".monthly-installments");
 
 laybyTerms.style.display = "none";
 monthlyInstallments.style.display = "none";
+payLaterTerms.style.display = "none";
 
 const amountPaidInput = document.getElementById('id_amount_paid');
 const totalBalanceDueElement = document.getElementById('total_balance_due');
@@ -444,14 +446,26 @@ function handlePaymentTypeClick(selectedButton) {
     if (selectedButton.id === "layby") {
         laybyTerms.style.display = "block";
         monthlyInstallments.style.display = "none";
+        payLaterTerms.style.display = "none";
     } else if (selectedButton.id === "Installment") {
         laybyTerms.style.display = "none";
         monthlyInstallments.style.display = "block";
+        payLaterTerms.style.display = "none";
     } else if (selectedButton.id === "cash") {
         laybyTerms.style.display = "none";
         monthlyInstallments.style.display = "none";
+        payLaterTerms.style.display = "none";
+    } else if (selectedButton.id === "pay_later") {
+        laybyTerms.style.display = "none";
+        monthlyInstallments.style.display = "none";
+        payLaterTerms.style.display = "block";
     }
 }
+
+payLaterBtn.addEventListener('click', () => {
+    handlePaymentTypeClick(payLaterBtn);
+    paymentTerms = 'pay later';
+})
 
 laybyButton.addEventListener("click", function () {
     handlePaymentTypeClick(laybyButton);
@@ -1058,6 +1072,7 @@ async function processCart(el) {
             recourring:document.getElementById('id_reoccuring').checked,
             paymentTerms: paymentTerms,
             hold_status: holdStatus,
+            pay_later_date: document.getElementById('paylater_date').value
         }
     ];
 

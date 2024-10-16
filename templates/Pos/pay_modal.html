@@ -135,39 +135,45 @@
     <div class="receipt">
         <!-- Payment Details -->
         <div class="payment-detail">
-            <p class="currency_rcp"><strong>Currency:</strong><select  id='rp_currency' class='form-select'>
-                <option value=''>Currency</option>
-                {% for currency in currencies %}
+            <p class="currency_rcp">
+                <strong>Currency:</strong><select id='rp_currency' class='form-select'>
+                    <option value=''>Currency</option>
+                    {% for currency in currencies %}
                     {% if currency.default %}
-                        <option value='{{currency.id}}' selected>{{currency.name}}</option>
+                    <option value='{{currency.id}}' selected>{{currency.name}}</option>
                     {% else %}
-                        <option value='{{currency.id}}'>{{currency.name}}</option>
+                    <option value='{{currency.id}}'>{{currency.name}}</option>
                     {% endif %}
-                {% endfor %}
-            </select></p>
+                    {% endfor %}
+                </select>
+            </p>
             <div class="side">
-                <p class="payment-method"><strong>Payment:</strong>
-                        <button class="btn btn-outline-dark btn-pm btn-sm border" id="pCash" data-name="cash">Cash</button>
-                        <button class="btn btn-outline-dark btn-pm btn-sm border" id="pBank" data-name="bank">Bank</button>
-                        <button class="btn btn-outline-dark btn-pm btn-sm border" id="pEcocash" data-name="ecocash">Ecocash</button>
+                <p class="payment-method">
+                    <strong>Payment:</strong>
+                    <button class="btn btn-outline-dark btn-pm btn-sm border" id="pCash" data-name="cash">Cash</button>
+                    <button class="btn btn-outline-dark btn-pm btn-sm border" id="pBank" data-name="bank">Bank</button>
+                    <button class="btn btn-outline-dark btn-pm btn-sm border" id="pEcocash" data-name="ecocash">Ecocash</button>
                 </p>
-                <p class="terms"><strong>Terms:</strong>
+                <p class="terms">
+                    <strong>Terms:</strong>
                     <button class="btn btn-outline-dark btn-sm btn-terms border active" id="cash">Cash</button>
+                    <button class="btn btn-outline-dark btn-sm btn-terms border" id="pay_later">Pay later</button>
                     <button class="btn btn-outline-dark btn-sm btn-terms border" id="layby">Layby</button>
                     <button class="btn btn-outline-dark btn-sm btn-terms border" id="Installment">Monthly Installment</button>
                 </p>
             </div>
-            
+
         </div>
 
         <hr>
 
         <!-- Customer Info -->
-         
+
         <h4>Payment by <span id="customerName"></span></h4>
         <div class="customer-info">
             <div class="account-summary">
-                <p><strong>Enter Amount Received:</strong>
+                <p>
+                    <strong>Enter Amount Received:</strong>
                     <input type="number" id="id_amount_paid" name="amount_received" class="form-control">
                 </p>
             </div>
@@ -211,7 +217,8 @@
         <div class="layby-terms">
             <h4>Layby Terms</h4>
             <p><strong>Deposited:</strong> <span id="id_deposited"></span></p>
-            <p><strong>Period:</strong>
+            <p>
+                <strong>Period:</strong>
                 <input type="number" name="interval" id="id_period" form="control">
             </p>
             <p id="payment_date"></p>
@@ -221,11 +228,22 @@
         <div class="monthly-installments">
             <h4>Monthly Payments</h4>
             <p><strong>Amount Paid:</strong> <span id="id_deposited"></span></p>
-            <p><strong>Reccuring:</strong>
+            <p>
+                <strong>Reccuring:</strong>
                 <input type="checkbox" name="reoccuring" id="id_reoccuring">
             </p>
-            <p><strong>Date:</strong>
+            <p>
+                <strong>Date:</strong>
                 <input type="date" id="installment_date">
+            </p>
+        </div>
+
+        <!--paylater-->
+        <div class="paylater">
+            <h4>Pay later terms</h4>
+            <p>
+                <strong>Date:</strong> 
+                <input type="date" id="paylater_date">
             </p>
         </div>
 
