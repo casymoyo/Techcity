@@ -11,6 +11,7 @@
     input {
         height: 30px;
     }
+
     thead th {
         position: sticky;
         top: 0;
@@ -19,15 +20,15 @@
         border-bottom: 2px solid #dee2e6;
     }
 
-    table {
+    /*    table {
         border-collapse: separate;
         border-spacing: 0;
         width: 100%;
-    }
+    }*/
     /* Add a max-height to the table container to make the header stick */
     .table-container {
-        max-height: 500px; 
-        overflow-y: auto;
+        /*        max-height: 500px;
+        overflow-y: auto;*/
     }
 </style>
 <div class="inventory-navbar">
@@ -107,12 +108,13 @@
         </tbody>
     </table>
 </div>
-
+<!-- Submit All Button -->
+<button class="submit-btn btn btn-secondary w-100 mt-3" onclick="submitAllItems()">Submit All</button>
 <script>
     new DataTable('#order_items_table', {
         paging: false,  // This removes pagination
-        scrollY: '500px',  // Adjust to your preferred height for scroll
-        scrollCollapse: true
+        //scrollY: '500px',  // Adjust to your preferred height for scroll
+        //scrollCollapse: true
     });
 
 

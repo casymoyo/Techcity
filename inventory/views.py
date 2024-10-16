@@ -1845,7 +1845,7 @@ def process_received_order(request):
 
         # Bulk update order items
         if order_items:
-            PurchaseOrderItem.objects.bulk_update(order_items, ['received_quantity', 'status'])
+            PurchaseOrderItem.objects.bulk_update(order_items, ['received_quantity'])
 
         return JsonResponse({'success': True, 'message': 'Inventory updated successfully'}, status=200)
          
