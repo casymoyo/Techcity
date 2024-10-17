@@ -505,6 +505,8 @@
     let expensesData = [];
     let products = [];
     let purchaseData = [];
+    let formData = [];
+
 
     const po_id = {{ purchase_order.id }}
 
@@ -605,7 +607,8 @@
     })
 
     confirmBtn.addEventListener('click', ()=>{
-      noteModal.show()
+        noteModal.show()
+        submitTableData()
     })
 
     document.querySelector('#id_add_category').addEventListener(
@@ -1093,7 +1096,7 @@
         const data = {
         'po_items':cart,
         'expenses':expensesData,
-        'purchaseData':purchaseData,
+        'cost_allocations': formData, 
         'purchase_order':{
           'payment_method':document.getElementById('id_payment_method').value,
           'supplier':document.getElementById('id_supplier').value,
@@ -1560,6 +1563,39 @@
 
         calculateExpense();
 
+    }
+
+    // Function to collect data from the table and submit it to the backend
+    function submitTableData() {
+        const rows = document.querySelectorAll('#apportionment-table tr');
+
+        // Loop through each row and extract data
+        rows.forEach((row) => {
+            let product = row.querySelector('td:first-child small')?.textContent.trim();
+            let quantity = row.querySelector('td:nth-child(2) small')?.textContent.trim();
+            let price = row.querySelector('td:nth-child(3) small')?.textContent.trim();
+            let totalBuying = row.querySelector('td:nth-child(4) small')?.textContent.trim();
+            let allocated = row.querySelector('td:nth-child(5) small')?.textContent.trim();
+            let allocationRate = row.querySelector('td:nth-child(6) small')?.textContent.trim();
+            let expCost = row.querySelector('td:nth-child(7) input')?.value;
+            let total = row.querySelector('td:nth-child(8) small')?.textContent.trim();
+
+            // Prepare the data object for each row
+            if (product) {
+                formData.push({
+                    product: product,
+                    quantity: quantity,
+                    price: price,
+                    totalBuying: totalBuying,
+                    allocated: allocated,
+                    allocationRate: allocationRate,
+                    expCost: expCost,
+                    total: total
+                });
+            }
+        });
+
+        console.log(formData)
     }
 
 

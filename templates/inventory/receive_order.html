@@ -37,6 +37,7 @@
                 <h4 class='mt-1 fw-bold'><small class='px-1 fw-bold fx-6'>Receive Purchase Order: </small>{{ purchase_order.order_number }}</h4>
             </div>
         </div>
+        <a href="{% url 'inventory:mark_done' purchase_order.id %}" class="btn btn-secondary">Done</a>
     </nav>
 </div>
 <div class="table-container">

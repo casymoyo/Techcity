@@ -1784,7 +1784,6 @@ def process_received_order(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            # Directly accessing individual item attributes
             order_item_id = data.get('id')
             quantity = data.get('quantity', 0)
             selling_price = data.get('selling_price', 0)
@@ -1795,7 +1794,6 @@ def process_received_order(request):
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
 
-        # Skip this item if quantity is 0
         if quantity == 0:
             return JsonResponse({'success': False, 'message': 'Quantity cannot be zero.'}, status=400)
 
@@ -1813,7 +1811,7 @@ def process_received_order(request):
         # Update the order item with received quantity
         order_item.receive_items(quantity)
         order_item.expected_profit = expected_profit
-        order_item.check_received()
+        #order_item.check_received() revisit the model method
 
         # Update or create inventory
         try:
@@ -1869,6 +1867,15 @@ def process_received_order(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
 
 @login_required
+def mark_purchase_order_done(request, po_id):
+    purchase_order = PurchaseOrder.objects.get(id=po_id)
+    purchase_order.received = True
+    purchase_order.save()
+
+    messages.info(request, 'Purchase order done')
+    return redirect('inventory:purchase_orders')
+
+@login_required
 def edit_purchase_order(request, po_id):
     if request.method == 'GET':
         purchase_order = PurchaseOrder.objects.get(id=po_id)
@@ -1896,19 +1903,17 @@ def edit_purchase_order(request, po_id):
             data = json.loads(request.body)
             purchase_order_data = data.get('purchase_order', {})
             purchase_order_items_data = data.get('po_items', [])
-            expenses = data.get('expenses')
-            logger.info(po_id)
-            unique_expenses = []
+            expenses = data.get('expenses', [])
+            cost_allocations = data.get('cost_allocations', [])
 
+            # remove duplicates
+            unique_expenses = []
             seen = set()
             for expense in expenses:
                 expense_tuple = (expense['name'], expense['amount'])
                 if expense_tuple not in seen:
                     seen.add(expense_tuple)
                     unique_expenses.append(expense)
-
-
-            logger.info(f'expenses data: {unique_expenses}')
 
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
@@ -1995,6 +2000,25 @@ def edit_purchase_order(request, po_id):
                         )
                     )
                 otherExpenses.objects.bulk_create(expense_bulk)
+
+                logger.info('processing cost allocations ....')
+                costs_list = []
+                for cost in cost_allocations:
+                    costs_list.append(
+                        costAllocationPurchaseOrder(
+                            purchase_order = purchase_order,
+                            allocated = cost['allocated'],
+                            allocationRate = cost['allocationRate'],
+                            expense_cost = cost['expCost'],
+                            price = cost['price'],
+                            quantity = float(cost['price']),
+                            product = cost['product'],
+                            total = cost['total'],
+                            total_buying = cost['totalBuying']
+                        )
+                    )
+                logger.info(f'processing cost allocations .... {costs_list}')
+                costAllocationPurchaseOrder.objects.bulk_create(costs_list)
                     
                 # update finance accounts (vat, cashbook, expense, account_transaction_log)
                 if purchase_order.status in ['Received', 'received']:
@@ -2018,9 +2042,6 @@ def remove_purchase_order(purchase_order_id, request):
         purchase_order = PurchaseOrder.objects.get(id=purchase_order_id)
 
         logger.info(f'{purchase_order} remove')
-
-        if purchase_order.received:
-            return JsonResponse({'success': False, 'message': 'Cannot delete a received purchase order'}, status=400)
 
         with transaction.atomic():
             
