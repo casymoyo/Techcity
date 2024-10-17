@@ -6,10 +6,15 @@
 <style>
     td, input {
         font-size: 12px;
+        vertical-align: middle; 
+        text-align: center; 
     }
 
     input {
         height: 30px;
+        font-size: 12px;
+        vertical-align: middle;
+        text-align: center;
     }
 
     thead th {
@@ -21,14 +26,9 @@
     }
 
     table {
-/*        border-collapse: separate;*/
         width: 100%;
     }
-    /* Add a max-height to the table container to make the header stick */
-    .table-container {
-        /*        max-height: 500px;
-        overflow-y: auto;*/
-    }
+
 </style>
 <div class="inventory-navbar">
     <nav class="d-flex justify-content-between align-items-center text-light rounded mb-2 p-2" style="background:#373f4c !important;">
@@ -50,7 +50,7 @@
                 <th>Enter Selling Price</th>
                 <th>Enter Dealer Price</th>
                 <th>Expected Profit</th>
-                <th>Actions</th> <!-- Add Actions Column -->
+                <th>Actions</th> 
             </tr>
         </thead>
         <tbody>
@@ -62,17 +62,18 @@
                     {% if item.received %}
                     <div class="rounded">All received</div>
                     {% else %}
-                    <input type="number" id="quantity_{{ item.id }}" placeholder="Enter quantity received" min="1" class='form-control'>
+                    <input type="number" value="{{ item.quantity }}" id="quantity_{{ item.id }}" placeholder="Enter quantity received" min="1" class='form-control'>
                     {% endif %}
                 </td>
                 <td>{{ item.actual_unit_cost }}</td>
                 <td>
                     {% if not item.received %}
                     {% if request.user.role == 'admin' or request.user.role == 'owner' %}
-                    <input type="number"
+                    <input type="text"
                            id="selling_{{ item.id }}"
                            placeholder="Enter Selling Price"
-                           min="1"
+                           value="{% for prod in inventory %}{% if prod.product == item.product %} {{ prod.price }} {% endif %} {% endfor %}"
+                           min="1"{
                            class='form-control'
                            oninput="expectedProfit(
                                 '{{ item.id }}',
@@ -87,11 +88,12 @@
                 <td>
                     {% if not item.received %}
                     {% if request.user.role == 'admin' or request.user.role == 'owner' %}
-                    <input type="number"
+                    <input type="text"
                            id="dealer_{{ item.id }}"
                            placeholder="Enter Dealer Selling Price"
                            min="1"
                            class='form-control'
+                           value="{% for prod in inventory %}{% if prod.product == item.product %} {{ prod.dealer_price }} {% endif %} {% endfor %}"
                            oninput="expectedProfit(
                                 '{{ item.id }}',
                                 '{{ item.quantity }}',
@@ -115,22 +117,34 @@
 </div>
 
 <script>
+    let expectedProfitAmnt = 0;
+
     new DataTable('#order_items_table', {
-        paging: false,  // This removes pagination
-        //scrollY: '700px',
-        //scrollX: '100%',  // Adjust to your preferred height for scroll
+        paging: false, 
         scrollCollapse: true
     });
 
-    let expectedProfitAmnt = 0;
-    // Function to calculate and display expected profit
+    document.addEventListener('DOMContentLoaded', function () {
+        expectedProfitOnLoad();
+    });
+
+    function expectedProfitOnLoad() {
+        
+        {% for item in orders %}
+        expectedProfit(
+            '{{ item.id }}',
+            '{{ item.quantity }}',
+            '{{ item.actual_unit_cost }}'
+        );
+        {% endfor %}
+    }
+
     function expectedProfit(itemId, quantity, actualUnitCost) {
         const sellingPrice = document.getElementById(`selling_${itemId}`).value;
         const expectedProfitField = document.getElementById(`profit_${itemId}`);
         const pQuantity = document.getElementById(`quantity_${itemId}`).value;
 
         if (sellingPrice && quantity && actualUnitCost) {
-            const profitPerUnit = parseFloat(actualUnitCost);
             const expectedProfit = (parseFloat(sellingPrice) * parseInt(quantity)) - (parseFloat(actualUnitCost) * parseInt(pQuantity));
             
             expectedProfitField.textContent = expectedProfit.toFixed(2);
@@ -140,7 +154,6 @@
         }
     }
 
-    // Function to submit a single item
     function submitItem(itemId) {
         const quantity = document.getElementById(`quantity_${itemId}`)?.value || 0;
         const sellingPrice = document.getElementById(`selling_${itemId}`)?.value || 0;
@@ -153,8 +166,6 @@
             dealer_price: parseFloat(dealerPrice),
             expected_profit: parseFloat(expectedProfitAmnt)
         };
-
-        console.log(itemData)
 
         fetch(`{% url "inventory:process_received_order" %}`, {
             method: 'POST',

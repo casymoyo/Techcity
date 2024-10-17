@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\templates",
+    "\\techcity",
     "\\templates\\inventory"
   ],
+  "SelectedNode": "\\techcity\\settings.py",
   "PreviewInSolutionExplorer": false
 }
