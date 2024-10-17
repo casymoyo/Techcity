@@ -313,18 +313,20 @@
                         </button>
                     </div>
                   </div>
-                  <div id="div_id_name" class="mb-3">
+                  <div id="div_id_name" class="mb-3 form-group">
                         <label for="id_name" class="form-label requiredField">
                           Name
                           <span class="asteriskField">*</span> 
                       </label> 
-                      <input 
-                          type="text" 
-                          name="name" 
-                          maxlength="255" 
-                          class="textinput form-control" 
-                          required id="id_name"
-                      > 
+                        <div class="d-flex align-items-center">
+                            <input type="text"
+                                   name="name"
+                                   maxlength="255"
+                                   class="textinput form-control"
+                                   required id="id_name">
+                            <button class="btn btn-light bx bx-edit border mx-1"></button>
+                            <button class="btn btn-light bx bx-trash border"></button>
+                        </div>
                   </div> 
                   <div id="div_id_category form-group" class="mb-3"> 
                       <label for="id_category" class="form-label requiredField">
@@ -957,26 +959,58 @@
     
     function updateCartDisplay() {
         const cartItemsList = document.getElementById("cart-items");
-        cartItemsList.innerHTML = ""; 
-      
-        let total = 0;
-      
-        cart.forEach((item) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
+        cartItemsList.innerHTML = "";
+
+        cart.forEach((item, index) => {
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
             <td>
-              <button class="btn" data-id=${item.id} onclick="removeItem(this);">
-                  <i class='bx bx-trash-alt'></i>
-              </button>
-              ${item.product}
+                <button class="btn" data-id=${item.id} onclick="removeItem(this);">
+                    <i class='bx bx-trash-alt'></i>
+                </button>
+                ${item.product}
             </td>
-            <td>${item.price}</td>
-            <td>${item.quantity}</td>
-            <td class='text-center'>${item.quantity * item.price}</td>
-          `;
-          cartItemsList.appendChild(row);
+            <td>
+                <input type="number" class="form-control" id="price-${item.id}" value="${item.price}" min="0" step="0.01" 
+                    onchange="updateItemPrice('${item.id}', this.value)">
+            </td>
+            <td>
+                <input type="number" class="form-control" id="quantity-${item.id}" value="${item.quantity}" min="1" 
+                    onchange="updateItemQuantity('${item.id}', this.value)">
+            </td>
+            <td class='text-center' id="total-${item.id}">${(item.quantity * item.price).toFixed(2)}</td>
+        `;
+            cartItemsList.appendChild(row);
         });
+
+        calculateTotals(); 
     }
+
+    function updateItemPrice(id, newPrice) {
+        const item = cart.find((item) => item.id === id);
+        if (item) {
+            item.price = parseFloat(newPrice); 
+            updateItemTotal(item); 
+            calculateTotals(); 
+        }
+    }
+
+    function updateItemQuantity(id, newQuantity) {
+        const item = cart.find((item) => item.id === id);
+        if (item) {
+            item.quantity = Number(newQuantity); 
+            updateItemTotal(item); 
+            calculateTotals();
+        }
+    }
+
+    function updateItemTotal(item) {
+        const totalElement = document.getElementById(`total-${item.id}`);
+        const totalPrice = (item.quantity * item.price).toFixed(2);
+        totalElement.textContent = totalPrice; 
+    }
+
     
 
     function addItem() {
