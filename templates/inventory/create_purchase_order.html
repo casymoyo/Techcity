@@ -505,6 +505,7 @@
     let expensesData = [];
     let products = [];
     let purchaseData = [];
+    let formData = [];
    
     const errorEl = document.getElementById('error');
     const addToCartError = document.getElementById('cart_error');
@@ -603,7 +604,8 @@
     })
 
     confirmBtn.addEventListener('click', ()=>{
-      noteModal.show()
+        noteModal.show()
+        submitTableData()
     })
 
     document.querySelector('#id_add_category').addEventListener(
@@ -1088,7 +1090,7 @@
       const data= {
         'po_items':cart,
         'expenses':expensesData,
-        'purchaseData':purchaseData,
+        'cost_allocations':formData,
         'purchase_order':{
           'payment_method':document.getElementById('id_payment_method').value,
           'supplier':document.getElementById('id_supplier').value,
@@ -1308,7 +1310,6 @@
           
           addProductToFooter(expFooter, data, productId);
           products.push(data.product);  
-          console.log('Added new product:', data.product);
 
           recalculateTotalExpenses(exp, data.tB);
           updateValues(newCart, expense, data.product)
@@ -1318,7 +1319,7 @@
           })
         } else {
           // If product exists, update the amount
-          // updateProductAmount(existingProduct, data);
+           updateProductAmount(existingProduct, data);
           // console.log('Updated product:', data.product);
         }
 
@@ -1467,11 +1468,106 @@
       let expCost = (productCost + (productCostAllocationRate * expenses)) / quantity
       let allocated = productCostAllocationRate * expenses;
 
-      return {
+        return {
         expCost:expCost.toFixed(2),
         allocated:allocated.toFixed(2),
         allocationRate:expCost - price 
       }
+    }
+
+    function updateValues(newCart, expenses, products) {
+        let totalCost = totalProductCost(newCart);
+
+        // Remove products from 'newCart'
+        products.forEach((product) => {
+            let existingItemIndex = newCart.findIndex((item) => item.product === product);
+            if (existingItemIndex !== -1) {
+                newCart.splice(existingItemIndex, 1);
+            }
+        });
+
+        // Update the rows of the table based on 'newCart'
+        const rows = document.querySelectorAll('#apportionment-table tr');
+        newCart.forEach((item) => {
+            rows.forEach((row) => {
+                const firstCell = row.querySelector('td:first-child small');
+                if (firstCell && firstCell.textContent.trim() === item.product) {
+
+                    let result = allocateCost(
+                        totalCost,
+                        item.price,
+                        item.quantity,
+                        expenses
+                    );
+
+                    let totalBuying = item.price * item.quantity;
+                    let total = totalBuying + parseFloat(result.allocated);
+
+                    // Update the row content with new values
+                    row.innerHTML = `
+                    <td id='${item.id}'><small>${item.product}</small></td>
+                    <td id='${item.id}'><small>${item.quantity}</small></td>
+                    <td id='${item.id}'><small>${item.price.toFixed(2)}</small></td>
+                    <td id='${item.id}'><small>${totalBuying.toFixed(2)}</small></td>
+                    <td id='${item.id}'><small>${result.allocated}</small></td>
+                    <td id='${item.id}'><small>${result.allocationRate.toFixed(2)}</small></td>
+                    <td id='${item.id}'>
+                        <small>
+                            <input 
+                                value='${result.expCost}' 
+                                class='po-input form-control' 
+                                type='number'
+                                data-id='input_${item.id}'
+                                oninput='priceOverride(
+                                    this, 
+                                    {
+                                        tB:${result.allocated},
+                                        exp:${expenses},
+                                        product:"${item.product}",
+                                        acp:${result.expCost}
+                                    }
+                                )'
+                            />
+                        </small>
+                    </td>
+                    <td id='${item.id}'><small>${total.toFixed(2)}</small></td>
+                `;
+                }
+            });
+        });
+    }
+
+    // Function to collect data from the table and submit it to the backend
+    function submitTableData() {
+        const rows = document.querySelectorAll('#apportionment-table tr');
+
+        // Loop through each row and extract data
+        rows.forEach((row) => {
+            let product = row.querySelector('td:first-child small')?.textContent.trim();
+            let quantity = row.querySelector('td:nth-child(2) small')?.textContent.trim();
+            let price = row.querySelector('td:nth-child(3) small')?.textContent.trim();
+            let totalBuying = row.querySelector('td:nth-child(4) small')?.textContent.trim();
+            let allocated = row.querySelector('td:nth-child(5) small')?.textContent.trim();
+            let allocationRate = row.querySelector('td:nth-child(6) small')?.textContent.trim();
+            let expCost = row.querySelector('td:nth-child(7) input')?.value;
+            let total = row.querySelector('td:nth-child(8) small')?.textContent.trim();
+
+            // Prepare the data object for each row
+            if (product) {
+                formData.push({
+                    product: product,
+                    quantity: quantity,
+                    price: price,
+                    totalBuying: totalBuying,
+                    allocated: allocated,
+                    allocationRate: allocationRate,
+                    expCost: expCost,
+                    total: total
+                });
+            }
+        });
+
+        console.log(formData)
     }
 
 

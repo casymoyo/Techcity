@@ -14,39 +14,64 @@
         </div>
         <div>
             <div class="table-detail mt-2 w-100 atable">
-                <table class='table border table-hover rounded p-2' id='order_table' style="width: 100%;">
-                    <thead class='bg-primary'>
-                            <th>Date</th>
-                            <th>Order Number</th>
-                            <th>Product</th>
-                            <th>Unit Cost</th>
-                            <th>Quantity</th>
-                            <th>Total</th>
+                <table class="table table-bordered table-striped">
+                    <thead>
+                    <th class="fs-6 text-dark" style="color:black;">Product</th>
+                    <th class="fs-6 text-dark" style="color:black;">Quantity</th>
+                    <th class="fs-6 text-dark" style="color:black;">Supplier Price</th>
+                    <th class="fs-6 text-dark" style="color:black;">Total Supplier Price</th>
+                    <th class="fs-6 text-dark" style="color:black;">Total Product Expenses</th>
+                    <th class="fs-6 text-dark" style="color:black;">Unit Product Expense</th>
+                    <th class="fs-6 text-dark" style="color:black;">Total Purchase Price + Expense</th>
+                    <th class="fs-6 text-dark" style="color:black;">Total Purchase Price</th>
                     </thead>
-                    <tbody>
-                        {% for order in orders %}
+                    <tbody id="apportionment-table">
+                        {% for item in items %}
                         <tr>
-                            <td data-id={{ order.id }}><small>{{ order.purchase_order.order_date }}</small></td>
-                            <td data-id={{ order.id }}><small>{{ order.purchase_order.order_number }}</small></td> 
-                            <td data-id={{ order.id }}><small>{{ order.product.name }}</small></td>
-                            <td data-id={{ order.id }}><small>{{ order.actual_unit_cost }}</small></td>
-                            <td data-id={{ order.id }}><small>{{ order.quantity }}</small></td>
-                            <td data-id={{ order.id }}><small id='total'></small></td>  
+                            <td>{{ item.product }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.price }}</td>
+                            <td>{{ item.total_buying }}</td>
+                            <td>{{ item.allocated }}</td>
+                            <td>{{ item.expense_cost }}</td>
+                            <td>{{ item.total }}</td>
+                            <td>{{ item.allocationRate }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
-                    <tfoot>
+
+                    <!-- Section to display additional expenses -->
+                    <tbody id="expenses-table">
                         <tr>
-                            <td colspan="6">Expenses</td>
+                            <td colspan="4"><strong>Totals</strong></td>
+                            <td><strong>{{ total_expenses }}</strong></td>
+                            <td colspan="4"></td>
                         </tr>
                         {% for expense in expenses %}
-                            <tr>
-                                <td colspan="5">{{ expense.name }}</td>
-                                <td>{{ expense.amount }}</td>
-                            </tr>
+                        <tr>
+                            <td colspan="4">{{ expense.name }}</td>
+                            <td>{{ expense.amount }}</td>
+                            <td colspan="4"></td>
+                        </tr>
                         {% endfor %}
-                    </tfoot>
+                    </tbody>
+
+                    <!-- Footer for totals -->
+                    <!--<tfoot id="expense-footer">
+                        {% for expense in expenses %}
+                        <tr>
+                            <td colspan="5">{{ expense.name }}</td>
+                            <td>{{ expense.amount }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr>
+                            <td colspan="2"><strong>Total Other Expenses</strong></td>
+                            <td colspan="2">{{ total_expense_sum }}</td>
+                            <td colspan="4"></td>
+                        </tr>
+                    </tfoot>-->
                 </table>
+
             </div>
         </div>
    </div>

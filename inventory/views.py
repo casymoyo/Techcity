@@ -1374,7 +1374,8 @@ def create_purchase_order(request):
             data = json.loads(request.body) 
             purchase_order_data = data.get('purchase_order', {})
             purchase_order_items_data = data.get('po_items', [])
-            expenses = data.get('expenses')
+            expenses = data.get('expenses', [])
+            cost_allocations = data.get('cost_allocations', [])
 
             unique_expenses = []
 
@@ -1384,9 +1385,6 @@ def create_purchase_order(request):
                 if expense_tuple not in seen:
                     seen.add(expense_tuple)
                     unique_expenses.append(expense)
-
-
-            logger.info(f'expenses data: {unique_expenses}')
 
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
@@ -1473,6 +1471,29 @@ def create_purchase_order(request):
                         )
                     )
                 otherExpenses.objects.bulk_create(expense_bulk)
+
+
+                # cost allocations
+                logger.info('processing cost allocations ....')
+                costs_list = []
+                for cost in cost_allocations:
+                    costs_list.append(
+                        costAllocationPurchaseOrder(
+                            purchase_order = purchase_order,
+                            allocated = cost['allocated'],
+                            allocationRate = cost['allocationRate'],
+                            expense_cost = cost['expCost'],
+                            price = cost['price'],
+                            quantity = float(cost['price']),
+                            product = cost['product'],
+                            total = cost['total'],
+                            total_buying = cost['totalBuying']
+                        )
+                    )
+                logger.info(f'processing cost allocations .... {costs_list}')
+                costAllocationPurchaseOrder.objects.bulk_create(costs_list)
+
+                logger.info('Cost allocations processed :)')
                     
                 # update finance accounts (vat, cashbook, expense, account_transaction_log)
                 if purchase_order.status in ['Received', 'received']:
@@ -1701,15 +1722,21 @@ def purchase_order_detail(request, order_id):
     except PurchaseOrderItem.DoesNotExist:
         messages.warning(request, f'Purchase order with ID: {order_id} does not exists')
         return redirect('inventory:purchase_orders')
-    
-    purchase_order_expenses = otherExpenses.objects.filter(purchase_order=purchase_order)
-    logger.info(purchase_order_expenses)
+
+    items = costAllocationPurchaseOrder.objects.filter(purchase_order__id=order_id)
+    expenses = otherExpenses.objects.filter(purchase_order__id=order_id)
+    total_expense_sum = expenses.aggregate(total_expense=Sum('amount'))['total_expense'] or 0
+
+    logger.info(items)
     
     return render(request, 'inventory/purchase_order_detail.html', 
         {
+            'items':items,
+            'expenses':expenses,
             'orders':purchase_order_items,
             'purchase_order':purchase_order,
-            'expenses':purchase_order_expenses
+            'total_expenses':total_expense_sum 
+
         }
     )
     

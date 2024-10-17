@@ -142,6 +142,20 @@ class PurchaseOrderItem(models.Model):
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
 
+class costAllocationPurchaseOrder(models.Model):
+    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE)
+    allocated = models.DecimalField(max_digits=10, decimal_places=2)
+    allocationRate = models.DecimalField(max_digits=10, decimal_places=2)
+    expense_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.FloatField()
+    product = models.CharField(max_length=255)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    total_buying = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self) -> str:
+        return f'{self.purchase_order}: {self.product}'
+
 class ProductDetail(models.Model):
     purchase_order = models.ForeignKey(PurchaseOrderItem, on_delete=models.CASCADE) 
 
