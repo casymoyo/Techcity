@@ -45,14 +45,15 @@
                                         <a href="{% url 'inventory:purchase_order_detail' order.id %}" class="btn bx bx-show"></a>
                                         <a href="{% url 'inventory:print_purchase_order' order.id %}" class="btn bx bx-printer mx-1"></a>
                                         {% if order.status != 'received' %}
-                                            <button class="btn btn-sm btn-light" data-id={{ order.id }} onclick="status(this)">Change Status</button>
+                                        <button class="btn btn-sm btn-light" data-id={{ order.id }} onclick="status(this)">Change Status</button>
                                         {% else %}
-                                            {% if order.received %}
-                                                <small class="bg-success fw-bold text-light p-2 rounded text-center w-100">Recieved</small>
-                                            {% else %}
-                                                <a href="{% url 'inventory:receive_order' order.id %}" class="btn btn-sm btn-light">Receive Order Items</a>
-                                            {% endif %}
+                                        {% if order.received %}
+                                        <small class="bg-success fw-bold text-light p-2 rounded text-center w-100">Recieved</small>
+                                        {% else %}
+                                        <a href="{% url 'inventory:receive_order' order.id %}" class="btn btn-sm btn-light">Receive Order Items</a>
                                         {% endif %}
+                                        {% endif %}
+                                        <a href="{% url 'inventory:edit_po' order.id %}" class="btn btn-primary btn-sm bx bx-edit"></a>
                                         <button class="btn btn-danger btn-sm" onclick="confirmDeletePurchaseOrder({{ order.id }})">Delete</button>
                                     </td>
                                 </tr>

@@ -57,6 +57,8 @@ urlpatterns = [
     path('purchase_order/delete/<int:purchase_order_id>/', delete_purchase_order, name='delete_purchase_order'),
     path('purchase_orders/status/<int:order_id>/', change_purchase_order_status, name='change_purchase_order_status'),
     path('purchase_order/delete/<int:purchase_order_id>/', delete_purchase_order, name='delete_purchase_order'),
+    path('edit_purchase_order_data/<int:po_id>/', edit_purchase_order_data, name='edit_po_data'),
+    path('edit_purchase_order/<int:po_id>/', edit_purchase_order, name='edit_po'),
 
     # transfers
     path('transfers', inventory_transfers, name='transfers'),

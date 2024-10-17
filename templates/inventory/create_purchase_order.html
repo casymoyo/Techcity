@@ -771,8 +771,6 @@
               end_of_day: document.getElementById('id_end_of_day').checked,
               service: document.getElementById('id_service').checked,
             };
-
-            console.log(data)
           
             fetch("{% url 'inventory:product' %}", {
               method: "POST",
@@ -859,9 +857,7 @@
            fetch(`/inventory/inventory/?name=${product}`)
           .then(response => response.json())
           .then(data=>{
-            console.log(prodData)
             prodData.push(data)
-            console.log(prodData)
           })
           .catch(error => console.error('Error:', error))
       })
@@ -1206,12 +1202,16 @@
             const expenseName = document.getElementById(`expense-name-${i}`).value;
             const expenseAmount = parseFloat(document.getElementById(`expense-amount-${i}`).value) || 0;
 
-            // Push each expense as an object to the expensesData array
-            expensesData.push({
-                name: expenseName,
-                amount: expenseAmount
-            });
-    
+              // Push each expense as an object to the expensesData array
+              let expenseExist = expensesData.filter((exp) => exp.name === expenseName)
+           
+              expensesData.push({
+                  name: expenseName,
+                  amount: expenseAmount
+              });
+
+              console.log(expensesData)
+            
             // Create and append the expense row to the footer
             const expenseRow = document.createElement('tr');
             expenseRow.innerHTML += `

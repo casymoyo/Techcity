@@ -57,7 +57,7 @@
             {% for item in orders %}
             <tr>
                 <td>{{ item.product.name }}</td>
-                <td>{{ item.quantity }}</td>
+                <td id="purchased_quantity_{{ item.id }}">{{ item.quantity }}</td>
                 <td>
                     {% if item.received %}
                     <div class="rounded">All received</div>
@@ -127,10 +127,12 @@
     function expectedProfit(itemId, quantity, actualUnitCost) {
         const sellingPrice = document.getElementById(`selling_${itemId}`).value;
         const expectedProfitField = document.getElementById(`profit_${itemId}`);
+        const pQuantity = document.getElementById(`quantity_${itemId}`).value;
 
         if (sellingPrice && quantity && actualUnitCost) {
-            const profitPerUnit = parseFloat(sellingPrice) - parseFloat(actualUnitCost);
-            const expectedProfit = profitPerUnit * parseInt(quantity);
+            const profitPerUnit = parseFloat(actualUnitCost);
+            const expectedProfit = (parseFloat(sellingPrice) * parseInt(quantity)) - (parseFloat(actualUnitCost) * parseInt(pQuantity));
+            
             expectedProfitField.textContent = expectedProfit.toFixed(2);
             expectedProfitAmnt = expectedProfit.toFixed(2)
         } else {

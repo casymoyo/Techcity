@@ -1346,6 +1346,7 @@ def purchase_orders(request):
             'status_form':status_form 
         }
     )
+
     
 @login_required
 def create_purchase_order(request):
@@ -1374,6 +1375,18 @@ def create_purchase_order(request):
             purchase_order_data = data.get('purchase_order', {})
             purchase_order_items_data = data.get('po_items', [])
             expenses = data.get('expenses')
+
+            unique_expenses = []
+
+            seen = set()
+            for expense in expenses:
+                expense_tuple = (expense['name'], expense['amount'])
+                if expense_tuple not in seen:
+                    seen.add(expense_tuple)
+                    unique_expenses.append(expense)
+
+
+            logger.info(f'expenses data: {unique_expenses}')
 
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
@@ -1449,10 +1462,9 @@ def create_purchase_order(request):
                 PurchaseOrderItem.objects.bulk_create(purchase_order_items_bulk)
 
                 expense_bulk = []
-                for expense in expenses:
+                for expense in unique_expenses:
                     name = expense['name'] 
                     amount = expense['amount']
-
                     expense_bulk.append(
                         otherExpenses(
                             purchase_order=purchase_order,
@@ -1475,8 +1487,9 @@ def create_purchase_order(request):
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
         return JsonResponse({'success': True, 'message': 'Purchase order created successfully'})
-    
-    
+
+       
+@login_required    
 def if_purchase_order_is_received(request, purchase_order, tax_amount, payment_method):
     try:
         currency = Currency.objects.get(default=True)
@@ -1737,10 +1750,6 @@ def receive_order(request, order_id):
             'purchase_order':purchase_order
         }
     )
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from django.db import transaction
-import json
 
 @login_required
 @transaction.atomic
@@ -1832,8 +1841,172 @@ def process_received_order(request):
         return JsonResponse({'success': True, 'message': 'Inventory updated successfully'}, status=200)
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
-         
-        
+
+
+
+
+@login_required
+def edit_purchase_order(request, po_id):
+    if request.method == 'GET':
+        purchase_order = PurchaseOrder.objects.get(id=po_id)
+        supplier_form = AddSupplierForm()
+        product_form = AddProductForm()
+        suppliers = Supplier.objects.all()
+        note_form = noteStatusForm()
+        batch_form = BatchForm()
+
+        batch_codes = BatchCode.objects.all()
+
+        return render(request, 'inventory/edit_purchase_order.html', {
+            'purchase_order':purchase_order,
+            'product_form':product_form,
+            'supplier_form':supplier_form,
+            'suppliers':suppliers,
+            'note_form':note_form,
+            'batch_form':batch_form,
+            'batch_codes':batch_codes
+
+         })
+    
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            purchase_order_data = data.get('purchase_order', {})
+            purchase_order_items_data = data.get('po_items', [])
+            expenses = data.get('expenses')
+
+            unique_expenses = []
+
+            seen = set()
+            for expense in expenses:
+                expense_tuple = (expense['name'], expense['amount'])
+                if expense_tuple not in seen:
+                    seen.add(expense_tuple)
+                    unique_expenses.append(expense)
+
+
+            logger.info(f'expenses data: {unique_expenses}')
+
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
+
+        supplier_id = purchase_order_data['supplier']
+        delivery_date = purchase_order_data['delivery_date']
+        status = purchase_order_data['status']
+        notes = purchase_order_data['notes']
+        total_cost = Decimal(purchase_order_data['total_cost'])
+        discount = Decimal(purchase_order_data['discount'])
+        tax_amount = Decimal(purchase_order_data['tax_amount'])
+        other_amount = Decimal(purchase_order_data['other_amount'])
+        payment_method = purchase_order_data.get('payment_method')
+    
+        if not all([supplier_id, delivery_date, status, total_cost, payment_method]):
+            return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
+
+        try:
+            supplier = Supplier.objects.get(id=supplier_id)
+        except Supplier.DoesNotExist:
+            return JsonResponse({'success': False, 'message': f'Supplier with ID {supplier_id} not found'}, status=404)
+
+        try:
+            with transaction.atomic():
+                purchase_order = PurchaseOrder(
+                    order_number=PurchaseOrder.generate_order_number(),
+                    supplier=supplier,
+                    delivery_date=delivery_date,
+                    status=status,
+                    notes=notes,
+                    total_cost=total_cost,
+                    discount=discount,
+                    tax_amount=tax_amount,
+                    other_amount=other_amount,
+                    branch = request.user.branch,
+                    is_partial = False,
+                    received = False
+                )
+                purchase_order.save()
+                
+                purchase_order_items_bulk = []
+                for item_data in purchase_order_items_data:
+                    product_name = (item_data['product'])
+                    quantity = int(item_data['quantity'])
+                    unit_cost = Decimal(item_data['price'])
+                    actual_unit_cost = Decimal(item_data['actualPrice'])
+
+                    if not all([product_name, quantity, unit_cost]):
+                        transaction.set_rollback(True)
+                        return JsonResponse({'success': False, 'message': 'Missing fields in item data'}, status=400)
+
+                    try:
+                        product = Product.objects.get(name=product_name)
+                    except Product.DoesNotExist:
+                        transaction.set_rollback(True)
+                        return JsonResponse({'success': False, 'message': f'Product with Name {product_name} not found'}, status=404)
+
+                    purchase_order_items_bulk.append(
+                        PurchaseOrderItem(
+                            purchase_order=purchase_order,
+                            product=product,
+                            quantity=quantity,
+                            unit_cost=unit_cost,
+                            actual_unit_cost=actual_unit_cost,
+                            received_quantity=0,
+                            received=False
+                        )
+                    )
+
+                    product.price = 0
+                    product.save()
+
+                PurchaseOrderItem.objects.bulk_create(purchase_order_items_bulk)
+
+                expense_bulk = []
+                for expense in unique_expenses:
+                    name = expense['name'] 
+                    amount = expense['amount']
+                    expense_bulk.append(
+                        otherExpenses(
+                            purchase_order=purchase_order,
+                            name=name,
+                            amount=amount
+                        )
+                    )
+                otherExpenses.objects.bulk_create(expense_bulk)
+                    
+                # update finance accounts (vat, cashbook, expense, account_transaction_log)
+                if purchase_order.status in ['Received', 'received']:
+                    if_purchase_order_is_received(
+                        request, 
+                        purchase_order, 
+                        tax_amount, 
+                        payment_method
+                    )
+            delete_purchase_order(request, po_id)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+        return JsonResponse({'success': True, 'message': 'Purchase order created successfully'})
+
+
+@login_required
+def edit_purchase_order_data(request, po_id):
+    try:
+        expenses = otherExpenses.objects.filter(purchase_order__id=po_id).values()
+    
+        purchase_order_items = PurchaseOrderItem.objects.filter(purchase_order__id=po_id).values(
+            'purchase_order__id',
+            'product__name',
+            'quantity',
+            'unit_cost',
+            'actual_unit_cost',
+            'expected_profit'
+        )
+
+        return JsonResponse({'success':True, 'po_items':list(purchase_order_items), 'expenses':list(expenses)})
+
+    except Exception as e:
+        return JsonResponse({"success":False, 'message':f'{e}'})
+    
 @login_required
 def product(request):
 
