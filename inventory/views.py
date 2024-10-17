@@ -1780,8 +1780,8 @@ def process_received_order(request):
         # Update expected profit and check quantity
         cost = order_item.actual_unit_cost
         
-        if quantity > order_item.quantity:
-            return JsonResponse({'success': False, 'message': 'Quantity cannot be more than ordered quantity.'})
+        #if quantity > order_item.quantity:
+        #    return JsonResponse({'success': False, 'message': 'Quantity cannot be more than ordered quantity.'})
 
         # Update the order item with received quantity
         order_item.receive_items(quantity)
