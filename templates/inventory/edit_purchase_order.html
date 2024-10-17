@@ -1062,9 +1062,11 @@
           'tax_amount':parseFloat(document.getElementById('tax').textContent) || 0,
           'other_amount':parseFloat(document.getElementById('id_other').value) || 0
         }
-      }
+        }
 
-       fetch(`/inventory/edit_purchase_order_data/${po_id}/`, {
+        console.log(data)
+
+       fetch(`/inventory/edit_purchase_order/${po_id}/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1075,12 +1077,12 @@
       .then(response => response.json())
       .then(data=>{
           if (data.success) {
-            Swal.fire({
-              icon: 'success',
-              title: 'success',
-              text: 'Purchase Order Successfully Created',
-            }).then(()=>{
-              window.location.reload()
+              Swal.fire({
+                  icon: 'success',
+                  title: 'success',
+                  text: 'Purchase Order Successfully Created',
+              }).then(() => {
+                  window.location.href = '{% url "inventory:purchase_orders"%}' 
             })
           } else {
             Swal.fire({

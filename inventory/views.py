@@ -1779,7 +1779,6 @@ def process_received_order(request):
 
         # Update expected profit and check quantity
         cost = order_item.actual_unit_cost
-        expected_profit = (selling_price - cost) * quantity
         
         if quantity > order_item.quantity:
             return JsonResponse({'success': False, 'message': 'Quantity cannot be more than ordered quantity.'})
@@ -1842,9 +1841,6 @@ def process_received_order(request):
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
 
-
-
-
 @login_required
 def edit_purchase_order(request, po_id):
     if request.method == 'GET':
@@ -1874,7 +1870,7 @@ def edit_purchase_order(request, po_id):
             purchase_order_data = data.get('purchase_order', {})
             purchase_order_items_data = data.get('po_items', [])
             expenses = data.get('expenses')
-
+            logger.info(po_id)
             unique_expenses = []
 
             seen = set()
@@ -1900,11 +1896,11 @@ def edit_purchase_order(request, po_id):
         other_amount = Decimal(purchase_order_data['other_amount'])
         payment_method = purchase_order_data.get('payment_method')
     
-        if not all([supplier_id, delivery_date, status, total_cost, payment_method]):
+        if not all([delivery_date, status, total_cost, payment_method]):
             return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
 
         try:
-            supplier = Supplier.objects.get(id=supplier_id)
+            supplier = Supplier.objects.get(id=1)
         except Supplier.DoesNotExist:
             return JsonResponse({'success': False, 'message': f'Supplier with ID {supplier_id} not found'}, status=404)
 
@@ -1981,12 +1977,86 @@ def edit_purchase_order(request, po_id):
                         tax_amount, 
                         payment_method
                     )
-            delete_purchase_order(request, po_id)
+                
+                remove_purchase_order(po_id, request)
+
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
         return JsonResponse({'success': True, 'message': 'Purchase order created successfully'})
 
+def remove_purchase_order(purchase_order_id, request):
+    try:
+        # Retrieve the purchase order
+        purchase_order = PurchaseOrder.objects.get(id=purchase_order_id)
+
+        logger.info(f'{purchase_order} remove')
+
+        if purchase_order.received:
+            return JsonResponse({'success': False, 'message': 'Cannot delete a received purchase order'}, status=400)
+
+        with transaction.atomic():
+            
+            # Reverse related account transactions
+            currency = Currency.objects.get(default=True)
+
+            account_transaction = AccountTransaction.objects.filter(expense__purchase_order=purchase_order).first()
+            if account_transaction:
+                account_balance = AccountBalance.objects.get(account=account_transaction.account)
+
+                # Reverse account balance adjustments
+                account_balance.balance += purchase_order.total_cost
+                account_balance.save()
+
+                # Delete account transaction log
+                account_transaction.delete()
+
+            # Reverse Cashbook entry
+            cashbook_entry = Cashbook.objects.filter(expense__purchase_order=purchase_order).first()
+            if cashbook_entry:
+                cashbook_entry.delete()
+
+            # Reverse the VAT transaction
+            vat_transaction = VATTransaction.objects.filter(purchase_order=purchase_order).first()
+            if vat_transaction:
+                vat_transaction.delete()
+
+            # Reverse the Expense record
+            expense = Expense.objects.filter(purchase_order=purchase_order).first()
+            if expense:
+                expense.delete()
+
+            # Reverse other expenses related to the purchase order
+            other_expenses = otherExpenses.objects.filter(purchase_order=purchase_order)
+            if other_expenses.exists():
+                other_expenses.delete()
+
+            #deduct product quantity
+            items = PurchaseOrderItem.objects.filter(purchase_order=purchase_order)
+            products = Inventory.objects.all()
+
+            for item in items:
+                for prod in products:
+                    if item.product == prod.product:
+                        prod.quantity -= item.received_quantity
+                        prod.save()
+                        
+                        ActivityLog.objects.create(
+                            branch = request.user.branch,
+                            user= request.user,
+                            action= 'delete',
+                            inventory=prod,
+                            quantity=item.received_quantity,
+                            total_quantity=prod.quantity
+                        )
+
+            # Remove PurchaseOrderItems
+            PurchaseOrderItem.objects.filter(purchase_order=purchase_order).delete()
+
+            # Finally, delete the purchase order itself
+            purchase_order.delete()
+    except Exception as e:
+        logger.info(e)
 
 @login_required
 def edit_purchase_order_data(request, po_id):
