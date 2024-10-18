@@ -1,0 +1,90 @@
+﻿<div class="edit-inventory">
+    <div class='add-product-nav d-flex py-2 px-2 align-items-center shadow bg-dark text-light rounded'>
+        <div>
+            <h5 class='fw-normal px-2 mt-2n fw-bold'>Edit / Update Product - {{product.product.name}}</h5>
+        </div>
+    </div>
+    <form method="post" class="rounded border mt-2 p-2">
+        {% csrf_token %}
+        <div id="div_id_batch_code" class="mb-3">
+            <label for="id_batch_code" class="form-label requiredField">
+                Batch code<span class="asteriskField">*</span>
+            </label>
+            <input type="text" name="batch_code" value='{{product.product.batch_code}}' maxlength="255" class="textinput form-control" required id="id_batch_code">
+        </div>
+        <div id="div_id_name" class="mb-3">
+            <label for="id_name" class="form-label requiredField">
+                Name
+                <span class="asteriskField">*</span>
+            </label>
+            <input type="text"
+                   name="name"
+                   value='{{product.product.name}}'
+                   class="textinput form-control"
+                   required id="id_name">
+        </div>
+        <div id="div_id_cost" class="mb-3">
+            <label for="id_cost" class="form-label requiredField">
+                Cost
+                <span class="asteriskField">*</span>
+            </label>
+            <input type="number" name="cost" value={{product.cost}} step="0.01" class="numberinput form-control" required id="id_cost">
+            <p id="cost_error" class="fs-6 text-danger"></p>
+        </div>
+        <div id="div_id_price" class="mb-3">
+            <label for="id_price" class="form-label requiredField">
+                Price
+                <span class="asteriskField">*</span>
+            </label>
+            <input type="number" name="price" value={{product.price}} step="0.01" class="numberinput form-control" required id="id_price">
+            <p id="price_error" class="fs-6 text-danger"></p>
+        </div>
+        <div id="div_id_quantity" class="mb-3">
+            <label for="id_quantity" class="form-label requiredField">
+                Quantity
+                <span class="asteriskField">*</span>
+            </label>
+            <input type="number" name="quantity" value={{product.quantity}} class="numberinput form-control" required id="id_quantit">
+            <p id="quantity_error" class="fs-6 text-danger"></p>
+        </div>
+        <div id="div_id_min_stock_level" class="mb-3">
+            <label for="id_min_stock_level" class="form-label requiredField">
+                Min stock level
+                <span class="asteriskField">*</span>
+            </label>
+            <input type="number"
+                   name="min_stock_level"
+                   value="{{ product.stock_level_threshold }}"
+                   class="numberinput form-control"
+                   required id="id_min_stock_level">
+        </div>
+        <div id="div_id_description" class="mb-3">
+            <label for="id_description" class="form-label requiredField">
+                Description<span class="asteriskField">*</span>
+            </label>
+            <textarea name="description"
+                      cols="20"
+                      rows="2"
+                      class="form-control"
+                      required id="id_description">{{ product.product.description }}</textarea>
+        </div>
+        <div class="mb-3">
+            <div id="div_id_end_of_day" class="form-check">
+                <input type="checkbox" name="end_of_day" class="checkboxinput form-check-input" id="id_end_of_day" {% if product.product.end_of_day %} checked {% endif %}>
+                <label for="id_end_of_day" class="form-check-label">
+                    End of day
+                </label>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end">
+            <div class="">
+                <button type="reset" class="btn btn-danger btn-sm w-100">Reset</button>
+            </div>
+            <span class="px-1"></span>
+            <div class="">
+                <button type="submit" class="btn btn-secondary btn-sm y w-100">Save</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock content %}

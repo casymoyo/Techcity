@@ -302,7 +302,16 @@
     </div>
 </div>
 
-
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+              <div class="modal-body">
+                  <h5 class="fw-bold">Edit Product</h5>
+                  {% include 'inventory/edit_product_modal.html' %}
+              </div>
+          </div>
+      </div>
+</div>
 <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -336,8 +345,9 @@
                                    maxlength="255"
                                    class="textinput form-control"
                                    required id="id_name">
-                            <button class="btn btn-light bx bx-edit border mx-1"></button>
-                            <button class="btn btn-light bx bx-trash border"></button>
+                            <button class="btn btn-light border btn-sm" type="button">s</button>
+                            <button class="btn btn-light bx bx-edit border mx-1" type="button"></button>
+                            <button class="btn btn-light bx bx-trash border" type="button"></button>
                         </div>
                   </div> 
                   <div id="div_id_category form-group" class="mb-3"> 
@@ -531,6 +541,9 @@
     const confirmBtn = document.getElementById('confirm_btn');
 
     const cartError = document.getElementById('cartError');
+
+    const editProductModal = document.getElementById('editProductModal');
+
 
     calculateExpression('id_p_price', errorId = null)
 
@@ -1210,24 +1223,28 @@
             <td id='${item.id}'><small>${item.price.toFixed(2)}</small></td>
             <td id='${item.id}'><small>${totalBuying.toFixed(2)}</small></td>
             <td id='${item.id}'><small>${result.allocated}</small></td>
-            <td id='${item.id}'><small>${result.allocationRate.toFixed(2)}</small></td>
+            <td id='${item.id}'>
+                <small>
+                    <input
+                      value='${result.allocationRate.toFixed(2)}' 
+                      class='po-input form-control' 
+                      type='number'
+                      data-id='${item.id}'
+                      oninput='priceOverride(
+                        this, 
+                        {
+                          tB:${result.allocated},
+                          exp:${totalExpenses},
+                          product:"${product}",
+                          acp:${result.allocationRate.toFixed(2)}
+                        }
+                      )'
+                    />
+                </small>
+            </td>
             <td id='${item.id}'>
               <small>
-                <input 
-                  value='${actualCostPrice}' 
-                  class='po-input form-control' 
-                  type='number'
-                  data-id='${item.id}'
-                  oninput='priceOverride(
-                    this, 
-                    {
-                      tB:${result.allocated},
-                      exp:${totalExpenses},
-                      product:"${product}",
-                      acp:${actualCostPrice}
-                    }
-                  )'
-                />
+                ${actualCostPrice}
               </small>
             </td> 
             <td id='${item.id}'><small>${total.toFixed(2)}</small></td>
@@ -1287,8 +1304,9 @@
     function priceOverride(input, data) {
       let expense = 0;
       let totalCost = 0;
-      const newCart = JSON.parse(JSON.stringify(cart));
       let exp = parseFloat(document.getElementById('total_expenses').textContent);
+
+      const newCart = JSON.parse(JSON.stringify(cart));
       const newCost = parseFloat(input.value);
       const expFooter = document.getElementById('expense-footer');  
       const tdEls = document.querySelectorAll(`[id^='${input.dataset.id}']`);
@@ -1296,6 +1314,7 @@
       expense = exp;
 
       if (data.acp !== newCost) {
+        console.log('Costs' + data.acp, newCost)
         const productId = `product_${data.product.replace(/\s+/g, '_')}`;
 
         let existingProduct = document.getElementById(productId);
@@ -1475,10 +1494,11 @@
       }
     }
 
-    function updateValues(newCart, expenses, products) {
+    function updateValues(newCart, expenses) {
         let totalCost = totalProductCost(newCart);
 
         // Remove products from 'newCart'
+        console.log('products' + products)
         products.forEach((product) => {
             let existingItemIndex = newCart.findIndex((item) => item.product === product);
             if (existingItemIndex !== -1) {

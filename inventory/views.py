@@ -599,6 +599,7 @@ def receive_inventory(request):
                     existing_inventory = Inventory.objects.get(product=branch_transfer.product, branch=request.user.branch)
                     existing_inventory.quantity += int(request.POST['quantity'])
                     existing_inventory.price = branch_transfer.price
+                    existing_inventory.dealer_price = Product.objects.get(id=branch_transfer.product.id).dealer_price
                     existing_inventory.save()
                     
                     ActivityLog.objects.create(
@@ -619,6 +620,7 @@ def receive_inventory(request):
                         product=branch_transfer.product,
                         cost=branch_transfer.product.cost,  
                         price=branch_transfer.price,
+                        dealer_price = Product.objects.get(id=branch_transfer.product.id).dealer_price,
                         quantity=request.POST['quantity'],
                     )
                     ActivityLog.objects.create(
