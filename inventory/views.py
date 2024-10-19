@@ -1728,21 +1728,48 @@ def purchase_order_detail(request, order_id):
         return redirect('inventory:purchase_orders')
 
     items = costAllocationPurchaseOrder.objects.filter(purchase_order__id=order_id)
+
     expenses = otherExpenses.objects.filter(purchase_order__id=order_id)
     total_expense_sum = expenses.aggregate(total_expense=Sum('amount'))['total_expense'] or 0
+    
+    
+    products = Inventory.objects.filter(branch=request.user.branch).values(
+        'dealer_price', 
+        'price', 
+        'product__name'
+    )
+    
+    # Convert products queryset to a dictionary for easy lookup by product ID
+    product_prices = {product['product__name']: product for product in products}
 
+    total_quantity = 0
+    total_received_quantity = 0
+
+    for item in items:
+        product_name = item.product  
+        product_data = product_prices.get(product_name)
+        logger.info(product_name)
+        
+        if product_data:
+            item.dealer_price = product_data['dealer_price']
+            item.selling_price = product_data['price']
+        else:
+            item.dealer_price = 0  
+            item.selling_price = 0 
+        total_quantity += item.quantity
+        
+
+    
     logger.info(items)
     
-    return render(request, 'inventory/purchase_order_detail.html', 
-        {
-            'items':items,
-            'expenses':expenses,
-            'order_items':purchase_order_items,
-            'purchase_order':purchase_order,
-            'total_expenses':total_expense_sum 
-
-        }
-    )
+    return render(request, 'inventory/purchase_order_detail.html', {
+        'items': items,              
+        'expenses': expenses,
+        'order_items':purchase_order_items,
+        'total_expenses': total_expense_sum,
+        'purchase_order': purchase_order,
+        'total_quantity':total_quantity
+    })
     
 @login_required
 def delete_purchase_order(request, purchase_order_id):
