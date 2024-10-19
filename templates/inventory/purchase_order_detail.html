@@ -18,6 +18,7 @@
                     <thead>
                     <th class="fs-6 text-dark" style="color:black;">Product</th>
                     <th class="fs-6 text-dark" style="color:black;">Quantity</th>
+                    <th class="fs-6 text-dark" style="color:black;">Quantity Received</th>
                     <th class="fs-6 text-dark" style="color:black;">Supplier Price</th>
                     <th class="fs-6 text-dark" style="color:black;">Total Supplier Price</th>
                     <th class="fs-6 text-dark" style="color:black;">Total Product Expenses</th>
@@ -30,6 +31,7 @@
                         <tr>
                             <td>{{ item.product }}</td>
                             <td>{{ item.quantity }}</td>
+                            <td>{{ item.received_quantity}} / {{ item.quantity }}</td>
                             <td>{{ item.price }}</td>
                             <td>{{ item.total_buying }}</td>
                             <td>{{ item.allocated }}</td>
@@ -55,23 +57,7 @@
                         </tr>
                         {% endfor %}
                     </tbody>
-
-                    <!-- Footer for totals -->
-                    <!--<tfoot id="expense-footer">
-                        {% for expense in expenses %}
-                        <tr>
-                            <td colspan="5">{{ expense.name }}</td>
-                            <td>{{ expense.amount }}</td>
-                        </tr>
-                        {% endfor %}
-                        <tr>
-                            <td colspan="2"><strong>Total Other Expenses</strong></td>
-                            <td colspan="2">{{ total_expense_sum }}</td>
-                            <td colspan="4"></td>
-                        </tr>
-                    </tfoot>-->
                 </table>
-
             </div>
         </div>
    </div>

@@ -1737,7 +1737,7 @@ def purchase_order_detail(request, order_id):
         {
             'items':items,
             'expenses':expenses,
-            'orders':purchase_order_items,
+            'order_items':purchase_order_items,
             'purchase_order':purchase_order,
             'total_expenses':total_expense_sum 
 
