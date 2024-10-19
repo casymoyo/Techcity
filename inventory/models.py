@@ -30,7 +30,7 @@ class Product(models.Model):
         ('zero rated', 'Zero Rated')
     ]
     
-    batch_code = models.ForeignKey(BatchCode,on_delete=models.CASCADE, null=True)
+    batch = models.CharField(max_length = 255, blank=True, default='')
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, default=0)
     cost = models.DecimalField(max_digits=10, decimal_places=2)
@@ -72,7 +72,7 @@ class PurchaseOrder(models.Model):
     order_date = models.DateTimeField(default=timezone.now)
     delivery_date = models.DateField(null=True, blank=True)
     total_cost = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
-    status = models.CharField(max_length=50, choices=status_choices, default='pending')
+    status = models.CharField(max_length=50, choices=status_choices, default='received')
     notes = models.CharField(max_length=255 ,null=True, blank=True)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     discount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
@@ -86,6 +86,7 @@ class PurchaseOrder(models.Model):
         ('ecocash', 'ecocash')
     ]
     , default="cash")
+    batch = models.CharField(max_length=20, null=True)
 
     def generate_order_number():
         return f'PO-{uuid.uuid4().hex[:10].upper()}'

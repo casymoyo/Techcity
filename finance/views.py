@@ -1529,6 +1529,7 @@ def add_currency(request):
     if request.method == 'POST':
         form = CurrencyForm(request.POST)
         if form.is_valid():
+            default = request.POST['default']
             try:
                 form.save()
                 messages.success(request, 'Currency added successfully!')  

@@ -434,19 +434,52 @@
             <div class="modal-body">
                 <h5 class="fw-bold">Proceed by filling the Purchase Order form below</h5>
                 <form class="mt-2">
-                    {{ note_form | crispy}}
+                    {% csrf_token %}
+                    <div id="div_id_batch" class="mb-3">
+                        <label for="id_batch" class="form-label requiredField">
+                            Batch<span class="asteriskField">*</span>
+                        </label> <input type="text" name="batch" maxlength="20" value="{{ purchase_order.batch }}" class="textinput form-control" required="" id="id_batch">
+                    </div> <div id="div_id_status" class="mb-3">
+                        <label for="id_status" class="form-label requiredField">
+                            Status<span class="asteriskField">*</span>
+                        </label> <select name="status" class="select form-select" id="id_status">
+                            <option value="pending">Pending</option>
+                            <option value="ordered">Ordered</option>
+                            <option value="received" selected="">Received</option>
+                            <option value="canceled">Canceled</option>
+
+                        </select>
+                    </div> <div id="div_id_delivery_date" class="mb-3">
+                        <label for="id_delivery_date" class="form-label">
+                            Delivery date
+                        </label> <input type="date" name="delivery_date" value="2024-10-19" class="dateinput form-control" id="id_delivery_date">
+                    </div> <div id="div_id_payment_method" class="mb-3">
+                        <label for="id_payment_method" class="form-label requiredField">
+                            Payment method<span class="asteriskField">*</span>
+                        </label> <select name="payment_method" class="select form-select" id="id_payment_method">
+                            <option value="cash" selected="">cash</option>
+                            <option value="bank">bank</option>
+                            <option value="ecocash">ecocash</option>
+
+                        </select>
+                    </div> <div id="div_id_notes" class="mb-3">
+                        <label for="id_notes" class="form-label">
+                            Notes
+                        </label> <input type="text" value="{{ purchase_order.notes }}" name="notes" maxlength="255" class="textinput form-control" id="id_notes">
+                    </div>
+
                     <p id="cartError" class="text-danger"></p>
                     <div class="d-flex justify-content-end">
                         <div class="">
                             <button type="reset" class="btn btn-outline-dark btn-sm w-100">
-                                <i class='bx bx-reset'></i>
+                                <i class="bx bx-reset"></i>
                                 Reset
                             </button>
                         </div>
                         <span class="px-1"></span>
                         <div class="">
                             <button type="button" onclick="processCart();" class="btn btn-dark btn-sm w-100">
-                                <i class='bx bx-save'></i>
+                                <i class="bx bx-save"></i>
                                 Save
                             </button>
                         </div>
@@ -1097,7 +1130,8 @@
         'po_items':cart,
         'expenses':expensesData,
         'cost_allocations': formData, 
-        'purchase_order':{
+          'purchase_order': {
+          'batch': document.getElementById('id_batch').value.trim(),
           'payment_method':document.getElementById('id_payment_method').value,
           'supplier':document.getElementById('id_supplier').value,
           'delivery_date':document.getElementById('id_delivery_date').value,

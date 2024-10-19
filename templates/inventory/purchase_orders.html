@@ -23,7 +23,7 @@
                             <tr>
                                 <th>Date</th>
                                 <th>Delivery Date</th>
-                                <th>Order Number</th>
+                                <th>Batch</th>
                                 <th>Suplier</th>
                                 <th>Total Cost</th>
                                 <th>Notes</th>
@@ -36,7 +36,7 @@
                                 <tr>
                                     <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.order_date }}</small></td>
                                     <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.delivery_date }}</small></td>
-                                    <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.order_number }}</small></td>
+                                    <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.batch|lower }}</small></td>
                                     <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.supplier.name }}</small></td>
                                     <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.total_cost }}</small></td>
                                     <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.notes }}</small></td>
@@ -50,11 +50,15 @@
                                         {% if order.received %}
                                         <small class="bg-success fw-bold text-light p-2 rounded text-center w-100">Recieved</small>
                                         {% else %}
-                                        <a href="{% url 'inventory:receive_order' order.id %}" class="btn btn-sm btn-light">Receive Order Items</a>
+                                        <a href="{% url 'inventory:receive_order' order.id %}" class="btn btn-sm btn-outline-dark">
+                                            <small>
+                                                Receive Order Items
+                                            </small>
+                                        </a>
                                         {% endif %}
                                         {% endif %}
-                                        <a href="{% url 'inventory:edit_po' order.id %}" class="btn btn-primary btn-sm bx bx-edit"></a>
-                                        <button class="btn btn-danger btn-sm" onclick="confirmDeletePurchaseOrder({{ order.id }})">Delete</button>
+                                        <a href="{% url 'inventory:edit_po' order.id %}" class="btn btn-outline-dark btn-sm bx bx-edit"></a>
+                                        <button class="btn bx bx-trash btn-outline-dark btn-sm" onclick="confirmDeletePurchaseOrder({{ order.id }})"></button>
                                     </td>
                                 </tr>
                             {% endfor %}

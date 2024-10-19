@@ -1390,6 +1390,8 @@ def create_purchase_order(request):
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
 
+        batch = purchase_order_data['batch']
+        logger.info(batch)
         supplier_id = purchase_order_data['supplier']
         delivery_date = purchase_order_data['delivery_date']
         status = purchase_order_data['status']
@@ -1412,6 +1414,7 @@ def create_purchase_order(request):
             with transaction.atomic():
                 purchase_order = PurchaseOrder(
                     order_number=PurchaseOrder.generate_order_number(),
+                    batch=batch,
                     supplier=supplier,
                     delivery_date=delivery_date,
                     status=status,
@@ -1455,6 +1458,7 @@ def create_purchase_order(request):
                         )
                     )
 
+                    product.batch = product.batch + f'{batch}, '
                     product.price = 0
                     product.save()
 
@@ -1918,6 +1922,7 @@ def edit_purchase_order(request, po_id):
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
 
+        batch = purchase_order_data['batch']
         supplier_id = purchase_order_data['supplier']
         delivery_date = purchase_order_data['delivery_date']
         status = purchase_order_data['status']
@@ -1939,6 +1944,7 @@ def edit_purchase_order(request, po_id):
         try:
             with transaction.atomic():
                 purchase_order = PurchaseOrder(
+                    batch = batch,
                     order_number=PurchaseOrder.generate_order_number(),
                     supplier=supplier,
                     delivery_date=delivery_date,
@@ -2032,7 +2038,7 @@ def edit_purchase_order(request, po_id):
                     )
                 
                 remove_purchase_order(po_id, request)
-
+                
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
@@ -2048,7 +2054,7 @@ def remove_purchase_order(purchase_order_id, request):
         with transaction.atomic():
             
             # Reverse related account transactions
-            currency = Currency.objects.get(default=True)
+            currency = Currency.objects.filter(default=True).first()
 
             account_transaction = AccountTransaction.objects.filter(expense__purchase_order=purchase_order).first()
             if account_transaction:
@@ -2143,15 +2149,10 @@ def product(request):
         """
         try:
             data = json.loads(request.body)
-            batch_code_id = int(data.get('batch_code'))
             
         except Exception as e:
             return JsonResponse({'success':False, 'message':'Invalid data'})
-        
-        logger.info(batch_code_id)
-        
-        batch_code = BatchCode.objects.get(id=batch_code_id)
-        logger.info(data)
+
         # validation for existance
         if Product.objects.filter(name=data['name']).exists():
             return JsonResponse({'success':False, 'message':f'Product {data['name']} exists'})
@@ -2164,7 +2165,7 @@ def product(request):
         logger.info(category)
         
         product = Product.objects.create(
-            batch_code = batch_code,
+            batch = '',
             name = data['name'],
             price = 0,
             cost = 0,
@@ -2180,7 +2181,7 @@ def product(request):
         
         Inventory.objects.create(
             product = product,
-            branch = Branch.objects.get(id=1), # To be specific
+            branch = request.user.branch, # To be specific
             cost = product.cost,
             price = product.price,
             dealer_price = 0,

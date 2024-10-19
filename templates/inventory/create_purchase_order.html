@@ -311,7 +311,7 @@
                 <h5 class="fw-bold">Add Product</h5>
                 <form method="post" class='mt-2 p-2'>
                   {% csrf_token %} 
-                  <div id="div_id_batch_code" class="mb-3"> 
+                  <div id="div_id_batch_code" class="mb-3 d-none"> 
                       <label for="id_batch_code" class="form-label requiredField">
                           Batch code<span class="asteriskField">*</span>
                       </label>
@@ -780,7 +780,6 @@
     
         function addProduct() {
             const data = {
-              batch_code: document.getElementById('id_code_select').value,
               name: document.getElementById('id_name').value,
               category: document.getElementById('id_category').value,
               tax_type: document.getElementById('id_tax_type').value,
@@ -789,6 +788,8 @@
               end_of_day: document.getElementById('id_end_of_day').checked,
               service: document.getElementById('id_service').checked,
             };
+
+            console.log(data)
           
             fetch("{% url 'inventory:product' %}", {
               method: "POST",
@@ -1093,13 +1094,14 @@
         'po_items':cart,
         'expenses':expensesData,
         'cost_allocations':formData,
-        'purchase_order':{
+          'purchase_order': {
+          'batch': document.getElementById('id_batch').value.trim(),
           'payment_method':document.getElementById('id_payment_method').value,
           'supplier':document.getElementById('id_supplier').value,
           'delivery_date':document.getElementById('id_delivery_date').value,
           'total_cost': finalTotal,
           'status':document.getElementById('id_status').value,
-          'notes':document.getElementById('id_notes').value,
+          'notes':document.getElementById('id_notes').value.trim(),
           'discount':parseFloat(document.getElementById('id_discount').value) || 0,
           'tax_amount':parseFloat(document.getElementById('tax').textContent) || 0,
           'other_amount':parseFloat(document.getElementById('id_other').value) || 0
