@@ -1339,7 +1339,6 @@ def purchase_orders(request):
 
     # Perform a bulk update on the 'received' field
     PurchaseOrderItem.objects.bulk_update(items, ['expected_profit', 'received_quantity'])
-    ActivityLog.objects.all().delete()
    
     return render(request, 'inventory/purchase_orders.html', 
         {
@@ -1473,7 +1472,6 @@ def create_purchase_order(request):
                         )
                     )
                 otherExpenses.objects.bulk_create(expense_bulk)
-
 
                 # cost allocations
                 logger.info('processing cost allocations ....')

@@ -302,16 +302,8 @@
     </div>
 </div>
 
-<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-      <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-              <div class="modal-body">
-                  <h5 class="fw-bold">Edit Product</h5>
-                  {% include 'inventory/edit_product_modal.html' %}
-              </div>
-          </div>
-      </div>
-</div>
+
+
 <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -541,9 +533,6 @@
     const confirmBtn = document.getElementById('confirm_btn');
 
     const cartError = document.getElementById('cartError');
-
-    const editProductModal = document.getElementById('editProductModal');
-
 
     calculateExpression('id_p_price', errorId = null)
 
