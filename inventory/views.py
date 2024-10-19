@@ -1992,13 +1992,13 @@ def edit_purchase_order(request, po_id):
                         return JsonResponse({'success': False, 'message': f'Product with Name {product_name} not found'}, status=404)
 
                     # get the log with the quantity received for replacing po_item quantity 
-                    log_quantity = logs.get(inventory__product = product).quantity or 0
-
+                    log_quantity = logs.filter(inventory__product = product).values('quantity')
+                    logger.info(log_quantity)
                     purchase_order_items_bulk.append(
                         PurchaseOrderItem(
                             purchase_order=purchase_order,
                             product=product,
-                            quantity=log_quantity,
+                            quantity=quantity if not log_quantity else log_quantity[0]['quantity'],
                             unit_cost=unit_cost,
                             actual_unit_cost=actual_unit_cost,
                             received_quantity=0,

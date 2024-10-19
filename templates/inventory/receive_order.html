@@ -119,7 +119,9 @@
                 <td id="profit_{{ item.id }}">{{ item.expected_profit }}</td>
                 <td>
                     {% if not item.received %}
-                    <button class="btn btn-primary" onclick="submitItem('{{ item.id }}')">Submit</button>
+                        <button class="btn btn-outline-dark btn-sm" onclick="submitItem('{{ item.id }}')">Submit</button>
+                    {% else %}
+                        <button class="btn btn-secondary text-light btn-sm">Submitted</button>
                     {% endif %}
                 </td>
             </tr>
@@ -152,9 +154,11 @@
     }
 
     function expectedProfit(itemId, quantity, actualUnitCost) {
-        const sellingPrice = document.getElementById(`selling_${itemId}`).value;
+        const sellingPrice = document.getElementById(`selling_${itemId}`).value || 0;
         const expectedProfitField = document.getElementById(`profit_${itemId}`);
         const pQuantity = document.getElementById(`quantity_${itemId}`).value;
+
+        console.log(5)
 
         if (sellingPrice && quantity && actualUnitCost) {
             const expectedProfit = (parseFloat(sellingPrice) * parseInt(quantity)) - (parseFloat(actualUnitCost) * parseInt(pQuantity));
@@ -187,29 +191,38 @@
             },
             body: JSON.stringify(itemData)
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Update the row with the new values
-                document.getElementById(`quantity_${itemId}`).replaceWith(`${itemData.quantity}`);
-                document.getElementById(`selling_${itemId}`).replaceWith(`${itemData.selling_price}`);
-                document.getElementById(`dealer_${itemId}`).replaceWith(`${itemData.dealer_price}`);
-            } else {
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the row with the new values
+                    document.getElementById(`quantity_${itemId}`).replaceWith(`${itemData.quantity}`);
+                    document.getElementById(`selling_${itemId}`).replaceWith(`${itemData.selling_price}`);
+                    document.getElementById(`dealer_${itemId}`).replaceWith(`${itemData.dealer_price}`);
+
+                    // Update the button color, text, and disable it
+                    const submitButton = document.querySelector(`button[onclick="submitItem('${itemId}')"]`);
+                    submitButton.textContent = 'Submitted';
+                    submitButton.classList.remove('btn-primary');
+                    submitButton.classList.add('bg-secondary', 'text-light', 'btn-sm');
+                    submitButton.disabled = true;
+
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        icon: 'error',
+                        text: data.message
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
                 Swal.fire({
                     title: 'Error',
                     icon: 'error',
-                    text: data.message
+                    text: 'An error occurred. Please try again.'
                 });
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Swal.fire({
-                title: 'Error',
-                icon: 'error',
-                text: 'An error occurred. Please try again.'
             });
-        });
     }
+
 </script>
 {% endblock content %}

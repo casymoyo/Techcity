@@ -13,6 +13,10 @@
         text-align: center;
     }
 
+    td:first-child {
+        text-align: left; 
+    }
+
     input {
         height: 30px;
         font-size: 12px;
@@ -32,62 +36,57 @@
                 <div class="d-flex flex-column">
                     <p id="cart-title">Purchase order Items</p>
                     <table class="table border rounder p-2" id="cart-table">
-                      <thead>
+                        <thead>
+                        <th>Action</th>
                         <th>Product</th>
-                        <th>Unit Price</th>
                         <th>Quantity</th>
+                        <th>Unit Price</th>
                         <th class="text-center">Total</th>
-                      </thead>
-                      <tbody id="cart-items"></tbody>
-                      <tfoot>
-                        <tr>
-                          <td></td>
-                          <td></td>
-                          <td class="fw-bold">Subtotal</td>
-                          <td class="text-center fw-bold" id="subtotal"></td>
-                        </tr>
-                        <tr>
-                          <td></td>
-                          <td></td>
-                          <td class="fw-bold">Discount</td>
-                          <td>
-                            <input id="id_discount" class="form-control text-center fw-bold" oninput="calculateTotals()">
-                          </td>
-                        </tr>
-                        <tr>
-                          <td></td>
-                          <td></td>
-                          <td class="fw-bold">Tax Rate</td>
-                          <td id="tax_rate" class="fw-bold text-center">15%</td>
-                        </tr>
-                        <tr>
-                          <td></td>
-                          <td></td>
-                          <td class="fw-bold">Tax Total</td>
-                          <td id="tax" class="fw-bold text-center"></td>
-                        </tr>
-                        <tr id="other-expense-row">
-                          <td></td>
-                          <td></td>
-                          <td class="fw-bold">Expenses</td>
-                          <td>
-                            <input id="id_other" class="form-control text-center fw-bold" oninput="calculateTotals()" readonly>
-                          </td>
-                        </tr>
-                        <!-- Add dynamic rows for other expenses here -->
-                        <tr>
-                          <td colspan="3"></td>
-                          <td>
-                            <button class="btn btn-outline-dark btn-sm w-100" id="add-expense-btn" onclick="addExpense()">Add Expense</button>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td></td>
-                          <td></td>
-                          <td class="fw-bold">Total</td>
-                          <td class="fw-bold text-center" id="id_total"></td>
-                        </tr>
-                      </tfoot>
+                        </thead>
+                        <tbody id="cart-items"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3"></td>
+                                <td class="fw-bold">Subtotal</td>
+                                <td class="text-center fw-bold" id="subtotal"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3"></td>
+                                <td class="fw-bold">Discount</td>
+                                <td>
+                                    <input id="id_discount" class="form-control text-center fw-bold" oninput="calculateTotals()">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3"></td>
+                                <td class="fw-bold">Tax Rate</td>
+                                <td id="tax_rate" class="fw-bold text-center">15%</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3"></td>
+                                <td class="fw-bold">Tax Total</td>
+                                <td id="tax" class="fw-bold text-center"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3"></td>
+                                <td class="fw-bold">Expenses</td>
+                                <td>
+                                    <input id="id_other" class="form-control text-center fw-bold" oninput="calculateTotals()" readonly>
+                                </td>
+                            </tr>
+                            <!-- Add dynamic rows for other expenses here -->
+                            <tr id="other-expense-row">
+                                <td colspan="4"></td>
+                                <td>
+                                    <button class="btn btn-outline-dark btn-sm w-100" id="add-expense-btn" onclick="addExpense()">Add Expense</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3"></td>
+                                <td class="fw-bold">Total</td>
+                                <td class="fw-bold text-center" id="id_total"></td>
+                            </tr>
+                        </tfoot>
                     </table>
                     <div class="d-flex justify-content-end">
                       <button class="btn btn-outline-dark btn-sm flex mx-2" onclick="reload();">Cancel</button>
@@ -545,7 +544,7 @@
 
       // Name column
       const cell = document.createElement('td');
-      cell.colSpan='2';
+      cell.colSpan='3';
 
       const nameCell = document.createElement('td');
       const nameInput = document.createElement('input');
@@ -986,15 +985,17 @@
                 <button class="btn" data-id=${item.id} onclick="removeItem(this);">
                     <i class='bx bx-trash-alt'></i>
                 </button>
-                ${item.product}
             </td>
             <td>
-                <input type="number" class="form-control" id="price-${item.id}" value="${item.price}" min="0" step="0.01" 
-                    onchange="updateItemPrice('${item.id}', this.value)">
+                ${item.product}
             </td>
             <td>
                 <input type="number" class="form-control" id="quantity-${item.id}" value="${item.quantity}" min="1" 
                     onchange="updateItemQuantity('${item.id}', this.value)">
+            </td>
+            <td>
+                <input type="number" class="form-control" id="price-${item.id}" value="${item.price}" min="0" step="0.01" 
+                    onchange="updateItemPrice('${item.id}', this.value)">
             </td>
             <td class='text-center' id="total-${item.id}">${(item.quantity * item.price).toFixed(2)}</td>
         `;
@@ -1189,9 +1190,9 @@
         console.log(cost)
 
         apportionmentTable.innerHTML = '';
-
-        // populate the table 
-        cart.forEach((item) => {
+        
+          // populate the table 
+        cart.reverse().forEach((item) => {
           const row = document.createElement("tr");
           let id = 1;
           let actualCostPrice = 0;
