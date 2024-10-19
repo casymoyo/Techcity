@@ -148,7 +148,7 @@ class costAllocationPurchaseOrder(models.Model):
     allocationRate = models.DecimalField(max_digits=10, decimal_places=2)
     expense_cost = models.DecimalField(max_digits=10, decimal_places=2)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity = models.FloatField()
+    quantity = models.IntegerField()
     product = models.CharField(max_length=255)
     total = models.DecimalField(max_digits=10, decimal_places=2)
     total_buying = models.DecimalField(max_digits=10, decimal_places=2)

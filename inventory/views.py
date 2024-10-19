@@ -1961,6 +1961,8 @@ def edit_purchase_order(request, po_id):
                     unit_cost = Decimal(item_data['price'])
                     actual_unit_cost = Decimal(item_data['actualPrice'])
 
+                    logger.info(f'quantity: {quantity}')
+
                     if not all([product_name, quantity, unit_cost]):
                         transaction.set_rollback(True)
                         return JsonResponse({'success': False, 'message': 'Missing fields in item data'}, status=400)
@@ -2011,7 +2013,7 @@ def edit_purchase_order(request, po_id):
                             allocationRate = cost['allocationRate'],
                             expense_cost = cost['expCost'],
                             price = cost['price'],
-                            quantity = float(cost['price']),
+                            quantity = int(cost['quantity']),
                             product = cost['product'],
                             total = cost['total'],
                             total_buying = cost['totalBuying']
