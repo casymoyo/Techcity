@@ -1834,6 +1834,7 @@ def process_received_order(request):
             inventory.price = selling_price
             inventory.dealer_price = dealer_price
             inventory.quantity += quantity
+            inventory.batch += f'{order_item.batch}, ',
             inventory.save()
         except Inventory.DoesNotExist:
             # Create a new inventory object if it does not exist
@@ -1846,7 +1847,8 @@ def process_received_order(request):
                 quantity=quantity,
                 stock_level_threshold=product.min_stock_level,
                 reorder=False,
-                alert_notification=True
+                alert_notification=True,
+                batch = f'{order_item.batch}, '
             )
             inventory.save()
 

@@ -183,6 +183,7 @@ class Inventory(models.Model):
     stock_level_threshold = models.IntegerField(default=5)
     reorder = models.BooleanField(default=False)
     alert_notification = models.BooleanField(default=False, null=True, blank=True)
+    batch = models.CharField(max_length=255, blank=True)
     
     def update_stock(self, added_quantity):
         self.quantity += added_quantity
