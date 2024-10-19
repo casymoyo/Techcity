@@ -1794,7 +1794,6 @@ def process_received_order(request):
             dealer_price = data.get('dealer_price', 0)
             expected_profit = data.get('expected_profit', 0)
 
-            logger.info(data)
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
 
@@ -1803,6 +1802,7 @@ def process_received_order(request):
 
         try:
             order_item = PurchaseOrderItem.objects.get(id=order_item_id)
+            order = PurchaseOrder.objects.get(id=order_item.purchase_order.id)
         except PurchaseOrderItem.DoesNotExist:
             return JsonResponse({'success': False, 'message': f'Purchase Order Item with ID: {order_item_id} does not exist'}, status=404)
 
@@ -1834,7 +1834,7 @@ def process_received_order(request):
             inventory.price = selling_price
             inventory.dealer_price = dealer_price
             inventory.quantity += quantity
-            inventory.batch += f'{order_item.batch}, ',
+            inventory.batch += f'{order.batch}, '
             inventory.save()
         except Inventory.DoesNotExist:
             # Create a new inventory object if it does not exist
@@ -1921,6 +1921,11 @@ def edit_purchase_order(request, po_id):
                     seen.add(expense_tuple)
                     unique_expenses.append(expense)
 
+            # get previous purchase_order
+            last_purchase_order = PurchaseOrder.objects.get(id=po_id)
+
+            logger.info(last_purchase_order)
+
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
 
@@ -1963,6 +1968,11 @@ def edit_purchase_order(request, po_id):
                 purchase_order.save()
                 
                 purchase_order_items_bulk = []
+
+                # preload the logs with previous received stock
+                logs = ActivityLog.objects.filter(purchase_order=last_purchase_order)
+                logger.info(f'logs {logs}')
+
                 for item_data in purchase_order_items_data:
                     product_name = (item_data['product'])
                     quantity = int(item_data['quantity'])
@@ -1981,11 +1991,14 @@ def edit_purchase_order(request, po_id):
                         transaction.set_rollback(True)
                         return JsonResponse({'success': False, 'message': f'Product with Name {product_name} not found'}, status=404)
 
+                    # get the log with the quantity received for replacing po_item quantity 
+                    log_quantity = logs.get(inventory__product = product).quantity or 0
+
                     purchase_order_items_bulk.append(
                         PurchaseOrderItem(
                             purchase_order=purchase_order,
                             product=product,
-                            quantity=quantity,
+                            quantity=log_quantity,
                             unit_cost=unit_cost,
                             actual_unit_cost=actual_unit_cost,
                             received_quantity=0,

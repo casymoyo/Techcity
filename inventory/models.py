@@ -171,7 +171,6 @@ class otherExpenses(models.Model):
     def __str__(self) -> str:
         return f'{self.purchase_order} : {self.name} -> {self.amount}'
 
-
 class Inventory(models.Model):
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
