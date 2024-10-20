@@ -1,4 +1,6 @@
 import json, datetime, openpyxl 
+import csv
+from django.http import HttpResponse
 from datetime import timedelta
 from openpyxl.styles import Alignment, Font, PatternFill
 from . models import *
@@ -1718,21 +1720,18 @@ def purchase_order_detail(request, order_id):
     try:
         purchase_order = PurchaseOrder.objects.get(id=order_id)
     except PurchaseOrder.DoesNotExist:
-        messages.warning(request, f'Purchase order with ID: {order_id} does not exists')
-        return redirect('inventory:purchase_orders')
-    
-    try:
-        purchase_order_items = PurchaseOrderItem.objects.filter(purchase_order=purchase_order)
-    except PurchaseOrderItem.DoesNotExist:
-        messages.warning(request, f'Purchase order with ID: {order_id} does not exists')
+        messages.warning(request, f'Purchase order with ID: {order_id} does not exist')
         return redirect('inventory:purchase_orders')
 
-    items = costAllocationPurchaseOrder.objects.filter(purchase_order__id=order_id)
+    items = costAllocationPurchaseOrder.objects.filter(purchase_order=purchase_order)
+    expenses = otherExpenses.objects.filter(purchase_order=purchase_order)
+    purchase_order_items = PurchaseOrderItem.objects.filter(purchase_order=purchase_order)
 
-    expenses = otherExpenses.objects.filter(purchase_order__id=order_id)
+    total_received_quantity = purchase_order_items.aggregate(Sum('received_quantity'))['received_quantity__sum'] or 0
+    total_expected_profit = purchase_order_items.aggregate(Sum('expected_profit'))['expected_profit__sum'] or 0
+    total_quantity = items.aggregate(Sum('quantity'))['quantity__sum'] or 0
     total_expense_sum = expenses.aggregate(total_expense=Sum('amount'))['total_expense'] or 0
-    
-    
+
     products = Inventory.objects.filter(branch=request.user.branch).values(
         'dealer_price', 
         'price', 
@@ -1742,34 +1741,52 @@ def purchase_order_detail(request, order_id):
     # Convert products queryset to a dictionary for easy lookup by product ID
     product_prices = {product['product__name']: product for product in products}
 
-    total_quantity = 0
-    total_received_quantity = 0
-
     for item in items:
         product_name = item.product  
         product_data = product_prices.get(product_name)
-        logger.info(product_name)
-        
+
         if product_data:
             item.dealer_price = product_data['dealer_price']
             item.selling_price = product_data['price']
         else:
             item.dealer_price = 0  
             item.selling_price = 0 
-        total_quantity += item.quantity
-        
 
-    
-    logger.info(items)
-    
+    if request.GET.get('download') == 'csv':
+        return generate_csv_response(items, purchase_order_items)
+
     return render(request, 'inventory/purchase_order_detail.html', {
-        'items': items,              
+        'items': items,
         'expenses': expenses,
-        'order_items':purchase_order_items,
+        'order_items': purchase_order_items,  
+        'total_quantity': total_quantity,
+        'total_received_quantity': total_received_quantity,
+        'total_expected_profit': total_expected_profit,
         'total_expenses': total_expense_sum,
         'purchase_order': purchase_order,
-        'total_quantity':total_quantity
     })
+
+def generate_csv_response(items, po_items):
+    """Generate CSV response for the purchase order"""
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="purchase_order.csv"'
+
+    writer = csv.writer(response)
+
+    writer.writerow(['Product', 'Quantity', 'Quantity Received', 'Selling Price', 'Dealer Price'])
+
+    for item in items:
+        received_quantity = po_items.filter(product__name=item.product, purchase_order=item.purchase_order).first().received_quantity
+        writer.writerow([
+            item.product,
+            item.quantity,
+            received_quantity,
+            f"${item.selling_price:.2f}",
+            f"${item.dealer_price:.2f}",
+        ])
+
+    return response
     
 @login_required
 def delete_purchase_order(request, purchase_order_id):

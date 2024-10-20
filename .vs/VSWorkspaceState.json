@@ -1,15 +1,14 @@
 {
   "ExpandedNodes": [
     "",
+    "\\finance",
     "\\finance\\templatetags",
     "\\inventory",
     "\\inventory\\filters",
     "\\techcity",
-    "\\templates",
-    "\\templates\\finance\\customers",
     "\\templates\\inventory",
     "\\templates\\inventory\\components"
   ],
-  "SelectedNode": "\\inventory\\views.py",
+  "SelectedNode": "\\techcity\\settings.py",
   "PreviewInSolutionExplorer": false
 }
