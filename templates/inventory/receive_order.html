@@ -26,6 +26,11 @@
         border-bottom: 2px solid #dee2e6;
     }
 
+    td:first-child {
+        text-align: left;
+    }
+
+
     table {
         width: 100%;
     }
@@ -74,6 +79,18 @@
                 <td id="sP_{{ item.id }}"d>
                     {% if not item.received %}
                     {% if request.user.role == 'admin' or request.user.role == 'owner' %}
+                    {% if not prod %}
+                    <input type="text"
+                           id="selling_{{ item.id }}"
+                           placeholder="Enter Selling Price"
+                           min="1" {
+                           class='form-control'
+                           oninput="expectedProfit(
+                        '{{ item.id }}',
+                        '{{ item.quantity }}',
+                        '{{ item.actual_unit_cost }}'
+                    )">
+                    {% endif %}
                     {% for prod in inventory %}
                     {% if prod.product == item.product %}
                     <input type="text"
@@ -97,6 +114,18 @@
                 <td id="dSp_{{ item.id }}">
                     {% if not item.received %}
                     {% if request.user.role == 'admin' or request.user.role == 'owner' %}
+                    {% if not prod %}
+                    <input type="text"
+                           id="dealer_{{ item.id }}"
+                           placeholder="Enter Dealer Selling Price"
+                           min="1"
+                           class='form-control'
+                           oninput="expectedProfit(
+                        '{{ item.id }}',
+                        '{{ item.quantity }}',
+                        '{{ item.actual_unit_cost }}'
+                    )">
+                    {% endif %}
                     {% for prod in inventory %}
                     {% if prod.product == item.product %}
                     <input type="text"
@@ -110,7 +139,7 @@
                                 '{{ item.quantity }}',
                                 '{{ item.actual_unit_cost }}'
                             )">
-                    {% endif %} 
+                    {% endif %}
                     {% endfor %}
                     {% endif %}
                     {% else %}
@@ -192,7 +221,6 @@
         editStatus = true
     }
 
-
     function cancel(itemId, originalSellingPrice, originalDealerPrice) {
         // Revert Selling Price and Dealer Price to their original values
         document.getElementById(`selling_${itemId}`).replaceWith(`${originalSellingPrice}`);
@@ -231,8 +259,6 @@
         } catch (error) {
             pQuantity = parseInt(document.getElementById(`rq_${itemId}`).textContent);
         }
-            
-        console.log(sellingPrice, pQuantity, quantity)
 
         if (sellingPrice && quantity && actualUnitCost) {
             const expectedProfit = (parseFloat(sellingPrice) * parseInt(quantity)) - (parseFloat(actualUnitCost) * parseInt(pQuantity));
