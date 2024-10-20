@@ -1778,7 +1778,10 @@ def generate_csv_response(items, po_items):
     writer.writerow(['Product', 'Quantity', 'Quantity Received', 'Selling Price', 'Dealer Price'])
 
     for item in items:
-        received_quantity = po_items.get(product__name=item.product, purchase_order=item.purchase_order).received_quantity or 0
+        received_quantity = 0
+        if po_items.filter(product__name=item.product).exists():
+           received_quantity = po_items.filter(product__name=item.product).first().received_quantity
+
         writer.writerow([
             item.product,
             item.quantity,
