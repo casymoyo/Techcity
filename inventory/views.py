@@ -1738,7 +1738,7 @@ def purchase_order_detail(request, order_id):
         'price', 
         'product__name'
     )
-    
+    logger.info(f'branch: {request.user.branch}')
     # Convert products queryset to a dictionary for easy lookup by product ID
     product_prices = {product['product__name']: product for product in products}
 
@@ -1781,13 +1781,15 @@ def generate_csv_response(items, po_items):
         received_quantity = 0
         if po_items.filter(product__name=item.product).exists():
            received_quantity = po_items.filter(product__name=item.product).first().received_quantity
+           selling_price = po_items.filter(product__name=item.product).first().selling_price
+           dealer_price = po_items.filter(product__name=item.product).first().dealer_price
 
         writer.writerow([
             item.product,
             item.quantity,
             received_quantity,
-            f"${item.selling_price:.2f}",
-            f"${item.dealer_price:.2f}",
+            f"${selling_price:.2f}",
+            f"${dealer_price:.2f}",
         ])
 
     return response
@@ -1884,6 +1886,8 @@ def process_received_order(request):
 
         try:
             inventory = Inventory.objects.get(product=product, branch=request.user.branch)
+            logger.info(inventory)
+            logger.info(request.user.branch)
             # Update existing inventory
             inventory.cost = cost
             inventory.price = selling_price
