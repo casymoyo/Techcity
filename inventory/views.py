@@ -1,3 +1,4 @@
+
 import json, datetime, openpyxl 
 import csv
 from django.http import HttpResponse
@@ -1777,7 +1778,7 @@ def generate_csv_response(items, po_items):
     writer.writerow(['Product', 'Quantity', 'Quantity Received', 'Selling Price', 'Dealer Price'])
 
     for item in items:
-        received_quantity = po_items.filter(product__name=item.product, purchase_order=item.purchase_order).first().received_quantity
+        received_quantity = po_items.filter(product__name=item.product, purchase_order=item.purchase_order).first().received_quantity or 0
         writer.writerow([
             item.product,
             item.quantity,
@@ -1832,6 +1833,7 @@ def process_received_order(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
+            edit = data.get('edit')
             order_item_id = data.get('id')
             quantity = data.get('quantity', 0)
             selling_price = data.get('selling_price', 0)
@@ -1840,6 +1842,12 @@ def process_received_order(request):
 
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
+
+
+        if edit:
+            return edit_purchase_order_item(order_item_id, selling_price, dealer_price, expected_profit)
+
+        logger.info('here')
 
         if quantity == 0:
             return JsonResponse({'success': False, 'message': 'Quantity cannot be zero.'}, status=400)
@@ -1915,6 +1923,40 @@ def process_received_order(request):
         return JsonResponse({'success': True, 'message': 'Inventory updated successfully'}, status=200)
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+
+def edit_purchase_order_item(order_item_id, selling_price, dealer_price, expected_profit):
+    try:
+        po_item = PurchaseOrderItem.objects.get(id=order_item_id)
+
+        # Update fields in the PurchaseOrderItem
+        po_item.selling_price = selling_price
+        po_item.dealer_price = dealer_price
+        po_item.expected_profit = expected_profit
+        po_item.save()
+
+        # Update the related product's price and dealer price
+        product = po_item.product
+        product.price = selling_price
+        product.dealer_price = dealer_price
+        product.save()
+
+        # Update the inventory, assuming this item already exists in inventory
+        try:
+            inventory = Inventory.objects.get(product=product, branch=po_item.purchase_order.branch)
+            inventory.price = selling_price
+            inventory.dealer_price = dealer_price
+            inventory.save()
+        except Inventory.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Inventory not found for the product'}, status=404)
+
+        logger.info('done')
+        return JsonResponse({'success': True, 'message': 'Purchase Order Item updated successfully'}, status=200)
+    
+    except PurchaseOrderItem.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Purchase Order Item not found'}, status=404)
+    except Product.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Product not found'}, status=404)
+
 
 @login_required
 def mark_purchase_order_done(request, po_id):
