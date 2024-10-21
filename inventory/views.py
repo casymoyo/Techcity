@@ -1734,6 +1734,7 @@ def purchase_order_detail(request, order_id):
 
     total_received_quantity = purchase_order_items.aggregate(Sum('received_quantity'))['received_quantity__sum'] or 0
     total_expected_profit = purchase_order_items.aggregate(Sum('expected_profit'))['expected_profit__sum'] or 0
+    total_expected_dealer_profit = purchase_order_items.aggregate(Sum('dealer_expected_profit'))['dealer_expected_profit__sum'] or 0
     total_quantity = items.aggregate(Sum('quantity'))['quantity__sum'] or 0
     total_expense_sum = expenses.aggregate(total_expense=Sum('amount'))['total_expense'] or 0
 
@@ -1770,6 +1771,7 @@ def purchase_order_detail(request, order_id):
         'total_expected_profit': total_expected_profit,
         'total_expenses': total_expense_sum,
         'purchase_order': purchase_order,
+        'total_expected_dealer_profit':total_expected_dealer_profit
     })
 
 def generate_csv_response(items, po_items):
