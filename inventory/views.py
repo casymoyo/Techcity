@@ -1881,8 +1881,7 @@ def process_received_order(request):
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
 
         if edit:
-            return edit_purchase_order_item(order_item_id, selling_price, dealer_price, expected_profit, dealer_expected_profit)
-
+            return edit_purchase_order_item(order_item_id, selling_price, dealer_price, expected_profit, dealer_expected_profit, quantity, request)
 
         if quantity == 0:
             return JsonResponse({'success': False, 'message': 'Quantity cannot be zero.'}, status=400)
@@ -1955,7 +1954,7 @@ def process_received_order(request):
             action='stock in',
             inventory=inventory,
             quantity=quantity,
-            description=f'Stock in from {order_item.purchase_order.order_number}',
+            description=f'Stock in from {order_item.purchase_order.batch}',
             total_quantity=inventory.quantity
         )
         log.save()
@@ -1967,7 +1966,7 @@ def process_received_order(request):
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
 
-def edit_purchase_order_item(order_item_id, selling_price, dealer_price, expected_profit):
+def edit_purchase_order_item(order_item_id, selling_price, dealer_price, expected_profit, dealer_expected_profit, quantity, request):
     try:
         po_item = PurchaseOrderItem.objects.get(id=order_item_id)
 
@@ -1976,6 +1975,7 @@ def edit_purchase_order_item(order_item_id, selling_price, dealer_price, expecte
         po_item.dealer_price = dealer_price
         po_item.expected_profit = expected_profit
         po_item.dealer_expected_profit = dealer_expected_profit
+        po_item.received_quantity = quantity
         po_item.save()
 
         # Update the related product's price and dealer price
@@ -1989,7 +1989,23 @@ def edit_purchase_order_item(order_item_id, selling_price, dealer_price, expecte
             inventory = Inventory.objects.get(product=product, branch=po_item.purchase_order.branch)
             inventory.price = selling_price
             inventory.dealer_price = dealer_price
+            inventory.quantity = quantity
             inventory.save()
+
+            log = ActivityLog.objects.get(purchase_order=po_item.purchase_order, inventory=inventory)
+            log.delete()
+
+            ActivityLog.objects.create(
+                purchase_order=po_item.purchase_order,
+                branch=request.user.branch,
+                user=request.user,
+                action='stock in',
+                inventory=inventory,
+                quantity=quantity,
+                description=f'Stock in from {po_item.purchase_order.batch}',
+                total_quantity=inventory.quantity
+            )
+
         except Inventory.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Inventory not found for the product'}, status=404)
 
@@ -2101,7 +2117,8 @@ def edit_purchase_order(request, po_id):
 
                 # preload the logs with previous received stock
                 logs = ActivityLog.objects.filter(purchase_order=last_purchase_order)
-                logger.info(f'logs {logs}')
+                logger.info(f'logs {purchase_order_items_data}')
+                logger.info(f'cist {cost_allocations}')
 
                 for item_data in purchase_order_items_data:
                     product_name = (item_data['product'])
@@ -2128,10 +2145,10 @@ def edit_purchase_order(request, po_id):
                         PurchaseOrderItem(
                             purchase_order=purchase_order,
                             product=product,
-                            quantity=quantity if not log_quantity else log_quantity[0]['quantity'],
+                            quantity= 0 if not quantity else quantity,
                             unit_cost=unit_cost,
                             actual_unit_cost=actual_unit_cost,
-                            received_quantity=0,
+                            received_quantity= 0 if not log_quantity else log_quantity[0]['quantity'],
                             received=False
                         )
                     )

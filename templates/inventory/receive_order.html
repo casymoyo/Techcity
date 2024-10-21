@@ -65,26 +65,25 @@
         <tbody>
             {% for item in orders %}
             <tr>
+                <span class="d-none" id="rq_{{ item.id }}">{{ item.received_quantity }}</span>
                 <td>{{ item.product.name }}</td>
                 <td id="purchased_quantity_{{ item.id }}">{{ item.quantity }}</td>
-                <td id="id-{{ item.id }}" d>
-                    <span class="d-none" id="rq_{{ item.id }}">{{ item.received_quantity }}</span>
+                <td id="q_{{ item.id }}" d>
                     {% if item.received %}
-                    <div class="rounded">All received</div>
+                    <div class="rounded">Received [{{item.received_quantity}}]</div>
                     {% else %}
-                    <input 
-                           type="number" 
-                           value="{{ item.quantity }}" 
-                           id="quantity_{{ item.id }}" 
-                           placeholder="Enter quantity received" 
-                           min="1" 
+                    <input type="number"
+                           value="{{ item.received_quantity }}"
+                           id="quantity_{{ item.id }}"
+                           placeholder="Enter quantity received"
+                           min="1"
                            class='form-control'
+                           onclick="clearInput(this)"
                            oninput="expectedProfit(
                                 '{{ item.id }}',
                                 '{{ item.quantity }}',
                                 '{{ item.actual_unit_cost }}'
-                            )"
-                    >
+                            )">
                     {% endif %}
                 </td>
                 <td>{{ item.unit_cost }}</td>
@@ -98,6 +97,7 @@
                            min="1"
                            class='form-control'
                            value="{{ item.dealer_price }}"
+                           onclick="clearInput(this)"
                            oninput="expectedProfit(
                             '{{ item.id }}',
                             '{{ item.quantity }}',
@@ -117,6 +117,7 @@
                            value="{{ item.selling_price|trim }}"
                            min="1" {
                            class='form-control'
+                           onclick="clearInput(this)"
                            oninput="expectedProfit(
                              '{{ item.id }}',
                              '{{ item.quantity }}',
@@ -177,11 +178,16 @@
         {% endfor %}
     }
 
+    function clearInput(el) {
+        el.value = '';
+    }
+
     function edit(itemId, sPrice, dPrice, quantity, acp) {
         const parentEl = document.getElementById('itemId');
         const sellingPrice = document.getElementById(`selling_${itemId}`);
-        const pQuantity = document.getElementById(`quantity_${itemId}`);
+        const pQuantity = document.getElementById(`rq_${itemId}`).textContent;
 
+        const q = document.getElementById(`q_${itemId}`);
         const sp = document.getElementById(`sP_${itemId}`);
         const dsp = document.getElementById(`dSp_${itemId}`);
 
@@ -192,6 +198,23 @@
         // add cancel button
         document.getElementById(`cancel_${itemId}`).style.display = 'block'
 
+        console.log(pQuantity)
+
+        q.innerHTML = `
+            <input type="number"
+               value="${ pQuantity }"
+               id="quantity_${ itemId }"
+               placeholder="Enter quantity received"
+               min="1"
+               class='form-control'
+               onclick="clearInput(this)"
+               oninput="expectedProfit(
+                    '${itemId}',
+                    this.value,
+                    '${acp}'
+                )">
+        `
+
         sp.innerHTML = `
             <input type="text"
                id="selling_${ itemId }"
@@ -199,6 +222,7 @@
                min="1"
                class='form-control'
                value="${ sPrice }"
+               onclick="clearInput(this)"
                oninput="expectedProfit(
                     '${itemId}',
                     '${quantity}',
@@ -213,6 +237,7 @@
                min="1"
                class='form-control'
                value="${ dPrice }"
+               onclick="clearInput(this)"
                oninput="expectedProfit(
                     '${ itemId }',
                     '${ quantity }',
@@ -243,8 +268,6 @@
         const dealerPrice = document.getElementById(`dealer_${itemId}`)?.value || document.getElementById(`d_${itemId}`).textContent;
         const expectedProfitField = document.getElementById(`profit_${itemId}`);
         const dealerExpectedProfitField = document.getElementById(`dealer_profit_${itemId}`)
-
-        console.log(sellingPrice)
        
         try {
             pQuantity = document.getElementById(`quantity_${itemId}`).value;
