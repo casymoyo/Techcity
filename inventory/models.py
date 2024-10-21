@@ -114,6 +114,7 @@ class PurchaseOrderItem(models.Model):
     received_quantity = models.IntegerField(default=0) 
     received = models.BooleanField(default=False, null=True)
     expected_profit = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    dealer_expected_profit = models.DecimalField(max_digits=10, decimal_places=2, null=True)
 
     def receive_items(self, quantity):
        

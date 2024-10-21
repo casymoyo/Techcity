@@ -1873,14 +1873,14 @@ def process_received_order(request):
             selling_price = data.get('selling_price', 0)
             dealer_price = data.get('dealer_price', 0)
             expected_profit = data.get('expected_profit', 0)
+            dealer_expected_profit = data.get('dealer_expected_profit', 0)
 
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
 
         if edit:
-            return edit_purchase_order_item(order_item_id, selling_price, dealer_price, expected_profit)
+            return edit_purchase_order_item(order_item_id, selling_price, dealer_price, expected_profit, dealer_expected_profit)
 
-        logger.info('here')
 
         if quantity == 0:
             return JsonResponse({'success': False, 'message': 'Quantity cannot be zero.'}, status=400)
@@ -1900,6 +1900,12 @@ def process_received_order(request):
         # Update the order item with received quantity
         order_item.receive_items(quantity)
         order_item.expected_profit = expected_profit
+        order_item.dealer_expected_profit = dealer_expected_profit
+        order_item.received = True
+
+        logger.info(f'profit: {expected_profit}')
+        logger.info(f'dealer profit: {dealer_expected_profit}')
+
         #order_item.check_received() revisit the model method
 
         # Update or create inventory
@@ -1967,6 +1973,7 @@ def edit_purchase_order_item(order_item_id, selling_price, dealer_price, expecte
         po_item.selling_price = selling_price
         po_item.dealer_price = dealer_price
         po_item.expected_profit = expected_profit
+        po_item.dealer_expected_profit = dealer_expected_profit
         po_item.save()
 
         # Update the related product's price and dealer price

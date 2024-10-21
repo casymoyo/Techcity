@@ -58,6 +58,7 @@
                 <th>Enter Dealer Price</th>
                 <th>Enter Selling Price</th>
                 <th>Expected Profit</th>
+                <th>Expected Profit Dealer Price</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -71,7 +72,19 @@
                     {% if item.received %}
                     <div class="rounded">All received</div>
                     {% else %}
-                    <input type="number" value="{{ item.quantity }}" id="quantity_{{ item.id }}" placeholder="Enter quantity received" min="1" class='form-control'>
+                    <input 
+                           type="number" 
+                           value="{{ item.quantity }}" 
+                           id="quantity_{{ item.id }}" 
+                           placeholder="Enter quantity received" 
+                           min="1" 
+                           class='form-control'
+                           oninput="expectedProfit(
+                                '{{ item.id }}',
+                                '{{ item.quantity }}',
+                                '{{ item.actual_unit_cost }}'
+                            )"
+                    >
                     {% endif %}
                 </td>
                 <td>{{ item.unit_cost }}</td>
@@ -92,7 +105,7 @@
                         )">
                     {% endif %}
                     {% else %}
-                    {{ item.product.dealer_price }}
+                    <span id="d_{{ item.id }}">{{ item.product.dealer_price }}</span>
                     {% endif %}
                 </td>
                 <td id="sP_{{ item.id }}" d>
@@ -105,16 +118,17 @@
                            min="1" {
                            class='form-control'
                            oninput="expectedProfit(
-                         '{{ item.id }}',
-                         '{{ item.quantity }}',
-                         '{{ item.actual_unit_cost }}'
+                             '{{ item.id }}',
+                             '{{ item.quantity }}',
+                             '{{ item.actual_unit_cost }}'
                      )">
                     {% endif %}
                     {% else %}
-                    {{ item.product.price }}
+                    <span id="s_{{ item.id }}">{{ item.product.price }}</span>
                     {% endif %}
                 </td>
                 <td id="profit_{{ item.id }}">{{ item.expected_profit }}</td>
+                <td id="dealer_profit_{{ item.id }}">{{ item.dealer_expected_profit }}</td>
                 <td>
                     {% if not item.received %}
                     <span class="d-flex">
@@ -140,12 +154,28 @@
 
 <script>
     let expectedProfitAmnt = 0;
+    let dealerExpectedProfitAmnt = 0;
     let editStatus = false;
 
     new DataTable('#order_items_table', {
         paging: false, 
         scrollCollapse: true
     });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        expectedProfitOnLoad();
+    });
+
+    function expectedProfitOnLoad() {
+
+        {% for item in orders %}
+            expectedProfit(
+                '{{ item.id }}',
+                '{{ item.quantity }}',
+                '{{ item.actual_unit_cost }}'
+            );
+        {% endfor %}
+    }
 
     function edit(itemId, sPrice, dPrice, quantity, acp) {
         const parentEl = document.getElementById('itemId');
@@ -207,25 +237,14 @@
         editStatus=false
     } 
 
-    document.addEventListener('DOMContentLoaded', function () {
-        expectedProfitOnLoad();
-    });
-
-    function expectedProfitOnLoad() {
-        
-        {% for item in orders %}
-        expectedProfit(
-            '{{ item.id }}',
-            '{{ item.quantity }}',
-            '{{ item.actual_unit_cost }}'
-        );
-        {% endfor %}
-    }
-
     function expectedProfit(itemId, quantity, actualUnitCost) {
         let pQuantity = 0
-        const sellingPrice = document.getElementById(`selling_${itemId}`)?.value || 0;
+        const sellingPrice = document.getElementById(`selling_${itemId}`)?.value || document.getElementById(`s_${itemId}`).textContent;
+        const dealerPrice = document.getElementById(`dealer_${itemId}`)?.value || document.getElementById(`d_${itemId}`).textContent;
         const expectedProfitField = document.getElementById(`profit_${itemId}`);
+        const dealerExpectedProfitField = document.getElementById(`dealer_profit_${itemId}`)
+
+        console.log(sellingPrice)
        
         try {
             pQuantity = document.getElementById(`quantity_${itemId}`).value;
@@ -234,11 +253,21 @@
         }
 
         if (sellingPrice && quantity && actualUnitCost) {
-            const expectedProfit = (parseFloat(sellingPrice) * parseInt(quantity)) - (parseFloat(actualUnitCost) * parseInt(pQuantity));
-            
+            const expectedProfit = (parseFloat(sellingPrice) * parseInt(pQuantity)) - (parseFloat(actualUnitCost) * parseInt(quantity));
+            console.log(sellingPrice, pQuantity, actualUnitCost, quantity)
             expectedProfitField.textContent = expectedProfit.toFixed(2);
             expectedProfitAmnt = expectedProfit.toFixed(2)
         } else {
+            expectedProfitField.textContent = '';
+        }
+
+        if (dealerPrice && quantity && actualUnitCost) {
+            const dealerExpectedProfit = (parseFloat(dealerPrice) * parseInt(pQuantity)) - (parseFloat(actualUnitCost) * parseInt(quantity));
+            console.log(dealerPrice, pQuantity, actualUnitCost, quantity)
+            dealerExpectedProfitField.textContent = dealerExpectedProfit.toFixed(2);
+            dealerExpectedProfitAmnt = dealerExpectedProfit.toFixed(2)
+        
+        }else {
             expectedProfitField.textContent = '';
         }
     }
@@ -254,7 +283,8 @@
             quantity: parseInt(quantity),
             selling_price: parseFloat(sellingPrice),
             dealer_price: parseFloat(dealerPrice),
-            expected_profit: parseFloat(expectedProfitAmnt)
+            expected_profit: parseFloat(expectedProfitAmnt),
+            dealer_expected_profit: parseFloat(dealerExpectedProfitAmnt)
         };
 
         fetch(`{% url "inventory:process_received_order" %}`, {
@@ -283,14 +313,15 @@
 
                     // hide the submit and cancel button
                     const cancelBtn = document.getElementById(`cancel_${itemId}`);
+                    const editBtn = document.getElementById(`editBtn_${itemId}`);
 
                     // check existance
                     if (cancelBtn) {
                         cancelBtn.style.display = 'none';
                     }
-
-                    const editBtn = document.getElementById(`editBtn_${itemId}`);
-                    editBtn.style.display = 'block';
+                    if (editBtn) {
+                        editBtn.style.display = 'block';
+                    }
 
                 } else {
                     Swal.fire({
