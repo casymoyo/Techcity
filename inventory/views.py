@@ -59,6 +59,8 @@ from permissions.permissions import (
 )
 from utils.account_name_identifier import account_identifier
 from loguru import logger
+from xhtml2pdf import pisa
+from django.template.loader import get_template
 
 
 @login_required
@@ -1743,7 +1745,7 @@ def purchase_order_detail(request, order_id):
         'price', 
         'product__name'
     )
-    logger.info(f'branch: {request.user.branch}')
+
     # Convert products queryset to a dictionary for easy lookup by product ID
     product_prices = {product['product__name']: product for product in products}
 
@@ -1758,7 +1760,6 @@ def purchase_order_detail(request, order_id):
             item.dealer_price = 0  
             item.selling_price = 0 
 
-    logger.info(items.values())
     if request.GET.get('download') == 'csv':
         return generate_csv_response(items, purchase_order_items)
 
@@ -1788,19 +1789,66 @@ def generate_csv_response(items, po_items):
         received_quantity = 0
         if po_items.filter(product__name=item.product).exists():
            received_quantity = po_items.filter(product__name=item.product).first().received_quantity
-           selling_price = po_items.filter(product__name=item.product).first().selling_price
-           dealer_price = po_items.filter(product__name=item.product).first().dealer_price
 
         writer.writerow([
             item.product,
             item.quantity,
             received_quantity,
-            f"${selling_price:.2f}",
-            f"${dealer_price:.2f}",
+            f"${item.selling_price:.2f}",
+            f"${item.dealer_price:.2f}",
         ])
 
     return response
+ 
+@login_required
+def sales_price_list_pdf(request, order_id):
+    try:
+        purchase_order = PurchaseOrder.objects.get(id=order_id)
+    except PurchaseOrder.DoesNotExist:
+        messages.warning(request, f'Purchase order with ID: {order_id} does not exist')
+        return redirect('inventory:purchase_orders')
+
+    items = costAllocationPurchaseOrder.objects.filter(purchase_order=purchase_order)
+    purchase_order_items = PurchaseOrderItem.objects.filter(purchase_order=purchase_order)
+
+    products = Inventory.objects.filter(branch=request.user.branch).values(
+        'dealer_price', 
+        'price', 
+        'product__name',
+        'product__description',
+        'quantity'
+    )
+
+    # Convert products queryset to a dictionary for easy lookup by product ID
+    product_prices = {product['product__name']: product for product in products}
+   
+    for item in items:
+        product_name = item.product
+        product_data = product_prices.get(product_name)
+
+        if product_data:
+            item.dealer_price = product_data['dealer_price']
+            item.selling_price = product_data['price']
+        else:
+            item.dealer_price = 0
+            item.selling_price = 0
+
+        item.description = product_data['product__description']
+
+    context = {'items': items}
+
+    template = get_template('inventory/pdf_templates/price_list.html')
+    html = template.render(context)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="price_list.pdf"'
     
+    pisa_status = pisa.CreatePDF(html, dest=response)
+
+    if pisa_status.err:
+        return HttpResponse('Error generating PDF', status=400)
+    return response
+
 @login_required
 def delete_purchase_order(request, purchase_order_id):
     if request.method != "DELETE":

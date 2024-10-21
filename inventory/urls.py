@@ -60,6 +60,7 @@ urlpatterns = [
     path('edit_purchase_order_data/<int:po_id>/', edit_purchase_order_data, name='edit_po_data'),
     path('edit_purchase_order/<int:po_id>/', edit_purchase_order, name='edit_po'),
     path('mark_purchase_order_done/<int:po_id>/', mark_purchase_order_done, name='mark_done'),
+    path('sales_price_list_pdf/<int:order_id>/', sales_price_list_pdf, name='sales_price_list'),
 
     # transfers
     path('transfers', inventory_transfers, name='transfers'),
