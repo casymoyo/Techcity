@@ -162,8 +162,8 @@ class AccountBalance(models.Model):
     balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     branch = models.ForeignKey('company.branch', on_delete=models.CASCADE)
 
-    class Meta:
-        unique_together = ('account', 'currency')
+    #class Meta:
+    #    unique_together = ('account', 'currency')
 
     def __str__(self):
         return f'{self.account.name} ({self.account.type}):{self.currency}{self.balance}'

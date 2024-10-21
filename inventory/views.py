@@ -1753,6 +1753,7 @@ def purchase_order_detail(request, order_id):
             item.dealer_price = 0  
             item.selling_price = 0 
 
+    logger.info(items.values())
     if request.GET.get('download') == 'csv':
         return generate_csv_response(items, purchase_order_items)
 
@@ -1823,7 +1824,31 @@ def receive_order(request, order_id):
     except PurchaseOrderItem.DoesNotExist:
         messages.warning(request, f'Purchase order with ID: {order_id} does not exists')
         return redirect('inventory:purchase_orders')
-    
+
+    products = Inventory.objects.filter(branch=request.user.branch).values(
+        'dealer_price', 
+        'price', 
+        'product__name'
+    )
+    logger.info(f'branch: {request.user.branch}')
+    # Convert products queryset to a dictionary for easy lookup by product ID
+    product_prices = {product['product__name']: product for product in products}
+
+    new_po_items =  []
+    for item in purchase_order_items:
+        product_name = item.product.name  
+        product_data = product_prices.get(product_name)
+        logger.info(product_name)
+        if product_data:
+            item.dealer_price = product_data['dealer_price']
+            item.selling_price = product_data['price']
+        else:
+            item.dealer_price = 0  
+            item.selling_price = 0 
+        new_po_items.append(item)
+
+
+    logger.info(f'Purchase order items: {new_po_items}')
     
     return render(request, 'inventory/receive_order.html', 
         {
@@ -1847,7 +1872,6 @@ def process_received_order(request):
 
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
-
 
         if edit:
             return edit_purchase_order_item(order_item_id, selling_price, dealer_price, expected_profit)
@@ -1907,7 +1931,7 @@ def process_received_order(request):
                 stock_level_threshold=product.min_stock_level,
                 reorder=False,
                 alert_notification=True,
-                batch = f'{order_item.batch}, '
+                batch = f'{order.batch}, '
             )
             inventory.save()
 

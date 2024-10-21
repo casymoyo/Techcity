@@ -76,36 +76,20 @@
                 </td>
                 <td>{{ item.unit_cost }}</td>
                 <td>{{ item.actual_unit_cost }}</td>
-                <td id="sP_{{ item.id }}"d>
+                <td id="sP_{{ item.id }}" d>
                     {% if not item.received %}
                     {% if request.user.role == 'admin' or request.user.role == 'owner' %}
-                    {% if not prod %}
                     <input type="text"
                            id="selling_{{ item.id }}"
                            placeholder="Enter Selling Price"
+                           value="{{ item.selling_price|trim }}"
                            min="1" {
                            class='form-control'
                            oninput="expectedProfit(
-                        '{{ item.id }}',
-                        '{{ item.quantity }}',
-                        '{{ item.actual_unit_cost }}'
-                    )">
-                    {% endif %}
-                    {% for prod in inventory %}
-                    {% if prod.product == item.product %}
-                    <input type="text"
-                           id="selling_{{ item.id }}"
-                           placeholder="Enter Selling Price"
-                           value="{{ prod.price|trim }}"
-                           min="1" {
-                           class='form-control'
-                           oninput="expectedProfit(
-                                '{{ item.id }}',
-                                '{{ item.quantity }}',
-                                '{{ item.actual_unit_cost }}'
-                            )">
-                    {% endif %} 
-                    {% endfor %}
+                         '{{ item.id }}',
+                         '{{ item.quantity }}',
+                         '{{ item.actual_unit_cost }}'
+                     )">
                     {% endif %}
                     {% else %}
                     {{ item.product.price }}
@@ -114,33 +98,17 @@
                 <td id="dSp_{{ item.id }}">
                     {% if not item.received %}
                     {% if request.user.role == 'admin' or request.user.role == 'owner' %}
-                    {% if not prod %}
-                    <input type="text"
-                           id="dealer_{{ item.id }}"
-                           placeholder="Enter Dealer Selling Price"
-                           min="1"
-                           class='form-control'
-                           oninput="expectedProfit(
-                        '{{ item.id }}',
-                        '{{ item.quantity }}',
-                        '{{ item.actual_unit_cost }}'
-                    )">
-                    {% endif %}
-                    {% for prod in inventory %}
-                    {% if prod.product == item.product %}
-                    <input type="text"
-                           id="dealer_{{ item.id }}"
-                           placeholder="Enter Dealer Selling Price"
-                           min="1"
-                           class='form-control'
-                           value="{{ prod.dealer_price }}"
-                           oninput="expectedProfit(
-                                '{{ item.id }}',
-                                '{{ item.quantity }}',
-                                '{{ item.actual_unit_cost }}'
-                            )">
-                    {% endif %}
-                    {% endfor %}
+                        <input type="text"
+                               id="dealer_{{ item.id }}"
+                               placeholder="Enter Dealer Selling Price"
+                               min="1"
+                               class='form-control'
+                               value="{{ item.dealer_price }}"
+                               oninput="expectedProfit(
+                            '{{ item.id }}',
+                            '{{ item.quantity }}',
+                            '{{ item.actual_unit_cost }}'
+                        )">
                     {% endif %}
                     {% else %}
                     {{ item.product.dealer_price }}
@@ -149,14 +117,19 @@
                 <td id="profit_{{ item.id }}">{{ item.expected_profit }}</td>
                 <td>
                     {% if not item.received %}
+                    <span class="d-flex">
+                        <button class="btn btn-outline-dark btn-sm" id="submit_{{ item.id }}" style="display:none;" onclick="submitItem('{{ item.id }}')">Submit</button>
+                        <button class="bx bx-edit border btn mx-1" id="editBtn_{{ item.id }}" style="display:none;" onclick="edit({{ item.id }}, {{ item.product.price }}, {{ item.product.dealer_price }}, {{ item.quantity }}, {{ item.actual_unit_cost }})"></button>
+                        <button class="btn btn-danger btn-sm " id="cancel_{{ item.id }}" onclick="cancel('{{ item.id }}', {{ item.product.price }}, {{ item.product.dealer_price }})" style="display:none;">cancel</button>
                         <button class="btn btn-outline-dark btn-sm" onclick="submitItem('{{ item.id }}')">Submit</button>
+                    </span>
                     {% else %}
-                        <span class="d-flex">
-                            <button class="btn btn-outline-dark btn-sm" id="submit_{{ item.id }}" style="display:none;" onclick="submitItem('{{ item.id }}')">Submit</button>
-                            <button class="bx bx-edit border btn mx-1" onclick="edit({{ item.id }}, {{ item.product.price }}, {{ item.product.dealer_price }}, {{ item.quantity }}, {{ item.actual_unit_cost }})"></button>
-                            <button class="btn btn-danger btn-sm " id="cancel_{{ item.id }}" onclick="cancel('{{ item.id }}', {{ item.product.price }}, {{ item.product.dealer_price }})" style="display:none;">cancel</button>
-                            <button class="btn btn-secondary text-light btn-sm" id="submitted_{{ item.id }}">Submitted</button>
-                        </span>
+                    <span class="d-flex">
+                        <button class="btn btn-outline-dark btn-sm" id="submit_{{ item.id }}" style="display:none;" onclick="submitItem('{{ item.id }}')">Submit</button>
+                        <button class="bx bx-edit border btn mx-1" onclick="edit({{ item.id }}, {{ item.product.price }}, {{ item.product.dealer_price }}, {{ item.quantity }}, {{ item.actual_unit_cost }})"></button>
+                        <button class="btn btn-danger btn-sm " id="cancel_{{ item.id }}" onclick="cancel('{{ item.id }}', {{ item.product.price }}, {{ item.product.dealer_price }})" style="display:none;">cancel</button>
+                        <button class="btn btn-secondary text-light btn-sm" id="submitted_{{ item.id }}">Submitted</button>
+                    </span>
                     {% endif %}
                 </td>
             </tr>
@@ -309,7 +282,15 @@
                     submitButton.disabled = true;
 
                     // hide the submit and cancel button
-                    document.getElementById(`cancel_${itemId}`).style.display = 'none';
+                    const cancelBtn = document.getElementById(`cancel_${itemId}`);
+
+                    // check existance
+                    if (cancelBtn) {
+                        cancelBtn.style.display = 'none';
+                    }
+
+                    const editBtn = document.getElementById(`editBtn_${itemId}`);
+                    editBtn.style.display = 'block';
 
                 } else {
                     Swal.fire({

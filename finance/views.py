@@ -639,7 +639,7 @@ def create_invoice(request):
                     # cost of sales item
                     COGSItems.objects.get_or_create(
                         invoice=invoice,
-                        defaults={'cogs': cogs, 'product': Inventory.objects.get(product=product)}
+                        defaults={'cogs': cogs, 'product': Inventory.objects.get(product=product, branch=request.user.branch)}
                     )
                     
                     # stock log  
