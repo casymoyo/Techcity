@@ -26,7 +26,8 @@
         border-bottom: 2px solid #dee2e6;
     }
 
-    td:first-child {
+    td:first-child,
+    td:nth-child(2){
         text-align: left;
     }
 
@@ -51,6 +52,7 @@
         <thead>
             <tr>
                 <th>Product Name</th>
+                <th>Description</th>
                 <th>Ordered Quantity</th>
                 <th>Enter Quantity</th>
                 <th>Supplier Cost/unit</th>
@@ -67,6 +69,7 @@
             <tr>
                 <span class="d-none" id="rq_{{ item.id }}">{{ item.received_quantity }}</span>
                 <td>{{ item.product.name }}</td>
+                <td>{{ item.product.description }}</td>
                 <td id="purchased_quantity_{{ item.id }}">{{ item.quantity }}</td>
                 <td id="q_{{ item.id }}" d>
                     {% if item.received %}

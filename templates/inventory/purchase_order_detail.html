@@ -66,7 +66,7 @@
                         {% for order in order_items %}
                         {% if order.product.name == item.product %}
                         <tr>
-                            <td>{{ item.product }}</td>
+                            <td>{{ item.product }} <small>({{ order.product.description }})</small></td>
                             <td>{{ item.quantity }}</td>
                             <td>
                                 {% if order.received_quantity == item.quantity %}

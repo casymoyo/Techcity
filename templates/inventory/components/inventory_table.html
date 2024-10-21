@@ -8,6 +8,7 @@
                 <thead>
                     <tr>
                         <th>Name</th>
+                        <th>Description</th>
                         <th>Quantity</th>
                         <th>Cost</th>
                         <th>Price</th>
@@ -19,6 +20,7 @@
                     {% for product in inventory %}
                     <tr>
                         <td><small><span class='hint--bottom' aria-label='{{ product.product.description }}'>{{ product.product.name }}</span></small></td>
+                        <td><small>{{ product.product.description }}</small></td>
                         <td><small>{{ product.quantity }}</small></td>
                         <td><small>{{ product.cost }}</small></td>
                         <td><small>{{ product.price }}</small></td>
