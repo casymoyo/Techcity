@@ -55,10 +55,10 @@
                 <th>Enter Quantity</th>
                 <th>Supplier Cost/unit</th>
                 <th>Product Cost/unit + expense</th>
-                <th>Enter Selling Price</th>
                 <th>Enter Dealer Price</th>
+                <th>Enter Selling Price</th>
                 <th>Expected Profit</th>
-                <th>Actions</th> 
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -66,7 +66,7 @@
             <tr>
                 <td>{{ item.product.name }}</td>
                 <td id="purchased_quantity_{{ item.id }}">{{ item.quantity }}</td>
-                <td id="id-{{ item.id }}"d>
+                <td id="id-{{ item.id }}" d>
                     <span class="d-none" id="rq_{{ item.id }}">{{ item.received_quantity }}</span>
                     {% if item.received %}
                     <div class="rounded">All received</div>
@@ -76,6 +76,25 @@
                 </td>
                 <td>{{ item.unit_cost }}</td>
                 <td>{{ item.actual_unit_cost }}</td>
+                <td id="dSp_{{ item.id }}">
+                    {% if not item.received %}
+                    {% if request.user.role == 'admin' or request.user.role == 'owner' %}
+                    <input type="text"
+                           id="dealer_{{ item.id }}"
+                           placeholder="Enter Dealer Selling Price"
+                           min="1"
+                           class='form-control'
+                           value="{{ item.dealer_price }}"
+                           oninput="expectedProfit(
+                            '{{ item.id }}',
+                            '{{ item.quantity }}',
+                            '{{ item.actual_unit_cost }}'
+                        )">
+                    {% endif %}
+                    {% else %}
+                    {{ item.product.dealer_price }}
+                    {% endif %}
+                </td>
                 <td id="sP_{{ item.id }}" d>
                     {% if not item.received %}
                     {% if request.user.role == 'admin' or request.user.role == 'owner' %}
@@ -93,25 +112,6 @@
                     {% endif %}
                     {% else %}
                     {{ item.product.price }}
-                    {% endif %}
-                </td>
-                <td id="dSp_{{ item.id }}">
-                    {% if not item.received %}
-                    {% if request.user.role == 'admin' or request.user.role == 'owner' %}
-                        <input type="text"
-                               id="dealer_{{ item.id }}"
-                               placeholder="Enter Dealer Selling Price"
-                               min="1"
-                               class='form-control'
-                               value="{{ item.dealer_price }}"
-                               oninput="expectedProfit(
-                            '{{ item.id }}',
-                            '{{ item.quantity }}',
-                            '{{ item.actual_unit_cost }}'
-                        )">
-                    {% endif %}
-                    {% else %}
-                    {{ item.product.dealer_price }}
                     {% endif %}
                 </td>
                 <td id="profit_{{ item.id }}">{{ item.expected_profit }}</td>

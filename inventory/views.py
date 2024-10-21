@@ -74,7 +74,10 @@ def service(request):
     if request.method == 'POST':
         form = ServiceForm(request.POST)
         if form.is_valid():
-            form.save()
+            service_obj = form.save(commit=False)
+            service_obj.cost = 0;
+            service_obj.branch = request.user.branch
+            service_obj.save()
             messages.success(request, 'Service successfully created')
             return redirect('inventory:inventory')
         messages.warning(request, 'Invalid form data')
@@ -106,6 +109,8 @@ def batch_code(request):
 def product_list(request): 
     """ for the pos """
     queryset = Inventory.objects.filter(branch=request.user.branch, status=True)
+    services = Service.objects.all().order_by('-name')
+
     search_query = request.GET.get('q', '') 
     product_id = request.GET.get('product', '')
     category_id = request.GET.get('category', '')
@@ -305,7 +310,6 @@ def transfer_details(request, transfer_id):
 def inventory(request):
     product_name = request.GET.get('name', '')
     if product_name:
-        logger.info(f'{list(Inventory.objects.filter(product__name=product_name, branch=request.user.branch).values())}')
         return JsonResponse(list(Inventory.objects.filter(product__name=product_name, branch=request.user.branch).values()), safe=False)
     return JsonResponse({'error':'product doesnt exists'})
 

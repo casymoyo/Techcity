@@ -174,15 +174,16 @@ class otherExpenses(models.Model):
 class Inventory(models.Model):
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    name = models.CharField(max_length=255, null=True)
     cost =  models.DecimalField(max_digits=10, decimal_places=2)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    dealer_price = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity = models.IntegerField()
-    status = models.BooleanField(default=True)
-    stock_level_threshold = models.IntegerField(default=5)
-    reorder = models.BooleanField(default=False)
+    dealer_price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    quantity = models.IntegerField(null=True)
+    status = models.BooleanField(default=True, null=True)
+    stock_level_threshold = models.IntegerField(default=5, null=True)
+    reorder = models.BooleanField(default=False, null=True)
     alert_notification = models.BooleanField(default=False, null=True, blank=True)
-    batch = models.CharField(max_length=255, blank=True)
+    batch = models.CharField(max_length=255, blank=True, null=True)
     
     def update_stock(self, added_quantity):
         self.quantity += added_quantity

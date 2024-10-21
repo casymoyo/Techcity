@@ -25,7 +25,7 @@ class AddProductForm(forms.ModelForm):
 class InventoryForm(forms.ModelForm):
     class Meta:
         model = Inventory
-        exclude = ['branch']
+        exclude = ['branch', 'name']
         
 class addCategoryForm(forms.ModelForm):
     class Meta:
@@ -56,8 +56,8 @@ class RestockForm(forms.ModelForm):
         
 class ServiceForm(forms.ModelForm):
     class Meta:
-        model = Service
-        fields = '__all__'
+        model = Inventory
+        fields = ['name', 'price']
 
 class AddSupplierForm(forms.ModelForm):   
     class Meta :
