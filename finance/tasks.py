@@ -13,7 +13,11 @@ from users.models import User
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from utils.utils import send_mail_func
+
+from finance.models import Expense
+from utils.email import EmailThread
+from django.core.mail import EmailMessage
+from loguru import logger
 
 import logging
 logger = logging.getLogger(__name__)
@@ -222,3 +226,22 @@ def check_and_send_invoice_reminders():
             customer_subject, customer_message, "from@example.com", [invoice.customer.email]
         )
         email.send()
+
+
+def send_expense_creation_notification(expense_id):
+    expense = Expense.objects.get(id=expense_id)
+    
+    email = EmailMessage(
+        subject=f"Expense Notification:",
+        body=f"""
+        The email is to notify you on the creation of an expense for {expense.description}.
+        For an amount of ${expense.amount}.
+        """,
+        from_email='admin@techcity.co.zw',
+        to=['cassymyo@gmail.com'],
+    )
+    
+    EmailThread(email).start()
+    
+    logger.info('send')
+

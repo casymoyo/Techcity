@@ -16,6 +16,4 @@ from finance.models import Invoice
 # #         attachments=[('receipt.pdf', pdf_content, 'application/pdf')] 
 # #     )
 
-@shared_task
-def add(x, y):
-    return x + y
+

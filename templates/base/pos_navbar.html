@@ -26,7 +26,7 @@
         <div class='user mt-3  px-2 d-flex justify-content-end w-75'>
             <ul class="menu list-unstyled d-flex align-items-center">
                 <li class="menu-link dropdown">
-                    <select  id='currency' class='bg-dark text-light shadow form-select'>
+                    <select  id='currency' class='bg-dark shadow text-light  form-select'>
                         <option value=''>Currency</option>
                         {% for currency in currencies %}
                             {% if currency.default %}
@@ -38,33 +38,33 @@
                     </select>
                 </li>
                 <span class='px-2'></span>
-                <li class="menu-link invoice btn btn-secondary p-1 shadow">
-                    <a href={% url 'finance:invoice' %}  class='text-light px-1'>
+                <li class="menu-link invoice btn btn-light shadow p-1">
+                    <a href={% url 'finance:invoice' %}  class='px-1'>
                         Invoices
-                        <span class='badge badge-sm text-light'>{{invoice_count}}</span>
+                        <span class='badge badge-sm'>{{invoice_count}}</span>
                     </a>
                 </li>
                 <span class='px-2'></span>
-                <li class="menu-link btn btn-warning p-1 shadow">
-                    <a href='{% url 'finance:qoutation_list' %}' class='px-1 text-light'>
+                <li class="menu-link btn btn-light shadow p-1">
+                    <a href='{% url 'finance:qoutation_list' %}' class='px-1'>
                         Qoutations
-                        <span class='badge badge-sm text-light'>{{qoute_count}}</span>
+                        <span class='badge badge-sm'>{{qoute_count}}</span>
                     </a>
                 </li>
                 <span class='px-2'></span>
-                <li class="menu-link btn btn-primary p-1 shadow">
-                    <a href={% url 'finance:withdrawals' %} class='px-1 text-light'>
+                <li class="menu-link btn btn-light shadow p-1">
+                    <a href={% url 'finance:withdrawals' %} class='px-1'>
                         Cash Withdraw
                     </a>
                 </li>
                 <span class='px-2'></span>
-                <li class="menu-link invoice btn btn-light p-1 shadow" id='end'>
+                <li class="menu-link invoice btn btn-light shadow p-1" id='end'>
                     <span class='px-1'>
                         End Of Day
                     </span>
                 </li>
                 <span class='px-2'></span>
-                <span class='p-1 shadow d-flex rounded'>
+                <span class='p-1 d-flex rounded'>
                 <li class="menu-link">
                     <a href={% url 'inventory:branches_inventory'%} class="">
                         <small class='bx bx-briefcase text-muted'></small>
@@ -76,7 +76,7 @@
                 </li>
                 <li class="menu-link dropdown px-2">
                     <small class="dropdown-toggle">{{request.user}}</small>
-                    <ul class="dropdown-menu shadow w-50 bg-light">
+                    <ul class="dropdown-menu w-50 bg-light">
                         <li class="dropdown-link">
                             <a href="" class="px-3 fs-6">Profile</a>
                         </li>
@@ -106,7 +106,7 @@
                     <div class="mt-4">
                         <ul class='list-unstyled'>
                             {% for branch in branches %}
-                                <li><a href="{% url 'company:switch_branch' branch.id %}" class="px-3 text-dark">{{ branch.name }}</a></li>
+                                <li><a href="{% url 'company:switch_branch' branch.id %}" class="pxlight shadow">{{ branch.name }}</a></li>
                             {% endfor %}
                         </ul>
                     </div>

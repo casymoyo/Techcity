@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}VAT Transactions{% endblock title %}
+{% block content %}
+<div>
+    <nav class="border rounded d-flex justify-content-between bg-dark text-light rounded shadow align-items-center p-2">
+        <div class=''>
+            <h5 class='fw-bold'>VAT Transactions</h5>
+        </div>
+        <div>
+            <div class="d-flex justify-content-between mt-1">
+                <button class='button'>Pay</button>
+                <div>
+                    <select class="form-select" id="filterSelect" onchange="filterVAT()">
+                        <option value="today" {% if filter_option == 'today' %}selected{% endif %}>Today</option>
+                        <option value="this_week" {% if filter_option == 'this_week' %}selected{% endif %}>This Week</option>
+                        <option value="yesterday" {% if filter_option == 'yesterday' %}selected{% endif %}>Yesterday</option>
+                        <option value="this_month" {% if filter_option == 'this_month' %}selected{% endif %}>This Month</option>
+                        <option value="last_month" {% if filter_option == 'last_month' %}selected{% endif %}>Last Month</option>
+                        <option value="this_year" {% if filter_option == 'this_year' %}selected{% endif %}>This Year</option>
+                    </select>
+                </div>
+                <div id="customDateRange" class="d-flex mx-2">
+                    <input type="date" id="startDate" value="{{ start_date }}" class="form-control" placeholder="Start Date">
+                    <input type="date" id="endDate" value="{{ end_date}}" class="form-control mx-2" placeholder="End Date">
+                    <button class="btn btn-primary" onclick="applyCustomFilter()">Apply</button>
+                </div>
+                <button class="btn btn-secondary" onclick="downloadReport()">Download Report</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class='mt-2'>
+        <table class='table table-striped' id='vat_table' style='width:100%;'>
+            <thead>
+                <th>Date</th>
+                <th>Details</th>
+                <th>Status</th>
+                <th>Input</th>
+                <th>Output</th>
+                <th>Balance</th>
+            </thead>
+            <tbody>
+               {% for transaction in vat_transactions %}
+                <tr>
+                    <td>
+                        {% if transaction.invoice %} 
+                            {{ transaction.invoice.issue_date }} 
+                        {% else %}
+                            {{ transaction.purchase_order.order_date }} 
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if transaction.invoice %} 
+                            {{ transaction.invoice.invoice_number }} 
+                        {% else %}
+                            {{ transaction.purchase_order.order_number }} 
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if transaction.paid %} Collected {% else %} Not yet Collected{% endif %}
+                    </td>
+                    <td>
+                        {% if transaction.vat_type == 'Input' %}
+                            {{ transaction.tax_amount }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if transaction.vat_type == 'Output' %}
+                            {{ transaction.tax_amount }}
+                        {% endif %}
+                    </td>
+                    <td id='balance'></td>
+                </tr>
+               {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+    new DataTable('#vat_table', {
+        pageLength:100
+    })
+
+    function filterVAT() {
+        const filter = document.getElementById('filterSelect').value;
+        window.location.href = `?filter=${filter}`;
+    }
+
+    function applyCustomFilter() {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        if (startDate && endDate) {
+            window.location.href = `?filter=custom&start_date=${startDate}&end_date=${endDate}`;
+        } else {
+            Swal.fire({
+                title: "Error",
+                text: "Please select both start and end dates.",
+                icon: "error"
+            });
+        }
+    }
+
+    function downloadReport() {
+        const filter = document.getElementById('filterSelect').value;
+        let url = `?filter=${filter}&download=${true}/`;
+
+        if (filter === 'custom') {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            url += `&start_date=${startDate}&end_date=${endDate}`;
+        }
+
+        window.location.href = url;
+    }
+</script>
+{% endblock %}

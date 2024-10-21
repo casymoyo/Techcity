@@ -1,186 +1,257 @@
-{% load static%}
-{% block content %}
-
-<div class='payment'>
-    <div class="bg-secondary text-light border d-flex justify-content-between align-items-center rounded w-100 py-2">
-        <h4 class='px-2' id="id_customer_details">Process Payment -> <span>Cash</span></h4>
-       <div class='px-2'>
-            <button id='closebtn' class="btn-close text-light btn-sm"></button>
-       </div>
-    </div>
-    <div class='row mt-2 payment-details'>
-        <div class='col-3 border p-2'>
-            <h5>Order details</h5>
-            <table class="table table-borderless">
-                <tbody id="order_details"></tbody>
-            </table>
-           <div>
-                <table id="oder_details_foot" class="table table-borderless">
-                    <tr>
-                        <td class='px-5 fw-bold'>Subtotal</td>
-                        <td class="d-flex justify-content-end" id="id_subtotal"></td>
-                    </tr>
-                    <tr id='disc'>
-                        <td id="id_dcp"class='px-5 fw-bold'></td>
-                        <td class="d-flex justify-content-end" id="id_disc">
-                            <span class='disc_c'>0.00</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class='px-5 fw-bold'>VAT</td>
-                        <td class="d-flex justify-content-end" id="id_vat">0.00</td>
-                    </tr>
-                    <tr id='d_charge'>
-                        <td class='px-5 fw-bold'>Delivery Charge</td>
-                        <td class="d-flex justify-content-end" id="id_delivery_charge">
-                            <span class='d_c'>0.00</span>
-                        </td>
-                    </tr>
-                    <tr id='int'>
-                        <td class='px-5 fw-bold'>Interest Amount</td>
-                        <td class="d-flex justify-content-end" id="id_interest_amount">
-                            <span class='inter'>0.00</span>
-                        </td>
-                    </tr>
-                    <tr id='prv'>
-                        <td class='px-5 fw-bold'>Previous Due</td>
-                        <td class="d-flex justify-content-end" id="previous_due">
-                            <span class='p_due'>25.00</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class='px-5 fw-bold'>Current Due</td>
-                        <td class="d-flex justify-content-end" id="id_due_amount">0.00</td>
-                    </tr>
-                    <tr id='prv'>
-                        <td class='px-5 fw-bold'>Total Balance</td>
-                        <td class="d-flex justify-content-end" id="tb_due">
-                            <span class='p_due' id='total_balance_due'>25.00</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class='px-5 fw-bold'>Amount Paid</td>
-                        <td class="d-flex justify-content-end" id="id_paid_amount">0.00</td>
-                    </tr>
-                    <tr>
-                        <td class='px-5 fw-bold'>Due Amount</td>
-                        <td class="d-flex justify-content-end fw-bold" id="id_balance">0.00</td>
-                    </tr>
-                    
-                </table>
-           </div>
-        </div>
-        <div class='col-6 border p-2'>
-            <div class='payment-form mt-3'>
-                <div class='mb-2 d-flex align-items-center'>
-                    <label for="id_amount_paid" class="px-2">Amount</label>
-                    <input
-                        id='id_amount_paid'
-                        name='amount'
-                        type="number"
-                        class='form-control'
-                     />
-                </div>
-
-                <div class="credit border rounded p-2 mb-2">
-                    <p>Credit details</p>
-                    <div class="mb-2">
-                        <label for="id_date">Credit Duration</label>
-                        <input
-                            type="number"
-                            class="form-control"
-                            placeholder="number of days"
-                            id="id_days"
-                            value="0"
-                        />
-                    </div>
-                </div>
-                <div class="mb-2 d-flex justify-content-between align-items-center">
-                    <div class="d-flex">
-                        <label for="reoccuring">Reoccuring</label>
-                        <input class="mx-2" type="checkbox" id="reoccuring" class="form-check"/>
-                    </div>
-                    <div class="hidden" id="next_due_date_p">
-                        <label class="mx-2" for="next_due_date">Next due days</label>
-                        <input type="number" id="next_due_date" class="form-control"/>
-                    </div>
-                </div>
-                <div class='d-flex align-items-center'>
-                    <label for="id_note p-1" class="px-2">Note</label>
-                    <textarea
-                        title="note"
-                        id='id_note'
-                        rows='2'
-                        name='note'
-                        class='form-control'
-                        placeholder=""
-                    ></textarea>
-                </div>
-            </div>
-            <small class'text-danger fw-bold' id='pay_error'></small>
-        </div>
-        <div class="col-3 border p-2">
-            <div class='button-choose w-100'>
-                <div class="w-100 p-2">
-                    <button type="button"  class='btn btn-light btn-lg w-100 pm' data-name='cash' id="id_cash_btn" onclick="processCart(this)">
-                        CASH
-                    </button>
-                </div>
-
-                <div class="w-100 mt-2 p-2">
-                    <button type="button" class='bank btn btn-success btn-lg w-100 pm' data-name='pay_later' id="id_paylater" onclick="processCart(this)">
-                        PAY LATER
-                    </button>
-                </div>
-
-                <div class="w-100 mt-2 p-2">
-                    <button type="button" class='bank btn btn-secondary btn-lg w-100 pm' data-name='bank' id="id_bank_transfer" onclick="processCart(this)">
-                        BANK CARD
-                    </button>
-                </div>
-
-                <div class="w-100 mt-2 p-2">
-                    <button type="button" class='ecocash btn btn-primary btn-lg w-100 pm' data-name='ecocash' id="id_credit_ecocash" onclick="processCart(this)">
-                        ECOCASH
-                    </button>
-                </div>
-
-                <div class="w-100 mt-2 p-2">
-                    <button type="button" class='btn btn-danger btn-lg w-100 pm' data-name='qoutation'  onclick="processCart(this)">
-                        QOUTATION
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<script>
-    const previousV = document.querySelector('.p_due');
-    const interestV = document.querySelector('.inter');
-    const deliveryV = document.querySelector('.d_c');
-    const discountV = document.querySelector('.disc_c');
-
-    const reocurring = document.getElementById('reoccuring');
-    const nextDueDaysEl = document.getElementById('next_due_date_p');
-    const nextDueDays = document.getElementById('next_due_date');
-
-    reocurring.addEventListener('click', () => {
-        nextDueDaysEl.classList.toggle('hidden');
-        nextDueDaysEl.classList.toggle('d-flex');
-    });
-
-    function hideIfZero(element, selector) {
-        if (element.textContent.trim() === '0.00') {
-            const el = document.querySelector(selector);
-            el.style.display = 'none';
-            el.classList.add('hidden');
-        }
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="Techcity Pos System" />
+        <meta name="Author" content="casy moyo" />
+        <link rel="icon" href="{% static 'images/favicons/favicon.ico' %}" />
+    
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+            integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    
+        {% block css %}
+        <link rel="stylesheet" href="{% static 'css/main.css' %}">
+        <link rel="stylesheet" href="{% static 'css/bootstrap/css/bootstrap.min.css' %}">
+        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        {% endblock css %}
+    
+    </head>
+    <style>
+    .receipt-el{
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f4f4f4;
     }
 
-    hideIfZero(previousV, '#prv');
-    hideIfZero(interestV, '#int');
-    hideIfZero(deliveryV, '#d_charge');
-    hideIfZero(discountV, '#disc');
-</script>
+    .currency_rcp{
+        display: flex;
+        align-items: center;
+    }
 
-{% endblock content %}
+    .receipt {
+        background-color: white;
+        padding: 20px;
+        max-width: 800px;
+        margin: auto;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+    }
+
+    .logo img {
+        height: 50px;
+        margin-right: 10px;
+    }
+
+    .company-info {
+        font-size: 0.9em;
+    }
+
+    .receipt-info {
+        text-align: right;
+    }
+
+    .receipt-info h3 {
+        color: red;
+    }
+
+    .payment-details, .customer-info, .totals, .layby-terms {
+        font-size: 0.9em;
+        margin-bottom: 20px;
+    }
+
+    .payment-details p, .totals p, .layby-terms p {
+        margin: 5px 0;
+    }
+
+    .customer-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .customer-info div {
+        width: 45%;
+    }
+
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+    .items-table th, .items-table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .items-table th {
+        background-color: #f4f4f4;
+    }
+
+    .totals {
+        text-align: right;
+    }
+
+    .layby-terms h4 , .monthly-installments h4{
+        margin-bottom: 10px;
+        font-size: 1.1em;
+    }
+
+    .receipt-el .active{
+        background: #333;
+        color: #fff;
+    }
+
+    .side{
+        display: flex;
+        justify-content:space-between;
+        align-items: center;
+
+    }
+
+    .currency_rcp select{
+        height: 30px;
+        font-size: 12px;
+    }
+
+    </style>
+<div class="receipt-el">
+    <div class="receipt">
+        <!-- Payment Details -->
+        <div class="payment-detail">
+            <p class="currency_rcp">
+                <strong>Currency:</strong><select id='rp_currency' class='form-select'>
+                    <option value=''>Currency</option>
+                    {% for currency in currencies %}
+                    {% if currency.default %}
+                    <option value='{{currency.id}}' selected>{{currency.name}}</option>
+                    {% else %}
+                    <option value='{{currency.id}}'>{{currency.name}}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </p>
+            <div class="side">
+                <p class="payment-method">
+                    <strong>Payment:</strong>
+                    <button class="btn btn-outline-dark btn-pm btn-sm border" id="pCash" data-name="cash">Cash</button>
+                    <button class="btn btn-outline-dark btn-pm btn-sm border" id="pBank" data-name="bank">Bank</button>
+                    <button class="btn btn-outline-dark btn-pm btn-sm border" id="pEcocash" data-name="ecocash">Ecocash</button>
+                </p>
+                <p class="terms">
+                    <strong>Terms:</strong>
+                    <button class="btn btn-outline-dark btn-sm btn-terms border active" id="cash">Cash</button>
+                    <button class="btn btn-outline-dark btn-sm btn-terms border" id="pay_later">Pay later</button>
+                    <button class="btn btn-outline-dark btn-sm btn-terms border" id="layby">Layby</button>
+                    <button class="btn btn-outline-dark btn-sm btn-terms border" id="Installment">Monthly Installment</button>
+                </p>
+            </div>
+
+        </div>
+
+        <hr>
+
+        <!-- Customer Info -->
+
+        <h4>Payment by <span id="customerName"></span></h4>
+        <div class="customer-info">
+            <div class="account-summary">
+                <p>
+                    <strong>Enter Amount Received:</strong>
+                    <input type="number" id="id_amount_paid" name="amount_received" class="form-control">
+                </p>
+            </div>
+            <div>
+                <p><strong>Previous bal:</strong><span id="previous_due" class="prv_due"></span></p>
+                <p><strong>Available bal:</strong> <span id="availableBalance"></span></p>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- Item Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>NAME</th>
+                    <th>DESCRIPTION</th>
+                    <th>QNTY</th>
+                    <th>UNIT PRICE</th>
+                    <th>TOTAL</th>
+                </tr>
+            </thead>
+            <tbody id="receiptTable"></tbody>
+        </table>
+
+        <hr>
+
+        <!-- Totals -->
+        <div class="totals">
+            <p><strong>Subtotal:</strong> <span id="id_subtotal"></span></p>
+            <p><strong>VAT 15%:</strong> <span id="id_vat"></span></p>
+            <p><strong>Previous Due</strong> <span id="tpreviousDue"></span></p>
+            <p><strong>Total:</strong> <span id='total_balance_due'></span></p>
+            <!-- <p><strong>Available bal:</strong> <span id='total_balance_due'>25.00</span></p> -->
+            <p><strong><span id="balance_label">Amount Due</span>:</strong> <span id="id_balance"></span></p>
+        </div>
+
+        <hr>
+
+        <!-- Layby Terms -->
+        <div class="layby-terms">
+            <h4>Layby Terms</h4>
+            <p><strong>Deposited:</strong> <span id="id_deposited"></span></p>
+            <p>
+                <strong>Period:</strong>
+                <input type="number" name="interval" id="id_period" form="control">
+            </p>
+            <p id="payment_date"></p>
+        </div>
+
+        <!-- Monthly Installments-->
+        <div class="monthly-installments">
+            <h4>Monthly Payments</h4>
+            <p><strong>Amount Paid:</strong> <span id="id_deposited"></span></p>
+            <p>
+                <strong>Reccuring:</strong>
+                <input type="checkbox" name="reoccuring" id="id_reoccuring">
+            </p>
+            <p>
+                <strong>Date:</strong>
+                <input type="date" id="installment_date">
+            </p>
+        </div>
+
+        <!--paylater-->
+        <div class="paylater">
+            <h4>Pay later terms</h4>
+            <p>
+                <strong>Date:</strong> 
+                <input type="date" id="paylater_date">
+            </p>
+        </div>
+
+        <div class="d-flex justify-content-end">
+            <button class="btn btn-danger btn-sm" id="closebtn">Cancel</button>
+            <button class="btn btn-primary btn-sm mx-2" id="id_hold" data-name="invoice">Hold</button>
+            <button class="btn btn-success btn-sm " id="processCart" data-name="invoice" onclick="processCart(this)">Process Receipt</button>
+        </div>
+    </div>
+</body>
+</html>

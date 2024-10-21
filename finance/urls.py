@@ -7,13 +7,13 @@ urlpatterns = [
     path('', Finance.as_view(), name='finance'),
     
     # expenses
-    path('expenses/', ExpenseView.as_view(), name='expense_list'),  
-    path('expenses/add/', create_expense, name='expense_create'),  
-    path('expenses/<int:pk>/', ExpenseView.as_view(), name='expense_detail'),  
-    path('expenses/<int:pk>/update/', ExpenseView.as_view(), name='expense_update'),
-    path('expenses/<int:pk>/delete/', ExpenseView.as_view(), name='expense_delete'),  
-    path('expenses/confirm/<int:expense_id>/', confirm_expense, name='confirm_expense'),  
-    path('expense/category/add', create_expense_category, name='create_expense_category' ),
+    path('expenses', expenses, name='expenses'),
+    path('get_expense/<int:expense_id>/',get_expense, name='get_expense'),
+    path('add/expense/', add_expense_category, name='add_expense_category'),
+    path('edit/expense/', add_or_edit_expense, name='add_or_edit_expense'),
+    path('delete_expense/<int:expense_id>/', delete_expense, name='delete_expense'),
+    path('update_expense_status/', update_expense_status, name='update_expense_status'),
+    
     
     #invoice
     path('invoice/', invoice, name='invoice'),
@@ -90,4 +90,19 @@ urlpatterns = [
     
     # cashbook
     path('cashbook/', cashbook_view, name='cashbook'),
-]
+    path('cashbook/note/', cashbook_note, name='cashbook_note'),
+    path('report/', download_cashbook_report, name='download_cashbook_report'),
+    path('cancel-entry/', cancel_transaction, name='cancel-entry'),
+    path('cashbook/note/<int:entry_id>/', cashbook_note_view, name='cashbook_note_view'),
+    path('update_transaction_status/<int:pk>/', update_transaction_status, name='update_transaction_status'),
+
+    # days data
+    path('days_data', days_data, name='days_data'),
+
+    path('pl_overview/', pl_overview, name='pl_overview'),
+    path('income_json/', income_json, name='income_json'),
+    path('expense_json/', expense_json, name='expense_json'),
+
+    # vat
+    path('vat/', vat, name='vat')
+]   

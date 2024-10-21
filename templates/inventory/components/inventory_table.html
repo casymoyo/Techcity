@@ -11,43 +11,45 @@
                         <th>Quantity</th>
                         <th>Cost</th>
                         <th>Price</th>
+                        <th>Dealer Price</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id='inventory_table' >
                     {% for product in inventory %}
-                        <tr >
-                            <td><small><span class='hint--bottom' aria-label='{{ product.product.description }}'>{{ product.product.name }}</span</small></td>
-                            <td><small>{{ product.quantity }}</small></td>
-                            <td><small>{{ product.cost }}</small></td>
-                            <td><small>{{ product.price }}</small></td>
-                            <td>
-                                <small>
-                                    <span>
-                                        <a href="{% url 'inventory:inventory_detail' product.id %}" class='text-dark'>
-                                            <i class='bx bx-show'></i>
-                                        </a>
+                    <tr>
+                        <td><small><span class='hint--bottom' aria-label='{{ product.product.description }}'>{{ product.product.name }}</span></small></td>
+                        <td><small>{{ product.quantity }}</small></td>
+                        <td><small>{{ product.cost }}</small></td>
+                        <td><small>{{ product.price }}</small></td>
+                        <td><small>{{ product.dealer_price }}</small></td>
+                        <td>
+                            <small>
+                                <span>
+                                    <a href="{% url 'inventory:inventory_detail' product.id %}" class='text-dark'>
+                                        <i class='bx bx-show'></i>
+                                    </a>
+                                </span>
+                                <span class='px-2'>
+                                    <a href="{% url 'inventory:edit_inventory' product.product.name %}" class="text-dark">
+                                        <i class='bx bx-edit-alt'></i>
+                                    </a>
+                                </span>
+                                <span>
+                                    <span id='delete' data-id="{{ product.id }}" onclick="productId(this)" class="text-dark">
+                                        <i class='bx bx-trash-alt'></i>
                                     </span>
-                                    <span class='px-2'>
-                                        <a href="{% url 'inventory:edit_inventory' product.product.name %}" class="text-dark">
-                                            <i class='bx bx-edit-alt'></i>
-                                        </a>
-                                    </span>
-                                    <span>
-                                        <span id='delete' data-id="{{ product.id }}" onclick="productId(this)" class="text-dark">
-                                            <i class='bx bx-trash-alt'></i>
-                                        </span>
-                                    </span>
-                                    <span>
-                                        {%if product.status == False %} 
-                                            <a href='{% url "inventory:activate_inventory" product.id %}' class="btn btn-sm text-primary">
-                                                activate product
-                                            </a>
-                                        {% endif %}
-                                    </span>
-                                </small>
-                                </td>
-                        </tr>
+                                </span>
+                                <span>
+                                    {%if product.status == False %}
+                                    <a href='{% url "inventory:activate_inventory" product.id %}' class="btn btn-sm text-primary">
+                                        activate product
+                                    </a>
+                                    {% endif %}
+                                </span>
+                            </small>
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>

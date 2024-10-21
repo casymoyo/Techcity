@@ -18,6 +18,9 @@ urlpatterns = [
     path('activate/product/<int:product_id>/', activate_inventory, name='activate_inventory'),
     path('defective_product_list/', defective_product_list, name='defective_product_list'),
     path('inventory/branches/json', branches_inventory_json, name='branches_inventory_json'),
+
+    #batch_code 
+    path('batch_code/', batch_code, name='batch_code'),
     
     # product
     path('create/product/', product, name='product'),
@@ -42,6 +45,7 @@ urlpatterns = [
     path('clear/reorder/list/', clear_reorder_list, name='clear_reorder_list'),
     path('reorder/from/notifications/', reorder_from_notifications, name='reorder_from_notifications'),
     path('add/reoder/quantity', add_reorder_quantity, name='add_reoder_quantity'),
+    path('settings/', reorder_settings, name='reorder_settings'),
     
     # purchase_order
     path('purchase_orders/list/', purchase_orders, name='purchase_orders'),
@@ -52,7 +56,11 @@ urlpatterns = [
     path('purchase_order/detail/<int:order_id>/', purchase_order_detail, name='purchase_order_detail'),
     path('purchase_order/delete/<int:purchase_order_id>/', delete_purchase_order, name='delete_purchase_order'),
     path('purchase_orders/status/<int:order_id>/', change_purchase_order_status, name='change_purchase_order_status'),
-    
+    path('purchase_order/delete/<int:purchase_order_id>/', delete_purchase_order, name='delete_purchase_order'),
+    path('edit_purchase_order_data/<int:po_id>/', edit_purchase_order_data, name='edit_po_data'),
+    path('edit_purchase_order/<int:po_id>/', edit_purchase_order, name='edit_po'),
+    path('mark_purchase_order_done/<int:po_id>/', mark_purchase_order_done, name='mark_done'),
+
     # transfers
     path('transfers', inventory_transfers, name='transfers'),
     path('print/transfer/<int:transfer_id>/', print_transfer, name='print_transfer'),

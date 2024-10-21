@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% load crispy_forms_tags %}
 {% load static%}
 {% block title%} Re order {% endblock%}
 {% block content %}
    <div class="inventory">
         <div class="inventory-navbar">
-            <nav class="d-flex justify-content-between align-items-center bg-dark text-light rounded p-2">
+            <nav class="d-flex justify-content-between align-items-center rounded p-2">
                 <div class="d-flex  align-items-center">
                     <div>
                         <h5 class='mt-1 fw-bold'>Product Re-order List</h5>
@@ -14,22 +15,29 @@
                     <div class="reorder-basket btn mx-1">
                         <i class='bx bx-basket text-light fs-5'></i>
                         <small class='badge text-danger' style='position:relative; top:-10px; left:-7px;' id="reorder_quantity">1</small>
-                    </div>
-                    <div>
-                        <button type="button" class="btn btn-primary" id="createList">
+                    </div> 
+                    <div class="mx-2">
+                        <button type="button" class="btn btn-outline-dark" id="createList">
                             create order list
                         </button>
                     </div>
-                    <div class="mx-2">
-                        <a href="{% url 'inventory:clear_reorder_list' %}" type="button" class="btn btn-danger">
+                    <div>
+                        <a href="{% url 'inventory:clear_reorder_list' %}" type="button" class="btn btn-outline-dark">
                             clear list
                         </a>
                     </div>
-                    <div>
+                    <div class="mx-2">
                         <span>
-                            <a href='?download=true' class="btn btn-success">
+                            <a href='?download=true' class="btn btn-outline-dark">
                                 excel
                                 <i class='bx bx-download'></i>
+                            </a>        
+                        </span>
+                    </div>
+                    <div></div>
+                        <span>
+                            <button type="button" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#reorderSettingsModal">
+                                <i class='bx bx-cog'></i>
                             </a>        
                         </span>
                     </div>
@@ -43,6 +51,9 @@
                 <thead class='bg-primary'>
                         <th>Date</th>
                         <th>Product</th>
+                        <th>Available Quantity</th>
+                        <th>Last Day Received</th>
+                        <th>Average Sales</th>
                         <th>Quantity</th>
                         <th>Quantity To Be Ordered</th>
                         <th>Cost</th>
@@ -114,7 +125,55 @@
                 </div>
             </div>
         </div>
-        
+        <!-- Settings Modal -->
+        <div class="modal fade" id="reorderSettingsModal" tabindex="-1" aria-labelledby="reorderSettingsModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="reorderSettingsModalLabel">Create Reorder Setting</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                    <form method="POST" id="reorderSettingsForm">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="bDhvSqLEO0SysVNDyAvvy1BNXCmvgSf4VDGXsfEsJ8A1w3VUozCvRPslTrFSXMGc">
+                        
+    
+    <div id="div_id_supplier" class="mb-3"> <label for="id_supplier" class="form-label requiredField">
+                    Supplier<span class="asteriskField">*</span> </label> <input type="text" name="supplier" maxlength="255" class="textinput form-control" required id="id_supplier"> </div> <div class="mb-3"> 
+                    </div> 
+                    <div id="div_id_number_of_days_from" class="mb-3"> 
+                        </div> 
+                    <div id="div_id_number_of_days_to" class="mb-3"> 
+                        <label for="id_number_of_days_to" class="form-label requiredField">
+                        Number of days to<span class="asteriskField">*</span> 
+                    </label> 
+                    <input type="number" name="number_of_days_to" step="any" class="numberinput form-control" required id="id_number_of_days_to"> </div> <div class="mb-3"> 
+                        <div id="div_id_order_enough_stock" class="mb-3 form-check"> 
+                            <input type="checkbox" name="order_enough_stock" class="checkboxinput form-check-input" id="id_order_enough_stock">
+                            <label for="id_order_enough_stock" class="form-check-label">
+                                Order enough stock from 
+                            </label> 
+                            <label for="id_number_of_days_from" class="form-label requiredField">
+                                Number of days from<span class="asteriskField">*</span> 
+                            </label> 
+                            <input type="number" name="number_of_days_from" step="any" class="numberinput form-control" required id="id_number_of_days_from">     
+                        </div> 
+
+                    <div id="div_id_quantity_suggestion" class="mb-3 form-check"> <input type="checkbox" name="quantity_suggestion" class="checkboxinput form-check-input" id="id_quantity_suggestion"> <label for="id_quantity_suggestion" class="form-check-label">
+                        Dont suggestion quantity
+                    </label> </div> 
+
+                    </div>
+    
+                    </form>
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="submitReorderForm">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>   
    </div> 
 <script>
     let product_id = '';

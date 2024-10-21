@@ -2,36 +2,95 @@
 {% load static%}
 {% block title%} Inventory {% endblock%}
 {% block content %}
+<style>
+    td, span{
+        font-size: 12px;
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    td:first-child {
+         text-align: left;
+    }
+</style>
    <div class="inventory">
         <div class="inventory-navbar">
             <nav class="d-flex justify-content-between align-items-center bg-dark text-light rounded mb-2 p-2">
                 <div class="d-flex">
                     <div>
-                        <h4 class='mt-1 fw-bold'>{{ purchase_order.order_number}} <small class='px-1 fw-bold fx-6'>Order Detail</small></h4>
+                        <h4 class='mt-1 fw-bold'>{{ purchase_order.batch|lower }}: <small class='px-1 fw-bold fx-6'>Order Detail</small></h4>
                     </div>
+                </div>
+                <div>
+                    <a href="?download=csv" class="btn text-light border bx bx-download"></a>
                 </div>
             </nav>
         </div>
         <div>
-            <div class="table-detail mt-2 w-100 atable">
-                <table class='table border table-hover rounded p-2' id='order_table' style="width: 100%;">
-                    <thead class='bg-primary'>
-                            <th>Date</th>
-                            <th>Order Number</th>
-                            <th>Product</th>
-                            <th>Unit Cost</th>
-                            <th>Quantity</th>
-                            <th>Total</th>
+            <div class="mt-2">
+                <table class="table table-bordered table-striped" id="details_table" style='width:100%;'>
+                    <thead>
+                        <th class="fs-6 text-dark" style="color:black;">Product</th>
+                        <th class="fs-6 text-dark" style="color:black;">Quantity</th>
+                        <th class="fs-6 text-dark" style="color:black;">Quantity Received</th>
+                        <th class="fs-6 text-dark" style="color:black;">Supplier Price</th>
+                        <th class="fs-6 text-dark" style="color:black;">Total Supplier Price</th>
+                        <th class="fs-6 text-dark" style="color:black;">Total Product Expenses</th>
+                        <th class="fs-6 text-dark" style="color:black;">Unit Product Expense</th>
+                        <th class="fs-6 text-dark" style="color:black;">Total Purchase Price + Expense</th>
+                        <th class="fs-6 text-dark" style="color:black;">Total Purchase Price</th>
+                        <th class="fs-6 text-dark" style="color:black;">Selling Price</th>
+                        <th class="fs-6 text-dark" style="color:black;">Dealer Price</th>
+                        <th>Expcted Profit</th>
                     </thead>
-                    <tbody>
-                        {% for order in orders %}
+                    <tbody id="apportionment-table">
+                        {% for item in items %}
+                        {% for order in order_items %}
+                        {% if order.product.name == item.product %}
                         <tr>
-                            <td data-id={{ order.id }}><small>{{ order.purchase_order.order_date }}</small></td>
-                            <td data-id={{ order.id }}><small>{{ order.purchase_order.order_number }}</small></td> 
-                            <td data-id={{ order.id }}><small>{{ order.product.name }}</small></td>
-                            <td data-id={{ order.id }}><small>{{ order.unit_cost }}</small></td>
-                            <td data-id={{ order.id }}><small>{{ order.quantity }}</small></td>
-                            <td data-id={{ order.id }}><small id='total'></small></td>  
+                            <td>{{ item.product }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>
+                                {% if order.received_quantity == item.quantity %}
+                                <small class="bg-success btn btn-sm btn-success">All received</small>
+                                {% else %}
+                                <small class="bg-danger btn btn-danger btn-sm">
+                                    Received
+                                    {{ order.received_quantity}} / {{ item.quantity }}
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.price }}</td>
+                            <td>{{ item.total_buying }}</td>
+                            <td>{{ item.allocated }}</td>
+                            <td>{{ item.expense_cost }}</td>
+                            <td>{{ item.total }}</td>
+                            <td>{{ item.allocationRate }}</td>
+                            <td>{{ item.selling_price }}</td>
+                            <td>{{ item.dealer_price }}</td>
+                            <td>{{ order.expected_profit }}</td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                        {% endfor %}
+                    </tbody>
+
+                    <!-- Section to display additional expenses -->
+                    <tbody id="expenses-table">
+                        <tr>
+                            <td colspan="1"><strong>Totals</strong></td>
+                            <td>{{ total_quantity }}</td>
+                            <td>{{ total_received_quantity }}</td>
+                            <td></td>
+                            <td><strong>{{ total_expenses }}</strong></td>
+                            <td colspan="6"></td>
+                            <td>{{ total_expected_profit }}</td>
+                        </tr>
+                        {% for expense in expenses %}
+                        <tr>
+                            <td colspan="4">{{ expense.name }}</td>
+                            <td>{{ expense.amount }}</td>
+                            <td colspan="4"></td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -42,6 +101,11 @@
    <script>
     document.addEventListener('DOMContentLoaded', function() {
         let rows = document.querySelectorAll('#order_table tbody tr');
+
+        //new DataTable('#details_table', {
+        //    paging: false,
+        //    scrollCollapse: true
+        //})
 
         rows.forEach(row => {
             let unitCostCell = row.children[3];

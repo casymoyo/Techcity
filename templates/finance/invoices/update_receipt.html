@@ -1,0 +1,382 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="Techcity Pos System" />
+        <meta name="Author" content="casy moyo" />
+        <link rel="icon" href="{% static 'images/favicons/favicon.ico' %}" />
+    
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+            integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    
+        {% block css %}
+        <link rel="stylesheet" href="{% static 'css/main.css' %}">
+        <link rel="stylesheet" href="{% static 'css/bootstrap/css/bootstrap.min.css' %}">
+        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        {% endblock css %}
+    
+    </head>
+    <style>
+    .receipt-rcp{
+        margin: 0;
+        padding: 20px;
+        background-color: #f4f4f4;
+    }
+
+    .receipt {
+        background-color: white;
+        padding: 20px;
+        max-width: 800px;
+        margin: auto;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+    }
+
+    .logo img {
+        height: 50px;
+        margin-right: 10px;
+    }
+
+    .company-info {
+        font-size: 0.9em;
+    }
+
+    .receipt-info {
+        text-align: right;
+    }
+
+    .receipt-info h3 {
+        color: red;
+    }
+
+    .payment-details, .customer-info, .totals, .layby-terms {
+        font-size: 0.9em;
+        margin-bottom: 20px;
+    }
+
+    .payment-details p, .totals p, .layby-terms p {
+        margin: 5px 0;
+    }
+
+    .customer-info {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .customer-info div {
+        width: 45%;
+    }
+
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+    .items-table th, .items-table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .items-table th {
+        background-color: #f4f4f4;
+    }
+
+    .totals {
+        text-align: right;
+    }
+
+    .layby-terms h4 {
+        margin-bottom: 10px;
+        font-size: 1.1em;
+    }
+
+    .receipt-el .active{
+        background: #333;
+        color: #fff;
+    }
+
+    .payment-details{
+        display: flex;
+        justify-content: space-evenly;
+        align-items: center;
+    }
+
+    </style>
+<div class="receipt-rcp">
+    <div class="receipt-print">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <img src="{% static 'assets/logo.png' %}" alt="TechCity Logo">
+                <div class="company-info">
+                    <!-- <h2>TechCity</h2> -->
+                    <p>Tin No:20012500</p>
+                    <p>Vat: 2001278367</p>
+                    <p>65 Speke, Speke Avenue</p>
+                </div>
+            </div>
+            <div class="receipt-info">
+                <h3>Receipt <span id="invoiceNumber"></span></h3>
+                <p>Date: <span id="date"></span></p>
+                <p>Time: <span id="time"></span>14:39 pm</p>
+            </div>
+        </div>
+        
+        <hr>
+
+        <!-- Payment Details -->
+        <div class="payment-details">
+            <p><strong>Payment:</strong><span id="rcp-payment"></span> </p>
+            <p class="terms"><strong>Terms:</strong><span id="rcp-pterms"></span></p>
+            <p><strong>Currency:</strong><span id="rcp-currency"></span></p>
+            <p><strong>Cashier:</strong> {{ request.user.first_name }}</p>
+        </div>
+
+        <hr>
+
+        <!-- Customer Info -->
+        <div class="customer-info">
+            <div class="company">
+                <p><strong>Company:</strong> <span id="customerCompany"></span></p>
+                <p><strong>Name:</strong> <span id="customerName"></span></p>
+                <p><strong>Cell:</strong> <span id="customerPhone"></span></p>
+                <p><strong>Email:</strong> <span id="customerEmail"></span></p>
+                <p><strong>Address:</strong> <span id="customerAddress"></span></p>
+            </div>
+            <div class="account-summary">
+                <h4>Customer Account Summary</h4>
+                <p><strong>Amount Paid:</strong> <span id="rcp_amount_paid"></span></p>
+                <p><strong>Amount Previously Paid:</strong> <span id="rcp_prv_paid"></span></p>
+                <p><strong>Amount Due:</strong><span id="rcp_due"></span></p>
+            </div>
+        </div>
+
+        <hr>
+
+        <p>Payment update details:</p>
+
+        <!-- Item Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>NAME</th>
+                    <th>DESCRIPTION</th>
+                    <th>QNTY</th>
+                    <th>UNIT PRICE</th>
+                    <th>TOTAL</th>
+                </tr>
+            </thead>
+            <tbody id="receipt"></tbody>
+        </table>
+
+        <hr>
+
+        <!-- Totals -->
+         
+        <div class="totals">
+            <p><strong>Subtotal:</strong> <span id="subTotalAmount"></span></p>
+            <p><strong>VAT 15%:</strong> <span id="vatAmount"></span></p>
+            <p><strong>Total:</strong> <span id='total_amount'></span></p>
+            <p><strong>Amount paid:</strong> <span id='f_prv_paid'></span></p>
+            <p><strong>Due amount:</strong> <span id="id_balance"></span></p> -->
+        </div>
+
+        <hr>
+
+        <div class="layby-terms" id="laybyTerms" style="display: none;">
+            <h4>Layby Terms</h4>
+            <p><strong>Deposited:</strong> <span id="rcp_deposited"></span></p>
+            <p><strong>Period:</strong> <span id="rcp_period"></span></p>
+            <p id="rcp_payment_dates"></p>
+        </div>
+        </div>
+        
+        <div class="monthly-installments" id="installmentTerms" style="display: none;">
+            <h4>Monthly Payments</h4>
+            <p><strong>Amount Paid:</strong> <span id="rcp_installment_deposit"></span></p>
+            <p><strong>Date:</strong>
+                <input type="date" id="installment_date">
+            </p>
+        </div>
+        
+
+        <button class="btn btn-success btn-sm w-100" onclick="printReceipt(this)">Print Receipt</button>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    
+});
+
+function updateDateTime() {
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10);  
+
+    let hours = now.getHours();
+    let minutes = now.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    const time = hours + ':' + minutes + ' ' + ampm;
+
+    document.getElementById('date').textContent = date;
+    document.getElementById('time').textContent = time;
+}
+
+updateDateTime();
+setInterval(updateDateTime, 1000);
+
+function printReceipt(el) {
+    el.style.display='none';
+    // Get the receipt content
+    const receiptContent = document.querySelector('.receipt-print').outerHTML;
+
+    // Create a new window
+    const printWindow = window.open('', '_blank', 'width=600,height=600');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Print Receipt</title>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+                <style>
+                    .receipt {
+                        background-color: white;
+                        padding: 20px;
+                        max-width: 600px;
+                        margin: auto;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                    }
+                    .items-table th, .items-table td {
+                        border: 1px solid #ddd;
+                        padding: 10px;
+                        text-align: left;
+                    }
+                </style>
+                    <style>
+    .receipt-rcp{
+        margin: 0;
+        padding: 20px;
+        background-color: #f4f4f4;
+    }
+
+    .receipt {
+        background-color: white;
+        padding: 20px;
+        max-width: 800px;
+        margin: auto;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+    }
+
+    .logo img {
+        height: 50px;
+        margin-right: 10px;
+    }
+
+    .company-info {
+        font-size: 0.9em;
+    }
+
+    .receipt-info {
+        text-align: right;
+    }
+
+    .receipt-info h3 {
+        color: red;
+    }
+
+    .payment-details, .customer-info, .totals, .layby-terms {
+        font-size: 0.9em;
+        margin-bottom: 20px;
+    }
+
+    .payment-details p, .totals p, .layby-terms p {
+        margin: 5px 0;
+    }
+
+    .customer-info {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .customer-info div {
+        width: 45%;
+    }
+
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+    .items-table th, .items-table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .items-table th {
+        background-color: #f4f4f4;
+    }
+
+    .totals {
+        text-align: right;
+    }
+
+    .layby-terms h4 {
+        margin-bottom: 10px;
+        font-size: 1.1em;
+    }
+
+    .receipt-el .active{
+        background: #333;
+        color: #fff;
+    }
+
+    .payment-details{
+        display: flex;
+        justify-content: space-evenly;
+        align-items: center;
+    }
+
+    </style>
+            </head>
+            <body onload="window.print(); window.close();">
+                <div class="receipt">${receiptContent}</div>
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+</script>
+</body>
+</html>
+
+

@@ -1,3 +1,4 @@
+from pickle import FALSE
 import uuid
 from decimal import Decimal
 from django.db import models
@@ -7,6 +8,12 @@ from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 
+class PaymentMethod(models.Model):
+    name = models.CharField(max_length=255)
+    
+    def __str__(self):
+        return self.name
+    
 class Currency(models.Model):
     code = models.CharField(max_length=3, unique=True)  
     name = models.CharField(max_length=50)  
@@ -126,6 +133,8 @@ class VATTransaction(models.Model):
     vat_type = models.CharField(max_length=6, choices=VATType.choices)
     vat_rate = models.DecimalField(max_digits=5, decimal_places=2)
     tax_amount = models.DecimalField(max_digits=15, decimal_places=2)
+    paid = models.BooleanField(default=False)
+    date = models.DateField(auto_now_add=True)
     
     def __str__(self):
         return f"VAT Transaction for {self.invoice}"
@@ -146,14 +155,15 @@ class Account(models.Model):
     
     def __str__(self):
         return f'{self.name} ({self.type})'
+    
 class AccountBalance(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='balances')
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     branch = models.ForeignKey('company.branch', on_delete=models.CASCADE)
 
-    class Meta:
-        unique_together = ('account', 'currency')
+    #class Meta:
+    #    unique_together = ('account', 'currency')
 
     def __str__(self):
         return f'{self.account.name} ({self.account.type}):{self.currency}{self.balance}'
@@ -183,7 +193,7 @@ class ExpenseCategory(models.Model):
         return self.name
 
 class Expense(models.Model):
-    issue_date = models.DateField()
+    issue_date = models.DateField(auto_now_add=True)
     amount = models.DecimalField(max_digits=15, decimal_places=2)
     payment_method = models.CharField(max_length=15, choices=[
         ('cash', 'cash'),
@@ -196,7 +206,7 @@ class Expense(models.Model):
     user = models.ForeignKey('users.user', on_delete=models.CASCADE)
     branch = models.ForeignKey('company.branch', on_delete=models.CASCADE)
     status = models.BooleanField(default=False)
-    
+    purchase_order = models.ForeignKey("inventory.PurchaseOrder", on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return f"{self.issue_date} - {self.category} - {self.description} - ${self.amount}"
@@ -227,27 +237,30 @@ class Invoice(models.Model):
     invoice_number = models.CharField(max_length=50, unique=True)       
     customer = models.ForeignKey(Customer, on_delete=models.PROTECT)  
     issue_date = models.DateTimeField()
-    due_date = models.DateField()
     amount = models.DecimalField(max_digits=15, decimal_places=2, default=0) 
     vat = models.DecimalField(max_digits=15, decimal_places=2, default=0)     
     amount_paid = models.DecimalField(max_digits=15, decimal_places=2, default=0)  
     amount_due = models.DecimalField(max_digits=15, decimal_places=2, default=0) 
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE, null=True) 
     payment_status = models.CharField(max_length=10, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
-    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    delivery_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True)
+    delivery_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True)
     branch = models.ForeignKey('company.branch', on_delete=models.CASCADE)
     status = models.BooleanField(default=True)
     user = models.ForeignKey('users.User', on_delete=models.PROTECT, null=True)
     reocurring = models.BooleanField(default=False)
-    recurrence_period = models.IntegerField(default=0)  
-    next_due_date = models.DateField(null=True, blank=True) 
     subtotal =  models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    note = models.TextField()
+    note = models.TextField(null=True)
     cancelled = models.BooleanField(default=False)
     products_purchased = models.TextField()
     invoice_return = models.BooleanField(default=False)
-    
+    payment_terms = models.CharField(choices=(
+        ('cash', 'cash'),
+        ('layby', 'layby'),
+        ('installment', 'installment')
+    ))
+    hold_status = models.BooleanField(default=False)
+
     def generate_invoice_number(branch):
         last_invoice = Invoice.objects.filter(branch__name=branch).order_by('-id').first()
         if last_invoice:
@@ -292,6 +305,24 @@ class InvoiceItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.item.product.description} for Invoice #{self.invoice.invoice_number}"
     
+
+class layby(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='layby')
+
+    def __str__(self):
+        return f'{self.invoice}'
+
+class laybyDates(models.Model):
+    layby = models.ForeignKey(layby, on_delete=models.CASCADE)
+    due_date = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.invoice}: {self.due_date}'
+    
+class recurringInvoices(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    status = models.BooleanField(default=False)
+    
 class Payment(models.Model):
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='payments')
     amount_due = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -310,23 +341,40 @@ class Payment(models.Model):
         return f'{self.invoice.invoice_number} {self.amount_paid}'
 
 class Cashbook(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, null=True)
+    expense = models.ForeignKey(Expense, on_delete=models.CASCADE, null=True)
     issue_date = models.DateField(auto_now_add=True)
     description = models.CharField(max_length=255)
-    debit = models.BooleanField(default=True)
-    credit = models.BooleanField(default=True)
+    debit = models.BooleanField(default=False)
+    credit = models.BooleanField(default=False)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     branch = models.ForeignKey('company.branch', on_delete=models.CASCADE)
-    
+    manager = models.BooleanField(default=False)
+    accountant = models.BooleanField(default=False, null=True)
+    director = models.BooleanField(default=False, null=True)
+    cancelled = models.BooleanField(default=False, null=True)
+    note = models.TextField(default='', null=True)
+
     def __str__(self):
-        return f'{self.date}: {self.balance}'
+        return f'{self.issue_date}'
+
+class CashBookNote(models.Model):
+    entry = models.ForeignKey(Cashbook, related_name="notes", on_delete=models.CASCADE)
+    user = models.ForeignKey('users.user', on_delete=models.CASCADE)
+    note = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Note by {self.user.username} on {self.timestamp}"
+    
 
 class CashTransfers(models.Model):
     class TransferMethod(models.TextChoices):
         BANK = ('Bank'), _('Bank')
         CASH = ('Cash'), _('Cash')
         ECOCASH =('Ecocash'), _('Ecocash')
-    
+   
     date = models.DateField(auto_now_add=True)    
     from_branch = models.ForeignKey('company.Branch', on_delete=models.CASCADE, related_name='kwarikuenda')
     to = models.ForeignKey('company.Branch', on_delete=models.CASCADE, related_name='to')
@@ -421,7 +469,51 @@ class PurchasesAccount(models.Model):
     debit = models.BooleanField(default=False)
     credit = models.BooleanField(default=True)
     amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    
 
+class COGS(models.Model):
+    date = models.DateField(auto_now_add=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0) 
+
+class COGSItems(models.Model):
+    cogs = models.ForeignKey(COGS, on_delete=models.CASCADE, null=True)
+    invoice = models.OneToOneField(Invoice, on_delete=models.CASCADE, null=True)
+    product = models.ForeignKey('inventory.Inventory', on_delete=models.PROTECT)
+    date = models.DateField(auto_now_add=True)
+
+
+class SalesReturns(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    reason = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey("users.user", on_delete=models.CASCADE)
     
+    def __str__(self) -> str:
+        return self.invoice
+
+class CashWithdrawals(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    timestamp = models.DateTimeField(auto_now=False, auto_now_add=False)
+    description = models.CharField(max_length=255)
+    user = models.ForeignKey("users.user", on_delete=models.CASCADE)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE) 
+
+class CashDeposit(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    timestamp = models.DateTimeField(auto_now=False, auto_now_add=False)
+    description = models.CharField(max_length=255)
+    user = models.ForeignKey("users.user", on_delete=models.CASCADE)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE) 
+
+    def __str__(self) -> str:
+        return self.account.name 
     
+class AccountTransaction(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    expense = models.ForeignKey(Expense, on_delete=models.CASCADE, null=True)
+    cash_withdrawal = models.ForeignKey(CashWithdraw, on_delete=models.CASCADE, null=True)
+    cash_deposit = models.ForeignKey(CashDeposit, on_delete=models.CASCADE, null=True)
+    expense = models.ForeignKey(Expense, on_delete=models.CASCADE, null=True)
+    sales_returns = models.ForeignKey(SalesReturns, on_delete=models.CASCADE, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)

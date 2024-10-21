@@ -2,92 +2,254 @@
 {% load static%}
 {% block title%} Invoices {% endblock%}
 {% block content %}
+<style>
+.finance {
+    /* font-family: Arial, sans-serif; */
+    background-color: #f7f7f7;
+    padding: 20px;
+}
+
+.table-container {
+    max-width: 100%;
+    margin: auto;
+    overflow-x: auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background-color: white;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+thead th {
+    background-color: #f9f9f9;
+    padding: 12px 15px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+}
+
+tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.status {
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.9em;
+}
+
+.status.completed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status.pending {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.payment-btn {
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.payment-btn.paid {
+    background-color: #28a745;
+    color: white;
+}
+
+.payment-btn.due {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Table Container to allow scrolling */
+.table-container {
+    max-height: 600px;
+    overflow-y: auto;
+    position: relative;
+}
+
+/* Sticky Search Bar */
+.sticky-top-search {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 100;
+    padding: 10px 0;
+    border-bottom: 2px solid #ccc;
+}
+
+/* Sticky Table Header */
+.sticky-header th {
+    position: sticky;
+    top: 56px; 
+    z-index: 99;
+    background-color: #007bff; 
+    color: white;
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+}
+
+.table-scroll {
+    width: 100%;
+    display: block;
+}
+
+/* Custom Scrollbar Styling */
+.table-container::-webkit-scrollbar {
+    width: 2.5px; 
+    background-color: #f1f1f1;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background-color: #444;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background-color: #555; 
+}
+</style>
 <div class="finance d-flex">
     <div class="px-2 main-content ">
         <div class="finance-navbar">
-            <nav class="d-flex justify-content-between align-items-center bg-dark text-light rounded shadow p-2">
+            <nav class="d-flex justify-content-between align-items-center text-light rounded shadow p-2" style="background:#373f4c;">
                 <div class='h5'>
-                    <i class='bx bx-dollar'></i> 
                     Invoices
                 </div>
-                <div class='d-flex'>
-                    <form method="get" class="d-flex justify-content-between align-items-center">
-                        <input
-                            id="search"
-                            name="q"
-                            type="search"
-                            value="{{search_query}}"
-                            class="form-control"
-                            placeholder="search..."
-                        />
-                    </form>
-                    <div class='d-flex px-2'>
-                        <button type="button" id='filterBtn' class='btn btn-light border rounded btn-sm'>Filters</button>
+                <div class="d-flex justify-content-between mt-1">
+                    <div>
+                        <select class="form-select" id="filterSelect" onchange="filterCashBook()">
+                            <option value="today" {% if filter_option == 'today' %}selected{% endif %}>Today</option>
+                            <option value="this_week" {% if filter_option == 'this_week' %}selected{% endif %}>This Week</option>
+                            <option value="yesterday" {% if filter_option == 'yesterday' %}selected{% endif %}>Yesterday</option>
+                            <option value="this_month" {% if filter_option == 'this_month' %}selected{% endif %}>This Month</option>
+                            <option value="last_month" {% if filter_option == 'last_month' %}selected{% endif %}>Last Month</option>
+                            <option value="this_year" {% if filter_option == 'this_year' %}selected{% endif %}>This Year</option>
+                        </select>
                     </div>
+                    <div id="customDateRange" class="d-flex mx-2">
+                        <input type="date" id="startDate" value="{{ start_date }}" class="form-control" placeholder="Start Date">
+                        <input type="date" id="endDate" value="{{ end_date}}" class="form-control mx-2" placeholder="End Date">
+                        <button class="btn btn-secondary" onclick="applyCustomFilter()">Apply</button>
+                    </div>
+                    <button class="btn btn-secondary" onclick="downloadReport()">Download Report</button>
                 </div>
             </nav>
         </div>
         {% include 'components/loader.html' %}
-        <div class='invoice-table mt-3 table-scroll'>
-            <div class='invoice-table mt-3 table-scroll'>
-            <table class="table table-striped border table-hover rounded table-responsive table-sm p-2" id='invoiceTable' style='width:100%;'>
-                <thead class="bg-primary">
-                    <tr class='fw-normal'>
-                        <th scope="col">Date</th>
-                        <th scope="col">Invoice #</th>
-                        <th scope="col">Customer</th>
-                        <th scope="col">Details</th>
-                        <th scope="col">Amount Paid</th>
-                        <th scope="col">Amount Due</th>
-                        <th scope="col">Amount</th>
-                        <th scope="col">Processed by</th>
-                        <th scope="col">Action</th>
+        <div class=' mt-3 table-scrol table-container'>
+            <div class="row mt-2 mb-3  sticky-top-search">
+                <div class="col-md-4 w-100 px-4">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search invoices...">
+                </div>
+            </div>
+            <table class="invoice-table sticky-header" id="invoiceTable">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="select-all"></th>
+                        <th>Customer Name &#9650;</th>
+                        <th>Reference &#9650;</th>
+                        <th>Date &#9650;</th>
+                        <th>Status &#9650;</th>
+                        <th>Grand Total &#9650;</th>
+                        <th>Paid &#9650;</th>
+                        <th>Due &#9650;</th>
+                        <th>Payment</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for invoice in invoices %}
-                        <tr style='color: #6c757d; cursor:pointer'>
-                            <td scope="row" {% if invoice.payment_status != 'Paid' %}class='text-danger'{% endif %}><small>{{ invoice.issue_date }}</small></td>
-                            <td {% if invoice.payment_status != 'Paid' %}class='text-danger'{% endif %}><small>#{{ invoice.invoice_number }}</small></td>
-                            <td><small><a href="{% url 'finance:customer' invoice.customer.id %}">{{ invoice.customer.name }}</a></small></td>
-                            <td><small>{{ invoice.products_purchased }}</small></td>
-                            <td id="tr" data-invoiceID={{ invoice.id }} {% if invoice.payment_status != 'Paid' %}class='text-danger'{% endif %}><small>{{ invoice.currency.symbol }} {{ invoice.amount_paid }}</small></td>
-                            <td {% if invoice.payment_status != 'Paid' %}class='text-danger'{% endif %}><small>{{ invoice.currency.symbol }} {{ invoice.amount_due }}</small></td>
-                            <td {% if invoice.payment_status != 'Paid' %}class='text-danger'{% endif %}><small>{{ invoice.currency.symbol }} {{ invoice.amount }}</small></td>
-                            <td {% if invoice.payment_status != 'Paid' %}class='text-danger'{% endif %}><small>{{ invoice.user.username }}</small></td>
-                            <td>
-                                <span>
-                                    <a href="{% url 'finance:invoice_preview' invoice.id %}" class='text-dark'>
-                                        <i class='bx bx-show'></i>
-                                    </a>
-                                </span>
-                                <span class='px-2'>
-                                    {% if invoice.amount_due > 0 %}
-                                        <span style='cursor:pointer;' data-id={{ invoice.id }} data-amount={{ invoice.amount_due }} id='id_update' class="text-dark">
-                                            <i class='bx bx-right-arrow'></i>
-                                        </span>
+                    <tr>
+                        <td><input type="checkbox" class="row-checkbox"></td>
+                        <td><small><a href="{% url 'finance:customer' invoice.customer.id %}">{{ invoice.customer.name }}</a></small></td>
+                        <td><small>#{{ invoice.invoice_number }}</small></td>
+                        <td><small>{{ invoice.issue_date }}</small></td>
+                        <!-- Status Column -->
+                        <td>
+                            <span class="status {% if invoice.payment_status == 'Paid' %}completed{% else %}pending{% endif %}">
+                                {% if invoice.hold_status %}
+                                    Onhold
+                                {% else %}
+                                    {% if invoice.payment_status == 'Paid' %}
+                                    Completed
                                     {% else %}
-                                        <span style='cursor:pointer;' class="text-dark hint--bottom" aria-label='Invoice fully paid'>
-                                            <i class='bx bx-rectangle'></i>
-                                        </span>
+                                    Pending
                                     {% endif %}
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td><small>{{ invoice.currency.symbol }} {{ invoice.amount }}</small></td>
+                        <td id="tr" data-invoiceID="{{ invoice.id }}"><small>{{ invoice.currency.symbol }} {{ invoice.amount_paid }}</small></td>
+                        <td><small>{{ invoice.currency.symbol }} {{ invoice.amount_due }}</small></td>
+                        <!-- <td><small>{{ invoice.products_purchased }}</small></td> -->
+                        <td>
+                            <button class="
+                                payment-btn
+                                {% if invoice.amount_due > 0 %}
+                                    due
+                                {% else %}
+                                    paid
+                                {% endif %}
+                            ">
+                                {% if invoice.amount_due > 0 %}
+                                    Due
+                                {% else %}
+                                    Paid
+                                {% endif %}
+                            </button>
+                        </td>
+                        <!-- <td><small>{{ invoice.user.username }}</small></td> -->
+
+                        <!-- Action Column -->
+                        <td>
+                            <span>
+                                <a href="{% url 'finance:invoice_preview' invoice.id %}" class='text-dark'>
+                                    <i class='bx bx-show'></i>
+                                </a>
+                            </span>
+                            <span class='px-2'>
+                                {% if invoice.amount_due > 0 %}
+                                <span style='cursor:pointer;' data-id="{{ invoice.id }}" data-amount="{{ invoice.amount_due }}" id='id_update' class="text-dark">
+                                    <i class='bx bx-right-arrow'></i>
                                 </span>
-                                <span>
-                                    {% if request.user.role == 'admin' %}
-                                        <span data-id={{ invoice.id }} id='whatsappBtn'>
-                                            <i class='bx bxl-whatsapp'></i>
-                                        </span>
-                                    {% endif %}
+                                {% else %}
+                                <span style='cursor:pointer;' class="text-dark hint--bottom" aria-label='Invoice fully paid'>
+                                    <i class='bx bx-rectangle'></i>
                                 </span>
-                                <span class='px-2'>
-                                    {% if request.user.role == 'admin' %}
-                                        <span id='id_delete' data-id={{ invoice.id }}>
-                                            <i class='bx bx-trash'></i>
-                                        </span>
-                                    {% endif %}
+                                {% endif %}
+                            </span>
+                            <span>
+                                {% if request.user.role == 'admin' %}
+                                <span data-id="{{ invoice.id }}" id='whatsappBtn'>
+                                    <i class='bx bxl-whatsapp'></i>
                                 </span>
-                            </td>
-                        </tr>
+                                {% endif %}
+                            </span>
+                            <span class='px-2'>
+                                {% if request.user.role == 'admin' %}
+                                <span id='id_delete' data-id="{{ invoice.id }}">
+                                    <i class='bx bx-trash'></i>
+                                </span>
+                                {% endif %}
+                            </span>
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -101,6 +263,26 @@
                             <span class="visually-hidden">Loading...</span>
                         </div>
                         <p class="mt-2">Sending invoice to WhatsApp...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body" id='payment_content'>
+                        {% include 'finance/invoices/update_invoice.html' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        {% include 'finance/invoices/update_receipt.html' %} 
                     </div>
                 </div>
             </div>
@@ -127,62 +309,6 @@
             </div>
         </div>
 
-        <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-body text-center">
-                        <h6 class="mt-2 fw-bold">Filters</h6>
-                        <form method='get' class='d-flex justify-content-center mt-2'>
-                            <input hidden name='category' value=''/>
-                            <button type="submit" class='btn btn-large border w-100 btn-flat'>All invoices</button>
-                        </form> 
-                        <form method='get' class='d-flex justify-content-center mt-2'>
-                            <input hidden name='category' value='paid'/>
-                            <button type="submit" class='btn btn-large border w-100 btn-flat'>Fully paid</button>
-                        </form> 
-                        <form method='get' class='d-flex justify-content-center mt-2'>
-                            <input hidden name='category' value='due'/>
-                            <button type="submit" class='btn btn-large border w-100 btn-flat'>Partially Paid</button>
-                        </form>   
-                        <form method='get' class='d-flex justify-content-center mt-2'>
-                            <input hidden name='day' value='today'/>
-                            <button type="submit" class='btn btn-large border w-100 btn-flat'>Today</button>
-                        </form> 
-
-                        <form method='get' class='d-flex justify-content-center mt-2'>
-                            <input hidden name='day' value='yesterday'/>
-                            <button type="submit" class='btn btn-large border w-100 btn-flat'>Yesterday</button>
-                        </form> 
-                        
-                        <form method='get' class='d-flex justify-content-center mt-2'>
-                            <input hidden name='day' value='t_week'/>
-                            <button type="submit" class='btn btn-large border w-100 btn-flat'>This Week</button>
-                        </form> 
-
-                        <form method='get' class='d-flex justify-content-center mt-2'>
-                            <input hidden name='day' value='l_week'/>
-                            <button type="submit" class='btn btn-large border w-100 btn-flat'>Last week</button>
-                        </form> 
-
-                        <form method='get' class='d-flex justify-content-center mt-2'>
-                            <input hidden name='day' value='t_month'/>
-                            <button type="submit" class='btn btn-large border w-100 btn-flat'>This month</button>
-                        </form> 
-
-                        <form method='get' class='d-flex justify-content-center mt-2'>
-                            <input hidden name='day' value='l_month'/>
-                            <button type="submit" class='btn btn-large border w-100 btn-flat'>Last month</button>
-                        </form> 
-
-                        <form method='get' class='d-flex justify-content-center mt-2'>
-                            <input hidden name='day' value='t_year'/>
-                            <button type="submit" class='btn btn-large border w-100 btn-flat'>This year</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
@@ -195,28 +321,19 @@
                 </div>
             </div>
         </div>
-
-        <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-body" id='payment_content'>
-                        {% include 'finance/invoices/update_invoice.html' %}
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>
 
 <script src="{% static 'assets/DataTables/datatables.min.js' %}"></script>
 <script type="text/javascript">
+
+    let invoiceId = '';
+    let invoiceAmountDue = '';
+    let paymentMethod = '';
+    let duePaid = 0;
+
     const whatsappBtn = document.getElementById('whatsappBtn');
     const appModal = new bootstrap.Modal(document.getElementById('appModal'));
-
-    const filterBtn = document.getElementById('filterBtn');
-    const filterModal = new bootstrap.Modal(document.getElementById('filterModal'));
-
 
     const trEl = document.querySelectorAll('#tr')
     const paymentsModal = new bootstrap.Modal(document.getElementById('paymentsModal'));
@@ -230,20 +347,76 @@
 
     const loader = new bootstrap.Modal(document.getElementById('loaderModal'));
 
-    let invoiceId = '';
-    let invoiceAmountDue = '';
-    let paymentMethod = '';
     const error = document.querySelector('#id_amount_error');
     const loaderModal = new bootstrap.Modal(document.getElementById('loaderModal'));
     const tableEl = document.querySelector('#invoiceTable');
     const loaderSpin = document.querySelector('#loader');
 
-    new DataTable('#invoiceTable');
+    const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
+
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        const searchValue = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#invoiceTable tbody tr');
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            let found = false;
+
+            cells.forEach(cell => {
+                if (cell.textContent.toLowerCase().includes(searchValue)) {
+                    found = true;
+                }
+            });
+
+            if (found) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+
+    // Select All Checkbox
+    const selectAllCheckbox = document.getElementById('select-all');
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+
+    selectAllCheckbox.addEventListener('change', function () {
+        rowCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+    });
+
+    // Column Sorting
+    const headers = document.querySelectorAll("thead th");
+    const tableBody = document.querySelector("tbody");
+    const rows = Array.from(tableBody.querySelectorAll("tr"));
+
+    headers.forEach((header, index) => {
+        header.addEventListener("click", () => {
+            const isAscending = header.classList.toggle("ascending");
+            const direction = isAscending ? 1 : -1;
+            const type = header.innerText.trim();
+            
+            rows.sort((rowA, rowB) => {
+                const cellA = rowA.querySelectorAll("td")[index].innerText;
+                const cellB = rowB.querySelectorAll("td")[index].innerText;
+                
+                if (!isNaN(cellA) && !isNaN(cellB)) {
+                    return direction * (parseFloat(cellA) - parseFloat(cellB));
+                }
+                return direction * cellA.localeCompare(cellB);
+            });
+            
+            rows.forEach(row => tableBody.appendChild(row));
+        });
+    });
+
     
     setTimeout(()=>{
         loaderSpin.classList.add('hidden');
         loaderSpin.classList.remove('d-flex')
-        tableEl.classList.remove('hidden')
+        // tableEl.classList.remove('hidden')
     }, 300)
 
     // payment methods
@@ -261,6 +434,8 @@
     function updatePayment(){
         const amount_paid = parseFloat(document.querySelector('#id_amount_paid').value);
         let validation = false
+
+        duePaid = amount_paid;
 
         const data = {
             amount_paid: amount_paid,
@@ -295,10 +470,7 @@
             .then(data => {
                 if (data.success) {
                     updateModal.hide()
-                    loaderModal.show()
-                    setTimeout(() => {
-                        window.location.href='{% url "finance:invoice" %}';
-                    }, 2000);
+                    displayReceipt(invoiceId)
                 } else {
                     loaderModal.hide()
                     error.textContent='*' + data.message
@@ -310,13 +482,17 @@
         }
     }
 
+    function name(params) {
+        
+    }
+
     updateBtn.forEach((btn)=>{
         btn.addEventListener(
             'click', ()=>{
                 invoiceId= btn.dataset.id
                 invoiceAmountDue = btn.dataset.amount
                 updateModal.show()
-            }   
+            }    
         )
     })
 
@@ -358,10 +534,6 @@
         )
     })
 
-    filterBtn.addEventListener('click', ()=>{
-        filterModal.show()
-    })
-
     whatsappBtn.addEventListener('click', function() {
         appModal.show(); 
         whatsappBtn.disabled = true; 
@@ -384,6 +556,109 @@
             console.error('Error:', error);
         });
     });
+
+    async function displayReceipt(invoiceId) {
+    try {
+        const response = await fetch(`/finance/invoice/preview/json/${invoiceId}/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"),
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok.');
+        }
+
+        const data = await response.json();
+        const { invoice, invoice_items: invoiceItems, lay_dates:dates} = data;
+        const {
+            invoice_number: invoiceNumber,
+            amount: invoiceTotal,
+            delivery_charge: deliveryCharge,
+            discount_amount: discountAmount,
+            vat: vatAmount,
+            subtotal: subTotal,
+            currency_symbol: currencySymbol,
+            amount_paid: amountPaid,
+            payment_terms: payment_terms,
+            customer_name: customer_name,
+            customer_email: customer_email,
+            customer_cell: customer_cell,
+            customer_address: customer_address,
+        } = invoice;
+
+        console.log(data)
+
+        let amount_due = invoiceTotal - amountPaid;
+        let prvPaid = amountPaid - duePaid;
+        console.log(duePaid)
+
+        document.getElementById('rcp-payment').textContent = paymentMethod;
+        document.getElementById('rcp-pterms').textContent = payment_terms;
+        document.getElementById('rcp-currency').textContent = currencySymbol;
+        document.getElementById('rcp_amount_paid').textContent = currencySymbol + ' ' + duePaid.toFixed(2);
+        document.getElementById('rcp_prv_paid').textContent = currencySymbol + ' ' + prvPaid.toFixed(2);
+        //document.getElementById('available_balance').textContent = currencySymbol + ' ' + (invoiceTotal - amountPaid + prvDue)
+        document.getElementById('total_amount').textContent = currencySymbol + ' ' + invoiceTotal
+        document.querySelector('#invoiceNumber').textContent = invoiceNumber;
+        document.getElementById('rcp_due').textContent = currencySymbol + ' ' + amount_due.toFixed(2);
+        document.getElementById('id_balance').textContent = currencySymbol + ' ' + amount_due.toFixed(2);
+        document.getElementById('f_prv_paid').textContent = currencySymbol + ' ' + amountPaid;
+
+        // set customer details
+        document.getElementById('customerCompany').textContent = customer_name;
+        document.getElementById('customerName').textContent = customer_name;
+        document.getElementById('customerPhone').textContent = customer_cell;
+        document.getElementById('customerEmail').textContent = customer_email;
+        document.getElementById('customerAddress').textContent = customer_address;
+
+
+        const receiptTableBody = document.querySelector('#receipt');
+        receiptTableBody.innerHTML = '';
+
+        // Populate the table with invoice items
+        invoiceItems.forEach(({ quantity, item__product__name, unit_price, item__product__description, total_amount }) => {
+            const newRow = receiptTableBody.insertRow();
+            newRow.insertCell().textContent = `${item__product__name}`
+            newRow.insertCell().textContent = `(${item__product__description})`;
+            newRow.insertCell().textContent = quantity;
+            newRow.insertCell().textContent = `${unit_price}`;
+            newRow.insertCell().textContent = `${quantity * unit_price}`;
+        });;
+
+        // Update total amounts in the footer
+        document.querySelector('#subTotalAmount').textContent = `${currencySymbol} ${subTotal}`;
+        //document.querySelector('#totalAmount').textContent = `${currencySymbol} ${invoiceTotal}`;
+        document.querySelector('#vatAmount').textContent = `${currencySymbol} ${vatAmount}`;
+       //document.querySelector('#rid_paid_amount').textContent = `${currencySymbol} ${amount_paid.toFixed(2)}`;
+        //document.querySelector('#rprevious_due').textContent = `${currencySymbol} ${previousDue.toFixed(2)}`;
+        
+        const laybyDateEl = document.getElementById('rcp_payment_dates')
+        const laybyTerms = document.getElementById('laybyTerms');
+        const installmentTerms = document.getElementById('installmentTerms');
+
+        
+        //modal.classList.add("hidden");
+        //overlay.classList.add("hidden");
+
+        Swal.fire({
+            icon: 'success',
+            title: 'success',
+            text: 'Invoice successfully processed',
+            timer: 2000,
+            showConfirmButton: false
+        }).then(()=>{
+            loaderModal.hide();
+            receiptModal.show();
+        })
+
+    } catch (error) {
+        console.error("Error:", error);
+        loaderModal.hide();
+    }
+}
 
     function getCookie(name) {
         let cookieValue = null;

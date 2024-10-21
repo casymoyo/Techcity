@@ -6,8 +6,16 @@ from . models import (
     DefectiveProduct, 
     Service, 
     Supplier, 
-    PurchaseOrder
+    PurchaseOrder,
+    BatchCode, 
+    reorderSettings
 )
+from datetime import date
+
+class BatchForm(forms.ModelForm):
+    class Meta:
+        model = BatchCode
+        fields = '__all__'
 
 class AddProductForm(forms.ModelForm):
     class Meta:
@@ -17,7 +25,7 @@ class AddProductForm(forms.ModelForm):
 class InventoryForm(forms.ModelForm):
     class Meta:
         model = Inventory
-        exclude = ['branch']
+        exclude = ['branch', 'name']
         
 class addCategoryForm(forms.ModelForm):
     class Meta:
@@ -48,8 +56,8 @@ class RestockForm(forms.ModelForm):
         
 class ServiceForm(forms.ModelForm):
     class Meta:
-        model = Service
-        fields = '__all__'
+        model = Inventory
+        fields = ['name', 'price']
 
 class AddSupplierForm(forms.ModelForm):   
     class Meta :
@@ -60,17 +68,30 @@ class CreateOrderForm(forms.ModelForm):
     class Meta:
         model =  PurchaseOrder
         exclude = ['order_number', 'branch']
-        
+      
+
 class noteStatusForm(forms.ModelForm):
     class Meta:
-        model =  PurchaseOrder
-        fields = ['status', 'delivery_date', 'notes']
+        model = PurchaseOrder
+        fields = ['batch', 'status', 'delivery_date', 'payment_method', 'notes']
         
         widgets = {
             'delivery_date': forms.DateInput(attrs={'type': 'date'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super(noteStatusForm, self).__init__(*args, **kwargs)
+        
+        if not self.initial.get('delivery_date'):
+            self.initial['delivery_date'] = date.today()
+
 class PurchaseOrderStatus(forms.ModelForm):
     class Meta:
         model = PurchaseOrder
         fields = ['status']
+
+class ReorderSettingsForm(forms.ModelForm):
+    class Meta:
+        model = reorderSettings
+        fields = ['supplier', 'quantity_suggestion', 'number_of_days_from', 'number_of_days_to', 'order_enough_stock']
+       

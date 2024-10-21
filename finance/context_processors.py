@@ -10,3 +10,4 @@ def currency_list(request):
     return {'currencies': Currency.objects.all()}
 
 
+

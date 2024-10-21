@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-rb&d1ur&gv!uedx9&nym9zthkk(32-kdvh1x_b0+c+&^hny!o9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DJANGO_DEBUG", True)
 
-ALLOWED_HOSTS = ['*', 'http://techcity-production.up.railway.app']
+ALLOWED_HOSTS = ['*', 'web-production-86a7.up.railway.app']
 
 
 # Application definition
@@ -65,7 +65,7 @@ LOCAL_APPS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
-CSRF_TRUSTED_ORIGINS = ['https://techcity-production.up.railway.app']
+CSRF_TRUSTED_ORIGINS = ['https://web-production-86a7.up.railway.app']
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
@@ -129,21 +129,21 @@ SESSION_AUTH = True
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME':  'techcity',
+    #'default': {
+    #    'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME':  'techcoty',
     #     'USER': 'postgres',
     #     'PASSWORD': 'neverfail',
     #     'HOST': 'localhost',
     #     'PORT': '5432'
-    # }
-    'default': {
-        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.getenv('DB_NAME', 'postgres'),
-        'USER': os.getenv('DB_USER', 'postgres.uizmccfdsrqjdgvhxren'),
-        'PASSWORD': os.getenv('DB_PASSWORD', '$p-!!v5jdXRDwJT'),  # No password is specified in the URL
-        'HOST': os.getenv('DB_HOST', 'aws-0-eu-central-1.pooler.supabase.com'),
-        'PORT': os.getenv('DB_PORT', '6543'),
+    #}
+   'default': {
+       'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.getenv('DB_NAME', 'railway'),
+        'USER': os.getenv('DB_USERNAME', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'TopCprLoVTPDAmezfOhAJoqvDuHLnxhw'),  
+        'HOST': os.getenv('DB_HOST', 'autorack.proxy.rlwy.net'),
+        'PORT': os.getenv('DB_PORT', '26269'),
     }
 }
 

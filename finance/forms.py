@@ -7,7 +7,9 @@ from .models import (
     Invoice, 
     CashTransfers, 
     CashWithdraw, 
-    CustomerDeposits
+    CustomerDeposits,
+    CashDeposit,
+    VATTransaction
 )
 
 class ExpenseForm(forms.ModelForm):
@@ -66,4 +68,13 @@ class customerDepositsRefundForm(forms.ModelForm):
     class Meta:
         model = CustomerDeposits
         fields = ['amount',]
-   
+
+class cashDepositForm(forms.ModelForm):
+    class Meta:
+        model = CashDeposit
+        exclude = ['user']
+
+class VatPayForm(forms.ModelForm):
+    class Meta:
+        model = VATTransaction
+        fields = ['paid']

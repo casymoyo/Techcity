@@ -5,6 +5,13 @@ from django.db.models import Sum
 from django.utils import timezone
 from django.db.models import F
 
+class BatchCode(models.Model):
+    code = models.CharField(max_length=255)
+
+    def __str__(self) -> str:
+        return self.code
+    
+
 class ProductCategory(models.Model):
     """Model for product categories."""
 
@@ -23,9 +30,9 @@ class Product(models.Model):
         ('zero rated', 'Zero Rated')
     ]
     
-    batch_code = models.CharField(max_length=255)
+    batch = models.CharField(max_length = 255, blank=True, default='')
     name = models.CharField(max_length=255)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, default=0)
     cost = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.IntegerField(default=0, null=True)
     category = models.ForeignKey(ProductCategory, on_delete=models.SET_NULL, null=True)
@@ -34,6 +41,7 @@ class Product(models.Model):
     description = models.TextField()
     end_of_day = models.BooleanField(default=False)
     service =  models.BooleanField(default=False)
+    dealer_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, default=0)
     
     def __str__(self):
         return self.name
@@ -64,15 +72,21 @@ class PurchaseOrder(models.Model):
     order_date = models.DateTimeField(default=timezone.now)
     delivery_date = models.DateField(null=True, blank=True)
     total_cost = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
-    status = models.CharField(max_length=50, choices=status_choices, default='pending')
-    notes = models.TextField(null=True, blank=True)
+    status = models.CharField(max_length=50, choices=status_choices, default='received')
+    notes = models.CharField(max_length=255 ,null=True, blank=True)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     discount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     tax_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
-    handling_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     other_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     is_partial = models.BooleanField(default=False)  
     received = models.BooleanField(default=False)
+    payment_method = models.CharField(max_length=15, choices=[
+        ('cash', 'cash'),
+        ('bank', 'bank'),
+        ('ecocash', 'ecocash')
+    ]
+    , default="cash")
+    batch = models.CharField(max_length=20, null=True)
 
     def generate_order_number():
         return f'PO-{uuid.uuid4().hex[:10].upper()}'
@@ -96,8 +110,11 @@ class PurchaseOrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField()
     unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    actual_unit_cost = models.DecimalField(max_digits=10, decimal_places=2)
     received_quantity = models.IntegerField(default=0) 
     received = models.BooleanField(default=False, null=True)
+    expected_profit = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    dealer_expected_profit = models.DecimalField(max_digits=10, decimal_places=2, null=True)
 
     def receive_items(self, quantity):
        
@@ -127,17 +144,47 @@ class PurchaseOrderItem(models.Model):
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
 
+class costAllocationPurchaseOrder(models.Model):
+    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE)
+    allocated = models.DecimalField(max_digits=10, decimal_places=2)
+    allocationRate = models.DecimalField(max_digits=10, decimal_places=2)
+    expense_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.IntegerField()
+    product = models.CharField(max_length=255)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    total_buying = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self) -> str:
+        return f'{self.purchase_order}: {self.product}'
+
+class ProductDetail(models.Model):
+    purchase_order = models.ForeignKey(PurchaseOrderItem, on_delete=models.CASCADE) 
+
+class otherExpenses(models.Model):
+
+    """additional expenses for the purchase order"""
+
+    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, null=True)
+    name = models.CharField(max_length=100)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self) -> str:
+        return f'{self.purchase_order} : {self.name} -> {self.amount}'
 
 class Inventory(models.Model):
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    name = models.CharField(max_length=255, null=True)
     cost =  models.DecimalField(max_digits=10, decimal_places=2)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity = models.IntegerField()
-    status = models.BooleanField(default=True)
-    stock_level_threshold = models.IntegerField(default=5)
-    reorder = models.BooleanField(default=False)
+    dealer_price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    quantity = models.IntegerField(null=True)
+    status = models.BooleanField(default=True, null=True)
+    stock_level_threshold = models.IntegerField(default=5, null=True)
+    reorder = models.BooleanField(default=False, null=True)
     alert_notification = models.BooleanField(default=False, null=True, blank=True)
+    batch = models.CharField(max_length=255, blank=True, null=True)
     
     def update_stock(self, added_quantity):
         self.quantity += added_quantity
@@ -303,3 +350,14 @@ class Service(models.Model):
     
     def __str__(self):
         return self.name
+    
+class reorderSettings(models.Model):
+    supplier = models.CharField(max_length=255)
+    quantity_suggestion = models.BooleanField(default=False)
+    number_of_days_from = models.FloatField(null=True)
+    number_of_days_to = models.FloatField(null=True)
+    order_enough_stock = models.BooleanField(default=False)
+    date_created = models.DateField(auto_now_add=True)
+
+    
+

@@ -142,7 +142,7 @@
                     <th>Date</th>
                     <th>Order Number</th>
                     <th>Product</th>
-                    <th>Unit Cost</th>
+                    <th>Unit Cost + expense</th>
                     <th>Quantity</th>
                     <th>Total</th>
             </thead>
@@ -152,7 +152,7 @@
                     <td data-id={{ order.id }}><small>{{ order.purchase_order.order_date }}</small></td>
                     <td data-id={{ order.id }}><small>{{ order.purchase_order.order_number }}</small></td> 
                     <td data-id={{ order.id }}><small>{{ order.product.name }}</small></td>
-                    <td data-id={{ order.id }}><small>{{ order.unit_cost }}</small></td>
+                    <td data-id={{ order.id }}><small>{{ order.actual_unit_cost }}</small></td>
                     <td data-id={{ order.id }}><small>{{ order.quantity }}</small></td>
                     <td data-id={{ order.id }} class='text-center'><small id='total'></small></td>  
                 </tr>
@@ -198,17 +198,7 @@
                     <td></td>
                     <td></td>
                     <td></td>
-                    <td class="fw-bold">Handling Fee</td>
-                    <td class="fw-bold text-center">
-                        {{ purchase_order.handling_amount }}
-                    </td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td class="fw-bold">Other</td>
+                    <td class="fw-bold">Expenses *</td>
                     <td class='text-center fw-bold'>
                         {{ purchase_order.other_amount }}
                     </td>
@@ -222,6 +212,22 @@
                     <td class="fw-bold text-center">{{ purchase_order.total_cost }}</td>
                 </tr>
             </tfoot>
+        </table>
+
+        <h5>* Expenses Summary</h5>
+        <table>
+            <tbody id="expenses-table">
+                {% for expense in expenses %}
+                <tr>
+                    <td colspan="6">{{ expense.name }}</td>
+                    <td>{{ expense.amount }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <td colspan="6"><strong>Totals</strong></td>
+                    <td><strong>{{ total_expenses }}</strong></td>
+                </tr>
+            </tbody>
         </table>
     </div>
     <div class="print-hide">

@@ -211,7 +211,6 @@ python-engineio==4.9.1
 python-json-logger==2.0.7
 python-slugify==8.0.1
 python-socketio==5.11.4
-pytz==2024.2
 PyYAML==6.0.2
 pyzmq==26.2.0
 qrcode==7.4.2
@@ -285,3 +284,4 @@ wsproto==1.2.0
 xhtml2pdf==0.2.15
 yarl==1.11.1
 zope.interface==6.1
+pytz

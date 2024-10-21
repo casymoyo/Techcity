@@ -5,7 +5,7 @@
 {% block content %}
    <div class="inventory">
         <div class="inventory-navbar">
-            <nav class="d-flex justify-content-between bg-dark text-light align-items-center rounded p-2">
+            <nav class="d-flex justify-content-between text-light align-items-center rounded p-2" style="background:#373f4c !important;">
                 <div class='fw-bold d-flex w-100'>
                     <h5><span class='fw-bold'>Purchase Orders</span></h5>
                 </div>
@@ -23,7 +23,7 @@
                             <tr>
                                 <th>Date</th>
                                 <th>Delivery Date</th>
-                                <th>Order Number</th>
+                                <th>Batch</th>
                                 <th>Suplier</th>
                                 <th>Total Cost</th>
                                 <th>Notes</th>
@@ -33,10 +33,10 @@
                             </thead>
                         <tbody>
                             {% for order in orders %}
-                                <tr">
+                                <tr>
                                     <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.order_date }}</small></td>
                                     <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.delivery_date }}</small></td>
-                                    <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.order_number }}</small></td>
+                                    <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.batch|lower }}</small></td>
                                     <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.supplier.name }}</small></td>
                                     <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.total_cost }}</small></td>
                                     <td class="{% if order.is_partial %}bg-warning text-dark{% endif %}" data-id={{ order.id }}><small>{{ order.notes }}</small></td>
@@ -45,14 +45,20 @@
                                         <a href="{% url 'inventory:purchase_order_detail' order.id %}" class="btn bx bx-show"></a>
                                         <a href="{% url 'inventory:print_purchase_order' order.id %}" class="btn bx bx-printer mx-1"></a>
                                         {% if order.status != 'received' %}
-                                            <button class="btn btn-sm btn-light" data-id={{ order.id }} onclick="status(this)">Change Status</button>
+                                        <button class="btn btn-sm btn-light" data-id={{ order.id }} onclick="status(this)">Change Status</button>
                                         {% else %}
-                                            {% if order.received %}
-                                                <small class="bg-success fw-bold text-light p-2 rounded text-center w-100">Recieved</small>
-                                            {% else %}
-                                                <a href="{% url 'inventory:receive_order' order.id %}" class="btn btn-sm btn-light">Receive Order Items</a>
-                                            {% endif %}
+                                        {% if order.received %}
+                                        <small class="bg-success fw-bold text-light p-2 rounded text-center w-100">Recieved</small>
+                                        {% else %}
+                                        <a href="{% url 'inventory:receive_order' order.id %}" class="btn btn-sm btn-outline-dark">
+                                            <small>
+                                                Receive Order Items
+                                            </small>
+                                        </a>
                                         {% endif %}
+                                        {% endif %}
+                                        <a href="{% url 'inventory:edit_po' order.id %}" class="btn btn-outline-dark btn-sm bx bx-edit"></a>
+                                        <button class="btn bx bx-trash btn-outline-dark btn-sm" onclick="confirmDeletePurchaseOrder({{ order.id }})"></button>
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -107,6 +113,54 @@
         const successModal = new bootstrap.Modal(document.getElementById('successModal'));
         const changeStatussubmitBtn = document.getElementById('c_sbtn');
 
+        
+        function confirmDeletePurchaseOrder(purchase_order_id) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/inventory/purchase_order/delete/${purchase_order_id}/`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire(
+                                'Deleted!',
+                                'Your purchase order has been deleted.',
+                                'success'
+                            ).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire(
+                                'Error!',
+                                data.message,
+                                'error'
+                            );
+                        }
+                    })
+                    .catch((error) => {
+                        Swal.fire(
+                            'Error!',
+                            'Something went wrong. Please try again.',
+                            'error'
+                        );
+                    });
+                }
+            })
+        }
+
         function status(td){
             orderID = td.dataset.id
             statusFormModal.show()
@@ -134,12 +188,20 @@
                       window.location.reload()
                     }, 1000)
                   } else {
-                    cartError.textContent=data.message;
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message,
+                      });
                   } 
                 })
                 .catch((error) => {
                   console.error("Error:", error);
-                  addToCartError.textContent=data.message;
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error,
+                  });
                 });
         
         }

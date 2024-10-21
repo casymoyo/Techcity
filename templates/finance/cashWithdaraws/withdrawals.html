@@ -43,11 +43,10 @@
             </div>
         </nav>
 
-        <table class="table border rounded withdrawals p-2 mt-2" style='width=100%' id='withdrawals'>
+        <table class="table border rounded withdrawal p-2 mt-2" style='width=100%' id='withdrawals'>
             <thead class='bg-primary'>
                 <tr>
                     <th>Date</th>
-                    <th>Status</th>
                     <th>User</th>
                     <th>Amount</th>
                     <th>Reason</th>
@@ -59,24 +58,13 @@
                 {% for withdrawal in withdrawals %}
                     <tr>
                         {% if withdrawal.deleted %}
-                            <td class='transfer-btn'><small class='text-decoration-line-through text-danger'>{{withdrawal.date}}</small></td>
+                            <td><small class='text-decoration-line-through text-danger'>{{withdrawal.date}}</small></td>
                             <td><small class='text-decoration-line-through text-danger'>{{withdrawal.user}}</small></td>
                             <td><small class='text-decoration-line-through text-danger'>{{withdrawal.currency.symbol}} {{withdrawal.amount}}</small></td>
                             <td><small class='text-decoration-line-through text-danger'>{{withdrawal.reason}}</small></td>
                             <td><small class='text-decoration-line-through text-danger'>{{withdrawal.user.branch.name}}</small></td>
                         {% else %}
                             <td><small>{{withdrawal.date}}</small></td>
-                            {% if withdrawal.status %}
-                                <td><span class='hint--bottom' aria-label='All received'>
-                                        <i class='bx bxs-circle text-success fs-3' ></i>
-                                    </span>
-                                </td>
-                            {% else %}
-                                <td><span class='hint--bottom' aria-label='Not yet received'>
-                                        <i class='bx bxs-circle text-danger fs-3' ></i>
-                                    </span>
-                                </td>
-                            {% endif %}
                             <td><small>{{withdrawal.user}}</small></td>
                             <td><small>{{withdrawal.currency.symbol}} {{withdrawal.amount}}</small></td>
                             <td><small>{{withdrawal.reason}}</small></td>
@@ -301,7 +289,7 @@
                     csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
             }
             $.ajax({
-                url: '{% url 'finance:create_expense_category'%}',
+                url: '{% url 'finance:add_expense_category'%}',
                 type: 'POST',
                 data: data,
                 }).done(function(response) {
@@ -343,14 +331,23 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success){
-                    expenseModal.hide()
-                    successModal.show()
-                    setTimeout(()=>{
-                        window.location.reload()
-                    }, 1000)
-                }else{
-                    document.querySelector('#id_exp_message').innerHTML=data.message  
+                if (data.success) {
+                    expenseModal.hide();  
+                    Swal.fire({
+                        title: 'Success',
+                        text: data.message,
+                        icon: 'success'  
+                    }).then(() => {
+                        setTimeout(() => {
+                            window.location.reload();  
+                        }, 1000);
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Warning',
+                        text: data.message,
+                        icon: 'warning'  
+                    });
                 }
             })
             .catch(error => {

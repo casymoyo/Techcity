@@ -1,5 +1,6 @@
  .venv/
  env/
+ migrations/
  */migrations/*
 .env
  *.pyc
@@ -18,3 +19,4 @@
  *.cpython-312.pyc
  */__pycache__/*
  *.pyc
+.vs/
