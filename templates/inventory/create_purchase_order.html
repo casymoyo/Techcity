@@ -13,7 +13,8 @@
         text-align: center;
     }
 
-    td:first-child {
+    td:first-child,
+    td:nth-child(2){
         text-align: left; 
     }
 
@@ -1066,7 +1067,8 @@
             price: price,
             supplier: supplier,
           };
-          cart.push(newTransfer);
+            cart.push(newTransfer);
+            cart.reverse()
         }
         
         updateCartDisplay();
