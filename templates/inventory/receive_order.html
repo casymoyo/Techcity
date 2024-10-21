@@ -44,7 +44,7 @@
                 <h4 class='mt-1 fw-bold'><small class='px-1 fw-bold fx-6'>Receive Purchase Order: </small>{{ purchase_order.batch|lower }}</h4>
             </div>
         </div>
-        <a href="{% url 'inventory:mark_done' purchase_order.id %}" class="btn btn-secondary">Done</a>
+        <!--<a href="{% url 'inventory:mark_done' purchase_order.id %}" class="btn btn-secondary">Done</a>-->
     </nav>
 </div>
 <div class="table-container">
@@ -56,7 +56,7 @@
                 <th>Ordered Quantity</th>
                 <th>Enter Quantity</th>
                 <th>Supplier Cost/unit</th>
-                <th>Product Cost/unit + expense</th>
+                <th>Landing Cost</th>
                 <th>Enter Wholesale Price</th>
                 <th>Enter Retail Price</th>
                 <th>Wholesale Profit</th>

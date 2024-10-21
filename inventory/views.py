@@ -1411,8 +1411,15 @@ def create_purchase_order(request):
         other_amount = Decimal(purchase_order_data['other_amount'])
         payment_method = purchase_order_data.get('payment_method')
     
-        if not all([supplier_id, delivery_date, status, total_cost, payment_method]):
+        if not all([supplier_id, delivery_date, status, total_cost, payment_method, batch]):
             return JsonResponse({'success': False, 'message': 'Missing required fields'}, status=400)
+
+        # validation for batch code
+        if len(batch.split(' ')) != 2:
+            return JsonResponse({'success':False, 'message':'Please write the batch input in this format: Batch X, where X is the batch number'})
+        else:
+            if batch.split(' ')[1] not in [f'{n}' for n in range(10000)]:
+                return JsonResponse({'success':False, 'message':'Please write the batch input in this format: Batch X, where X is the batch number'})
 
         try:
             supplier = Supplier.objects.get(id=supplier_id)
@@ -2118,8 +2125,6 @@ def edit_purchase_order(request, po_id):
             # get previous purchase_order
             last_purchase_order = PurchaseOrder.objects.get(id=po_id)
 
-            logger.info(last_purchase_order)
-
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
 
@@ -2219,7 +2224,6 @@ def edit_purchase_order(request, po_id):
                     )
                 otherExpenses.objects.bulk_create(expense_bulk)
 
-                logger.info('processing cost allocations ....')
                 costs_list = []
                 for cost in cost_allocations:
                     costs_list.append(
@@ -2235,7 +2239,6 @@ def edit_purchase_order(request, po_id):
                             total_buying = cost['totalBuying']
                         )
                     )
-                logger.info(f'processing cost allocations .... {costs_list}')
                 costAllocationPurchaseOrder.objects.bulk_create(costs_list)
                     
                 # update finance accounts (vat, cashbook, expense, account_transaction_log)
@@ -2305,6 +2308,11 @@ def remove_purchase_order(purchase_order_id, request):
                 for prod in products:
                     if item.product == prod.product:
                         prod.quantity -= item.received_quantity
+
+                        # eliminate negative stock
+                        if prod.quantity < 0:
+                            prod.quantity = 0
+
                         prod.save()
                         
                         ActivityLog.objects.create(

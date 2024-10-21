@@ -53,13 +53,13 @@
                     <th class="fs-6 text-dark" style="color:black;">Supplier Price</th>
                     <th class="fs-6 text-dark" style="color:black;">Unit Expense</th>
                     <th class="fs-6 text-dark" style="color:black;">landing Cost</th>
-                    <th class="fs-6 text-dark" style="color:black;">Total Supplier Price</th>
-                    <th class="fs-6 text-dark" style="color:black;">Total Product Expenses</th>
-                    <th class="fs-6 text-dark" style="color:black;">Total Product Cost</th>
                     <th class="fs-6 text-light" style="background:#7c8184;">Wholesale Price</th>
                     <th class="fs-6 text-light" style="background:#7c8184;">Wholesale Profit</th>
                     <th class="fs-6 text-light" style="background:#7c8184;">Retail Price</th>
                     <th class="fs-6 text-light" style="background:#7c8184;">Retail Profit</th>
+                    <th class="fs-6 text-dark" style="color:black;">Total Supplier Price</th>
+                    <th class="fs-6 text-dark" style="color:black;">Total Product Expenses</th>
+                    <th class="fs-6 text-dark" style="color:black;">Total Product Cost</th>
                     </thead>
                     <tbody id="apportionment-table">
                         {% for item in items %}
@@ -81,13 +81,13 @@
                             <td>{{ item.price }}</td>
                             <td>{{ item.allocationRate }}</td>
                             <td>{{ item.expense_cost }}</td>
-                            <td>{{ item.total_buying }}</td>
-                            <td>{{ item.allocated }}</td>
-                            <td>{{ item.total }}</td>
                             <td style="background:#7c8184;" class="text-light">{{ item.dealer_price }}</td>
                             <td style="background:#7c8184;" class="text-light">{{ order.dealer_expected_profit }}</td>
                             <td style="background:#7c8184;" class="text-light">{{ item.selling_price }}</td>
                             <td style="background:#7c8184;" class="text-light">{{ order.expected_profit }}</td>
+                            <td>{{ item.total_buying }}</td>
+                            <td>{{ item.allocated }}</td>
+                            <td>{{ item.total }}</td>
                         </tr>
                         {% endif %}
                         {% endfor %}
@@ -101,11 +101,12 @@
                             <td class="fw-bold">{{ total_quantity }}</td>
                             <td class="fw-bold">{{ total_received_quantity }}</td>
                             <td colspan="4"></td>
-                            <td><strong>{{ total_expenses }}</strong></td>
-                            <td colspan="2"></td>
                             <td class="fw-bold">{{ total_expected_dealer_profit }}0</td>
                             <td></td>
                             <td class="fw-bold">{{ total_expected_profit }}</td>
+                            <td colspan="1"></td>
+                            <td><strong>{{ total_expenses }}</strong></td>
+                            <td></td>
                         </tr>
                         {% for expense in expenses %}
                         <tr>
