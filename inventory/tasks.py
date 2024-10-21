@@ -86,3 +86,4 @@ def send_transfer_email(user_email, transfer_id, branch_id):
     except Exception as e:
         logger.error(f"Error sending account statement email: {e}", exc_info=True)
 
+

@@ -59,6 +59,8 @@ from permissions.permissions import (
 )
 from utils.account_name_identifier import account_identifier
 from loguru import logger
+from xhtml2pdf import pisa
+from django.template.loader import get_template
 
 
 @login_required
@@ -1734,6 +1736,7 @@ def purchase_order_detail(request, order_id):
 
     total_received_quantity = purchase_order_items.aggregate(Sum('received_quantity'))['received_quantity__sum'] or 0
     total_expected_profit = purchase_order_items.aggregate(Sum('expected_profit'))['expected_profit__sum'] or 0
+    total_expected_dealer_profit = purchase_order_items.aggregate(Sum('dealer_expected_profit'))['dealer_expected_profit__sum'] or 0
     total_quantity = items.aggregate(Sum('quantity'))['quantity__sum'] or 0
     total_expense_sum = expenses.aggregate(total_expense=Sum('amount'))['total_expense'] or 0
 
@@ -1742,7 +1745,7 @@ def purchase_order_detail(request, order_id):
         'price', 
         'product__name'
     )
-    logger.info(f'branch: {request.user.branch}')
+
     # Convert products queryset to a dictionary for easy lookup by product ID
     product_prices = {product['product__name']: product for product in products}
 
@@ -1757,7 +1760,6 @@ def purchase_order_detail(request, order_id):
             item.dealer_price = 0  
             item.selling_price = 0 
 
-    logger.info(items.values())
     if request.GET.get('download') == 'csv':
         return generate_csv_response(items, purchase_order_items)
 
@@ -1770,6 +1772,7 @@ def purchase_order_detail(request, order_id):
         'total_expected_profit': total_expected_profit,
         'total_expenses': total_expense_sum,
         'purchase_order': purchase_order,
+        'total_expected_dealer_profit':total_expected_dealer_profit
     })
 
 def generate_csv_response(items, po_items):
@@ -1786,19 +1789,66 @@ def generate_csv_response(items, po_items):
         received_quantity = 0
         if po_items.filter(product__name=item.product).exists():
            received_quantity = po_items.filter(product__name=item.product).first().received_quantity
-           selling_price = po_items.filter(product__name=item.product).first().selling_price
-           dealer_price = po_items.filter(product__name=item.product).first().dealer_price
 
         writer.writerow([
             item.product,
             item.quantity,
             received_quantity,
-            f"${selling_price:.2f}",
-            f"${dealer_price:.2f}",
+            f"${item.selling_price:.2f}",
+            f"${item.dealer_price:.2f}",
         ])
 
     return response
+ 
+@login_required
+def sales_price_list_pdf(request, order_id):
+    try:
+        purchase_order = PurchaseOrder.objects.get(id=order_id)
+    except PurchaseOrder.DoesNotExist:
+        messages.warning(request, f'Purchase order with ID: {order_id} does not exist')
+        return redirect('inventory:purchase_orders')
+
+    items = costAllocationPurchaseOrder.objects.filter(purchase_order=purchase_order)
+    purchase_order_items = PurchaseOrderItem.objects.filter(purchase_order=purchase_order)
+
+    products = Inventory.objects.filter(branch=request.user.branch).values(
+        'dealer_price', 
+        'price', 
+        'product__name',
+        'product__description',
+        'quantity'
+    )
+
+    # Convert products queryset to a dictionary for easy lookup by product ID
+    product_prices = {product['product__name']: product for product in products}
+   
+    for item in items:
+        product_name = item.product
+        product_data = product_prices.get(product_name)
+
+        if product_data:
+            item.dealer_price = product_data['dealer_price']
+            item.selling_price = product_data['price']
+        else:
+            item.dealer_price = 0
+            item.selling_price = 0
+
+        item.description = product_data['product__description']
+
+    context = {'items': items}
+
+    template = get_template('inventory/pdf_templates/price_list.html')
+    html = template.render(context)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="price_list.pdf"'
     
+    pisa_status = pisa.CreatePDF(html, dest=response)
+
+    if pisa_status.err:
+        return HttpResponse('Error generating PDF', status=400)
+    return response
+
 @login_required
 def delete_purchase_order(request, purchase_order_id):
     if request.method != "DELETE":
@@ -1879,8 +1929,7 @@ def process_received_order(request):
             return JsonResponse({'success': False, 'message': 'Invalid JSON payload'}, status=400)
 
         if edit:
-            return edit_purchase_order_item(order_item_id, selling_price, dealer_price, expected_profit, dealer_expected_profit)
-
+            return edit_purchase_order_item(order_item_id, selling_price, dealer_price, expected_profit, dealer_expected_profit, quantity, request)
 
         if quantity == 0:
             return JsonResponse({'success': False, 'message': 'Quantity cannot be zero.'}, status=400)
@@ -1953,7 +2002,7 @@ def process_received_order(request):
             action='stock in',
             inventory=inventory,
             quantity=quantity,
-            description=f'Stock in from {order_item.purchase_order.order_number}',
+            description=f'Stock in from {order_item.purchase_order.batch}',
             total_quantity=inventory.quantity
         )
         log.save()
@@ -1965,7 +2014,7 @@ def process_received_order(request):
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
 
-def edit_purchase_order_item(order_item_id, selling_price, dealer_price, expected_profit):
+def edit_purchase_order_item(order_item_id, selling_price, dealer_price, expected_profit, dealer_expected_profit, quantity, request):
     try:
         po_item = PurchaseOrderItem.objects.get(id=order_item_id)
 
@@ -1974,6 +2023,7 @@ def edit_purchase_order_item(order_item_id, selling_price, dealer_price, expecte
         po_item.dealer_price = dealer_price
         po_item.expected_profit = expected_profit
         po_item.dealer_expected_profit = dealer_expected_profit
+        po_item.received_quantity = quantity
         po_item.save()
 
         # Update the related product's price and dealer price
@@ -1987,7 +2037,23 @@ def edit_purchase_order_item(order_item_id, selling_price, dealer_price, expecte
             inventory = Inventory.objects.get(product=product, branch=po_item.purchase_order.branch)
             inventory.price = selling_price
             inventory.dealer_price = dealer_price
+            inventory.quantity = quantity
             inventory.save()
+
+            log = ActivityLog.objects.get(purchase_order=po_item.purchase_order, inventory=inventory)
+            log.delete()
+
+            ActivityLog.objects.create(
+                purchase_order=po_item.purchase_order,
+                branch=request.user.branch,
+                user=request.user,
+                action='stock in',
+                inventory=inventory,
+                quantity=quantity,
+                description=f'Stock in from {po_item.purchase_order.batch}',
+                total_quantity=inventory.quantity
+            )
+
         except Inventory.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Inventory not found for the product'}, status=404)
 
@@ -2099,7 +2165,8 @@ def edit_purchase_order(request, po_id):
 
                 # preload the logs with previous received stock
                 logs = ActivityLog.objects.filter(purchase_order=last_purchase_order)
-                logger.info(f'logs {logs}')
+                logger.info(f'logs {purchase_order_items_data}')
+                logger.info(f'cist {cost_allocations}')
 
                 for item_data in purchase_order_items_data:
                     product_name = (item_data['product'])
@@ -2126,10 +2193,10 @@ def edit_purchase_order(request, po_id):
                         PurchaseOrderItem(
                             purchase_order=purchase_order,
                             product=product,
-                            quantity=quantity if not log_quantity else log_quantity[0]['quantity'],
+                            quantity= 0 if not quantity else quantity,
                             unit_cost=unit_cost,
                             actual_unit_cost=actual_unit_cost,
-                            received_quantity=0,
+                            received_quantity= 0 if not log_quantity else log_quantity[0]['quantity'],
                             received=False
                         )
                     )

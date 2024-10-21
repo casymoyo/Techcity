@@ -22,7 +22,24 @@
                     </div>
                 </div>
                 <div>
-                    <a href="?download=csv" class="btn text-light border bx bx-download"></a>
+                    <a href="?download=csv" class="btn text-light border bx bx-download mx-1"></a>
+                    <div class="dropdown d-inline-block">
+                        <a href="javascript:void(0)" class="btn text-light border " id="shareDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class='bx bx-share-alt'></i>
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="shareDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'inventory:sales_price_list' purchase_order.id %}">
+                                    Sales
+                                </a>
+                            </li>
+                            <!--<li>
+                                <a class="dropdown-item" href="">
+                                    Admin
+                                </a>
+                            </li>-->
+                        </ul>
+                    </div>
                 </div>
             </nav>
         </div>
@@ -30,25 +47,26 @@
             <div class="mt-2">
                 <table class="table table-bordered table-striped" id="details_table" style='width:100%;'>
                     <thead>
-                        <th class="fs-6 text-dark" style="color:black;">Product</th>
-                        <th class="fs-6 text-dark" style="color:black;">Quantity</th>
-                        <th class="fs-6 text-dark" style="color:black;">Quantity Received</th>
-                        <th class="fs-6 text-dark" style="color:black;">Supplier Price</th>
-                        <th class="fs-6 text-dark" style="color:black;">Total Supplier Price</th>
-                        <th class="fs-6 text-dark" style="color:black;">Total Product Expenses</th>
-                        <th class="fs-6 text-dark" style="color:black;">Unit Product Expense</th>
-                        <th class="fs-6 text-dark" style="color:black;">Total Purchase Price + Expense</th>
-                        <th class="fs-6 text-dark" style="color:black;">Total Purchase Price</th>
-                        <th class="fs-6 text-dark" style="color:black;">Selling Price</th>
-                        <th class="fs-6 text-dark" style="color:black;">Dealer Price</th>
-                        <th>Expcted Profit</th>
+                    <th class="fs-6 text-dark" style="color:black;">Product</th>
+                    <th class="fs-6 text-dark" style="color:black;">Quantity</th>
+                    <th class="fs-6 text-dark" style="color:black;">Quantity Received</th>
+                    <th class="fs-6 text-dark" style="color:black;">Supplier Price</th>
+                    <th class="fs-6 text-dark" style="color:black;">Unit Expense</th>
+                    <th class="fs-6 text-dark" style="color:black;">landing Cost</th>
+                    <th class="fs-6 text-dark" style="color:black;">Total Supplier Price</th>
+                    <th class="fs-6 text-dark" style="color:black;">Total Product Expenses</th>
+                    <th class="fs-6 text-dark" style="color:black;">Total Product Cost</th>
+                    <th class="fs-6 text-light" style="background:#7c8184;">Wholesale Price</th>
+                    <th class="fs-6 text-light" style="background:#7c8184;">Wholesale Profit</th>
+                    <th class="fs-6 text-light" style="background:#7c8184;">Retail Price</th>
+                    <th class="fs-6 text-light" style="background:#7c8184;">Retail Profit</th>
                     </thead>
                     <tbody id="apportionment-table">
                         {% for item in items %}
                         {% for order in order_items %}
                         {% if order.product.name == item.product %}
                         <tr>
-                            <td>{{ item.product }}</td>
+                            <td>{{ item.product }} <small>({{ order.product.description }})</small></td>
                             <td>{{ item.quantity }}</td>
                             <td>
                                 {% if order.received_quantity == item.quantity %}
@@ -61,14 +79,15 @@
                                 {% endif %}
                             </td>
                             <td>{{ item.price }}</td>
+                            <td>{{ item.allocationRate }}</td>
+                            <td>{{ item.expense_cost }}</td>
                             <td>{{ item.total_buying }}</td>
                             <td>{{ item.allocated }}</td>
-                            <td>{{ item.expense_cost }}</td>
                             <td>{{ item.total }}</td>
-                            <td>{{ item.allocationRate }}</td>
-                            <td>{{ item.selling_price }}</td>
-                            <td>{{ item.dealer_price }}</td>
-                            <td>{{ order.expected_profit }}</td>
+                            <td style="background:#7c8184;" class="text-light">{{ item.dealer_price }}</td>
+                            <td style="background:#7c8184;" class="text-light">{{ order.dealer_expected_profit }}</td>
+                            <td style="background:#7c8184;" class="text-light">{{ item.selling_price }}</td>
+                            <td style="background:#7c8184;" class="text-light">{{ order.expected_profit }}</td>
                         </tr>
                         {% endif %}
                         {% endfor %}
@@ -79,18 +98,20 @@
                     <tbody id="expenses-table">
                         <tr>
                             <td colspan="1"><strong>Totals</strong></td>
-                            <td>{{ total_quantity }}</td>
-                            <td>{{ total_received_quantity }}</td>
-                            <td></td>
+                            <td class="fw-bold">{{ total_quantity }}</td>
+                            <td class="fw-bold">{{ total_received_quantity }}</td>
+                            <td colspan="4"></td>
                             <td><strong>{{ total_expenses }}</strong></td>
-                            <td colspan="6"></td>
-                            <td>{{ total_expected_profit }}</td>
+                            <td colspan="2"></td>
+                            <td class="fw-bold">{{ total_expected_dealer_profit }}0</td>
+                            <td></td>
+                            <td class="fw-bold">{{ total_expected_profit }}</td>
                         </tr>
                         {% for expense in expenses %}
                         <tr>
-                            <td colspan="4">{{ expense.name }}</td>
+                            <td colspan="6">{{ expense.name }}</td>
                             <td>{{ expense.amount }}</td>
-                            <td colspan="4"></td>
+                            <td colspan="3"></td>
                         </tr>
                         {% endfor %}
                     </tbody>
