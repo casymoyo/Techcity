@@ -12,12 +12,6 @@
         
         <form method="post" class="rounded border mt-2 p-2">
             {% csrf_token %}
-            <div id="div_id_batch_code" class="mb-3"> 
-                <label for="id_batch_code" class="form-label requiredField">
-                    Batch code<span class="asteriskField">*</span>
-                </label>
-                <input type="text" name="batch_code" value='{{product.product.batch_code}}' maxlength="255" class="textinput form-control" required id="id_batch_code">
-            </div>
             <div id="div_id_name" class="mb-3">
                 <label for="id_name" class="form-label requiredField">
                    Name
