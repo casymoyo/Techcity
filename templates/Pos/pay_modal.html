@@ -36,7 +36,6 @@
     .receipt {
         background-color: white;
         padding: 20px;
-        max-width: 800px;
         margin: auto;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
@@ -133,8 +132,12 @@
     </style>
 <div class="receipt-el">
     <div class="receipt">
+        <div class="d-flex justify-content-ed">
+            <button id="
+                    ." class="btn btn-sm w-100 border text-danger">Back</button>
+        </div>
         <!-- Payment Details -->
-        <div class="payment-detail">
+        <div class="payment-detail mt-2">
             <p class="currency_rcp">
                 <strong>Currency:</strong><select id='rp_currency' class='form-select'>
                     <option value=''>Currency</option>
@@ -169,12 +172,11 @@
 
         <!-- Customer Info -->
 
-        <h4>Payment by <span id="customerName"></span></h4>
         <div class="customer-info">
             <div class="account-summary">
                 <p>
-                    <strong>Enter Amount Received:</strong>
-                    <input type="number" id="id_amount_paid" name="amount_received" class="form-control">
+                    <!--<strong>Payment by <span id="customerName"></span></strong>-->
+                    <input type="number" id="id_amount_paid" name="amount_received" class="form-control" placeholder="Enter Amount Received:">
                 </p>
             </div>
             <div>

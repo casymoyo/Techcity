@@ -7,12 +7,16 @@
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\inventory\\purchase_order_detail.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\casy\\Desktop\\techcity\\templates\\inventory\\reorder_list.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\inventory\\reorder_list.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\casy\\Desktop\\techcity\\techcity\\settings.py||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:techcity\\settings.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\casy\\Desktop\\techcity\\templates\\inventory\\receive_order.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\inventory\\receive_order.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\casy\\Desktop\\techcity\\templates\\inventory\\reorder_list.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\inventory\\reorder_list.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\casy\\Desktop\\techcity\\inventory\\views.py||{8B382828-6202-11D1-8870-0000F87579D2}",
@@ -41,10 +45,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\casy\\Desktop\\techcity\\templates\\inventory\\inventory.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\inventory\\inventory.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\casy\\Desktop\\techcity\\templates\\inventory\\receive_order.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\inventory\\receive_order.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\casy\\Desktop\\techcity\\templates\\inventory\\edit_purchase_order.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
@@ -117,18 +117,18 @@
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedHeight": 349,
+          "DockedHeight": 325,
           "SelectedChildIndex": 7,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 1,
               "Title": "settings.py",
               "DocumentMoniker": "C:\\Users\\casy\\Desktop\\techcity\\techcity\\settings.py",
               "RelativeDocumentMoniker": "techcity\\settings.py",
               "ToolTip": "C:\\Users\\casy\\Desktop\\techcity\\techcity\\settings.py",
               "RelativeToolTip": "techcity\\settings.py",
-              "ViewState": "AgIAAH0AAAAAAAAAAAAkwIwAAABJAAAAAAAAAA==",
+              "ViewState": "AgIAAG4AAAAAAAAAAAAAAHcAAAAjAAAAAAAAAA==",
               "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMuSURBVDhPrVTPTxNREP627e7SQm0F2mKLUEVICP5IMBqUhB6NJ4/GGGPwoIf\u002BCR7VxBBPhnAxAeVC4kEuJB6Qi0Y8oCGKpoKQUpEWAhX6c7vb3X1Ol5UauzEc/JLJm31v3pdv5u0M/isYY5zpGohEIs8GBgZu8Dxv7tQik8mwbDb7YGpq6lEqlcqa2/twmOs\u002BBgcHEQgEzK9azMzMsHg8fsdut7Pp6enHKysrafPIQA1hBRRkelUQAcLhMEi9jTLxdnZ23pZl2elwOIYWFxe3zTBrwmAwaHpVcFy1OoIg8P39/c1Efo3KJquq\u002BpBEFCpnNiPiL9CFGvtd14rSyclJDA8P22dnZ1tcLlevKIp\u002B45BgqXBpacn0qqDUQGniXN9F9J6/AIeNg1TIyaOjo9/NEAOWhN3d3aZXRV5W8Sq2jY2sBElSwFNuR9x2x5HWtkabrZrogRXKDUEsb\u002BSxmSlg7tsG1LICX4PAX\u002Blpbff7/Q1mmHUNK6/5t2WKKt4uphBbS0NXy2QasvkiV1RtTrfb7TKvWhNWoGkaNHD4ulXGxNwmPibSOH3Ui95wI5rqeahESq8Ln7dwavLpjXe69HlB1/U2y5RXV1eNdb3E48VCDuvpHF1WoJWJhEyjdHWNVNKvJHBbgDQPlOZ74Ls7ZKmwq6vLsCKrw\u002BZu3lCjl1UquA6P0wGPi4eX7EzYhdNB6j5NoiL/AJS1S5YKY7GYsa6tS5BlUkOptTU6EI1IcNp3aQboNAh0eIUdhJybgFrcI9V2Pf9U2B4KQKCIisLbEQFnWz6gx7eMk/4VnGyOobU\u002BDk79SQF5IqNG4YM7loSKohjWfljE8WYn3KIdvkM6OKYBukIEMq2kkj7BiIJRF9Wd0iCEnlimnEwmjVUkuxU5jgzdD3jooUpEppWosT1kTlJE/S127UA89gV1J76Nj48PWRJ2dHSY3h4qg0HUkwz5AmcQajRc6vtIGRHam9aev1y/9/r1xNuRkZFiDeHY2Nj\u002BIPgTN69fThwVQ2Eon4iQHiD3HqzhPNOcvek3b\u002B7HK2Rm6MFAY\u002BoQ08uPWCmRYvl5ncnJBO29JLsajUbDe1HAL6CnYE1YMsFsAAAAAElFTkSuQmCC",
               "WhenOpened": "2024-10-16T08:32:51.961Z",
               "IsPinned": true,
@@ -149,7 +149,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
               "Title": "reorder_list.html",
               "DocumentMoniker": "C:\\Users\\casy\\Desktop\\techcity\\templates\\inventory\\reorder_list.html",
               "RelativeDocumentMoniker": "templates\\inventory\\reorder_list.html",
@@ -158,12 +158,11 @@
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAABMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
               "WhenOpened": "2024-10-16T15:23:36.307Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 8,
               "Title": "create_purchase_order.html",
               "DocumentMoniker": "C:\\Users\\casy\\Desktop\\techcity\\templates\\inventory\\create_purchase_order.html",
               "RelativeDocumentMoniker": "templates\\inventory\\create_purchase_order.html",
@@ -202,16 +201,17 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 2,
               "Title": "receive_order.html",
               "DocumentMoniker": "C:\\Users\\casy\\Desktop\\techcity\\templates\\inventory\\receive_order.html",
               "RelativeDocumentMoniker": "templates\\inventory\\receive_order.html",
               "ToolTip": "C:\\Users\\casy\\Desktop\\techcity\\templates\\inventory\\receive_order.html",
               "RelativeToolTip": "templates\\inventory\\receive_order.html",
-              "ViewState": "AgIAAC0AAAAAAAAAAAAAADoAAAAlAAAAAAAAAA==",
+              "ViewState": "AgIAABsAAAAAAAAAAAAAAD0AAAApAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
               "WhenOpened": "2024-10-16T14:39:24.078Z",
-              "IsPinned": true
+              "IsPinned": true,
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -219,9 +219,9 @@
               "Title": "purchase_order_detail.html",
               "DocumentMoniker": "C:\\Users\\casy\\Desktop\\techcity\\templates\\inventory\\purchase_order_detail.html",
               "RelativeDocumentMoniker": "templates\\inventory\\purchase_order_detail.html",
-              "ToolTip": "C:\\Users\\casy\\Desktop\\techcity\\templates\\inventory\\purchase_order_detail.html*",
-              "RelativeToolTip": "templates\\inventory\\purchase_order_detail.html*",
-              "ViewState": "AgIAAEIAAAAAAAAAAAAAAFUAAAAjAAAAAAAAAA==",
+              "ToolTip": "C:\\Users\\casy\\Desktop\\techcity\\templates\\inventory\\purchase_order_detail.html",
+              "RelativeToolTip": "templates\\inventory\\purchase_order_detail.html",
+              "ViewState": "AgIAAEUAAAAAAAAAAAAAAFYAAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
               "WhenOpened": "2024-10-17T11:55:27.331Z",
               "IsPinned": true,
@@ -229,7 +229,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "views.py",
               "DocumentMoniker": "C:\\Users\\casy\\Desktop\\techcity\\inventory\\views.py",
               "RelativeDocumentMoniker": "inventory\\views.py",
@@ -238,12 +238,11 @@
               "ViewState": "AgIAAIUGAAAAAAAAAAAuwJYGAAAAAAAAAAAAAA==",
               "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMuSURBVDhPrVTPTxNREP627e7SQm0F2mKLUEVICP5IMBqUhB6NJ4/GGGPwoIf\u002BCR7VxBBPhnAxAeVC4kEuJB6Qi0Y8oCGKpoKQUpEWAhX6c7vb3X1Ol5UauzEc/JLJm31v3pdv5u0M/isYY5zpGohEIs8GBgZu8Dxv7tQik8mwbDb7YGpq6lEqlcqa2/twmOs\u002BBgcHEQgEzK9azMzMsHg8fsdut7Pp6enHKysrafPIQA1hBRRkelUQAcLhMEi9jTLxdnZ23pZl2elwOIYWFxe3zTBrwmAwaHpVcFy1OoIg8P39/c1Efo3KJquq\u002BpBEFCpnNiPiL9CFGvtd14rSyclJDA8P22dnZ1tcLlevKIp\u002B45BgqXBpacn0qqDUQGniXN9F9J6/AIeNg1TIyaOjo9/NEAOWhN3d3aZXRV5W8Sq2jY2sBElSwFNuR9x2x5HWtkabrZrogRXKDUEsb\u002BSxmSlg7tsG1LICX4PAX\u002Blpbff7/Q1mmHUNK6/5t2WKKt4uphBbS0NXy2QasvkiV1RtTrfb7TKvWhNWoGkaNHD4ulXGxNwmPibSOH3Ui95wI5rqeahESq8Ln7dwavLpjXe69HlB1/U2y5RXV1eNdb3E48VCDuvpHF1WoJWJhEyjdHWNVNKvJHBbgDQPlOZ74Ls7ZKmwq6vLsCKrw\u002BZu3lCjl1UquA6P0wGPi4eX7EzYhdNB6j5NoiL/AJS1S5YKY7GYsa6tS5BlUkOptTU6EI1IcNp3aQboNAh0eIUdhJybgFrcI9V2Pf9U2B4KQKCIisLbEQFnWz6gx7eMk/4VnGyOobU\u002BDk79SQF5IqNG4YM7loSKohjWfljE8WYn3KIdvkM6OKYBukIEMq2kkj7BiIJRF9Wd0iCEnlimnEwmjVUkuxU5jgzdD3jooUpEppWosT1kTlJE/S127UA89gV1J76Nj48PWRJ2dHSY3h4qg0HUkwz5AmcQajRc6vtIGRHam9aev1y/9/r1xNuRkZFiDeHY2Nj\u002BIPgTN69fThwVQ2Eon4iQHiD3HqzhPNOcvek3b\u002B7HK2Rm6MFAY\u002BoQ08uPWCmRYvl5ncnJBO29JLsajUbDe1HAL6CnYE1YMsFsAAAAAElFTkSuQmCC",
               "WhenOpened": "2024-10-20T16:14:05.137Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "tasks.py",
               "DocumentMoniker": "C:\\Users\\casy\\Desktop\\techcity\\inventory\\tasks.py",
               "RelativeDocumentMoniker": "inventory\\tasks.py",
@@ -252,8 +251,7 @@
               "ViewState": "AgIAAAkAAAAAAAAAAAAAAFkAAAAAAAAAAAAAAA==",
               "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMuSURBVDhPrVTPTxNREP627e7SQm0F2mKLUEVICP5IMBqUhB6NJ4/GGGPwoIf\u002BCR7VxBBPhnAxAeVC4kEuJB6Qi0Y8oCGKpoKQUpEWAhX6c7vb3X1Ol5UauzEc/JLJm31v3pdv5u0M/isYY5zpGohEIs8GBgZu8Dxv7tQik8mwbDb7YGpq6lEqlcqa2/twmOs\u002BBgcHEQgEzK9azMzMsHg8fsdut7Pp6enHKysrafPIQA1hBRRkelUQAcLhMEi9jTLxdnZ23pZl2elwOIYWFxe3zTBrwmAwaHpVcFy1OoIg8P39/c1Efo3KJquq\u002BpBEFCpnNiPiL9CFGvtd14rSyclJDA8P22dnZ1tcLlevKIp\u002B45BgqXBpacn0qqDUQGniXN9F9J6/AIeNg1TIyaOjo9/NEAOWhN3d3aZXRV5W8Sq2jY2sBElSwFNuR9x2x5HWtkabrZrogRXKDUEsb\u002BSxmSlg7tsG1LICX4PAX\u002Blpbff7/Q1mmHUNK6/5t2WKKt4uphBbS0NXy2QasvkiV1RtTrfb7TKvWhNWoGkaNHD4ulXGxNwmPibSOH3Ui95wI5rqeahESq8Ln7dwavLpjXe69HlB1/U2y5RXV1eNdb3E48VCDuvpHF1WoJWJhEyjdHWNVNKvJHBbgDQPlOZ74Ls7ZKmwq6vLsCKrw\u002BZu3lCjl1UquA6P0wGPi4eX7EzYhdNB6j5NoiL/AJS1S5YKY7GYsa6tS5BlUkOptTU6EI1IcNp3aQboNAh0eIUdhJybgFrcI9V2Pf9U2B4KQKCIisLbEQFnWz6gx7eMk/4VnGyOobU\u002BDk79SQF5IqNG4YM7loSKohjWfljE8WYn3KIdvkM6OKYBukIEMq2kkj7BiIJRF9Wd0iCEnlimnEwmjVUkuxU5jgzdD3jooUpEppWosT1kTlJE/S127UA89gV1J76Nj48PWRJ2dHSY3h4qg0HUkwz5AmcQajRc6vtIGRHam9aev1y/9/r1xNuRkZFiDeHY2Nj\u002BIPgTN69fThwVQ2Eon4iQHiD3HqzhPNOcvek3b\u002B7HK2Rm6MFAY\u002BoQ08uPWCmRYvl5ncnJBO29JLsajUbDe1HAL6CnYE1YMsFsAAAAAElFTkSuQmCC",
               "WhenOpened": "2024-10-21T15:05:50.265Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
             },
             {
               "$type": "Document",
@@ -270,7 +268,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 9,
               "Title": "inventory_form.html",
               "DocumentMoniker": "C:\\Users\\casy\\Desktop\\techcity\\templates\\inventory\\inventory_form.html",
               "RelativeDocumentMoniker": "templates\\inventory\\inventory_form.html",
@@ -294,7 +292,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "requirements.txt",
               "DocumentMoniker": "C:\\Users\\casy\\Desktop\\techcity\\requirements.txt",
               "RelativeDocumentMoniker": "requirements.txt",
@@ -354,7 +352,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "forms.py",
               "DocumentMoniker": "C:\\Users\\casy\\Desktop\\techcity\\inventory\\forms.py",
               "RelativeDocumentMoniker": "inventory\\forms.py",
@@ -362,12 +360,11 @@
               "RelativeToolTip": "inventory\\forms.py",
               "ViewState": "AgIAAFEAAAAAAAAAAAAAAGAAAAAAAAAAAAAAAA==",
               "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAMuSURBVDhPrVTPTxNREP627e7SQm0F2mKLUEVICP5IMBqUhB6NJ4/GGGPwoIf\u002BCR7VxBBPhnAxAeVC4kEuJB6Qi0Y8oCGKpoKQUpEWAhX6c7vb3X1Ol5UauzEc/JLJm31v3pdv5u0M/isYY5zpGohEIs8GBgZu8Dxv7tQik8mwbDb7YGpq6lEqlcqa2/twmOs\u002BBgcHEQgEzK9azMzMsHg8fsdut7Pp6enHKysrafPIQA1hBRRkelUQAcLhMEi9jTLxdnZ23pZl2elwOIYWFxe3zTBrwmAwaHpVcFy1OoIg8P39/c1Efo3KJquq\u002BpBEFCpnNiPiL9CFGvtd14rSyclJDA8P22dnZ1tcLlevKIp\u002B45BgqXBpacn0qqDUQGniXN9F9J6/AIeNg1TIyaOjo9/NEAOWhN3d3aZXRV5W8Sq2jY2sBElSwFNuR9x2x5HWtkabrZrogRXKDUEsb\u002BSxmSlg7tsG1LICX4PAX\u002Blpbff7/Q1mmHUNK6/5t2WKKt4uphBbS0NXy2QasvkiV1RtTrfb7TKvWhNWoGkaNHD4ulXGxNwmPibSOH3Ui95wI5rqeahESq8Ln7dwavLpjXe69HlB1/U2y5RXV1eNdb3E48VCDuvpHF1WoJWJhEyjdHWNVNKvJHBbgDQPlOZ74Ls7ZKmwq6vLsCKrw\u002BZu3lCjl1UquA6P0wGPi4eX7EzYhdNB6j5NoiL/AJS1S5YKY7GYsa6tS5BlUkOptTU6EI1IcNp3aQboNAh0eIUdhJybgFrcI9V2Pf9U2B4KQKCIisLbEQFnWz6gx7eMk/4VnGyOobU\u002BDk79SQF5IqNG4YM7loSKohjWfljE8WYn3KIdvkM6OKYBukIEMq2kkj7BiIJRF9Wd0iCEnlimnEwmjVUkuxU5jgzdD3jooUpEppWosT1kTlJE/S127UA89gV1J76Nj48PWRJ2dHSY3h4qg0HUkwz5AmcQajRc6vtIGRHam9aev1y/9/r1xNuRkZFiDeHY2Nj\u002BIPgTN69fThwVQ2Eon4iQHiD3HqzhPNOcvek3b\u002B7HK2Rm6MFAY\u002BoQ08uPWCmRYvl5ncnJBO29JLsajUbDe1HAL6CnYE1YMsFsAAAAAElFTkSuQmCC",
-              "WhenOpened": "2024-10-21T08:11:14.529Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-10-21T08:11:14.529Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 10,
               "Title": "inventory.html",
               "DocumentMoniker": "C:\\Users\\casy\\Desktop\\techcity\\templates\\inventory\\inventory.html",
               "RelativeDocumentMoniker": "templates\\inventory\\inventory.html",
@@ -464,7 +461,7 @@
           ]
         },
         {
-          "DockedHeight": 51,
+          "DockedHeight": 75,
           "SelectedChildIndex": -1,
           "Children": [
             {

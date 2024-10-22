@@ -1335,7 +1335,7 @@ def edit_supplier(request, supplier_id):
 def purchase_orders(request):
     form = CreateOrderForm()
     status_form = PurchaseOrderStatus()
-    orders = PurchaseOrder.objects.filter(branch = request.user.branch)
+    orders = PurchaseOrder.objects.filter(branch = request.user.branch, hold=False)
 
     items = PurchaseOrderItem.objects.filter(purchase_order__id=5)
 
@@ -1386,6 +1386,7 @@ def create_purchase_order(request):
             purchase_order_items_data = data.get('po_items', [])
             expenses = data.get('expenses', [])
             cost_allocations = data.get('cost_allocations', [])
+            hold = data.get('hold', False)
 
             unique_expenses = []
 
@@ -1441,7 +1442,8 @@ def create_purchase_order(request):
                     other_amount=other_amount,
                     branch = request.user.branch,
                     is_partial = False,
-                    received = False
+                    received = False,
+                    hold = hold
                 )
                 purchase_order.save()
                 
@@ -1515,15 +1517,15 @@ def create_purchase_order(request):
 
                 logger.info('Cost allocations processed :)')
                     
-                # update finance accounts (vat, cashbook, expense, account_transaction_log)
-                if purchase_order.status in ['Received', 'received']:
-                    if_purchase_order_is_received(
-                        request, 
-                        purchase_order, 
-                        tax_amount, 
-                        payment_method
-                    )       
-          
+                # update finance accounts (vat, cashbook, expense, account_transaction_log)'
+                if purchase_order.hold == False:
+                    if purchase_order.status in ['Received', 'received']:
+                        if_purchase_order_is_received(
+                            request, 
+                            purchase_order, 
+                            tax_amount, 
+                            payment_method
+                        )       
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
 

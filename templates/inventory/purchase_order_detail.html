@@ -17,13 +17,19 @@
     thead th {
         position: sticky;
         top: 0;
-        background-color: white;
-        z-index: 2;
+        background: #808080 !important;
+        z-index: 1;
+        text-align: center;
+    }
+    .inventory-navbar {
+        position: sticky;
+        top: 0;
+        z-index: 1;
         text-align: center;
     }
 </style>
 <div class="inventory">
-    <div class="inventory-navbar">
+    <div class="inventory-navbar" onscroll="adjust()">
         <nav class="d-flex justify-content-between align-items-center bg-dark text-light rounded mb-2 p-2">
             <div class="d-flex">
                 <div>
@@ -51,19 +57,19 @@
         <div class="mt-2">
             <table class="table table-bordered table-striped" id="details_table" style='width:100%;'>
                 <thead>
-                <th class="fs-6 text-dark" style="color:black;">Product</th>
-                <th class="fs-6 text-dark" style="color:black;">Quantity</th>
-                <th class="fs-6 text-dark" style="color:black;">Quantity Received</th>
-                <th class="fs-6 text-dark" style="color:black;">Supplier Price</th>
-                <th class="fs-6 text-dark" style="color:black;">Unit Expense</th>
-                <th class="fs-6 text-dark" style="color:black;">landing Cost</th>
-                <th class="fs-6 text-dark" style="background: #fff;">Retail Price</th>
-                <th class="fs-6 text-dark" style="background: #fff;">Wholesale Price</th>
-                <th class="fs-6 text-dark" style="background: #fff;">Retail Profit</th>
-                <th class="fs-6 text-dark" style="background: #fff;">Wholesale Profit</th>
-                <th class="fs-6 text-dark" style="color:black;">All Supplier$</th>
-                <th class="fs-6 text-dark" style="color:black;">Total Expenses</th>
-                <th class="fs-6 text-dark" style="color:black;">Total Order$</th>
+                <th class="fs-6 text-dark bg-light" style="color:black;">Product</th>
+                <th class="fs-6 text-dark bg-light" style="color:black;">Quantity</th>
+                <th class="fs-6 text-dark bg-light" style="color:black;">Quantity Received</th>
+                <th class="fs-6 text-dark bg-light" style="color:black;">Supplier Price</th>
+                <th class="fs-6 text-dark bg-light" style="color:black;">Unit Expense</th>
+                <th class="fs-6 text-dark bg-light" style="color:black;">landing Cost</th>
+                <th class="fs-6 text-dark bg-light" style="background: #fff;">Retail Price</th>
+                <th class="fs-6 text-dark bg-light" style="background: #fff;">Wholesale Price</th>
+                <th class="fs-6 text-dark bg-light" style="background: #fff;">Retail Profit</th>
+                <th class="fs-6 text-dark bg-light" style="background: #fff;">Wholesale Profit</th>
+                <th class="fs-6 text-dark bg-light" style="color:black;">All Supplier$</th>
+                <th class="fs-6 text-dark bg-light" style="color:black;">Total Expenses</th>
+                <th class="fs-6 text-dark bg-light" style="color:black;">Total Order$</th>
                 </thead>
                 <tbody id="apportionment-table">
                     {% for item in items %}
@@ -84,7 +90,7 @@
                         </td>
                         <td style="background: #ebeced;">{{ item.price }}</td>
                         <td style="background: #ebeced;">{{ item.allocationRate }}</td>
-                        <td style="background: #ebeced;">{{ item.expense_cost }}</td>
+                        <td class="fw-bold" style="background: #ebeced;">{{ item.expense_cost }}</td>
                         <td class="fw-bold" style="background: #fff;">{{ item.selling_price }}</td>
                         <td class="fw-bold" style="background: #fff;">{{ item.dealer_price }}</td>
                         <td style="background: #fff;">
@@ -133,6 +139,14 @@
         //new DataTable('#details_table', {
         //    paging: false,
         //})
+
+        //function adjust() {
+        //    console.log('here')
+        //}
+
+        window.onscroll = () => {
+            console
+        }
 
         rows.forEach(row => {
             let unitCostCell = row.children[3];

@@ -87,6 +87,7 @@ class PurchaseOrder(models.Model):
     ]
     , default="cash")
     batch = models.CharField(max_length=20, null=True)
+    hold = models.BooleanField(null=True, default=True)
 
     def generate_order_number():
         return f'PO-{uuid.uuid4().hex[:10].upper()}'

@@ -508,6 +508,7 @@
     let products = [];
     let purchaseData = [];
     let formData = [];
+    let holdPurchaseOrder = false
    
     const errorEl = document.getElementById('error');
     const addToCartError = document.getElementById('cart_error');
@@ -533,6 +534,12 @@
     const confirmBtn = document.getElementById('confirm_btn');
 
     const cartError = document.getElementById('cartError');
+
+    const savePurchasaeOrderButton = document.getElementById('save_purchase_order')
+    //savePurchasaeOrderButton.addEventListener('click', () => {
+    //    holdPurchaseOrder = true;
+    //    processCart()
+    //})
 
     calculateExpression('id_p_price', errorId = null)
 
@@ -1095,6 +1102,7 @@
 
       const data= {
         'po_items':cart,
+        'hold':holdPurchaseOrder,
         'expenses':expensesData,
         'cost_allocations':formData,
           'purchase_order': {
@@ -1138,7 +1146,6 @@
           } 
         })
         .catch((error) => {
-          console.error("Error:", error);
           Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -1580,10 +1587,7 @@
                 });
             }
         });
-
-        console.log(formData)
     }
-
 
     function getCookie(name) {
       let cookieValue = null;
