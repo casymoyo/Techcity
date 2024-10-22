@@ -3,130 +3,135 @@
 {% block title%} Inventory {% endblock%}
 {% block content %}
 <style>
-    td, span{
+    td, span {
         font-size: 12px;
         vertical-align: middle;
         text-align: center;
     }
 
-    td:first-child {
-         text-align: left;
+        td:first-child {
+            text-align: left;
+        }
+
+    /* Sticky header style */
+    thead th {
+        position: sticky;
+        top: 0;
+        background-color: white;
+        z-index: 2;
+        text-align: center;
     }
 </style>
-   <div class="inventory">
-        <div class="inventory-navbar">
-            <nav class="d-flex justify-content-between align-items-center bg-dark text-light rounded mb-2 p-2">
-                <div class="d-flex">
-                    <div>
-                        <h4 class='mt-1 fw-bold'>{{ purchase_order.batch|lower }}: <small class='px-1 fw-bold fx-6'>Order Detail</small></h4>
-                    </div>
-                </div>
+<div class="inventory">
+    <div class="inventory-navbar">
+        <nav class="d-flex justify-content-between align-items-center bg-dark text-light rounded mb-2 p-2">
+            <div class="d-flex">
                 <div>
-                    <a href="?download=csv" class="btn text-light border bx bx-download mx-1"></a>
-                    <div class="dropdown d-inline-block">
-                        <a href="javascript:void(0)" class="btn text-light border " id="shareDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class='bx bx-share-alt'></i>
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="shareDropdown">
-                            <li>
-                                <a class="dropdown-item" href="{% url 'inventory:sales_price_list' purchase_order.id %}">
-                                    Sales
-                                </a>
-                            </li>
-                            <!--<li>
-                                <a class="dropdown-item" href="">
-                                    Admin
-                                </a>
-                            </li>-->
-                        </ul>
-                    </div>
+                    <h4 class='mt-1 fw-bold'>{{ purchase_order.batch|lower }}: <small class='px-1 fw-bold fx-6'>Order Detail</small></h4>
                 </div>
-            </nav>
-        </div>
-        <div>
-            <div class="mt-2">
-                <table class="table table-bordered table-striped" id="details_table" style='width:100%;'>
-                    <thead>
-                    <th class="fs-6 text-dark" style="color:black;">Product</th>
-                    <th class="fs-6 text-dark" style="color:black;">Quantity</th>
-                    <th class="fs-6 text-dark" style="color:black;">Quantity Received</th>
-                    <th class="fs-6 text-dark" style="color:black;">Supplier Price</th>
-                    <th class="fs-6 text-dark" style="color:black;">Unit Expense</th>
-                    <th class="fs-6 text-dark" style="color:black;">landing Cost</th>
-                    <th class="fs-6 text-light" style="background:#7c8184;">Wholesale Price</th>
-                    <th class="fs-6 text-light" style="background:#7c8184;">Wholesale Profit</th>
-                    <th class="fs-6 text-light" style="background:#7c8184;">Retail Price</th>
-                    <th class="fs-6 text-light" style="background:#7c8184;">Retail Profit</th>
-                    <th class="fs-6 text-dark" style="color:black;">Total Supplier Price</th>
-                    <th class="fs-6 text-dark" style="color:black;">Total Product Expenses</th>
-                    <th class="fs-6 text-dark" style="color:black;">Total Product Cost</th>
-                    </thead>
-                    <tbody id="apportionment-table">
-                        {% for item in items %}
-                        {% for order in order_items %}
-                        {% if order.product.name == item.product %}
-                        <tr>
-                            <td style="background: #ebeced;">{{ item.product }} <small>({{ order.product.description }})</small></td>
-                            <td style="background: #ebeced;">{{ item.quantity }}</td>
-                            <td style="background: #ebeced;">
-                                {% if order.received_quantity == item.quantity %}
-                                <small class="bg-success btn btn-sm btn-success">All received</small>
-                                {% else %}
-                                <small class="bg-danger btn btn-danger btn-sm">
-                                    Received
-                                    {{ order.received_quantity}} / {{ item.quantity }}
-                                </small>
-                                {% endif %}
-                            </td>
-                            <td style="background: #ebeced;">{{ item.price }}</td>
-                            <td style="background: #ebeced;">{{ item.allocationRate }}</td>
-                            <td style="background: #ebeced;">{{ item.expense_cost }}</td>
-                            <td style="background: #fff;">{{ item.dealer_price }}</td>
-                            <td style="background: #fff;">{{ order.dealer_expected_profit }}</td>
-                            <td style="background: #fff;">{{ item.selling_price }}</td>
-                            <td style="background: #fff;">{{ order.expected_profit }}</td>
-                            <td style="background: #ebeced;">{{ item.total_buying }}</td>
-                            <td style="background: #ebeced;">{{ item.allocated }}</td>
-                            <td style="background: #ebeced;">{{ item.total }}</td>
-                        </tr> batch 1 10/24
-                        {% endif %}
-                        {% endfor %}
-                        {% endfor %}
-                    </tbody>
-
-                    <!-- Section to display additional expenses -->
-                    <tbody id="expenses-table">
-                        <tr>
-                            <td colspan="1"><strong>Totals</strong></td>
-                            <td class="fw-bold">{{ total_quantity }}</td>
-                            <td class="fw-bold">{{ total_received_quantity }}</td>
-                            <td colspan="4"></td>
-                            <td class="fw-bold">{{ total_expected_dealer_profit }}0</td>
-                            <td></td>
-                            <td class="fw-bold">{{ total_expected_profit }}</td>
-                            <td colspan="1"></td>
-                            <td><strong>{{ total_expenses }}</strong></td>
-                            <td></td>
-                        </tr>
-                        {% for expense in expenses %}
-                        <tr>
-                            <td colspan="6">{{ expense.name }}</td>
-                            <td>{{ expense.amount }}</td>
-                            <td colspan="3"></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
             </div>
+            <div>
+                <a href="?download=csv" class="btn text-light border bx bx-download mx-1"></a>
+                <div class="dropdown d-inline-block">
+                    <a href="javascript:void(0)" class="btn text-light border " id="shareDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class='bx bx-share-alt'></i>
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="shareDropdown">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'inventory:sales_price_list' purchase_order.id %}">
+                                Sales
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </div>
+    <div>
+        <div class="mt-2">
+            <table class="table table-bordered table-striped" id="details_table" style='width:100%;'>
+                <thead>
+                <th class="fs-6 text-dark" style="color:black;">Product</th>
+                <th class="fs-6 text-dark" style="color:black;">Quantity</th>
+                <th class="fs-6 text-dark" style="color:black;">Quantity Received</th>
+                <th class="fs-6 text-dark" style="color:black;">Supplier Price</th>
+                <th class="fs-6 text-dark" style="color:black;">Unit Expense</th>
+                <th class="fs-6 text-dark" style="color:black;">landing Cost</th>
+                <th class="fs-6 text-dark" style="background: #fff;">Retail Price</th>
+                <th class="fs-6 text-dark" style="background: #fff;">Wholesale Price</th>
+                <th class="fs-6 text-dark" style="background: #fff;">Retail Profit</th>
+                <th class="fs-6 text-dark" style="background: #fff;">Wholesale Profit</th>
+                <th class="fs-6 text-dark" style="color:black;">All Supplier$</th>
+                <th class="fs-6 text-dark" style="color:black;">Total Expenses</th>
+                <th class="fs-6 text-dark" style="color:black;">Total Order$</th>
+                </thead>
+                <tbody id="apportionment-table">
+                    {% for item in items %}
+                    {% for order in order_items %}
+                    {% if order.product.name == item.product %}
+                    <tr>
+                        <td class="fw-bold" style="background: #ebeced;">{{ item.product }} <small>({{ order.product.description }})</small></td>
+                        <td style="background: #ebeced;">{{ item.quantity }}</td>
+                        <td style="background: #ebeced;">
+                            {% if order.received_quantity == item.quantity %}
+                            <small class="bg-success btn btn-sm btn-success">All received</small>
+                            {% else %}
+                            <small class="bg-danger btn btn-danger btn-sm">
+                                Received
+                                {{ order.received_quantity}} / {{ item.quantity }}
+                            </small>
+                            {% endif %}
+                        </td>
+                        <td style="background: #ebeced;">{{ item.price }}</td>
+                        <td style="background: #ebeced;">{{ item.allocationRate }}</td>
+                        <td style="background: #ebeced;">{{ item.expense_cost }}</td>
+                        <td class="fw-bold" style="background: #fff;">{{ item.selling_price }}</td>
+                        <td class="fw-bold" style="background: #fff;">{{ item.dealer_price }}</td>
+                        <td style="background: #fff;">
+                            {% if not order.expected_profit or order.expected_profit < 0 %}
+                            <span class="text-danger">{{ order.expected_profit }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="background: #fff;">{{ order.dealer_expected_profit }}</td>
+                        <td style="background: #ebeced;">{{ item.total_buying }}</td>
+                        <td style="background: #ebeced;">{{ item.allocated }}</td>
+                        <td style="background: #ebeced;">{{ item.total }}</td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                    {% endfor %}
+                </tbody>
+
+                <tbody id="expenses-table">
+                    <tr>
+                        <td colspan="1"><strong>Totals</strong></td>
+                        <td class="fw-bold">{{ total_quantity }}</td>
+                        <td class="fw-bold">{{ total_received_quantity }}</td>
+                        <td colspan="5"></td>
+                        <td class="fw-bold">{{ total_expected_dealer_profit }}0</td>
+                        <td class="fw-bold">{{ total_expected_profit }}</td>
+                        <td colspan="1"></td>
+                        <td><strong>{{ total_expenses }}</strong></td>
+                        <td></td>
+                    </tr>
+                    {% for expense in expenses %}
+                    <tr>
+                        <td colspan="11">{{ expense.name }}</td>
+                        <td>{{ expense.amount }}</td>
+                        <td colspan="1"></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-   </div>
-   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
         let rows = document.querySelectorAll('#order_table tbody tr');
 
         //new DataTable('#details_table', {
         //    paging: false,
-        //    scrollCollapse: true
         //})
 
         rows.forEach(row => {
@@ -138,7 +143,6 @@
             let quantity = parseInt(quantityCell.textContent.trim(), 10);
 
             let total = unitCost * quantity;
-            console.log(total)
             totalCell.textContent = total.toFixed(2);
         });
     });
