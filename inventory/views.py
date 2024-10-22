@@ -1661,6 +1661,30 @@ def delete_purchase_order(request, purchase_order_id):
             if other_expenses.exists():
                 other_expenses.delete()
 
+
+            items = PurchaseOrderItem.objects.filter(purchase_order=purchase_order)
+            products = Inventory.objects.all()
+
+            for item in items:
+                for prod in products:
+                    if item.product == prod.product:
+                        prod.quantity -= item.received_quantity
+
+                        # eliminate negative stock
+                        if prod.quantity < 0:
+                            prod.quantity = 0
+
+                        prod.save()
+                        
+                        ActivityLog.objects.create(
+                            branch = request.user.branch,
+                            user= request.user,
+                            action= 'delete',
+                            inventory=prod,
+                            quantity=item.received_quantity,
+                            total_quantity=prod.quantity
+                        )
+
             # Remove PurchaseOrderItems
             PurchaseOrderItem.objects.filter(purchase_order=purchase_order).delete()
 
@@ -2299,7 +2323,7 @@ def remove_purchase_order(purchase_order_id, request):
             other_expenses = otherExpenses.objects.filter(purchase_order=purchase_order)
             if other_expenses.exists():
                 other_expenses.delete()
-
+            
             #deduct product quantity
             items = PurchaseOrderItem.objects.filter(purchase_order=purchase_order)
             products = Inventory.objects.all()

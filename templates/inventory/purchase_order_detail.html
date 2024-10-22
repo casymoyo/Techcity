@@ -66,9 +66,9 @@
                         {% for order in order_items %}
                         {% if order.product.name == item.product %}
                         <tr>
-                            <td>{{ item.product }} <small>({{ order.product.description }})</small></td>
-                            <td>{{ item.quantity }}</td>
-                            <td>
+                            <td style="background: #ebeced;">{{ item.product }} <small>({{ order.product.description }})</small></td>
+                            <td style="background: #ebeced;">{{ item.quantity }}</td>
+                            <td style="background: #ebeced;">
                                 {% if order.received_quantity == item.quantity %}
                                 <small class="bg-success btn btn-sm btn-success">All received</small>
                                 {% else %}
@@ -78,17 +78,17 @@
                                 </small>
                                 {% endif %}
                             </td>
-                            <td>{{ item.price }}</td>
-                            <td>{{ item.allocationRate }}</td>
-                            <td>{{ item.expense_cost }}</td>
-                            <td style="background:#7c8184;" class="text-light">{{ item.dealer_price }}</td>
-                            <td style="background:#7c8184;" class="text-light">{{ order.dealer_expected_profit }}</td>
-                            <td style="background:#7c8184;" class="text-light">{{ item.selling_price }}</td>
-                            <td style="background:#7c8184;" class="text-light">{{ order.expected_profit }}</td>
-                            <td>{{ item.total_buying }}</td>
-                            <td>{{ item.allocated }}</td>
-                            <td>{{ item.total }}</td>
-                        </tr>
+                            <td style="background: #ebeced;">{{ item.price }}</td>
+                            <td style="background: #ebeced;">{{ item.allocationRate }}</td>
+                            <td style="background: #ebeced;">{{ item.expense_cost }}</td>
+                            <td style="background: #fff;">{{ item.dealer_price }}</td>
+                            <td style="background: #fff;">{{ order.dealer_expected_profit }}</td>
+                            <td style="background: #fff;">{{ item.selling_price }}</td>
+                            <td style="background: #fff;">{{ order.expected_profit }}</td>
+                            <td style="background: #ebeced;">{{ item.total_buying }}</td>
+                            <td style="background: #ebeced;">{{ item.allocated }}</td>
+                            <td style="background: #ebeced;">{{ item.total }}</td>
+                        </tr> batch 1 10/24
                         {% endif %}
                         {% endfor %}
                         {% endfor %}
