@@ -86,7 +86,7 @@ class noteStatusForm(forms.ModelForm):
         if not self.initial.get('delivery_date'):
             self.initial['delivery_date'] = date.today()
 
-        # set the batch incrementing from the previous
+        # set the batch incrementing from the previous 
         if not self.initial.get('batch'):
             batch = PurchaseOrder.objects.filter().order_by('-order_date').first().batch
             if batch:

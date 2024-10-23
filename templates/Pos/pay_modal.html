@@ -23,9 +23,9 @@
     <style>
     .receipt-el{
         font-family: Arial, sans-serif;
-        margin: 0;
+/*        margin: 0;
         padding: 20px;
-        background-color: #f4f4f4;
+        background-color: #f4f4f4;*/
     }
 
     .currency_rcp{
@@ -34,10 +34,8 @@
     }
 
     .receipt {
+        padding: 10px;
         background-color: white;
-        padding: 20px;
-        max-width: 800px;
-        margin: auto;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
 
@@ -113,14 +111,14 @@
         font-size: 1.1em;
     }
 
-    .receipt-el .active{
-        background: #333;
-        color: #fff;
+    .receipt-el .active {
+            background: #00c0ef;
+            color: #fff;
     }
 
     .side{
         display: flex;
-        justify-content:space-between;
+        justify-content:end;
         align-items: center;
 
     }
@@ -129,37 +127,43 @@
         height: 30px;
         font-size: 12px;
     }
-
     </style>
 <div class="receipt-el">
     <div class="receipt">
-        <!-- Payment Details -->
-        <div class="payment-detail">
-            <p class="currency_rcp">
-                <strong>Currency:</strong><select id='rp_currency' class='form-select'>
-                    <option value=''>Currency</option>
-                    {% for currency in currencies %}
-                    {% if currency.default %}
-                    <option value='{{currency.id}}' selected>{{currency.name}}</option>
-                    {% else %}
-                    <option value='{{currency.id}}'>{{currency.name}}</option>
-                    {% endif %}
-                    {% endfor %}
-                </select>
-            </p>
-            <div class="side">
-                <p class="payment-method">
-                    <strong>Payment:</strong>
-                    <button class="btn btn-outline-dark btn-pm btn-sm border" id="pCash" data-name="cash">Cash</button>
-                    <button class="btn btn-outline-dark btn-pm btn-sm border" id="pBank" data-name="bank">Bank</button>
-                    <button class="btn btn-outline-dark btn-pm btn-sm border" id="pEcocash" data-name="ecocash">Ecocash</button>
+        <div class="d-flex w-100">
+            <button id="payment_modal_btn" class="btn btn-sm btn-danger">Back</button>
+            <div class="side w-100">
+                <p class="payment-method mx-5">
+                    <span class="fw-bold" style="font-weight:700;">Payment:</span>
+                    <button class="btn btn-outline-dark btn-pm btn-sm border text-muted" id="pCash" data-name="cash">Cash</button>
+                    <button class="btn btn-outline-dark btn-pm btn-sm border text-muted" id="pBank" data-name="bank">Bank</button>
+                    <button class="btn btn-outline-dark btn-pm btn-sm border text-muted" id="pEcocash" data-name="ecocash">Ecocash</button>
                 </p>
                 <p class="terms">
-                    <strong>Terms:</strong>
-                    <button class="btn btn-outline-dark btn-sm btn-terms border active" id="cash">Cash</button>
-                    <button class="btn btn-outline-dark btn-sm btn-terms border" id="pay_later">Pay later</button>
-                    <button class="btn btn-outline-dark btn-sm btn-terms border" id="layby">Layby</button>
-                    <button class="btn btn-outline-dark btn-sm btn-terms border" id="Installment">Monthly Installment</button>
+                    <span class="fw-bold" style="font-weight:700;">Terms:</span>
+                    <button class="btn btn-outline-dark btn-sm btn-terms border active text-muted" id="cash">Cash</button>
+                    <button class="btn btn-outline-dark btn-sm btn-terms border text-muted" id="pay_later">Pay later</button>
+                    <button class="btn btn-outline-dark btn-sm btn-terms border text-muted" id="layby">Layby</button>
+                    <button class="btn btn-outline-dark btn-sm btn-terms border text-muted" id="Installment">Monthly Installment</button>
+                </p>
+            </div>
+        </div>
+        <!-- Payment Details -->
+        <div class="payment-detail mt-2 d-none">
+          
+            <div class="side">
+                <p class="payment-method">
+                    <span class="fw-bold">Payment:</span>
+                    <button class="btn btn-outline-dark btn-pm btn-sm border text-muted" id="pCash" data-name="cash">Cash</button>
+                    <button class="btn btn-outline-dark btn-pm btn-sm border text-muted" id="pBank" data-name="bank">Bank</button>
+                    <button class="btn btn-outline-dark btn-pm btn-sm border text-muted" id="pEcocash" data-name="ecocash">Ecocash</button>
+                </p>
+                <p class="terms">
+                    <span class="fw-bold">Terms:</span>
+                    <button class="btn btn-outline-dark btn-sm btn-terms border active text-muted" id="cash">Cash</button>
+                    <button class="btn btn-outline-dark btn-sm btn-terms border text-muted" id="pay_later">Pay later</button>
+                    <button class="btn btn-outline-dark btn-sm btn-terms border text-muted" id="layby">Layby</button>
+                    <button class="btn btn-outline-dark btn-sm btn-terms border text-muted" id="Installment">Monthly Installment</button>
                 </p>
             </div>
 
@@ -169,12 +173,11 @@
 
         <!-- Customer Info -->
 
-        <h4>Payment by <span id="customerName"></span></h4>
         <div class="customer-info">
             <div class="account-summary">
                 <p>
-                    <strong>Enter Amount Received:</strong>
-                    <input type="number" id="id_amount_paid" name="amount_received" class="form-control">
+                    <!--<strong>Payment by <span id="customerName"></span></strong>-->
+                    <input type="number" id="id_amount_paid" style="width:300px;" name="amount_received" class="form-control" placeholder="Enter Amount Received:">
                 </p>
             </div>
             <div>
@@ -203,7 +206,8 @@
 
         <!-- Totals -->
         <div class="totals">
-            <p><strong>Subtotal:</strong> <span id="id_subtotal"></span></p>
+            <p><strong>Subtotal:</strong> <span id="
+                                                "></span></p>
             <p><strong>VAT 15%:</strong> <span id="id_vat"></span></p>
             <p><strong>Previous Due</strong> <span id="tpreviousDue"></span></p>
             <p><strong>Total:</strong> <span id='total_balance_due'></span></p>
