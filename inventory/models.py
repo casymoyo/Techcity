@@ -33,14 +33,14 @@ class Product(models.Model):
     batch = models.CharField(max_length = 255, blank=True, default='')
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, default=0)
-    cost = models.DecimalField(max_digits=10, decimal_places=2)
+    cost = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     quantity = models.IntegerField(default=0, null=True)
     category = models.ForeignKey(ProductCategory, on_delete=models.SET_NULL, null=True)
-    tax_type = models.CharField(max_length=50, choices=tax_choices)
+    tax_type = models.CharField(max_length=50, choices=tax_choices, null=True)
     min_stock_level = models.IntegerField(default=0, null=True)
     description = models.TextField()
-    end_of_day = models.BooleanField(default=False)
-    service =  models.BooleanField(default=False)
+    end_of_day = models.BooleanField(default=False, null=True)
+    service =  models.BooleanField(default=False, null=True)
     dealer_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, default=0)
     
     def __str__(self):
@@ -186,6 +186,7 @@ class Inventory(models.Model):
     reorder = models.BooleanField(default=False, null=True)
     alert_notification = models.BooleanField(default=False, null=True, blank=True)
     batch = models.CharField(max_length=255, blank=True, null=True)
+
     
     def update_stock(self, added_quantity):
         self.quantity += added_quantity

@@ -29,26 +29,26 @@
 </head>
 <style>
     table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-}
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
 
-thead th {
-    background-color: #f9f9f9;
-    padding: 12px 15px;
-    border-bottom: 1px solid #ddd;
-    cursor: pointer;
-}
+    thead th {
+        background-color: #f9f9f9;
+        padding: 12px 15px;
+        border-bottom: 1px solid #ddd;
+        cursor: pointer;
+    }
 
-tbody td {
-    padding: 12px 15px;
-    border-bottom: 1px solid #eee;
-}
+    tbody td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+    }
 
-tbody tr:hover {
-    background-color: #f1f1f1;
-}
+    tbody tr:hover {
+        background-color: #f1f1f1;
+    }
 
     .payment-modal{
         background-color: #fff;
@@ -69,14 +69,19 @@ tbody tr:hover {
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
+/*        background-color: rgba(0, 0, 0, 0.5);*/
         display: none; 
-        z-index: 1000;
+        z-index: 1;
     }
 
     .modal-content {
         overflow-y: auto;  
     }
+
+    .payment-modal{
+        margin: 0px;
+    }
+
 </style>
 <body class="techcity">
     <div class='pos'>
@@ -221,6 +226,7 @@ tbody tr:hover {
             </div>
         </div>
     </div>
+
     <div class="payment-modal hidden">
         <div class="modal-content">
             {% include 'Pos/pay_modal.html' %}
@@ -233,6 +239,7 @@ tbody tr:hover {
             </div>
         </div>
     </div>
+
     </div>
     
     <div class="modal fade" id="clientModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
@@ -335,6 +342,8 @@ let clientName = '';
 let initialCurrencyValue = '';
 let addedToCartProduct = [];
 let paymentTerms = 'cash';
+let sub = 0
+let vatAmount
 
 const layby_dates = []
 
@@ -404,22 +413,18 @@ const paymentButtons = document.querySelectorAll(".btn-terms");
 let paymentTerm = 'cash'; 
 
 document.getElementById('payment_modal_btn').addEventListener('click', () => {
-        document.querySelector('.payment-modal').classList.add('hidden');
+    document.querySelector('.payment-modal').classList.add('hidden');
 })
 
 function calculateBalance() {
     let total = parseFloat(totalBalanceDueElement.textContent.split(' ')[1]); 
-
-    console.log(totalBalanceDueElement.textContent.split('')[1], totalBalanceDueElement.textContent)
     let amountPaid = parseFloat(amountPaidInput.value) || 0;
     let balance;
 
     if (paymentTerm === 'cash') {
-        console.log(total, amountPaid)
         balance = amountPaid - total; 
         balanceLabel.textContent = 'Change';
         balanceDueElement.textContent = Math.abs(balance).toFixed(2);
-        console.log(balanceDueElement.textContent, balance)
     } else {
         balance = total - amountPaid; 
         balanceLabel.textContent = 'Amount Due';
@@ -517,8 +522,12 @@ const receipt = () =>{
     const previousDue = document.getElementById('previous_due')
     const termsButtons = document.querySelectorAll('.btn');
 
+    let value;
+    let amountDue = previousDue.textContent.split('')[0];
+
+    console.log(previousDue.textContent, amountDue, 'here')
     // default if they is previous due
-    availableBalance.textContent = previousDue.textContent || 0.00
+    
 
     period.addEventListener('input', ()=>{
         if(period.value < 0){
@@ -533,11 +542,15 @@ const receipt = () =>{
     })
 
     id_amount_paid.addEventListener('input', ()=>{
-        let value = id_amount_paid.value
-        depositedAmount.textContent = value
+        value = id_amount_paid.value;
+        depositedAmount.textContent = value;
 
-        // availabe balancce
-        availableBalance.textContent = parseFloat(value) + (parseFloat(previousDue.textContent) || 0)
+        const amountDue = parseFloat(previousDue.textContent.split(' ')[1]);
+        console.log((parseFloat(sub) + parseFloat(vatAmount)) + amountDue - value)
+       
+        // availabe balance 
+        availableBalance.textContent = (parseFloat(sub) + parseFloat(vatAmount)) + amountDue - value || 0;
+        
     })
 
     const calculateNextDueDate = (period) => {
@@ -578,7 +591,6 @@ const receipt = () =>{
 }
 
 receipt()
-
 
 document.addEventListener("DOMContentLoaded", function() {
     const currencySelect = document.getElementById("currency");
@@ -1006,6 +1018,9 @@ function updateTfoot(vat, totalAmount, payable){
     }
 
     const totalBalanceDue = totalDueAmount - parseFloat(amount_paid.toFixed(2));
+
+    //sub = calculateTotalAmount(cart)
+    //vatAmount = vat.toFixed(2)
 
     document.querySelector('#id_subtotal').textContent = `${ symbol + ' ' + calculateTotalAmount(cart) }`
     document.querySelector('#id_vat').textContent = `${ symbol + ' ' + vat.toFixed(2) }`

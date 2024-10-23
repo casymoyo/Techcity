@@ -449,13 +449,11 @@
   display: flex;
   justify-content: center;
   width: 80%;
-  padding: 1.3rem;
   min-height: 500px;
   position: absolute;
   top: 1%;
   background-color: white;
   border: 1px solid #ddd;
-  border-radius: 15px;
   z-index: 2;
 }
 .techcity .customer-modal p,
