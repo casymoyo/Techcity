@@ -536,10 +536,6 @@ def create_invoice(request):
             
             amount_due = invoice_total_amount - amount_paid  
 
-            logger.info(f'Invoice for customer: {customer.name}')
-
-            logger.info(invoice_data)
-
             cogs = COGS.objects.create(amount=Decimal(0))
             
             with transaction.atomic():
@@ -675,7 +671,6 @@ def create_invoice(request):
                     amount_due=invoice_total_amount - amount_paid,
                     user=request.user
                 )
-
 
                 # calculate total cogs amount
                 cogs.amount = COGSItems.objects.filter(cogs=cogs, cogs__date=datetime.datetime.today())\

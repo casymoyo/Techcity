@@ -22,7 +22,7 @@
     </head>
     <style>
     .receipt-el{
-        font-family: Arial, sans-serif;
+/*        font-family: Arial, sans-serif;*/
 /*        margin: 0;
         padding: 20px;
         background-color: #f4f4f4;*/
@@ -131,7 +131,12 @@
 <div class="receipt-el">
     <div class="receipt">
         <div class="d-flex w-100">
-            <button id="payment_modal_btn" class="btn btn-sm btn-danger">Back</button>
+            <div class="d-flex">
+                <button id="payment_modal_btn" class="btn btn-sm btn-danger">Back</button>
+                <div class="d-flex mx-1">
+                    <span style="font-weight:bolder" class="text-success rounded p-2">Process Invoice For</span><span class="rounded p-2" id="customerName" class="bg-light text-dark"></span>
+                </div>
+            </div>
             <div class="side w-100">
                 <p class="payment-method mx-5">
                     <span class="fw-bold" style="font-weight:700;">Payment:</span>
@@ -154,7 +159,7 @@
             <div class="side">
                 <p class="payment-method">
                     <span class="fw-bold">Payment:</span>
-                    <button class="btn btn-outline-dark btn-pm btn-sm border text-muted" id="pCash" data-name="cash">Cash</button>
+                    <button class="btn btn-outline-dark btn-pm btn-sm border active text-muted" id="pCash" data-name="cash">Cash</button>
                     <button class="btn btn-outline-dark btn-pm btn-sm border text-muted" id="pBank" data-name="bank">Bank</button>
                     <button class="btn btn-outline-dark btn-pm btn-sm border text-muted" id="pEcocash" data-name="ecocash">Ecocash</button>
                 </p>
@@ -181,7 +186,10 @@
                 </p>
             </div>
             <div>
-                <p><strong>Previous bal:</strong><span id="previous_due" class="prv_due"></span></p>
+                <p><strong>Previous bal:</strong>
+                   <span onclick="customerStatement(this.textContent.strip())" id="id_last_invoice"></span>
+                    <span id="previous_due" class="prv_due"></span
+                </p>
                 <p><strong>Available bal:</strong> <span id="availableBalance"></span></p>
             </div>
         </div>
@@ -206,10 +214,9 @@
 
         <!-- Totals -->
         <div class="totals">
-            <p><strong>Subtotal:</strong> <span id="
-                                                "></span></p>
+            <p><strong>Subtotal:</strong> <span id="id_subtotal"></span></p>
             <p><strong>VAT 15%:</strong> <span id="id_vat"></span></p>
-            <p><strong>Previous Due</strong> <span id="tpreviousDue"></span></p>
+            <p class="d-none"><strong>Previous Due</strong> <span id="tpreviousDue"></span></p>
             <p><strong>Total:</strong> <span id='total_balance_due'></span></p>
             <!-- <p><strong>Available bal:</strong> <span id='total_balance_due'>25.00</span></p> -->
             <p><strong><span id="balance_label">Amount Due</span>:</strong> <span id="id_balance"></span></p>

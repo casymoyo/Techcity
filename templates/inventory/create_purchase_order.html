@@ -1315,7 +1315,7 @@
       expense = exp;
 
       if (data.acp !== newCost) {
-        console.log('Costs' + data.acp, newCost)
+        
         const productId = `product_${data.product.replace(/\s+/g, '_')}`;
 
         let existingProduct = document.getElementById(productId);
@@ -1324,15 +1324,16 @@
         existItem.actualPrice = parseFloat(input.value)
         
         // push product 
-        products.push(data.product)
+          products.push(data.product)
+          console.log(data.tB, exp, 'expenses')
 
         if (!existingProduct) {
           
-          addProductToFooter(expFooter, data, productId);
           products.push(data.product);  
 
           recalculateTotalExpenses(exp, data.tB);
-          updateValues(newCart, expense, data.product)
+          updateValues(newCart, expense, data.product);
+
           tdEls.forEach((td)=>{
             td.classList.add('bg-danger');
             td.classList.add('text-light');
@@ -1396,6 +1397,7 @@
     function updateValues(newCart, expenses, product) {
         // Find the index of the product to be removed
         let totalCost = totalProductCost(newCart);
+        console.log('total cost', totalCost);
 
         for(prod in products){
           let existingItemIndex = newCart.findIndex((item) => item.product === products[prod]);
@@ -1420,6 +1422,8 @@
                         item.quantity, 
                         expenses
                     );
+
+                    console.log('result', result)
 
                     let totalBuying = item.price * item.quantity;
                     let total = totalBuying + parseFloat(result.allocated);
@@ -1499,7 +1503,6 @@
         let totalCost = totalProductCost(newCart);
 
         // Remove products from 'newCart'
-        console.log('products' + products)
         products.forEach((product) => {
             let existingItemIndex = newCart.findIndex((item) => item.product === product);
             if (existingItemIndex !== -1) {

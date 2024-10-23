@@ -101,26 +101,4 @@
         </button>
     </div>
 </div>
-
-<script>
-   const c_id = {{customer.id}}
-    const mailBtn = document.querySelector('#mailBtn')
-
-    const emailLoader = new bootstrap.Modal(document.querySelector('#mailModal'))
-    
-    mailBtn.addEventListener('click', () => {
-        emailLoader.show()
-        $.ajax({
-            url: `/finance/customer/account/${c_id}/`,
-            type: 'GET',
-            data: {'email_bool': 'yes'}
-            }).done(function(response) {
-                const data = response
-                if(data.message){
-                    document.querySelector('.email').textContent=data.message
-                }
-            })
-        });
-
-</script>
 {% endblock %}

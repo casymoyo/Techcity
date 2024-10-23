@@ -51,7 +51,10 @@
     }
 
     .payment-modal{
+        display:flex;
+        justify-content:center;
         background-color: #fff;
+        margin-top:20px;
         width: 100%;
         max-width: 100%;
         max-height: 100%; 
@@ -82,6 +85,10 @@
         margin: 0px;
     }
 
+    .btn:hover{
+        color: #fff !important;
+    }
+
 </style>
 <body class="techcity">
     <div class='pos'>
@@ -89,15 +96,15 @@
             <div class="nav-bar"> {% include "base/pos_navbar.html" %} </div>
         </div>
         {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-                {{ message }}
-                <button type="button"
-                        class="btn-close"
-                        data-bs-dismiss="alert"
-                        aria-label="Close"></button>
-                </div>
-            {% endfor %}
+        {% for message in messages %}
+        <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+            {{ message }}
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close"></button>
+        </div>
+        {% endfor %}
         {% endif %}
         <div class='row'>
             <div class="aside-bar col-2 text-light"> {% include "base/aside.html" %} </div>
@@ -108,8 +115,8 @@
                             <div class='list-toggle'>
                                 <button id="menu-type" class="btn border bx bx-menu"></button>
                             </div>
-                            <div class="px-1" ><i class="bx bx-search"></i></div>
-                            <div><input type="search" name="q" class="form-control"  id='id_search' placeholder="search..."/></div>
+                            <div class="px-1"><i class="bx bx-search"></i></div>
+                            <div><input type="search" name="q" class="form-control" id='id_search' placeholder="search..." /></div>
                             <div class="">
                                 <button class="btn btn-light btn-sm border" id="out_of_stock">Out of Stock</button>
                             </div>
@@ -118,7 +125,7 @@
                             <select name='category' id="id_category" class="form-select">
                                 <option value="0">All Categories</option>
                                 {% for category in categories%}
-                                    <option value='{{ category.id }}'>{{ category.name }}</option>
+                                <option value='{{ category.id }}'>{{ category.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -138,7 +145,7 @@
                                 <option value=''></option>
                             </select>
                             <div class="avatar-container">
-                                <img src="{% static 'assets/avatar.png' %}" alt="Avatar" class="avatar"> 
+                                <img src="{% static 'assets/avatar.png' %}" alt="Avatar" class="avatar">
                             </div>
                         </div>
                         <div class="d-flex flex-column">
@@ -173,24 +180,20 @@
                     <div class='additional-costs border p-2 d-flex justify-content-between w-100'>
                         <div class='w-50'>
                             <label for="id_discount"><small>Discount</small></label>
-                            <input 
-                                id='id_discount'
-                                type='number'
-                                class='form-control text-center'
-                                placeholder='Discount'
-                                value=0
-                            />
+                            <input id='id_discount'
+                                   type='number'
+                                   class='form-control text-center'
+                                   placeholder='Discount'
+                                   value=0 />
                         </div>
                         <span class='px-2'></span>
                         <div class='w-50'>
                             <label for="id_dc_input"><small>Delivery Charge</small></label>
-                            <input 
-                                id='id_dc_input'
-                                type='number'
-                                class='form-control text-center'
-                                placeholder='Delivery Charge'
-                                value=0
-                            />
+                            <input id='id_dc_input'
+                                   type='number'
+                                   class='form-control text-center'
+                                   placeholder='Delivery Charge'
+                                   value=0 />
                         </div>
                     </div>
                     <div class='totals border d-flex aling-items-center table-responsive table-sm'>
@@ -217,7 +220,7 @@
                     </div>
                     <div class=" w-100 payment-buttons d-flex justify-content-between mt-3">
                         <div class="w-100">
-                            <button class="btn btn-secondary w-100"id='id_pay' >
+                            <button class="btn btn-secondary w-100" id='id_pay'>
                                 Next
                             </button>
                         </div>
@@ -241,7 +244,7 @@
     </div>
 
     </div>
-    
+
     <div class="modal fade" id="clientModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -261,6 +264,17 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="customerAccountTableModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="loaderModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -347,7 +361,9 @@ let vatAmount
 
 const layby_dates = []
 
-let error = document.querySelector('#error_message')
+let error = document.querySelector('#error_message');
+
+let customerAccountTableModal = new bootstrap.Modal(document.getElementById('customerAccountTableModal'))
 
 const currencySelect = document.querySelector('#currency')
 const endOfDayModal = new bootstrap.Modal(document.getElementById('endOfDayModal'));
@@ -618,7 +634,9 @@ $(document).ready(function() {
     )
     .on('change', function (e){
         clientName = $(this).val()
+        console.log(clientName)
         fetchCustomerAccount(clientName)
+        getLastInvoiceNumber(clientName)
     })
     
 })
@@ -1208,6 +1226,7 @@ async function displayReceipt(invoiceId) {
             newRow.insertCell().textContent = `(${item__product__description})`;
             newRow.insertCell().textContent = quantity;
             newRow.insertCell().textContent = `${unit_price}`;
+            newRow.insertCell().textContent = `${(0.15 * unit_price).toFixed(2)}`;
             newRow.insertCell().textContent = `${quantity * unit_price}`;
         });;
 
@@ -1411,8 +1430,57 @@ function setCustomer(customerId){
     email.textContent = data[0]?.email;
     address.textContent = data[0]?.address;
    
-}
+    }
 
+    const getLastInvoiceNumber = async (customerId) => {
+        try {
+            const response = await fetch(`/pos/last_due_invoice/${customerId}/`);
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok.');
+        }
+        const lastInvoice = await response.json();
+
+            console.log('last invoice number', lastInvoice)
+
+        // set the last invoice
+        document.getElementById('id_last_invoice').textContent = lastInvoice[0].invoice_number;
+
+        } catch (error) {
+            console.error('Error fetching Last Invoice Number:', error);
+        
+        }
+    }
+
+  
+    //$.ajax({
+    //    url: '/finance/customer/payments/json/',
+    //    type: 'GET',
+    //    data: { 'type': 'invoice_payments', 'customer_id': 1 },
+    //}).done(function (response) {
+    //    const data = response
+    //    paymentsData.push(data)
+    //    displaypaymentsTable(data)
+    //})
+
+    //function displaypaymentsTable(data) {
+    //    customerAccountTableModal.show()
+    //    customerAccountTable.innerHTML = '';
+    //    data.forEach((d) => {
+    //        customerAccountTable.innerHTML += `
+            
+    //        <tr>
+    //            <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${new Date(d.payment_date).toDateString()}</small></td>
+    //            <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>#${d.invoice__invoice_number}</small></td>
+    //            <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${d.invoice__products_purchased}</small></td>
+    //            <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${d.invoice__currency__symbol} ${d.invoice__amount}</small></td>
+    //            <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${d.invoice__currency__symbol} ${d.amount_paid}</small></td>
+    //            <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${d.invoice__currency__symbol} ${d.amount_due}</small></td>
+    //            <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${d.user__username}</small></td>
+    //        </tr>
+    //        `
+    //    })
+    //}
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== "") {

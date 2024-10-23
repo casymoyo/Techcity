@@ -1335,7 +1335,7 @@ def edit_supplier(request, supplier_id):
 def purchase_orders(request):
     form = CreateOrderForm()
     status_form = PurchaseOrderStatus()
-    orders = PurchaseOrder.objects.filter(branch = request.user.branch, hold=False)
+    orders = PurchaseOrder.objects.filter(branch = request.user.branch)
 
     items = PurchaseOrderItem.objects.filter(purchase_order__id=5)
 
