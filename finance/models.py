@@ -260,6 +260,7 @@ class Invoice(models.Model):
         ('installment', 'installment')
     ))
     hold_status = models.BooleanField(default=False)
+    amount_received = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def generate_invoice_number(branch):
         last_invoice = Invoice.objects.filter(branch__name=branch).order_by('-id').first()

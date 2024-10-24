@@ -15,6 +15,7 @@ from django.utils import timezone
 from django.db import transaction
 from django.contrib import messages
 from utils.utils import generate_pdf
+from . utils import update_latest_due
 from django.http import JsonResponse
 from utils.utils import generate_pdf
 from asgiref.sync import async_to_sync, sync_to_async
@@ -456,8 +457,6 @@ def update_invoice(request, invoice_id):
         else:
             customer_account_balance.balance -= amount_paid
 
-        
-
         account_balance.save()
         customer_account_balance.save()
         invoice.save()
@@ -528,11 +527,14 @@ def create_invoice(request):
                 defaults={'balance': 0}
             )
             
-            amount_paid = Decimal(invoice_data['amount_paid'])
+            amount_paid = update_latest_due(customer, Decimal(invoice_data['amount_paid']), request, invoice_data['paymentTerms'], customer_account_balance)
             invoice_total_amount = Decimal(invoice_data['payable'])
 
-            if amount_paid > invoice_total_amount:
-                amount_paid = invoice_total_amount
+
+            logger.info(f'amount paid: {amount_paid}')
+
+            #if amount_paid > invoice_total_amount:
+            #   amount_paid = invoice_total_amount
             
             amount_due = invoice_total_amount - amount_paid  
 
@@ -556,7 +558,8 @@ def create_invoice(request):
                     reocurring = invoice_data['recourring'],
                     products_purchased = ', '.join([f'{item['product_name']} x {item['quantity']} ' for item in items_data]),
                     payment_terms = invoice_data['paymentTerms'],
-                    hold_status = invoice_data['hold_status']
+                    hold_status = invoice_data['hold_status'],
+                    amount_received = invoice_data['amount_paid']
                 )
 
                 logger.info(invoice.hold_status)
@@ -1679,8 +1682,6 @@ def invoice_preview_json(request, invoice_id):
         'invoice_items': list(invoice_items),
         'dates':list(dates)
     }
-    logger.info(f'invoice data: {invoice_data}')
-
     return JsonResponse(invoice_data)
 
 @login_required
