@@ -87,13 +87,22 @@ class noteStatusForm(forms.ModelForm):
             self.initial['delivery_date'] = date.today()
 
         # set the batch incrementing from the previous 
-        if not self.initial.get('batch'):
-            batch = PurchaseOrder.objects.filter().order_by('-order_date').first().batch
-            if batch:
-                batch_number = int(batch.split(' ')[1]) + 1
-            else:
-                batch_number = 1
-            self.initial['batch'] = f'Batch {batch_number}'
+        latest_order = PurchaseOrder.objects.filter().order_by('-order_date').first()
+    
+        if latest_order and latest_order.batch:
+            try:
+                # Ensure the batch follows the expected format "Batch X"
+                batch_parts = latest_order.batch.split(' ')
+                if len(batch_parts) == 2 and batch_parts[1].isdigit():
+                    batch_number = int(batch_parts[1]) + 1
+                else:
+                    batch_number = 1  
+            except (IndexError, ValueError):
+                batch_number = 1  
+        else:
+            batch_number = 1  
+    
+        self.initial['batch'] = f'Batch {batch_number}'
 
 
 class PurchaseOrderStatus(forms.ModelForm):

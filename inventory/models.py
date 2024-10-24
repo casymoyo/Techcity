@@ -270,6 +270,7 @@ class ActivityLog(models.Model):
     ACTION_CHOICES = [
         ('stock in', 'stock in'),
         ('Stock update', 'Stock update'),
+        ('stock adjustment', 'stock adjustment'),
         ('update', 'Update'),
         ('delete', 'Delete'),
         ('edit', 'Edit'),
@@ -281,7 +282,9 @@ class ActivityLog(models.Model):
         ('defective', 'defective'),
         ('activated', 'activated'),
         ('deactivated', 'deactivated'),
-        ('removed', 'removed')
+        ('removed', 'removed'),
+        ('purchase edit +', 'purchase edit +'),
+        ('purchase edit -', 'purchase edit -')
     ]
     
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
@@ -290,7 +293,8 @@ class ActivityLog(models.Model):
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     quantity = models.IntegerField()
     total_quantity = models.IntegerField()
-    timestamp = models.DateField(auto_now_add=True)
+    system_quantity = models.IntegerField(default=0)
+    timestamp = models.DateTimeField(auto_now_add=True)
     description = models.CharField(max_length=255, null=True)
     purchase_order = models.ForeignKey(PurchaseOrder, null=True, blank=True, on_delete=models.SET_NULL)
     invoice = models.ForeignKey('finance.invoice', null=True, blank=True, on_delete=models.SET_NULL)

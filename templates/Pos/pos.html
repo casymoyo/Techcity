@@ -269,7 +269,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-body">
-                    
+                    {% include 'finance/customers/account_statement.html' %}
                 </div>
             </div>
         </div>
@@ -565,7 +565,7 @@ const receipt = () =>{
         console.log((parseFloat(sub) + parseFloat(vatAmount)) + amountDue - value)
        
         // availabe balance 
-        availableBalance.textContent = (parseFloat(sub) + parseFloat(vatAmount)) + amountDue - value || 0;
+        availableBalance.textContent = parseFloat(value) - amountDue || 0;
         
     })
 
@@ -1452,35 +1452,37 @@ function setCustomer(customerId){
         }
     }
 
-  
-    //$.ajax({
-    //    url: '/finance/customer/payments/json/',
-    //    type: 'GET',
-    //    data: { 'type': 'invoice_payments', 'customer_id': 1 },
-    //}).done(function (response) {
-    //    const data = response
-    //    paymentsData.push(data)
-    //    displaypaymentsTable(data)
-    //})
+    function customerAccount() {
+        $.ajax({
+            url: '/finance/customer/payments/json/',
+            type: 'GET',
+            data: { 'type': 'invoice_payments', 'customer_id': 1 },
+        }).done(function (response) {
+            const data = response
+            console.log(data)
+            displaypaymentsTable(data)
+        })
+    }
 
-    //function displaypaymentsTable(data) {
-    //    customerAccountTableModal.show()
-    //    customerAccountTable.innerHTML = '';
-    //    data.forEach((d) => {
-    //        customerAccountTable.innerHTML += `
+  
+    function displaypaymentsTable(data) {
+        customerAccountTableModal.show()
+        customerAccountTable.innerHTML = '';
+        data.forEach((d) => {
+            customerAccountTable.innerHTML += `
             
-    //        <tr>
-    //            <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${new Date(d.payment_date).toDateString()}</small></td>
-    //            <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>#${d.invoice__invoice_number}</small></td>
-    //            <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${d.invoice__products_purchased}</small></td>
-    //            <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${d.invoice__currency__symbol} ${d.invoice__amount}</small></td>
-    //            <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${d.invoice__currency__symbol} ${d.amount_paid}</small></td>
-    //            <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${d.invoice__currency__symbol} ${d.amount_due}</small></td>
-    //            <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${d.user__username}</small></td>
-    //        </tr>
-    //        `
-    //    })
-    //}
+            <tr>
+                <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${new Date(d.payment_date).toDateString()}</small></td>
+                <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>#${d.invoice__invoice_number}</small></td>
+                <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${d.invoice__products_purchased}</small></td>
+                <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${d.invoice__currency__symbol} ${d.invoice__amount}</small></td>
+                <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${d.invoice__currency__symbol} ${d.amount_paid}</small></td>
+                <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${d.invoice__currency__symbol} ${d.amount_due}</small></td>
+                <td><small class='${d.invoice__payment_status === 'Partial' ? "text-danger" : ''}'>${d.user__username}</small></td>
+            </tr>
+            `
+        })
+    }
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== "") {

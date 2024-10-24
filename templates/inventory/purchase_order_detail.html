@@ -77,14 +77,14 @@
                     {% if order.product.name == item.product %}
                     <tr>
                         <td class="fw-bold" style="background: #ebeced;">{{ item.product }} <small>({{ order.product.description }})</small></td>
-                        <td style="background: #ebeced;">{{ item.quantity }}</td>
+                        <td style="background: #ebeced;">{{ order.quantity }}</td>
                         <td style="background: #ebeced;">
-                            {% if order.received_quantity == item.quantity %}
+                            {% if order.received_quantity == order.quantity %}
                             <small class="bg-success btn btn-sm btn-success">All received</small>
                             {% else %}
                             <small class="bg-danger btn btn-danger btn-sm">
                                 Received
-                                {{ order.received_quantity}} / {{ item.quantity }}
+                                {{ order.received_quantity }} / {{ order.quantity }}
                             </small>
                             {% endif %}
                         </td>

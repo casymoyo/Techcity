@@ -1,5 +1,6 @@
 
-import json, datetime, openpyxl 
+import json, datetime, openpyxl
+from os import system 
 import csv
 from django.http import HttpResponse
 from datetime import timedelta
@@ -1611,7 +1612,6 @@ def if_purchase_order_is_received(request, purchase_order, tax_amount, payment_m
             tax_amount = tax_amount
         )
 
-        logger.info('done')
     except Exception as e:
         logger.info(e)
         return JsonResponse({'success':False, 'message':f'currency doesnt exists'})
@@ -1981,12 +1981,10 @@ def process_received_order(request):
 
         # Update the order item with received quantity
         order_item.receive_items(quantity)
+        order_item.received_quantity = quantity
         order_item.expected_profit = expected_profit
         order_item.dealer_expected_profit = dealer_expected_profit
         order_item.received = True
-
-        logger.info(f'profit: {expected_profit}')
-        logger.info(f'dealer profit: {dealer_expected_profit}')
 
         #order_item.check_received() revisit the model method
 
@@ -2000,10 +1998,11 @@ def process_received_order(request):
         except Product.DoesNotExist:
             return JsonResponse({'success': False, 'message': f'Product with ID: {order_item.product.id} does not exist'}, status=404)
 
+        system_quantity = 0 # if new product
         try:
             inventory = Inventory.objects.get(product=product, branch=request.user.branch)
-            logger.info(inventory)
-            logger.info(request.user.branch)
+           
+            system_quantity = inventory.quantity
             # Update existing inventory
             inventory.cost = cost
             inventory.price = selling_price
@@ -2035,6 +2034,7 @@ def process_received_order(request):
             action='stock in',
             inventory=inventory,
             quantity=quantity,
+            system_quantity=system_quantity,
             description=f'Stock in from {order_item.purchase_order.batch}',
             total_quantity=inventory.quantity
         )
@@ -2068,22 +2068,34 @@ def edit_purchase_order_item(order_item_id, selling_price, dealer_price, expecte
         # Update the inventory, assuming this item already exists in inventory
         try:
             inventory = Inventory.objects.get(product=product, branch=po_item.purchase_order.branch)
+
+            system_quantity = inventory.quantity
+            quantity_adjustment = 0
+
+            # adjust quantity
+            if inventory.quantity > quantity:
+                quantity_adjustment = inventory.quantity - quantity
+                inventory.quantity -= quantity_adjustment
+                action = 'purchase edit -'
+            else:
+                quantity_adjustment = quantity - inventory.quantity
+                inventory.quantity += quantity_adjustment
+                action = 'purchase edit +'
+
             inventory.price = selling_price
             inventory.dealer_price = dealer_price
             inventory.quantity = quantity
             inventory.save()
 
-            log = ActivityLog.objects.get(purchase_order=po_item.purchase_order, inventory=inventory)
-            log.delete()
-
             ActivityLog.objects.create(
                 purchase_order=po_item.purchase_order,
                 branch=request.user.branch,
                 user=request.user,
-                action='stock in',
+                action=action,
                 inventory=inventory,
-                quantity=quantity,
-                description=f'Stock in from {po_item.purchase_order.batch}',
+                quantity=quantity_adjustment,
+                system_quantity = system_quantity,
+                description=f'Stock adjustment ({po_item.purchase_order.batch})',
                 total_quantity=inventory.quantity
             )
 
@@ -2251,7 +2263,9 @@ def edit_purchase_order(request, po_id):
                 otherExpenses.objects.bulk_create(expense_bulk)
 
                 costs_list = []
+                
                 for cost in cost_allocations:
+                    #logger.info(f'editted quantity: {cost['quantity']}
                     costs_list.append(
                         costAllocationPurchaseOrder(
                             purchase_order = purchase_order,
@@ -2287,8 +2301,6 @@ def remove_purchase_order(purchase_order_id, request):
     try:
         # Retrieve the purchase order
         purchase_order = PurchaseOrder.objects.get(id=purchase_order_id)
-
-        logger.info(f'{purchase_order} remove')
 
         with transaction.atomic():
             
@@ -2333,8 +2345,9 @@ def remove_purchase_order(purchase_order_id, request):
             for item in items:
                 for prod in products:
                     if item.product == prod.product:
+                        system_quantity = prod.quantity
                         prod.quantity -= item.received_quantity
-
+                        
                         # eliminate negative stock
                         if prod.quantity < 0:
                             prod.quantity = 0
@@ -2344,10 +2357,12 @@ def remove_purchase_order(purchase_order_id, request):
                         ActivityLog.objects.create(
                             branch = request.user.branch,
                             user= request.user,
-                            action= 'delete',
+                            action= 'purchase edit -',
                             inventory=prod,
+                            system_quantity=system_quantity,
                             quantity=item.received_quantity,
-                            total_quantity=prod.quantity
+                            total_quantity=prod.quantity,
+                            description=f'Purchase order: {item.purchase_order.batch} edit'
                         )
 
             # Remove PurchaseOrderItems
